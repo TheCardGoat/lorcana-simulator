@@ -40,8 +40,13 @@ describe("Kristoff - Icy Explorer", () => {
 
       expect(testEngine.asPlayerOne().playCard(kristoffIcyExplorer)).toBeSuccessfulCommand();
 
-      // No bag effects should exist - ability should not trigger without Anna
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kristoffIcyExplorer, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
     });
 
     it("should trigger when Anna is in play and put own discard card on bottom of deck", () => {
@@ -115,6 +120,50 @@ describe("Kristoff - Icy Explorer", () => {
       expect(testEngine.asPlayerTwo().getZonesCardCount("player_two").discard).toBe(
         initialOpponentDiscardCount - 1,
       );
+    });
+
+    it("regression: resolveBag with empty targets drains when Anna is NOT in play", () => {
+      // Repro of player report: Kristoff solo on the board (no Anna), player
+      // clicks "Resolve triggered ability" which submits `{ targets: [] }`.
+      // Previously this errored with RESOLVE_BAG_TARGETS_REQUIRED and the bag
+      // was stuck. The intervening-if condition (no Anna) should drain instead.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [kristoffIcyExplorer],
+        inkwell: kristoffIcyExplorer.cost,
+        discard: [discardFodder],
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(kristoffIcyExplorer)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(kristoffIcyExplorer, { targets: [] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("discard");
+    });
+
+    it("regression: resolveBag with empty targets declines when Anna IS in play but all discards are empty", () => {
+      // Anna is in play so the intervening-if passes, but no cards exist in
+      // any discard, so there's no valid target for put-on-bottom. The
+      // optional must auto-decline rather than stalling the bag.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [kristoffIcyExplorer],
+        inkwell: kristoffIcyExplorer.cost,
+        play: [{ card: annaSoothingSister, isDrying: false }],
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(kristoffIcyExplorer)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(kristoffIcyExplorer, { targets: [] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
     it("should be optional - player can decline when Anna is in play", () => {

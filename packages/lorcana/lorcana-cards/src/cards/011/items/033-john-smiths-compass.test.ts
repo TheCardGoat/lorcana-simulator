@@ -55,7 +55,11 @@ describe("John Smith's Compass", () => {
       expect(testEngine.asPlayerOne().challenge(attacker, defender)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
-      // SPINNING ARROW triggers (mandatory banish) - compass goes to discard
+      // YOUR PATH is auto-fizzled (challenges-by-player >= 1 is true, so eq 0 is false).
+      // SPINNING ARROW condition passes and is auto-resolved (banish has no player choice).
+      // Bag is empty after auto-resolution.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // SPINNING ARROW fired — compass is banished
       expect(testEngine.asPlayerOne().getCardZone(johnSmithsCompass)).toBe("discard");
     });
 
@@ -71,11 +75,12 @@ describe("John Smith's Compass", () => {
       );
 
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
-      // Only YOUR PATH fires - SPINNING ARROW does not trigger
+      // SPINNING ARROW is auto-fizzled (challenges-by-player gte 1 is false, no challenge).
+      // YOUR PATH condition passes (challenges-by-player eq 0 is true) and stays in bag.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      // Resolve YOUR PATH and send card to bottom
+      // Resolve YOUR PATH — condition met (no challenge this turn)
       expect(
-        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass),
+        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass, { bagIndex: 0 }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolvePendingEffect(johnSmithsCompass, {
@@ -105,10 +110,11 @@ describe("John Smith's Compass", () => {
       );
 
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
-      // Only YOUR PATH fires - SPINNING ARROW's turn-metric condition (challenges >= 1) is false
+      // SPINNING ARROW is auto-fizzled (no challenge). YOUR PATH stays.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      // Resolve YOUR PATH (bagIndex: 0) — condition met (no challenge this turn)
       expect(
-        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass),
+        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass, { bagIndex: 0 }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolvePendingEffect(johnSmithsCompass, {
@@ -137,9 +143,11 @@ describe("John Smith's Compass", () => {
       );
 
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      // SPINNING ARROW is auto-fizzled (no challenge). YOUR PATH stays.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      // Resolve YOUR PATH (bagIndex: 0) — condition met (no challenge this turn)
       expect(
-        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass),
+        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass, { bagIndex: 0 }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolvePendingEffect(johnSmithsCompass, {
@@ -168,9 +176,11 @@ describe("John Smith's Compass", () => {
       );
 
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      // SPINNING ARROW is auto-fizzled (no challenge). YOUR PATH stays.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      // Resolve YOUR PATH (bagIndex: 0) — condition met (no challenge this turn)
       expect(
-        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass),
+        testEngine.asPlayerOne().resolvePendingByCard(johnSmithsCompass, { bagIndex: 0 }),
       ).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolvePendingEffect(johnSmithsCompass, {
@@ -202,11 +212,13 @@ describe("John Smith's Compass", () => {
       expect(testEngine.asPlayerOne().challenge(attacker, defender)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
-      // SPINNING ARROW fires and banishes the compass - YOUR PATH does NOT trigger
-      expect(testEngine.asPlayerOne().getCardZone(johnSmithsCompass)).toBe("discard");
-      // No bag items for YOUR PATH
+      // YOUR PATH is auto-fizzled (challenged, so challenges-by-player eq 0 is false).
+      // SPINNING ARROW condition passes and is auto-resolved (banish, no player choice).
+      // Bag is empty after auto-resolution.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-      // helpfulScout stays in deck
+      // SPINNING ARROW fires and banishes the compass
+      expect(testEngine.asPlayerOne().getCardZone(johnSmithsCompass)).toBe("discard");
+      // helpfulScout stays in deck (YOUR PATH was auto-fizzled, never fired)
       expect(testEngine.asPlayerOne().getCardZone(helpfulScout)).toBe("deck");
     });
   });

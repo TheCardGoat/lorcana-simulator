@@ -94,10 +94,15 @@ describe("Vanellope Von Schweetz - Gutsy Go-Getter", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      // No bag effects should be pending (ability does not trigger)
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(vanellopeVonSchweetzGutsyGogetter, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
-      // Lore should be unchanged (no lore gain from ability)
+      // Lore should be unchanged (no lore gain from ability - condition not met)
       expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
       // Only the standard beginning-of-turn draw should have happened (deck goes from 3 to 2)
       expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({

@@ -10,6 +10,7 @@
     } from "@/features/simulator/model/contracts.js";
   import { m } from "$lib/i18n/messages.js";
     import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+    import {ZONE_IMAGE_FORMATS} from "@/design-system/simulator/cards/card-image-format.js";
     import HotkeyCardBadge from "@/features/simulator/hotkeys/HotkeyCardBadge.svelte";
     import {createCardAnchorId, createZoneAnchorId} from "@/features/simulator/animations/board-move-animations.js";
     import {
@@ -49,7 +50,9 @@
   const simulatorCardContext = useSimulatorCardContext();
   const dnd = useLorcanaSimulatorDndContext();
   const inFlightCardIds = $derived(board.inFlightCardIds);
-  const cards = $derived(board.getZoneCards(playerSide, "hand").filter((card) => !inFlightCardIds.has(card.cardId)));
+  const handCards = $derived(board.getZoneCards(playerSide, "hand").filter((card) => !inFlightCardIds.has(card.cardId)));
+  const fromUnderCards = $derived(isOpponent ? [] : board.getPlayableFromUnderCards(playerSide));
+  const cards = $derived([...handCards, ...fromUnderCards]);
   const totalCards = $derived(board.getZoneTotalCards(playerSide, "hand"));
   const isMasked = $derived(board.isZoneMasked(playerSide, "hand"));
   const ownerId = $derived(board.getOwnerIdForSide(playerSide));
@@ -65,18 +68,88 @@
     },
   });
   const handDropState = $derived(dnd.getZoneDropState("hand", playerSide));
-  const playDropState = $derived(dnd.getZoneDropState("play", playerSide));
-  const inkwellDropState = $derived(dnd.getZoneDropState("inkwell", playerSide));
-  const showDragTargets = $derived(!isOpponent && dnd.isDraggingHandCard);
+  const showHandDropZone = $derived(!isOpponent && dnd.isDraggingHandCard);
   let handContainerEl = $state<HTMLDivElement | null>(null);
+  let handViewportWidth = $state(0);
   let hiddenCardsToLeft = $state(0);
   let hiddenCardsToRight = $state(0);
-  const showMobileHandControls = $derived(layoutMode === "mobile" && !isOpponent && cards.length > 0);
   const showDesktopTuckControl = $derived(
-    layoutMode === "desktop" && typeof onToggleTucked === "function",
+    layoutMode === "desktop" && isOpponent && typeof onToggleTucked === "function",
   );
   const tuckControlLabel = $derived(
     isTucked ? m["sim.hand.show"]({}) : m["sim.hand.hide"]({}),
+  );
+
+  function getDynamicOverlapRem(count: number): number {
+    if (count <= 7) return -1.15;
+    if (count <= 9) return -1.3;
+    if (count <= 11) return -1.45;
+    return -1.6;
+  }
+
+  function getDynamicCardWidthPx(count: number): number | null {
+    if (count <= 10) return null; // use default
+    if (count <= 12) return 116;
+    return 110;
+  }
+
+  const dynamicOverlap = $derived(getDynamicOverlapRem(cards.length));
+  const dynamicCardWidth = $derived(getDynamicCardWidthPx(cards.length));
+  const disableMobileSelectedLift = $derived(layoutMode === "mobile" && cards.length > 7);
+
+  function getMobileHandCardWidthPx(viewportWidth: number, count: number, opponent: boolean): number {
+    if (count <= 0 || viewportWidth <= 0) {
+      return opponent ? 62 : 76;
+    }
+
+    const maxCardWidth = opponent ? 62 : 76;
+    const minCardWidth = opponent ? 36 : 52;
+    const minVisibleStep = opponent ? 10 : 16;
+    const fittedCardWidth = viewportWidth - (count - 1) * minVisibleStep;
+
+    return Math.min(maxCardWidth, Math.max(minCardWidth, fittedCardWidth));
+  }
+
+  function getMobileHandStepPx(
+    viewportWidth: number,
+    count: number,
+    cardWidth: number,
+    opponent: boolean,
+  ): number {
+    if (count <= 1 || viewportWidth <= 0) {
+      return cardWidth;
+    }
+
+    const minVisibleStep = opponent ? 10 : 16;
+    const maxVisibleStep = cardWidth + 6;
+
+    return Math.min(
+      maxVisibleStep,
+      Math.max(minVisibleStep, (viewportWidth - cardWidth) / (count - 1)),
+    );
+  }
+
+  const mobileCardWidth = $derived(
+    layoutMode === "mobile"
+      ? getMobileHandCardWidthPx(handViewportWidth, cards.length, isOpponent)
+      : null,
+  );
+  const mobileHandStep = $derived(
+    layoutMode === "mobile" && mobileCardWidth
+      ? getMobileHandStepPx(handViewportWidth, cards.length, mobileCardWidth, isOpponent)
+      : null,
+  );
+  const mobileHandNeedsScroll = $derived.by(() => {
+    if (layoutMode !== "mobile" || !mobileCardWidth || cards.length <= 1 || handViewportWidth <= 0) {
+      return false;
+    }
+
+    const minVisibleStep = isOpponent ? 10 : 16;
+    const minRequiredWidth = mobileCardWidth + (cards.length - 1) * minVisibleStep;
+    return minRequiredWidth > handViewportWidth;
+  });
+  const showMobileHandControls = $derived(
+    layoutMode === "mobile" && !isOpponent && cards.length > 0 && mobileHandNeedsScroll,
   );
 
   function getFanRotation(index: number, total: number): number {
@@ -88,10 +161,11 @@
       return 0;
     }
 
-    const maxSpread = isOpponent ? 15 : 10;
+    const baseSpread = isOpponent ? 15 : 10;
+    const maxSpread = total > 10 ? baseSpread * 0.8 : baseSpread;
     const step = maxSpread / (total - 1);
     const rotation = -maxSpread / 2 + step * index;
-    return playerSide === "playerTwo" ? -rotation : rotation;
+    return seat === "top" ? -rotation : rotation;
   }
 
   function isPlayable(card: LorcanaCardSnapshot): boolean {
@@ -108,6 +182,7 @@
     cards.length === 0 ? Math.min(effectiveTotal, MAX_VISIBLE_HIDDEN_CARDS) : 0,
   );
   const hiddenOverflowCount = $derived(Math.max(0, effectiveTotal - hiddenPlaceholderCount));
+  const showZoneCounters = $derived(board.showZoneCounters);
 
   function getScrollableHandCards(): HTMLElement[] {
     if (!handContainerEl) {
@@ -179,7 +254,28 @@
   }
 
   $effect(() => {
-    if (layoutMode !== "mobile" || !handContainerEl) {
+    if (!handContainerEl) {
+      handViewportWidth = 0;
+      return;
+    }
+
+    const container = handContainerEl;
+    const updateViewportWidth = (): void => {
+      handViewportWidth = container.clientWidth;
+    };
+    const resizeObserver =
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateViewportWidth);
+
+    updateViewportWidth();
+    resizeObserver?.observe(container);
+
+    return () => {
+      resizeObserver?.disconnect();
+    };
+  });
+
+  $effect(() => {
+    if (layoutMode !== "mobile" || !mobileHandNeedsScroll || !handContainerEl) {
       hiddenCardsToLeft = 0;
       hiddenCardsToRight = 0;
       return;
@@ -206,12 +302,13 @@
       resizeObserver?.disconnect();
     };
   });
+
 </script>
 
 <div
   class="hand-zone"
-  class:hand-zone--player-two={playerSide === "playerTwo"}
-  class:hand-zone--drop-hover={handDropState === "valid"}
+  class:hand-zone--player-two={seat === "top"}
+  class:hand-zone--opponent={isOpponent}
   class:hand-zone--tucked={isTucked}
   data-layout-mode={layoutMode}
   data-player-seat={seat}
@@ -223,14 +320,14 @@
     <button
       type="button"
       class="hand-tuck-toggle"
-      class:hand-tuck-toggle--player-two={playerSide === "playerTwo"}
+      class:hand-tuck-toggle--player-two={seat === "top"}
       aria-label={tuckControlLabel}
       aria-pressed={isTucked}
       data-testid={`hand-tuck-toggle-${playerSide}`}
       onclick={handleToggleTucked}
     >
       <span class="hand-tuck-toggle__label">{tuckControlLabel}</span>
-      {#if playerSide === "playerTwo"}
+      {#if seat === "top"}
         {#if isTucked}
           <ChevronUpIcon class="size-4" />
         {:else}
@@ -244,39 +341,17 @@
     </button>
   {/if}
 
-  {#if showDragTargets}
-    <div class="hand-drag-targets" aria-hidden="true">
-      <div
-        class="hand-drag-target hand-drag-target--inkwell"
-        class:hand-drag-target--preview={inkwellDropState === "preview"}
-        class:hand-drag-target--valid={inkwellDropState === "valid"}
-        class:hand-drag-target--invalid={inkwellDropState === "invalid"}
-        data-player-side={playerSide}
-        data-zone-id="inkwell"
-      >
-        <span class="hand-drag-target__label">{m["sim.zone.inkwell"]({})}</span>
-      </div>
-
-      <div
-        class="hand-drag-target hand-drag-target--return"
-        class:hand-drag-target--valid={handDropState === "valid"}
-        data-player-side={playerSide}
-        data-zone-id="hand"
-        {@attach handDroppable.attach}
-      >
-        <span class="hand-drag-target__label">{m["sim.hand.returnToHand"]({})}</span>
-      </div>
-
-      <div
-        class="hand-drag-target hand-drag-target--play"
-        class:hand-drag-target--preview={playDropState === "preview"}
-        class:hand-drag-target--valid={playDropState === "valid"}
-        class:hand-drag-target--invalid={playDropState === "invalid"}
-        data-player-side={playerSide}
-        data-zone-id="play"
-      >
-        <span class="hand-drag-target__label">{m["sim.zone.play"]({})}</span>
-      </div>
+  {#if showHandDropZone}
+    <div
+      class="hand-drop-zone"
+      class:hand-drop-zone--valid={handDropState === "valid"}
+      class:hand-drop-zone--player-two={seat === "top"}
+      data-player-side={playerSide}
+      data-zone-id="hand"
+      aria-hidden="true"
+      {@attach handDroppable.attach}
+    >
+      <span class="hand-drop-zone__label">{m["sim.hand.returnToHand"]({})}</span>
     </div>
   {/if}
 
@@ -285,6 +360,16 @@
     bind:this={handContainerEl}
     data-board-anchor-id={createZoneAnchorId(playerSide, "hand")}
     data-board-scroll-sync={layoutMode === "mobile" ? "true" : undefined}
+    data-mobile-scrollable={layoutMode === "mobile" && mobileHandNeedsScroll ? "true" : undefined}
+    style:--hand-card-overlap={layoutMode === "desktop" ? `${dynamicOverlap}rem` : undefined}
+    style:--mobile-hand-step={layoutMode === "mobile" && mobileHandStep ? `${mobileHandStep}px` : undefined}
+    style:--zone-card-width={
+      layoutMode === "mobile" && mobileCardWidth
+        ? `${mobileCardWidth}px`
+        : layoutMode === "desktop" && dynamicCardWidth
+          ? `${dynamicCardWidth}px`
+          : undefined
+    }
   >
     {#if cards.length > 0}
       {#each cards as card, index (card.cardId)}
@@ -302,10 +387,12 @@
 
         <div
           class="hand-card"
-          class:hand-card--player-two={playerSide === "playerTwo"}
+          class:hand-card--player-two={seat === "top"}
           class:hand-card--dragging={dnd.draggedCardId === card.cardId}
           class:hand-card--playable={playable}
+          class:hand-card--from-under={card.isFromUnder}
           class:hand-card--selected={isSelected}
+          class:hand-card--selected-flat={disableMobileSelectedLift && isSelected}
           data-card-id={card.cardId}
           data-player-seat={seat}
           data-player-id={card.ownerId}
@@ -321,7 +408,7 @@
             {card}
             size="small"
             useContainerSize
-            imageFormat="art_and_name"
+            imageFormat={ZONE_IMAGE_FORMATS.hand}
             hoverShowActions
             clickOpensHover
             isSelected={isSelected}
@@ -339,13 +426,13 @@
         {@const rotation = getFanRotation(index, hiddenPlaceholderCount)}
         <div
           class="hand-card hand-card--placeholder"
-          class:hand-card--player-two={playerSide === "playerTwo"}
+          class:hand-card--player-two={seat === "top"}
           style:--rotation="{rotation}deg"
           aria-hidden="true"
         >
           <LorcanaCard
             size="small"
-            imageFormat="art_and_name"
+            imageFormat={ZONE_IMAGE_FORMATS.hand}
             isMasked
             useContainerSize
             {ownerId}
@@ -361,6 +448,10 @@
       </div>
     {/if}
   </div>
+
+  {#if !showZoneCounters && isOpponent && effectiveTotal > 0}
+    <span class="hand-inline-count">{effectiveTotal}</span>
+  {/if}
 
   {#if showMobileHandControls}
     <button
@@ -396,7 +487,7 @@
     --hand-card-aspect: 0.9582;
     --zone-card-width: var(--sim-hand-card-width, 122px);
     --zone-card-height: calc(var(--zone-card-width) / var(--hand-card-aspect));
-    --hand-container-height: calc(var(--zone-card-height) + 0.75rem);
+    --hand-container-height: var(--zone-card-height);
     --hand-card-overlap: -1.15rem;
     --hand-card-overlap-hover: 0.2rem;
     --hover-scale: 1.08;
@@ -404,11 +495,10 @@
 
     display: flex;
     position: relative;
-    width: min(100%, 100%);
+    width: fit-content;
+    max-width: 100%;
     flex-direction: column;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.1rem 0.35rem;
     pointer-events: none;
   }
 
@@ -477,33 +567,14 @@
       0 0 0 1px rgba(219, 234, 254, 0.22) inset;
   }
 
-  .hand-zone--drop-hover {
-    transition: outline 180ms ease, background 180ms ease;
-  }
 
-  .hand-drag-targets {
+  .hand-drop-zone {
     position: absolute;
-    top: -0.55rem;
-    bottom: -0.2rem;
-    left: 0;
-    right: 0;
-    padding-inline: clamp(0.25rem, 1.5vw, 1rem);
+    inset: -0.35rem;
+    z-index: 110;
     display: flex;
-    align-items: stretch;
+    align-items: center;
     justify-content: center;
-    gap: clamp(0.45rem, 1.8vw, 1rem);
-    pointer-events: none;
-    z-index: 120;
-  }
-
-  .hand-zone--player-two .hand-drag-targets {
-    top: -0.2rem;
-    bottom: -0.55rem;
-  }
-
-  .hand-drag-target {
-    flex: 0 1 clamp(6.75rem, 20vw, 12rem);
-    min-width: 0;
     border: 2px dashed rgba(124, 176, 255, 0.5);
     border-radius: 18px;
     background:
@@ -512,63 +583,26 @@
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.03) inset,
       0 10px 28px rgba(7, 18, 31, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     pointer-events: auto;
     transition:
       border-color 180ms ease,
       background 180ms ease,
       box-shadow 180ms ease,
-      transform 180ms ease,
-      flex-basis 180ms ease;
+      transform 180ms ease;
   }
 
-  .hand-drag-target--return {
-    flex-basis: clamp(8.5rem, 24vw, 15.5rem);
-  }
-
-  .hand-drag-target--inkwell {
-    border-color: rgba(180, 140, 230, 0.54);
-    background:
-      linear-gradient(180deg, rgba(119, 62, 204, 0.2), rgba(62, 28, 105, 0.08)),
-      rgba(22, 14, 39, 0.2);
-  }
-
-  .hand-drag-target--play {
-    border-color: rgba(94, 234, 212, 0.5);
-    background:
-      linear-gradient(180deg, rgba(20, 83, 45, 0.18), rgba(6, 78, 59, 0.08)),
-      rgba(9, 28, 26, 0.18);
-  }
-
-  .hand-drag-target--preview {
-    border-style: solid;
-    transform: translateY(-1px);
-  }
-
-  .hand-drag-target--valid {
+  .hand-drop-zone--valid {
     border-color: rgba(147, 197, 253, 0.92);
+    border-style: solid;
     background:
       linear-gradient(180deg, rgba(96, 165, 250, 0.24), rgba(30, 64, 175, 0.12)),
       rgba(15, 23, 42, 0.24);
     box-shadow:
       0 0 0 1px rgba(191, 219, 254, 0.12) inset,
       0 0 22px rgba(96, 165, 250, 0.22);
-    transform: translateY(-1px) scale(1.01);
   }
 
-  .hand-drag-target--invalid {
-    border-color: rgba(248, 113, 113, 0.9);
-    background:
-      linear-gradient(180deg, rgba(185, 28, 28, 0.22), rgba(127, 29, 29, 0.12)),
-      rgba(33, 16, 22, 0.22);
-    box-shadow:
-      0 0 0 1px rgba(254, 202, 202, 0.1) inset,
-      0 0 22px rgba(248, 113, 113, 0.2);
-  }
-
-  .hand-drag-target__label {
+  .hand-drop-zone__label {
     pointer-events: none;
     color: rgba(226, 232, 240, 0.88);
     font-size: 0.72rem;
@@ -579,15 +613,12 @@
     border-radius: 999px;
     background: rgba(15, 23, 42, 0.55);
     border: 1px solid rgba(147, 197, 253, 0.18);
-    position: relative;
-    z-index: 121;
   }
 
   .hand-container {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    width: 100%;
     max-width: 100%;
     min-height: var(--hand-container-height);
     position: relative;
@@ -647,6 +678,23 @@
     opacity: 0.3;
   }
 
+  .hand-card--from-under {
+    position: relative;
+  }
+
+  .hand-card--from-under::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px dashed rgba(168, 85, 247, 0.7);
+    border-radius: 12px;
+    box-shadow:
+      0 0 10px rgba(168, 85, 247, 0.25),
+      inset 0 0 6px rgba(168, 85, 247, 0.1);
+    pointer-events: none;
+    z-index: 5;
+  }
+
   .hand-card--player-two {
     transform-origin: top center;
   }
@@ -679,23 +727,25 @@
 
   .hand-zone[data-layout-mode="mobile"] {
     --zone-card-width: 82px;
-    --hand-container-height: calc(var(--zone-card-height) + 0.5rem);
+    --hand-container-height: var(--zone-card-height);
     width: 100%;
+    max-width: 100%;
     padding: 0;
   }
 
   .hand-zone[data-layout-mode="mobile"] .hand-container {
+    width: 100%;
     min-height: var(--hand-container-height);
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
-    gap: 0.45rem;
-    overflow-x: auto;
+    gap: 0;
+    overflow-x: hidden;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
-    padding: 0.3rem 0.4rem 0.2rem;
+    padding: 0;
     scrollbar-width: none;
-    scroll-snap-type: x proximity;
+    scroll-snap-type: none;
     pointer-events: auto;
   }
 
@@ -707,9 +757,13 @@
     margin: 0;
     transform: none;
     transform-origin: center center;
-    scroll-snap-align: center;
+    scroll-snap-align: unset;
     /* Preserve horizontal swipe-to-scroll while still allowing vertical drag gestures. */
     touch-action: pan-x pinch-zoom;
+  }
+
+  .hand-zone[data-layout-mode="mobile"] .hand-card + .hand-card {
+    margin-left: calc(var(--mobile-hand-step, var(--zone-card-width)) - var(--zone-card-width));
   }
 
   .hand-zone[data-layout-mode="mobile"] .hand-card--selected {
@@ -717,8 +771,18 @@
     margin: 0;
   }
 
+  .hand-zone[data-layout-mode="mobile"] .hand-card--selected-flat {
+    transform: none;
+    filter: brightness(1.18) saturate(1.18);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.85), 0 10px 20px rgba(245, 158, 11, 0.28);
+  }
+
   .hand-zone[data-layout-mode="mobile"] .hand-card--player-two.hand-card--selected {
     transform: translateY(4px) scale(1.03);
+  }
+
+  .hand-zone[data-layout-mode="mobile"] .hand-card--player-two.hand-card--selected-flat {
+    transform: none;
   }
 
   .hand-zone[data-layout-mode="mobile"] .hand-card--playable {
@@ -738,33 +802,6 @@
   .hand-zone[data-layout-mode="mobile"] .empty-hand {
     min-height: 4.5rem;
     width: 100%;
-  }
-
-  .hand-zone[data-layout-mode="mobile"] .hand-drag-targets {
-    top: -0.3rem;
-    bottom: -0.45rem;
-    gap: 0.35rem;
-    padding-inline: 0.1rem;
-  }
-
-  .hand-zone[data-layout-mode="mobile"] .hand-drag-target {
-    flex-basis: clamp(5.25rem, 24vw, 7rem);
-    border-radius: 14px;
-  }
-
-  .hand-zone[data-layout-mode="mobile"] .hand-drag-target--return {
-    flex-basis: clamp(7rem, 34vw, 9rem);
-  }
-
-  .hand-zone--player-two[data-layout-mode="mobile"] .hand-drag-targets {
-    top: -0.1rem;
-    bottom: -0.45rem;
-  }
-
-  .hand-zone[data-layout-mode="mobile"] .hand-drag-target__label {
-    font-size: 0.62rem;
-    letter-spacing: 0.05em;
-    padding-inline: 0.32rem;
   }
 
   .hand-zone[data-layout-mode="mobile"] .mobile-hand-scroll-button {
@@ -852,8 +889,8 @@
   }
 
   .hand-zone[data-layout-mode="mobile"] {
-    --zone-card-width: 76px;
-    --hand-container-height: calc(var(--zone-card-height) + 0.4rem);
+    --zone-card-width: 68px;
+    --hand-container-height: var(--zone-card-height);
     --hand-card-overlap: -0.38rem;
     --hand-card-overlap-hover: 0;
     --hover-scale: 1;
@@ -864,11 +901,22 @@
   }
 
   .hand-zone[data-layout-mode="mobile"] .hand-container {
+    width: 100%;
+    justify-content: center;
+    overflow-x: hidden;
+    overflow-y: visible;
+    padding: 0;
+    scrollbar-width: none;
+  }
+
+  .hand-zone[data-layout-mode="mobile"] .hand-container[data-mobile-scrollable="true"] {
     justify-content: flex-start;
     overflow-x: auto;
-    overflow-y: visible;
-    padding: 0 0.7rem;
-    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .hand-zone[data-layout-mode="mobile"] .hand-container[data-mobile-scrollable="true"] .hand-card {
+    scroll-snap-align: center;
   }
 
   .hand-zone[data-layout-mode="mobile"] .hand-container::-webkit-scrollbar {
@@ -883,17 +931,26 @@
   }
 
   .hand-zone--player-two[data-layout-mode="mobile"] {
-    --zone-card-width: 62px;
+    --zone-card-width: 56px;
     --hand-card-overlap: -0.2rem;
+  }
+
+  .hand-zone--opponent[data-layout-mode="mobile"] {
+    --hand-card-aspect: 1.12;
+    --hand-container-height: calc(var(--zone-card-height) - 0.15rem);
   }
 
   @media (max-width: 420px) {
     .hand-zone[data-layout-mode="mobile"] {
-      --zone-card-width: 70px;
+      --zone-card-width: 64px;
     }
 
     .hand-zone--player-two[data-layout-mode="mobile"] {
-      --zone-card-width: 58px;
+      --zone-card-width: 52px;
+    }
+
+    .hand-zone--opponent[data-layout-mode="mobile"] {
+      --hand-card-aspect: 1.16;
     }
   }
 
@@ -901,5 +958,38 @@
     .hand-card {
       transition: none;
     }
+  }
+
+  /* Inline hand count (counters OFF, opponent only, hover) */
+  .hand-inline-count {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #e2e8f0;
+    background: rgba(15, 23, 42, 0.88);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 999px;
+    padding: 0 6px;
+    pointer-events: none;
+    z-index: 5;
+    line-height: 1;
+    user-select: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  .hand-zone:hover .hand-inline-count {
+    opacity: 1;
   }
 </style>

@@ -8,6 +8,8 @@ import {
   type PlayerId,
 } from "#core";
 import type { FrameworkStateSnapshot, RuntimeCardWithDefinition } from "../core/runtime";
+import { resolvePriorityPlayer } from "../core/runtime/match-runtime.priority";
+import { resolveTurnOwnerId } from "../core/runtime/turn-owner";
 import {
   createCardQueryAPIForState,
   createTimeQueryAPI,
@@ -26,6 +28,7 @@ import type {
   LorcanaProjectedPlayerBoard,
 } from "../types";
 import { buildResolutionSelectionContext } from "../runtime-moves/resolution/action-effects/selection-context";
+import { getActivePlayFromUnderPermissions } from "../runtime-moves/effects/play-from-under-permissions";
 import type { ResolutionSelectionRuntimeContext } from "../runtime-moves/resolution/action-effects/selection-context";
 import {
   projectLorcanaCardDerived,
@@ -44,35 +47,7 @@ import { lorcanaRuntimeZones } from "../zones";
 export type LorcanaBoardProjection = EngineBoardProjection;
 
 function resolveTurnPlayer(state: LorcanaMatchState): PlayerId | null {
-  const otp = state.ctx.status.otp as PlayerId | undefined;
-  if (!otp) {
-    return (state.ctx.priority.holder as PlayerId | undefined) ?? null;
-  }
-
-  const turnNumber = state.ctx.status.turn ?? 0;
-  if (turnNumber <= 0) {
-    return otp;
-  }
-
-  // Count completed turns across all players to determine if any passes have occurred.
-  // When no turns have been completed (e.g. skipPreGame fixtures), the OTP is the turn player
-  // regardless of the turn counter value, since the formula below only applies after actual passes.
-  const turnsCompleted = state.G?.turnsCompletedByPlayer as Record<string, number> | undefined;
-  const totalCompletedTurns = turnsCompleted
-    ? Object.values(turnsCompleted).reduce((sum, count) => sum + (count ?? 0), 0)
-    : 0;
-  if (totalCompletedTurns === 0) {
-    return otp;
-  }
-
-  const playerIds = state.ctx.playerIds ?? [];
-  const otpIndex = playerIds.findIndex((playerId) => String(playerId) === String(otp));
-  if (otpIndex < 0 || playerIds.length === 0) {
-    return otp;
-  }
-
-  const offset = totalCompletedTurns % playerIds.length;
-  return playerIds[(otpIndex + offset) % playerIds.length] as PlayerId;
+  return resolveTurnOwnerId(state.ctx, state.G) ?? null;
 }
 
 function getDefinitionForInstance(
@@ -215,6 +190,11 @@ function buildVisibleCard(args: {
       : undefined,
     stackParentId: runtimeCard.meta.stackParentId as CardInstanceId | undefined,
     playedViaShift: runtimeCard.meta.playedViaShift === true ? true : undefined,
+    publicFaceState:
+      runtimeCard.meta.publicFaceState === "faceUp" ||
+      runtimeCard.meta.publicFaceState === "faceDown"
+        ? (runtimeCard.meta.publicFaceState as "faceUp" | "faceDown")
+        : undefined,
     strength: runtimeCard.strength,
     willpower: runtimeCard.willpower,
     lore: runtimeCard.lore,
@@ -300,48 +280,34 @@ function projectTimerView(
   state: LorcanaMatchState,
   serverTimestamp: number,
 ): LorcanaProjectedBoardView["timerView"] {
-  const players = Object.fromEntries(
-    state.ctx.playerIds.map((playerId) => {
-      if (state.ctx.time.mode === "none") {
-        return [
-          playerId,
-          {
-            timeRemaining: 0,
-            timerTicking: false,
-            canDeclareVictory: false,
-            canClaimAfkVictory: false,
-            canClaimPreGameVictory: false,
-            lastGameActionAt: 0,
-          },
-        ];
-      }
+  const time = state.ctx.time;
 
-      const playerState = state.ctx.time.players[String(playerId)];
-      const isActive = state.ctx.time.running && state.ctx.time.activePlayerID === playerId;
-      return [
-        playerId,
-        {
-          timeRemaining: playerState?.reserveMsRemaining ?? 0,
-          timerTicking: isActive,
-          canDeclareVictory: false,
-          canClaimAfkVictory: false,
-          canClaimPreGameVictory: false,
-          lastGameActionAt: playerState?.lastUpdatedAtMs ?? 0,
-          startedAtMs: isActive ? state.ctx.time.startedAtMs : undefined,
-          isInNegativeTime:
-            playerState && "isInNegativeTime" in playerState
-              ? playerState.isInNegativeTime
-              : undefined,
-          timeoutCount:
-            playerState && "timeoutCount" in playerState ? playerState.timeoutCount : undefined,
-        },
-      ];
-    }),
-  );
+  if (time.mode === "none") {
+    return { serverTimestamp };
+  }
 
-  if (state.ctx.time.mode === "none") {
-    return {
-      serverTimestamp,
+  // Chess and dynamic modes support the per-decision cap and expose
+  // isInNegativeTime / timeoutCount on the per-player state. Priority mode has
+  // none of these, so we default them.
+  const hasDecisionCap = time.mode === "chess" || time.mode === "dynamic";
+  const configMaxDecisionTimeMs = hasDecisionCap ? time.config.maxDecisionTimeMs : undefined;
+  const accumulatedMs = hasDecisionCap ? (time.activePlayerAccumulatedMs ?? 0) : undefined;
+
+  const players: LorcanaProjectedBoardView["timerView"]["players"] = {};
+
+  for (const playerId of state.ctx.playerIds) {
+    const playerState = time.players[String(playerId)];
+    const isRunning = time.running && time.activePlayerID === playerId;
+
+    players[String(playerId)] = {
+      reserveMsRemaining: playerState?.reserveMsRemaining ?? 0,
+      isRunning,
+      startedAtMs: isRunning ? time.startedAtMs : undefined,
+      timeoutCount: playerState && "timeoutCount" in playerState ? playerState.timeoutCount : 0,
+      isInNegativeTime:
+        playerState && "isInNegativeTime" in playerState ? playerState.isInNegativeTime : false,
+      activePlayerAccumulatedMs: isRunning ? accumulatedMs : undefined,
+      maxDecisionTimeMs: isRunning ? configMaxDecisionTimeMs : undefined,
     };
   }
 
@@ -585,23 +551,12 @@ function projectPlayerBoard(args: {
   );
 
   // Limbo is projected for card lookup and previews, even though it is not rendered as a board lane.
-  for (const [index, cardId] of (limboZone?.cards ?? []).entries()) {
-    const isFacedown = rawBoard.cards[cardId]?.meta?.publicFaceState === "faceDown";
-    if (isFacedown) {
-      registerCard(
-        buildHiddenCard({
-          state,
-          zone: "limbo",
-          ownerId: playerId,
-          slotIndex: index,
-          rawCardId: cardId,
-          rawBoard,
-          staticResources,
-          runtimeCardCache,
-          registry,
-        }),
-      );
-    } else {
+  // Cards with publicFaceState "faceUp" (e.g. Black Cauldron under-cards) are visible;
+  // cards without it (e.g. Boost cards) are hidden from the opponent.
+  for (const cardId of limboZone?.cards ?? []) {
+    const limboCardMeta = rawBoard.cards[cardId]?.meta as LorcanaCardMeta | undefined;
+    const isFaceUp = limboCardMeta?.publicFaceState === "faceUp";
+    if (isFaceUp) {
       registerCard(
         buildVisibleCard({
           cardId,
@@ -610,19 +565,100 @@ function projectPlayerBoard(args: {
           rawCards,
         }),
       );
+    } else {
+      registerCard(
+        buildHiddenCard({
+          state,
+          zone: "limbo",
+          ownerId: playerId,
+          slotIndex: 0,
+          rawCardId: cardId,
+          rawBoard,
+          staticResources,
+          runtimeCardCache,
+          registry,
+        }),
+      );
     }
   }
 
-  const deckTop = topDeckCardId
+  // Extend top-deck reveal to also cover temporary reveal windows (e.g. triggered scry)
+  const deckTopFromReveal = !topDeckCardId
+    ? authoritativeDeckCards && authoritativeDeckCards.length > 0
+      ? authoritativeDeckCards.at(-1)
+      : indexedTopDeckCardId
+    : undefined;
+  const resolvedTopDeckCardId =
+    topDeckCardId ??
+    (deckTopFromReveal && isCardVisibleViaReveal(state, deckTopFromReveal, roleCtx)
+      ? deckTopFromReveal
+      : undefined);
+
+  // Bottom-of-deck reveal via reveal windows
+  const deckBottomCandidate =
+    authoritativeDeckCards && authoritativeDeckCards.length > 0
+      ? authoritativeDeckCards.at(0)
+      : undefined;
+  const resolvedBottomDeckCardId =
+    deckBottomCandidate &&
+    deckBottomCandidate !== resolvedTopDeckCardId &&
+    isCardVisibleViaReveal(state, deckBottomCandidate, roleCtx)
+      ? deckBottomCandidate
+      : undefined;
+
+  const deckTop = resolvedTopDeckCardId
     ? registerCard(
         buildVisibleCard({
-          cardId: topDeckCardId,
+          cardId: resolvedTopDeckCardId,
           zone: "deck",
           rawBoard,
           rawCards,
         }),
       )
     : undefined;
+
+  const deckBottom = resolvedBottomDeckCardId
+    ? registerCard(
+        buildVisibleCard({
+          cardId: resolvedBottomDeckCardId,
+          zone: "deck",
+          rawBoard,
+          rawCards,
+        }),
+      )
+    : undefined;
+
+  // Compute playable-from-under card IDs from active permissions
+  const currentTurn = state.ctx.status.turn ?? 1;
+  const activePermissions = getActivePlayFromUnderPermissions(
+    state.G.playFromUnderPermissions,
+    playerId,
+    currentTurn,
+  );
+  let playableFromUnderCardIds: LorcanaProjectedCardId[] | undefined;
+  if (activePermissions.length > 0) {
+    const fromUnder: LorcanaProjectedCardId[] = [];
+    for (const permission of activePermissions) {
+      const sourceCard = rawBoard.cards[String(permission.sourceItemId)];
+      const cardsUnder = (sourceCard?.meta as LorcanaCardMeta | undefined)?.cardsUnder;
+      if (!Array.isArray(cardsUnder)) continue;
+      for (const underCardId of cardsUnder) {
+        if (permission.cardType) {
+          const def = staticResources.instances.get(underCardId as CardInstanceId);
+          const cardDef = def?.definitionId
+            ? staticResources.cards.get(def.definitionId)
+            : undefined;
+          if ((cardDef as LorcanaCard | undefined)?.cardType !== permission.cardType) {
+            continue;
+          }
+        }
+        fromUnder.push(underCardId as LorcanaProjectedCardId);
+      }
+    }
+    if (fromUnder.length > 0) {
+      playableFromUnderCardIds = fromUnder;
+    }
+  }
 
   return {
     lore: state.G.lore[playerId] ?? 0,
@@ -640,10 +676,12 @@ function projectPlayerBoard(args: {
     handCount: handZone?.count ?? hand.length,
     deckCount: deckZone?.count ?? 0,
     deckTop,
+    deckBottom,
     inkwell,
     hand,
     play,
     discard,
+    playableFromUnderCardIds,
   };
 }
 
@@ -765,7 +803,7 @@ export function projectLorcanaBoardView(
     stateID: state.ctx._stateID,
     playerOrder: [...state.ctx.playerIds],
     turnPlayer: resolveTurnPlayer(state),
-    priorityPlayer: (state.ctx.priority.holder as PlayerId | undefined) ?? null,
+    priorityPlayer: (resolvePriorityPlayer(state.ctx.priority) as PlayerId | undefined) ?? null,
     turnNumber: state.ctx.status.turn ?? 0,
     phase: state.ctx.status.phase,
     gameSegment: state.ctx.status.gameSegment,
@@ -809,15 +847,8 @@ export function projectLorcanaBoardView(
           requestID: pendingChoice.requestID,
         }
       : undefined,
-    bagEffects: (state.G.triggeredAbilities?.bag?.items ?? []).map((entry) => ({
-      id: entry.id,
-      type: entry.kind,
-      controllerId: entry.controllerId,
-      chooserId: entry.chooserId,
-      sourceId: entry.sourceId,
-      abilityIndex: entry.abilityIndex,
-      payload: entry,
-      selectionContext: buildResolutionSelectionContext({
+    bagEffects: (state.G.triggeredAbilities?.bag?.items ?? []).map((entry) => {
+      const selectionContext = buildResolutionSelectionContext({
         origin: "bag",
         requestId: entry.id,
         sourceCardId: entry.sourceId,
@@ -827,8 +858,18 @@ export function projectLorcanaBoardView(
         condition: entry.condition,
         resolutionInput: entry.resolutionInput,
         ctx: selectionRuntimeContext,
-      }),
-    })),
+      });
+      return {
+        id: entry.id,
+        type: entry.kind,
+        controllerId: entry.controllerId,
+        chooserId: selectionContext?.chooserId ?? entry.chooserId,
+        sourceId: entry.sourceId,
+        abilityIndex: entry.abilityIndex,
+        payload: entry,
+        selectionContext,
+      };
+    }),
     playerEffectSourceIds: projectPlayerEffectSourceIds(state),
     temporaryPlayerRestrictions:
       state.G.temporaryPlayerRestrictions?.restrictionsByPlayer ?? undefined,

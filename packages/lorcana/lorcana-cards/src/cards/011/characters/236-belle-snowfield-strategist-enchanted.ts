@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { belleSnowfieldStrategist } from "..";
+import { belleSnowfieldStrategist } from "./158-belle-snowfield-strategist";
 
 export const belleSnowfieldStrategistEnchanted: CharacterCard = {
   ...belleSnowfieldStrategist,

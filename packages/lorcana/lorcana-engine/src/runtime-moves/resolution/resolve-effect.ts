@@ -19,7 +19,12 @@ import {
   removePendingActionEffect,
   createPendingActionEffect,
 } from "./action-effects/pending-action-effects";
-import { flushTriggeredEventsToBag, hasPendingBagItems } from "../effects/triggered-abilities";
+import {
+  flushTriggeredEventsToBag,
+  hasPendingBagItems,
+  removeBagItemMatchingPendingSource,
+} from "../effects/triggered-abilities";
+import { emitBeChosenEvents } from "../effects/be-chosen";
 import { continuePendingChallengeResolution } from "../moves/core/challenge";
 import { continuePendingTurnTransition } from "../moves/turn/pass-turn";
 import {
@@ -41,6 +46,8 @@ import {
   hasExplicitTargetSelectionInput,
   validateAndNormalizeTargetSelection,
 } from "../../targeting/runtime";
+import { resolveTurnOwnerId } from "../../core/runtime/turn-owner";
+import { flattenSlottedTargets, isSlottedTargetInput } from "../../targeting/slotted-targets";
 
 type ResolveEffectValidationContext = Parameters<
   NonNullable<LorcanaMoveDefinition<"resolveEffect">["validate"]>
@@ -408,6 +415,10 @@ function isValidTargetInput(value: unknown): boolean {
     return value.length > 0;
   }
 
+  if (isSlottedTargetInput(value)) {
+    return flattenSlottedTargets(value).every((entry) => typeof entry === "string");
+  }
+
   return Array.isArray(value) && value.every((entry) => typeof entry === "string");
 }
 
@@ -468,8 +479,15 @@ function normalizeResolveEffectParams(params: unknown): PendingActionResolutionI
   }
 
   if (record.targets !== undefined && isValidTargetInput(record.targets)) {
-    normalized.currentTargets = record.targets as PendingActionResolutionInput["currentTargets"];
-    normalized.targets = record.targets as PendingActionResolutionInput["targets"];
+    if (isSlottedTargetInput(record.targets)) {
+      const flat = flattenSlottedTargets(record.targets);
+      normalized.slottedTargets = record.targets;
+      normalized.currentTargets = flat as PendingActionResolutionInput["currentTargets"];
+      normalized.targets = flat as PendingActionResolutionInput["targets"];
+    } else {
+      normalized.currentTargets = record.targets as PendingActionResolutionInput["currentTargets"];
+      normalized.targets = record.targets as PendingActionResolutionInput["targets"];
+    }
   }
 
   if (
@@ -747,8 +765,8 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
     }
 
     const actorId = ctx.playerId;
-    // Check only chooserId: for opponent-choice effects (e.g. Hades), pendingChoice.playerID is
-    // the controller (P1) but the chooser may be the opponent (P2). The chooserId is authoritative.
+    // Check only chooserId: for opponent-choice effects (e.g. Hades), pendingChoice.playerID
+    // is the chooser (e.g. opponent P2), not the controller. The chooserId is authoritative.
     if (!actorId || actorId !== pendingEffect.chooserId) {
       traceLorcanaRuntimeStep({
         kind: "move.validation.failed",
@@ -908,6 +926,11 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
       };
     }
 
+    // Emit be-chosen events for targets submitted in this deferred resolution step.
+    // The initial emission in resolveActionCardEffects only covers pre-determined targets.
+    // Targets chosen during pending-effect resolution (e.g., choice option targets) are new.
+    emitBeChosenEvents(ctx, pendingEffect.cardPlayed, normalizedParams);
+
     const result = resolveActionEffect(
       ctx,
       pendingEffect.cardPlayed,
@@ -916,6 +939,9 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
       {
         allowPromptForExistingChosenTargets: true,
         sourceAbilityIndex: pendingEffect.abilityIndex,
+        ...(pendingEffect.allowSuspendWithZeroTargetCandidates === true
+          ? { allowSuspendWithZeroTargetCandidates: true as const }
+          : {}),
         continuation: replayStagedSequence
           ? {
               ...(pendingEffect.continuation?.remainingEffects
@@ -968,6 +994,7 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
         cardName: sourceCardName,
         message: "Effect resolution completes",
       });
+      removeBagItemMatchingPendingSource(ctx, pendingEffect);
       flushTriggeredEventsToBag(ctx);
       if (ctx.G.pendingTurnTransition && !hasPendingBagItems(ctx)) {
         continuePendingTurnTransition(ctx);
@@ -989,6 +1016,9 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
       {
         allowPromptForExistingChosenTargets: true,
         sourceAbilityIndex: pendingEffect.abilityIndex,
+        ...(pendingEffect.allowSuspendWithZeroTargetCandidates === true
+          ? { allowSuspendWithZeroTargetCandidates: true as const }
+          : {}),
       },
     );
     if (continuationResult.status === "suspended") {
@@ -1015,6 +1045,7 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
       cardName: sourceCardName,
       message: "Effect resolution completes",
     });
+    removeBagItemMatchingPendingSource(ctx, pendingEffect);
     flushTriggeredEventsToBag(ctx);
 
     if (ctx.G.pendingTurnTransition && !hasPendingBagItems(ctx)) {
@@ -1032,8 +1063,9 @@ export const resolveEffect: LorcanaMoveDefinition<"resolveEffect"> = {
     }
 
     // Do NOT restrict by pendingChoice.playerID here: for opponent-choice effects (e.g. Hades),
-    // pendingChoice.playerID is the controller (P1) but the chooser is the opponent (P2).
-    // The chooserId check below is sufficient to restrict access to the correct player.
+    // pendingChoice.playerID is the chooser/decision-maker (set from pendingEffect.chooserId),
+    // which is correct for clock targeting. The chooserId check below is the authoritative
+    // access control for who can resolve the effect.
     const pendingEffect = getPendingEffect(ctx, pendingChoice.requestID);
     if (!pendingEffect || pendingEffect.chooserId !== ctx.playerId) {
       return false;
@@ -1061,7 +1093,7 @@ function restorePriorityToTurnPlayer(ctx: ResolveEffectExecutionContext): void {
     return;
   }
 
-  const turnPlayer = resolveTurnPlayerFromCtx(ctx);
+  const turnPlayer = resolveTurnOwnerId(ctx.framework.state, ctx.G);
   if (!turnPlayer || ctx.framework.state.currentPlayer === turnPlayer) {
     return;
   }
@@ -1071,34 +1103,4 @@ function restorePriorityToTurnPlayer(ctx: ResolveEffectExecutionContext): void {
   } else {
     (ctx.framework.state.priority as { holder?: PlayerId }).holder = turnPlayer;
   }
-}
-
-function resolveTurnPlayerFromCtx(ctx: ResolveEffectExecutionContext): PlayerId | undefined {
-  // Keep this turn-owner derivation in sync with:
-  // - runtime-moves/moves/turn/pass-turn.ts:resolveTurnPlayer
-  // - runtime-moves/resolution/resolve-bag.ts:resolveTurnPlayerFromCtx
-  // - runtime-game/project-board.ts:resolveTurnPlayer
-  const otp = ctx.framework.state.status.otp as PlayerId | undefined;
-  if (!otp) {
-    return ctx.framework.state.currentPlayer as PlayerId | undefined;
-  }
-
-  const playerIds = ctx.framework.state.playerIds;
-  const turnsCompleted = (ctx.G.turnsCompletedByPlayer ?? {}) as Record<string, number>;
-  const totalCompletedTurns = Object.values(turnsCompleted).reduce(
-    (sum, count) => sum + (count ?? 0),
-    0,
-  );
-
-  if (totalCompletedTurns === 0) {
-    return otp;
-  }
-
-  const otpIndex = playerIds.findIndex((p) => p === otp);
-  if (otpIndex < 0 || playerIds.length === 0) {
-    return otp;
-  }
-
-  const offset = totalCompletedTurns % playerIds.length;
-  return playerIds[(otpIndex + offset) % playerIds.length] as PlayerId;
 }

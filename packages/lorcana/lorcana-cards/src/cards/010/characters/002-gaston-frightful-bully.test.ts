@@ -57,7 +57,13 @@ describe("Gaston - Frightful Bully", () => {
     );
 
     expect(testEngine.asPlayerOne().quest(gastonFrightfulBully)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    // Per CRD 6.2.7: ability IS enqueued; condition (card under him) checked at resolution
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(gastonFrightfulBully, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.hasRestriction(opposingCharacter, "cant-challenge")).toBe(false);

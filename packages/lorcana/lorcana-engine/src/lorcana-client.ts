@@ -10,10 +10,11 @@ import {
   ClientEngine,
   type ClientEngineConfig,
   type DeepReadonly,
-  type InMemoryTransport,
+  type Transport,
   type MatchRuntimeConfig,
   type PlayerId,
   type CommandResult,
+  type ProtocolError,
 } from "#core";
 import type { CardInput } from "./types";
 import { lorcanaRuntimeConfig } from "./runtime-game";
@@ -23,7 +24,7 @@ import { type LorcanaBaseEngineParams } from "./engine-initialization";
 type LorcanaClientParams = {
   playerId: string;
   role?: "player" | "spectator";
-  transport?: InMemoryTransport;
+  transport?: Transport;
   identifier?: string;
   debugMode?: boolean;
   skipOptimisticState?: boolean;
@@ -54,6 +55,13 @@ export class LorcanaClient extends LorcanaEngineBase {
       transport: params.transport,
       identifier: params.identifier,
       skipOptimisticState: params.skipOptimisticState,
+      sandboxPostProcess: (sandboxRuntime, playerId, stateID) => {
+        try {
+          this.drainDeterministicBagEffectsInSandbox(sandboxRuntime, playerId, stateID);
+        } catch (err) {
+          // Swallow unexpected throws so optimistic state update is not lost
+        }
+      },
     };
 
     this.engine = new ClientEngine(clientEngineConfig);
@@ -65,6 +73,10 @@ export class LorcanaClient extends LorcanaEngineBase {
 
   getClientPlayerId(): string {
     return this._playerId;
+  }
+
+  onProtocolError(handler: (error: ProtocolError) => void): () => void {
+    return this.engine.onProtocolError(handler);
   }
 
   connectSync(): void {

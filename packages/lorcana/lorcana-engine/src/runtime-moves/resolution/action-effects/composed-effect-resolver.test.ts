@@ -755,8 +755,7 @@ describe("resolveActionEffect", () => {
         steps: [
           {
             type: "remove-damage",
-            amount: 3,
-            upTo: true,
+            amount: { type: "up-to", value: 3 },
             target: {
               selector: "chosen",
               count: 1,
@@ -810,8 +809,7 @@ describe("resolveActionEffect", () => {
             steps: [
               {
                 type: "remove-damage",
-                amount: 3,
-                upTo: true,
+                amount: { type: "up-to", value: 3 },
                 target: {
                   selector: "chosen",
                   count: 1,
@@ -1034,7 +1032,7 @@ describe("resolveActionEffect", () => {
         steps: [
           {
             type: "remove-damage",
-            amount: 3,
+            amount: { type: "up-to", value: 3 },
             target: {
               selector: "chosen",
               count: 1,
@@ -1042,7 +1040,6 @@ describe("resolveActionEffect", () => {
               zones: ["play"],
               cardTypes: ["character"],
             },
-            upTo: true,
           },
           {
             type: "draw",
@@ -1088,9 +1085,8 @@ describe("resolveActionEffect", () => {
       createCardPlayedPayload(source, PLAYER_ONE),
       {
         type: "remove-damage",
-        amount: 3,
+        amount: { type: "up-to", value: 3 },
         target: "CHOSEN_CHARACTER",
-        upTo: true,
       },
       {
         targets: [target],
@@ -1122,9 +1118,8 @@ describe("resolveActionEffect", () => {
       createCardPlayedPayload(source, PLAYER_ONE),
       {
         type: "remove-damage",
-        amount: 3,
+        amount: { type: "up-to", value: 3 },
         target: "CHOSEN_CHARACTER",
-        upTo: true,
       },
       {
         targets: [target],
@@ -1339,9 +1334,71 @@ describe("resolveActionEffect", () => {
       },
     );
 
-    expect(result.status).toBe("resolved");
+    expect(result.status).toBe("suspended");
     expect(state.moveCalls).toEqual([
       { cardId: returnedTarget, playerId: PLAYER_ONE, zone: "hand" },
+    ]);
+    if (result.status === "suspended") {
+      const sel = result.pendingEffect.selectionContext;
+      expect(sel?.kind === "target-selection" ? sel.allowedZones : undefined).toEqual(["hand"]);
+    }
+  });
+
+  it("restores event snapshot after if-you-do play-card so chosen-card-cost offset uses the banished card (Retro Evolution Device)", () => {
+    const source = "source" as CardInstanceId;
+    const sacrifice = "sacrifice" as CardInstanceId;
+    const followUp = "follow-up" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [sacrifice]: { id: "sacrifice", cardType: "character", cost: 4, willpower: 3 },
+        [followUp]: { id: "follow-up", cardType: "character", cost: 6, willpower: 3 },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [sacrifice],
+        [`hand:${PLAYER_ONE}`]: [followUp],
+      },
+    });
+
+    const result = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "sequence",
+        steps: [
+          {
+            type: "banish",
+            target: "CHOSEN_CHARACTER_OF_YOURS",
+          },
+          {
+            type: "conditional",
+            condition: {
+              type: "if-you-do",
+            },
+            then: {
+              type: "play-card",
+              from: "hand",
+              cardType: "character",
+              cost: "free",
+              filter: {
+                maxCost: {
+                  type: "chosen-card-cost",
+                  offset: 2,
+                },
+              },
+            },
+          },
+        ],
+      },
+      {
+        targets: [sacrifice, followUp],
+      },
+    );
+
+    expect(result.status).toBe("resolved");
+    expect(state.moveCalls).toEqual([
+      { cardId: sacrifice, playerId: PLAYER_ONE, zone: "discard" },
+      { cardId: followUp, playerId: PLAYER_ONE, zone: "play" },
     ]);
   });
 
@@ -1569,5 +1626,117 @@ describe("resolveActionEffect", () => {
 
     expect(result.status).toBe("resolved");
     expect(eventSnapshot.lastEffectPerformed).toBe(false);
+  });
+
+  it("reads move-damage from/to slots directly when a slotted input is provided", () => {
+    const source = "source" as CardInstanceId;
+    const donor = "donor" as CardInstanceId;
+    const dest = "dest" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [donor]: { id: "donor", cardType: "character", strength: 2, willpower: 5 },
+        [dest]: { id: "dest", cardType: "character", strength: 1, willpower: 5 },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [donor, dest],
+      },
+      cardMeta: {
+        [donor]: { damage: 3 },
+        [dest]: { damage: 0 },
+      },
+    });
+
+    const resolved = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "move-damage",
+        from: {
+          selector: "chosen",
+          count: 1,
+          owner: "self",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+        to: {
+          selector: "chosen",
+          count: 1,
+          owner: "self",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+      {
+        slottedTargets: {
+          kind: "move-damage",
+          from: [donor],
+          to: [dest],
+        },
+        // Flat mirror kept for generic consumers (required by the move-entry
+        // boundary that always populates this).
+        targets: [donor, dest],
+      },
+      { allowPromptForExistingChosenTargets: true },
+    );
+
+    expect(resolved.status).toBe("resolved");
+    // Damage moved from donor to dest using the slot keys rather than
+    // positional ordering.
+    expect(state.cardMeta[donor]?.damage).toBe(0);
+    expect(state.cardMeta[dest]?.damage).toBe(3);
+  });
+
+  it("moves all damage onto the prior sequence target when move-damage uses previous-target", () => {
+    const source = "source" as CardInstanceId;
+    const donor = "donor" as CardInstanceId;
+    const dest = "dest" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [donor]: { id: "donor", cardType: "character", strength: 2, willpower: 5 },
+        [dest]: { id: "dest", cardType: "character", strength: 1, willpower: 5 },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [donor],
+        [`play:${PLAYER_TWO}`]: [dest],
+      },
+      cardMeta: {
+        [donor]: { damage: 2 },
+        [dest]: { damage: 0 },
+      },
+    });
+
+    const resolved = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "sequence",
+        steps: [
+          {
+            type: "exert",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "opponent",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
+          },
+          {
+            type: "move-damage",
+            from: "ALL_CHARACTERS",
+            to: { ref: "previous-target" },
+          },
+        ],
+      },
+      { targets: [dest] },
+      { allowPromptForExistingChosenTargets: true },
+    );
+
+    expect(resolved.status).toBe("resolved");
+    expect(state.cardMeta[donor]?.damage).toBe(0);
+    expect(state.cardMeta[dest]?.damage).toBe(2);
+    expect(state.cardMeta[dest]?.state).toBe("exerted");
   });
 });

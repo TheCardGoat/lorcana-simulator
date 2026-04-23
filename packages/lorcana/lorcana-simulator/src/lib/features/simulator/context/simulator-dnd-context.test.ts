@@ -96,6 +96,31 @@ describe("dispatchDropIntent", () => {
     expect(calls).toEqual(["ink"]);
   });
 
+  it("rejects dropping a hand card on play when canDropHandCardIntoZone returns false", () => {
+    const calls: string[] = [];
+
+    const result = dispatchDropIntent({
+      cardId: "song-without-ink",
+      dropIntent: {
+        kind: "zone",
+        playerSide: "playerOne",
+        zoneId: "play",
+      },
+      draggedCardKind: "hand",
+      ownerSide: "playerOne",
+      game: createDropActionGame({
+        canDropHandCardIntoZone: (_cardId, zoneId) => zoneId !== "play",
+        playCard: () => {
+          calls.push("playCard");
+          return true;
+        },
+      }),
+    });
+
+    expect(result).toBe(false);
+    expect(calls).toEqual([]);
+  });
+
   it("treats hand as a no-op cancel target while dragging a hand card", () => {
     const calls: string[] = [];
 

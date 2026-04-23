@@ -46,6 +46,9 @@ export const liShangNewlyPromoted: CharacterCard = {
       type: "static",
     },
     {
+      condition: {
+        type: "self-has-damage",
+      },
       effect: {
         modifier: 2,
         stat: "strength",

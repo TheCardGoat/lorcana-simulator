@@ -65,10 +65,6 @@ export const ladyTremaineSinisterSocialite: CharacterCard = {
                 comparison: "less-or-equal",
                 value: 5,
               },
-              filter: {
-                cardType: "action",
-                maxCost: 5,
-              },
               from: "discard",
               type: "play-card",
             },

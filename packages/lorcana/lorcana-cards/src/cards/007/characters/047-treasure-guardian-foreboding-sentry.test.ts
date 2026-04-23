@@ -85,7 +85,7 @@ describe("Treasure Guardian - Foreboding Sentry", () => {
       expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
     });
 
-    it("does not trigger the ability (no bag effect) when no Illusion character is in play", () => {
+    it("resolves with no effect when no Illusion character is in play", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [treasureGuardianForebodingSentry],
         play: [nonIllusionCharacter],
@@ -97,8 +97,13 @@ describe("Treasure Guardian - Foreboding Sentry", () => {
         testEngine.asPlayerOne().playCard(treasureGuardianForebodingSentry),
       ).toBeSuccessfulCommand();
 
-      // No bag effect should be present since condition is not met
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(treasureGuardianForebodingSentry, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
     });
   });

@@ -7,43 +7,49 @@ export type PlayCardCostInput = "standard" | "free" | PlayCardCostObject;
  * Convenience type for playCard cost parameter in client mode.
  */
 type PlayCardCostObject =
-  | { cost: "standard"; amount?: number; targets?: CardInstanceId[] }
-  | { cost: "free"; amount?: number; targets?: CardInstanceId[] }
+  | { cost: "standard"; amount?: number; targets?: PlayCardMoveParams["targets"] }
+  | { cost: "free"; amount?: number; targets?: PlayCardMoveParams["targets"] }
   | {
       cost: "shift";
       shiftTarget: CardInstanceId;
       discardCards?: CardInstanceId[];
       amount?: number;
-      targets?: CardInstanceId[];
+      targets?: PlayCardMoveParams["targets"];
     }
   | {
       cost: "sing";
       singer: CardInstanceId;
       amount?: number;
-      targets?: CardInstanceId[];
+      targets?: PlayCardMoveParams["targets"];
     }
   | {
       cost: "singTogether";
       singers: CardInstanceId[];
       amount?: number;
-      targets?: CardInstanceId[];
+      targets?: PlayCardMoveParams["targets"];
     }
   | {
       cost: "sacrifice";
       sacrificeTarget: CardInstanceId;
       amount?: number;
-      targets?: CardInstanceId[];
+      targets?: PlayCardMoveParams["targets"];
     }
   | {
       cost: "exert-items";
       exertTargets: CardInstanceId[];
       amount?: number;
-      targets?: CardInstanceId[];
+      targets?: PlayCardMoveParams["targets"];
+    }
+  | {
+      cost: "put-on-deck-bottom";
+      deckBottomTarget: CardInstanceId;
+      amount?: number;
+      targets?: PlayCardMoveParams["targets"];
     };
 
 type PlayCardMoveParams = LorcanaRuntimeMoveParams["playCard"];
 type NormalizedPlayCardOptions = {
-  targets?: CardInstanceId[];
+  targets?: PlayCardMoveParams["targets"];
   playerTargets?: PlayerId | PlayerId[];
   amount?: number;
   namedCard?: string;
@@ -175,6 +181,13 @@ export function normalizePlayCardCost(
         cardId,
         cost: "exert-items",
         exertTargets: cost.exertTargets,
+        ...actionResolutionFields,
+      };
+    case "put-on-deck-bottom":
+      return {
+        cardId,
+        cost: "put-on-deck-bottom",
+        deckBottomTarget: cost.deckBottomTarget,
         ...actionResolutionFields,
       };
   }

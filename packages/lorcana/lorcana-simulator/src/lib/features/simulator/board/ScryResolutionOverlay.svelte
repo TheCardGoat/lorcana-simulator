@@ -1,555 +1,632 @@
 <script lang="ts">
-import ChevronLeftIcon from "@lucide/svelte/icons/chevron-left";
-import ChevronRightIcon from "@lucide/svelte/icons/chevron-right";
-import CircleHelpIcon from "@lucide/svelte/icons/circle-help";
-import EyeIcon from "@lucide/svelte/icons/eye";
-import GripIcon from "@lucide/svelte/icons/grip";
-import Maximize2Icon from "@lucide/svelte/icons/maximize-2";
-import MinusIcon from "@lucide/svelte/icons/minus";
-import {
-	createDragDropMonitor,
-	createDraggable,
-	createDroppable,
-} from "@dnd-kit/svelte";
-import { onMount, tick } from "svelte";
-
-import { m } from "$lib/i18n/messages.js";
-import * as Tooltip from "$lib/design-system/primitives/tooltip/index.js";
-import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
-import { CARD_IMAGE_ASPECT_RATIOS } from "@/design-system/simulator/cards/card-image-format.js";
-import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
-import type {
-	LorcanaCardSnapshot,
-	ResolutionScryAvailableMovesSelectionState,
-} from "@/features/simulator/model/contracts.js";
-import { SimulatorLayoutModeObserver } from "@/features/simulator/model/layout-mode.svelte.js";
-import { getScryZoneLabel } from "@/features/simulator/model/scry-destinations.js";
-import {
-	countHiddenScrollableItems,
-	getScrollableItemStep,
-} from "./item-zone-mobile.js";
-import {
-	buildScryCardDropId,
-	buildScryDragId,
-	buildScryZoneDropId,
-	canAssignScryCardToDestination,
-	findScryCardDestinationId,
-	findScryDestination,
-	getScryDesiredOrder,
-	getScryDestinationCountLabel,
-	getScryRemainderDestination,
-	getScryTapDestination,
-	mapReversedBeforeCardId,
-	parseScryDragId,
-	parseScryDropTarget,
-} from "./scry-overlay.js";
-
-interface ScryResolutionOverlayProps {
-	selectionState: ResolutionScryAvailableMovesSelectionState;
-	cardSnapshots?: Record<string, LorcanaCardSnapshot>;
-	onAssignCard?: (cardId: string, destinationId: string) => boolean;
-	onReorderCard?: (
-		destinationId: string,
-		cardId: string,
-		direction: "up" | "down",
-	) => boolean;
-	onConfirm?: () => boolean;
-	onDismiss?: () => void;
-}
-
-let {
-	selectionState,
-	cardSnapshots = {},
-	onAssignCard,
-	onReorderCard,
-	onConfirm,
-	onDismiss,
-}: ScryResolutionOverlayProps = $props();
-
-const simulatorCardContext = useSimulatorCardContext();
-const layout = new SimulatorLayoutModeObserver();
-
-const SCRY_OVERLAY_PADDING = 8;
-
-let overlayElement: HTMLElement | null = null;
-let overlayPosition = $state({
-	x: SCRY_OVERLAY_PADDING,
-	y: SCRY_OVERLAY_PADDING,
-});
-let isMinimized = $state(false);
-let isDraggingOverlay = $state(false);
-let rowContainerElements = $state<Record<string, HTMLDivElement | null>>({});
-let hiddenCardsByZone = $state<Record<string, { left: number; right: number }>>(
-	{},
-);
-
-let dragPointerId: number | null = null;
-let dragOffsetX = 0;
-let dragOffsetY = 0;
-
-function handleOverlayPointerUp(event: PointerEvent): void {
-	stopOverlayDrag(event.pointerId);
-}
-
-function handleOverlayPointerCancel(event: PointerEvent): void {
-	stopOverlayDrag(event.pointerId);
-}
-
-const MISSING_PROVIDER_ERROR =
-	"getDragDropManager was called outside of a DragDropProvider";
-const SCRY_CARD_IMAGE_FORMAT = "art_only";
-const SCRY_CARD_ASPECT_RATIO = CARD_IMAGE_ASPECT_RATIOS[SCRY_CARD_IMAGE_FORMAT];
-const isMobileLayout = $derived(layout.current !== "desktop");
-const sourceCard = $derived(
-	selectionState.sourceCardId
-		? (cardSnapshots[selectionState.sourceCardId] ?? null)
-		: null,
-);
-
-function isMissingProviderError(error: unknown): boolean {
-	return (
-		error instanceof Error && error.message.includes(MISSING_PROVIDER_ERROR)
-	);
-}
-
-function noopAttach(): void {}
-
-function clampOverlayPosition(x: number, y: number): { x: number; y: number } {
-	if (!overlayElement) {
-		return { x, y };
-	}
-
-	const parent = overlayElement.offsetParent;
-	if (!(parent instanceof HTMLElement)) {
-		return { x, y };
-	}
-
-	const maxX = Math.max(
-		SCRY_OVERLAY_PADDING,
-		parent.clientWidth - overlayElement.offsetWidth - SCRY_OVERLAY_PADDING,
-	);
-	const maxY = Math.max(
-		SCRY_OVERLAY_PADDING,
-		parent.clientHeight - overlayElement.offsetHeight - SCRY_OVERLAY_PADDING,
-	);
-
-	return {
-		x: Math.min(Math.max(SCRY_OVERLAY_PADDING, x), maxX),
-		y: Math.min(Math.max(SCRY_OVERLAY_PADDING, y), maxY),
-	};
-}
-
-async function centerOverlay(): Promise<void> {
-	await tick();
-
-	if (!overlayElement) {
-		return;
-	}
-
-	const parent = overlayElement.offsetParent;
-	if (!(parent instanceof HTMLElement)) {
-		return;
-	}
-
-	const centeredX = (parent.clientWidth - overlayElement.offsetWidth) / 2;
-	const centeredY = (parent.clientHeight - overlayElement.offsetHeight) / 2;
-	overlayPosition = clampOverlayPosition(centeredX, centeredY);
-}
-
-function handleWindowResize(): void {
-	overlayPosition = clampOverlayPosition(overlayPosition.x, overlayPosition.y);
-}
-
-function handleOverlayPointerMove(event: PointerEvent): void {
-	if (!isDraggingOverlay || dragPointerId !== event.pointerId) {
-		return;
-	}
-
-	overlayPosition = clampOverlayPosition(
-		event.clientX - dragOffsetX,
-		event.clientY - dragOffsetY,
-	);
-}
-
-function stopOverlayDrag(pointerId?: number): void {
-	if (!isDraggingOverlay) {
-		return;
-	}
-
-	if (pointerId !== undefined && dragPointerId !== pointerId) {
-		return;
-	}
-
-	isDraggingOverlay = false;
-	dragPointerId = null;
-}
-
-function handleOverlayPointerDown(event: PointerEvent): void {
-	if (!overlayElement) {
-		return;
-	}
-
-	const overlayRect = overlayElement.getBoundingClientRect();
-	dragPointerId = event.pointerId;
-	dragOffsetX = event.clientX - overlayRect.left;
-	dragOffsetY = event.clientY - overlayRect.top;
-	isDraggingOverlay = true;
-	event.preventDefault();
-}
-
-function toggleMinimized(): void {
-	isMinimized = !isMinimized;
-	tick().then(() => {
-		handleWindowResize();
-	});
-}
-
-function createSafeDraggable(id: string, disabled: boolean) {
-	try {
-		return createDraggable({ id, disabled });
-	} catch (error) {
-		if (isMissingProviderError(error)) {
-			return {
-				draggable: null,
-				isDragging: false,
-				isDropping: false,
-				isDragSource: false,
-				attach: noopAttach,
-				attachHandle: noopAttach,
-			};
-		}
-
-		throw error;
-	}
-}
-
-function createSafeDroppable(id: string, disabled: boolean) {
-	try {
-		return createDroppable({ id, disabled });
-	} catch (error) {
-		if (isMissingProviderError(error)) {
-			return {
-				droppable: null,
-				isDropTarget: false,
-				attach: noopAttach,
-			};
-		}
-
-		throw error;
-	}
-}
-
-function getEntryCard(cardId: string | undefined): LorcanaCardSnapshot | null {
-	return cardId ? (cardSnapshots[cardId] ?? null) : null;
-}
-
-function handleCardPreviewEnter(card: LorcanaCardSnapshot | null): void {
-	if (!card?.isMasked) {
-		simulatorCardContext.setExternalPreviewCard(card);
-	}
-}
-
-function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
-	if (
-		card &&
-		!card.isMasked &&
-		simulatorCardContext.previewCard?.cardId === card.cardId
-	) {
-		simulatorCardContext.setExternalPreviewCard(null);
-	}
-}
-
-function handleOpenGlobalPreview(card: LorcanaCardSnapshot | null): void {
-	if (!card?.isMasked) {
-		simulatorCardContext.openGlobalPreview(card);
-	}
-}
-
-function setRowContainer(destinationId: string, node: HTMLDivElement | null): void {
-	rowContainerElements[destinationId] = node;
-}
-
-function attachRowContainer(destinationId: string) {
-	return (node: HTMLElement) => {
-		if (node instanceof HTMLDivElement) {
-			setRowContainer(destinationId, node);
-		}
-
-		return () => {
-			setRowContainer(destinationId, null);
-		};
-	};
-}
-
-function getRowCardElements(destinationId: string): HTMLElement[] {
-	const container = rowContainerElements[destinationId];
-	if (!container) {
-		return [];
-	}
-
-	return Array.from(container.querySelectorAll<HTMLElement>(".scry-card"));
-}
-
-function updateHiddenCardsForDestination(destinationId: string): void {
-	const container = rowContainerElements[destinationId];
-	if (!container || !isMobileLayout) {
-		hiddenCardsByZone[destinationId] = { left: 0, right: 0 };
-		return;
-	}
-
-	hiddenCardsByZone[destinationId] = countHiddenScrollableItems({
-		viewportLeft: container.scrollLeft,
-		viewportWidth: container.clientWidth,
-		elements: getRowCardElements(destinationId).map((cardEl) => ({
-			offsetLeft: cardEl.offsetLeft,
-			offsetWidth: cardEl.offsetWidth,
-		})),
-	});
-}
-
-function scrollRow(destinationId: string, direction: "left" | "right"): void {
-	const container = rowContainerElements[destinationId];
-	if (!container) {
-		return;
-	}
-
-	const step = getScrollableItemStep({
-		viewportWidth: container.clientWidth,
-		elements: getRowCardElements(destinationId).map((cardEl) => ({
-			offsetLeft: cardEl.offsetLeft,
-			offsetWidth: cardEl.offsetWidth,
-		})),
-	});
-	if (step <= 0) {
-		return;
-	}
-
-	container.scrollBy({
-		left: direction === "left" ? -step : step,
-		behavior: "smooth",
-	});
-}
-
-function moveCardToIndex(
-	destinationId: string,
-	cardId: string,
-	targetIndex: number,
-	currentIndex: number,
-): void {
-	if (!onReorderCard || currentIndex === targetIndex) {
-		return;
-	}
-
-	const direction: "up" | "down" = currentIndex > targetIndex ? "up" : "down";
-	const steps = Math.abs(targetIndex - currentIndex);
-
-	for (let index = 0; index < steps; index += 1) {
-		const success = onReorderCard(destinationId, cardId, direction);
-		if (!success) {
-			break;
-		}
-	}
-}
-
-function handleCardTap(cardId: string): void {
-	const nextDestinationId = getScryTapDestination(selectionState, cardId);
-	if (nextDestinationId) {
-		onAssignCard?.(cardId, nextDestinationId);
-	}
-}
-
-function canMoveCard(
-	cardIndex: number,
-	cardCount: number,
-	direction: "up" | "down",
-): boolean {
-	if (direction === "up") {
-		return cardIndex > 0;
-	}
-
-	return cardIndex < cardCount - 1;
-}
-
-function handleLocalDragEnd(
-	sourceId: string | null,
-	targetId: string | null,
-): void {
-	const draggedCardId = parseScryDragId(sourceId);
-	const dropTarget = parseScryDropTarget(targetId);
-	if (!draggedCardId || !dropTarget) {
-		return;
-	}
-
-	const sourceDestinationId = findScryCardDestinationId(selectionState, draggedCardId);
-	const targetDestination = findScryDestination(
-		selectionState,
-		dropTarget.destinationId,
-	);
-	if (!sourceDestinationId || !targetDestination) {
-		return;
-	}
-
-	if (sourceDestinationId !== targetDestination.id) {
-		if (
-			!canAssignScryCardToDestination(
-				selectionState,
-				draggedCardId,
-				targetDestination.id,
-			)
-		) {
-			return;
-		}
-
-		const assigned =
-			onAssignCard?.(draggedCardId, targetDestination.id) ?? false;
-		if (!assigned || !targetDestination.orderingEnabled) {
-			return;
-		}
-
-		const actualBeforeCardId = mapReversedBeforeCardId(
-			targetDestination,
-			dropTarget.beforeCardId,
-		);
-		const desiredOrder = getScryDesiredOrder(
-			targetDestination,
-			draggedCardId,
-			actualBeforeCardId,
-		);
-		if (!desiredOrder) {
-			return;
-		}
-
-		const targetIndex = desiredOrder.indexOf(draggedCardId);
-		const currentIndex = targetDestination.cards.length;
-		if (targetIndex >= 0) {
-			moveCardToIndex(
-				targetDestination.id,
-				draggedCardId,
-				targetIndex,
-				currentIndex,
-			);
-		}
-		return;
-	}
-
-	if (!targetDestination.orderingEnabled) {
-		return;
-	}
-
-	const actualBeforeCardId = mapReversedBeforeCardId(
-		targetDestination,
-		dropTarget.beforeCardId,
-	);
-	const desiredOrder = getScryDesiredOrder(
-		targetDestination,
-		draggedCardId,
-		actualBeforeCardId,
-	);
-	const currentIndex = targetDestination.cards.findIndex(
-		(card) => card.cardId === draggedCardId,
-	);
-	const targetIndex = desiredOrder?.indexOf(draggedCardId) ?? -1;
-	if (!desiredOrder || currentIndex < 0 || targetIndex < 0) {
-		return;
-	}
-
-	moveCardToIndex(
-		targetDestination.id,
-		draggedCardId,
-		targetIndex,
-		currentIndex,
-	);
-}
-
-try {
-	createDragDropMonitor({
-		onDragEnd(event) {
-			if (event.canceled) {
-				return;
-			}
-
-			handleLocalDragEnd(
-				event.operation.source ? String(event.operation.source.id) : null,
-				event.operation.target ? String(event.operation.target.id) : null,
-			);
-		},
-	});
-} catch (error) {
-	if (!isMissingProviderError(error)) {
-		throw error;
-	}
-}
-
-onMount(() => {
-	void centerOverlay();
-
-	window.addEventListener("pointermove", handleOverlayPointerMove);
-	window.addEventListener("pointerup", handleOverlayPointerUp);
-	window.addEventListener("pointercancel", handleOverlayPointerCancel);
-	window.addEventListener("resize", handleWindowResize);
-
-	return () => {
-		window.removeEventListener("pointermove", handleOverlayPointerMove);
-		window.removeEventListener("pointerup", handleOverlayPointerUp);
-		window.removeEventListener("pointercancel", handleOverlayPointerCancel);
-		window.removeEventListener("resize", handleWindowResize);
-	};
-});
-
-$effect(() => {
-	selectionState;
-	isMinimized = false;
-	void centerOverlay();
-});
-
-$effect(() => {
-	selectionState.destinations;
-	isMobileLayout;
-
-	const cleanups: Array<() => void> = [];
-
-	for (const destination of selectionState.destinations) {
-		const destId = destination.id;
-		const container = rowContainerElements[destId];
-		if (!container) {
-			hiddenCardsByZone[destId] = { left: 0, right: 0 };
-			continue;
-		}
-
-		const update = () => updateHiddenCardsForDestination(destId);
-		const resizeObserver =
-			typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
-		const cardElements = Array.from(
-			container.querySelectorAll<HTMLElement>(".scry-card"),
-		);
-
-		update();
-		container.addEventListener("scroll", update, { passive: true });
-		resizeObserver?.observe(container);
-
-		for (const cardEl of cardElements) {
-			resizeObserver?.observe(cardEl);
-		}
-
-		cleanups.push(() => {
-			container.removeEventListener("scroll", update);
-			resizeObserver?.disconnect();
-		});
-	}
-
-	return () => {
-		for (const cleanup of cleanups) {
-			cleanup();
-		}
-	};
-});
+  import ChevronLeftIcon from '@lucide/svelte/icons/chevron-left';
+  import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+  import CircleHelpIcon from '@lucide/svelte/icons/circle-help';
+  import EyeIcon from '@lucide/svelte/icons/eye';
+  import GripIcon from '@lucide/svelte/icons/grip';
+  import Maximize2Icon from '@lucide/svelte/icons/maximize-2';
+  import MinusIcon from '@lucide/svelte/icons/minus';
+  import {
+    createDragDropMonitor,
+    createDraggable,
+    createDroppable,
+  } from '@dnd-kit/svelte';
+  import { onMount, tick } from 'svelte';
+
+  import { m } from '$lib/i18n/messages.js';
+  import * as Tooltip from '$lib/design-system/primitives/tooltip/index.js';
+  import LorcanaCard from '@/design-system/simulator/cards/LorcanaCard.svelte';
+  import { CARD_IMAGE_ASPECT_RATIOS } from '@/design-system/simulator/cards/card-image-format.js';
+  import { useSimulatorCardContext } from '@/features/simulator/context/simulator-card-context.svelte.js';
+  import type {
+    LorcanaCardSnapshot,
+    ResolutionScryAvailableMovesSelectionState,
+  } from '@/features/simulator/model/contracts.js';
+  import { SimulatorLayoutModeObserver } from '@/features/simulator/model/layout-mode.svelte.js';
+  import { getScryZoneLabel } from '@/features/simulator/model/scry-destinations.js';
+  import {
+    countHiddenScrollableItems,
+    getScrollableItemStep,
+  } from './item-zone-mobile.js';
+  import {
+    buildScryCardDropId,
+    buildScryDragId,
+    buildScryZoneDropId,
+    canAssignScryCardToDestination,
+    findScryCardDestinationId,
+    findScryDestination,
+    getScryDesiredOrder,
+    getScryDestinationCountLabel,
+    getScryRemainderDestination,
+    getScryTapDestination,
+    mapReversedBeforeCardId,
+    parseScryDragId,
+    parseScryDropTarget,
+  } from './scry-overlay.js';
+
+  interface ScryResolutionOverlayProps {
+    selectionState: ResolutionScryAvailableMovesSelectionState;
+    cardSnapshots?: Record<string, LorcanaCardSnapshot>;
+    onAssignCard?: (cardId: string, destinationId: string) => boolean;
+    onReorderCard?: (
+      destinationId: string,
+      cardId: string,
+      direction: 'up' | 'down',
+    ) => boolean;
+    onConfirm?: () => boolean;
+    onDismiss?: () => void;
+  }
+
+  let {
+    selectionState,
+    cardSnapshots = {},
+    onAssignCard,
+    onReorderCard,
+    onConfirm,
+    onDismiss,
+  }: ScryResolutionOverlayProps = $props();
+
+  const simulatorCardContext = useSimulatorCardContext();
+  const layout = new SimulatorLayoutModeObserver();
+
+  const SCRY_OVERLAY_PADDING = 8;
+
+  let overlayElement: HTMLElement | null = null;
+  let overlayPosition = $state({
+    x: SCRY_OVERLAY_PADDING,
+    y: SCRY_OVERLAY_PADDING,
+  });
+  let isMinimized = $state(false);
+  let isDraggingOverlay = $state(false);
+  let rowContainerElements = $state<Record<string, HTMLDivElement | null>>({});
+  let hiddenCardsByZone = $state<
+    Record<string, { left: number; right: number }>
+  >({});
+
+  let dragPointerId: number | null = null;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  /** While dragging a scry card, used to highlight legal destination rows. */
+  let activeScryDragCardId = $state<string | null>(null);
+
+  function handleOverlayPointerUp(event: PointerEvent): void {
+    stopOverlayDrag(event.pointerId);
+  }
+
+  function handleOverlayPointerCancel(event: PointerEvent): void {
+    stopOverlayDrag(event.pointerId);
+  }
+
+  const MISSING_PROVIDER_ERROR =
+    'getDragDropManager was called outside of a DragDropProvider';
+  const SCRY_CARD_IMAGE_FORMAT = 'art_only';
+  const SCRY_CARD_ASPECT_RATIO =
+    CARD_IMAGE_ASPECT_RATIOS[SCRY_CARD_IMAGE_FORMAT];
+  const isMobileLayout = $derived(layout.current !== 'desktop');
+  const sourceCard = $derived(
+    selectionState.sourceCardId
+      ? (cardSnapshots[selectionState.sourceCardId] ?? null)
+      : null,
+  );
+  const scryHeaderSubtitle = $derived(selectionState.headerSubtitle ?? null);
+  const scryOverlayAriaLabel = $derived(
+    [selectionState.title, scryHeaderSubtitle].filter(Boolean).join('. '),
+  );
+  /** All revealed scry cards — always listed in the top strip so players can tap/drag any card before confirm. */
+  const revealedScryEntries = $derived(
+    selectionState.entries.filter(
+      (entry) => entry.kind === 'scry-card' && Boolean(entry.cardId),
+    ),
+  );
+  const isScryCardDragActive = $derived(activeScryDragCardId !== null);
+
+  function isMissingProviderError(error: unknown): boolean {
+    return (
+      error instanceof Error && error.message.includes(MISSING_PROVIDER_ERROR)
+    );
+  }
+
+  function noopAttach(): void {}
+
+  function clampOverlayPosition(
+    x: number,
+    y: number,
+  ): { x: number; y: number } {
+    if (!overlayElement) {
+      return { x, y };
+    }
+
+    const parent = overlayElement.offsetParent;
+    if (!(parent instanceof HTMLElement)) {
+      return { x, y };
+    }
+
+    const maxX = Math.max(
+      SCRY_OVERLAY_PADDING,
+      parent.clientWidth - overlayElement.offsetWidth - SCRY_OVERLAY_PADDING,
+    );
+    const maxY = Math.max(
+      SCRY_OVERLAY_PADDING,
+      parent.clientHeight - overlayElement.offsetHeight - SCRY_OVERLAY_PADDING,
+    );
+
+    return {
+      x: Math.min(Math.max(SCRY_OVERLAY_PADDING, x), maxX),
+      y: Math.min(Math.max(SCRY_OVERLAY_PADDING, y), maxY),
+    };
+  }
+
+  async function centerOverlay(): Promise<void> {
+    await tick();
+
+    if (!overlayElement) {
+      return;
+    }
+
+    const parent = overlayElement.offsetParent;
+    if (!(parent instanceof HTMLElement)) {
+      return;
+    }
+
+    const centeredX = (parent.clientWidth - overlayElement.offsetWidth) / 2;
+    const centeredY = (parent.clientHeight - overlayElement.offsetHeight) / 2;
+    overlayPosition = clampOverlayPosition(centeredX, centeredY);
+  }
+
+  function handleWindowResize(): void {
+    overlayPosition = clampOverlayPosition(
+      overlayPosition.x,
+      overlayPosition.y,
+    );
+  }
+
+  function handleOverlayPointerMove(event: PointerEvent): void {
+    if (!isDraggingOverlay || dragPointerId !== event.pointerId) {
+      return;
+    }
+
+    overlayPosition = clampOverlayPosition(
+      event.clientX - dragOffsetX,
+      event.clientY - dragOffsetY,
+    );
+  }
+
+  function stopOverlayDrag(pointerId?: number): void {
+    if (!isDraggingOverlay) {
+      return;
+    }
+
+    if (pointerId !== undefined && dragPointerId !== pointerId) {
+      return;
+    }
+
+    isDraggingOverlay = false;
+    dragPointerId = null;
+  }
+
+  function handleOverlayPointerDown(event: PointerEvent): void {
+    if (!overlayElement) {
+      return;
+    }
+
+    const overlayRect = overlayElement.getBoundingClientRect();
+    dragPointerId = event.pointerId;
+    dragOffsetX = event.clientX - overlayRect.left;
+    dragOffsetY = event.clientY - overlayRect.top;
+    isDraggingOverlay = true;
+    event.preventDefault();
+  }
+
+  function toggleMinimized(): void {
+    isMinimized = !isMinimized;
+    tick().then(() => {
+      handleWindowResize();
+    });
+  }
+
+  function createSafeDraggable(id: string, disabled: boolean) {
+    try {
+      return createDraggable({ id, disabled });
+    } catch (error) {
+      if (isMissingProviderError(error)) {
+        return {
+          draggable: null,
+          isDragging: false,
+          isDropping: false,
+          isDragSource: false,
+          attach: noopAttach,
+          attachHandle: noopAttach,
+        };
+      }
+
+      throw error;
+    }
+  }
+
+  function createSafeDroppable(id: string, disabled: boolean) {
+    try {
+      return createDroppable({ id, disabled });
+    } catch (error) {
+      if (isMissingProviderError(error)) {
+        return {
+          droppable: null,
+          isDropTarget: false,
+          attach: noopAttach,
+        };
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Non-ordering rows (e.g. inkwell): do not register per-card droppables — disabled nested
+   * droppables can prevent @dnd-kit from resolving drops to the parent `scry-zone:` row.
+   */
+  function createScryCardSlotDroppable(
+    destinationId: string,
+    cardId: string,
+    orderingEnabled: boolean,
+  ) {
+    if (!orderingEnabled) {
+      return {
+        droppable: null,
+        isDropTarget: false,
+        attach: noopAttach,
+      };
+    }
+
+    return createSafeDroppable(
+      buildScryCardDropId(destinationId, cardId),
+      false,
+    );
+  }
+
+  function getEntryCard(
+    cardId: string | undefined,
+  ): LorcanaCardSnapshot | null {
+    return cardId ? (cardSnapshots[cardId] ?? null) : null;
+  }
+
+  function handleCardPreviewEnter(card: LorcanaCardSnapshot | null): void {
+    if (!card?.isMasked) {
+      simulatorCardContext.setExternalPreviewCard(card);
+    }
+  }
+
+  function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
+    if (
+      card &&
+      !card.isMasked &&
+      simulatorCardContext.previewCard?.cardId === card.cardId
+    ) {
+      simulatorCardContext.setExternalPreviewCard(null);
+    }
+  }
+
+  function handleOpenGlobalPreview(card: LorcanaCardSnapshot | null): void {
+    if (!card?.isMasked) {
+      simulatorCardContext.openGlobalPreview(card);
+    }
+  }
+
+  function setRowContainer(
+    destinationId: string,
+    node: HTMLDivElement | null,
+  ): void {
+    rowContainerElements[destinationId] = node;
+  }
+
+  function attachRowContainer(destinationId: string) {
+    return (node: HTMLElement) => {
+      if (node instanceof HTMLDivElement) {
+        setRowContainer(destinationId, node);
+      }
+
+      return () => {
+        setRowContainer(destinationId, null);
+      };
+    };
+  }
+
+  function getRowCardElements(destinationId: string): HTMLElement[] {
+    const container = rowContainerElements[destinationId];
+    if (!container) {
+      return [];
+    }
+
+    return Array.from(container.querySelectorAll<HTMLElement>('.scry-card'));
+  }
+
+  function updateHiddenCardsForDestination(destinationId: string): void {
+    const container = rowContainerElements[destinationId];
+    if (!container || !isMobileLayout) {
+      hiddenCardsByZone[destinationId] = { left: 0, right: 0 };
+      return;
+    }
+
+    hiddenCardsByZone[destinationId] = countHiddenScrollableItems({
+      viewportLeft: container.scrollLeft,
+      viewportWidth: container.clientWidth,
+      elements: getRowCardElements(destinationId).map((cardEl) => ({
+        offsetLeft: cardEl.offsetLeft,
+        offsetWidth: cardEl.offsetWidth,
+      })),
+    });
+  }
+
+  function scrollRow(destinationId: string, direction: 'left' | 'right'): void {
+    const container = rowContainerElements[destinationId];
+    if (!container) {
+      return;
+    }
+
+    const step = getScrollableItemStep({
+      viewportWidth: container.clientWidth,
+      elements: getRowCardElements(destinationId).map((cardEl) => ({
+        offsetLeft: cardEl.offsetLeft,
+        offsetWidth: cardEl.offsetWidth,
+      })),
+    });
+    if (step <= 0) {
+      return;
+    }
+
+    container.scrollBy({
+      left: direction === 'left' ? -step : step,
+      behavior: 'smooth',
+    });
+  }
+
+  function moveCardToIndex(
+    destinationId: string,
+    cardId: string,
+    targetIndex: number,
+    currentIndex: number,
+  ): void {
+    if (!onReorderCard || currentIndex === targetIndex) {
+      return;
+    }
+
+    const direction: 'up' | 'down' = currentIndex > targetIndex ? 'up' : 'down';
+    const steps = Math.abs(targetIndex - currentIndex);
+
+    for (let index = 0; index < steps; index += 1) {
+      const success = onReorderCard(destinationId, cardId, direction);
+      if (!success) {
+        break;
+      }
+    }
+  }
+
+  function handleCardTap(cardId: string): void {
+    const nextDestinationId = getScryTapDestination(selectionState, cardId);
+    if (nextDestinationId) {
+      onAssignCard?.(cardId, nextDestinationId);
+    }
+  }
+
+  function handleScryCardKeydown(
+    cardId: string | undefined,
+    event: KeyboardEvent,
+  ): void {
+    if (!cardId) {
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleCardTap(cardId);
+    }
+  }
+
+  function canMoveCard(
+    cardIndex: number,
+    cardCount: number,
+    direction: 'up' | 'down',
+  ): boolean {
+    if (direction === 'up') {
+      return cardIndex > 0;
+    }
+
+    return cardIndex < cardCount - 1;
+  }
+
+  function handleLocalDragEnd(
+    sourceId: string | null,
+    targetId: string | null,
+  ): void {
+    const draggedCardId = parseScryDragId(sourceId);
+    const dropTarget = parseScryDropTarget(targetId);
+    if (!draggedCardId || !dropTarget) {
+      return;
+    }
+
+    const sourceDestinationId = findScryCardDestinationId(
+      selectionState,
+      draggedCardId,
+    );
+    const targetDestination = findScryDestination(
+      selectionState,
+      dropTarget.destinationId,
+    );
+    if (!targetDestination) {
+      return;
+    }
+
+    if (sourceDestinationId !== targetDestination.id) {
+      if (
+        !canAssignScryCardToDestination(
+          selectionState,
+          draggedCardId,
+          targetDestination.id,
+        )
+      ) {
+        return;
+      }
+
+      const assigned =
+        onAssignCard?.(draggedCardId, targetDestination.id) ?? false;
+      if (!assigned || !targetDestination.orderingEnabled) {
+        return;
+      }
+
+      const actualBeforeCardId = mapReversedBeforeCardId(
+        targetDestination,
+        dropTarget.beforeCardId,
+      );
+      const desiredOrder = getScryDesiredOrder(
+        targetDestination,
+        draggedCardId,
+        actualBeforeCardId,
+      );
+      if (!desiredOrder) {
+        return;
+      }
+
+      const targetIndex = desiredOrder.indexOf(draggedCardId);
+      const currentIndex = targetDestination.cards.length;
+      if (targetIndex >= 0) {
+        moveCardToIndex(
+          targetDestination.id,
+          draggedCardId,
+          targetIndex,
+          currentIndex,
+        );
+      }
+      return;
+    }
+
+    if (!targetDestination.orderingEnabled) {
+      return;
+    }
+
+    const actualBeforeCardId = mapReversedBeforeCardId(
+      targetDestination,
+      dropTarget.beforeCardId,
+    );
+    const desiredOrder = getScryDesiredOrder(
+      targetDestination,
+      draggedCardId,
+      actualBeforeCardId,
+    );
+    const currentIndex = targetDestination.cards.findIndex(
+      (card) => card.cardId === draggedCardId,
+    );
+    const targetIndex = desiredOrder?.indexOf(draggedCardId) ?? -1;
+    if (!desiredOrder || currentIndex < 0 || targetIndex < 0) {
+      return;
+    }
+
+    moveCardToIndex(
+      targetDestination.id,
+      draggedCardId,
+      targetIndex,
+      currentIndex,
+    );
+  }
+
+  try {
+    createDragDropMonitor({
+      onDragStart(event) {
+        const rawId = event.operation.source
+          ? String(event.operation.source.id)
+          : null;
+        activeScryDragCardId = parseScryDragId(rawId);
+      },
+      onDragEnd(event) {
+        activeScryDragCardId = null;
+
+        if (event.canceled) {
+          return;
+        }
+
+        handleLocalDragEnd(
+          event.operation.source ? String(event.operation.source.id) : null,
+          event.operation.target ? String(event.operation.target.id) : null,
+        );
+      },
+    });
+  } catch (error) {
+    if (!isMissingProviderError(error)) {
+      throw error;
+    }
+  }
+
+  onMount(() => {
+    void centerOverlay();
+
+    window.addEventListener('pointermove', handleOverlayPointerMove);
+    window.addEventListener('pointerup', handleOverlayPointerUp);
+    window.addEventListener('pointercancel', handleOverlayPointerCancel);
+    window.addEventListener('resize', handleWindowResize);
+
+    return () => {
+      window.removeEventListener('pointermove', handleOverlayPointerMove);
+      window.removeEventListener('pointerup', handleOverlayPointerUp);
+      window.removeEventListener('pointercancel', handleOverlayPointerCancel);
+      window.removeEventListener('resize', handleWindowResize);
+    };
+  });
+
+  $effect(() => {
+    selectionState;
+    isMinimized = false;
+    void centerOverlay();
+  });
+
+  $effect(() => {
+    selectionState.destinations;
+    isMobileLayout;
+
+    const cleanups: Array<() => void> = [];
+
+    for (const destination of selectionState.destinations) {
+      const destId = destination.id;
+      const container = rowContainerElements[destId];
+      if (!container) {
+        hiddenCardsByZone[destId] = { left: 0, right: 0 };
+        continue;
+      }
+
+      const update = () => updateHiddenCardsForDestination(destId);
+      const resizeObserver =
+        typeof ResizeObserver === 'undefined'
+          ? null
+          : new ResizeObserver(update);
+      const cardElements = Array.from(
+        container.querySelectorAll<HTMLElement>('.scry-card'),
+      );
+
+      update();
+      container.addEventListener('scroll', update, { passive: true });
+      resizeObserver?.observe(container);
+
+      for (const cardEl of cardElements) {
+        resizeObserver?.observe(cardEl);
+      }
+
+      cleanups.push(() => {
+        container.removeEventListener('scroll', update);
+        resizeObserver?.disconnect();
+      });
+    }
+
+    return () => {
+      for (const cleanup of cleanups) {
+        cleanup();
+      }
+    };
+  });
 </script>
 
 <section
   class="scry-overlay"
   class:scry-overlay--dragging={isDraggingOverlay}
+  class:scry-overlay--scry-card-drag={isScryCardDragActive}
   class:scry-overlay--minimized={isMinimized}
-  aria-label={selectionState.title}
+  aria-label={scryOverlayAriaLabel}
   data-testid="scry-resolution-overlay"
   bind:this={overlayElement}
   style={`--scry-card-aspect-ratio: ${SCRY_CARD_ASPECT_RATIO}; left: ${overlayPosition.x}px; top: ${overlayPosition.y}px;`}
@@ -590,41 +667,47 @@ $effect(() => {
         {/if}
 
         <div class="scry-overlay__header-text">
-        
           <div class="scry-overlay__title-line">
-            <h2 class="scry-overlay__title">{selectionState.title}</h2>
-            {#if !isMinimized}
-              <Tooltip.Root>
-                <Tooltip.Trigger>
-                  {#snippet child({ props })}
-                    <button
-                      type="button"
-                      {...props}
-                      class="scry-overlay__help"
-                      aria-label="Show scry instructions"
-                    >
-                      <CircleHelpIcon class="size-4" />
-                    </button>
-                  {/snippet}
-                </Tooltip.Trigger>
-                <Tooltip.Content
-                  side="top"
-                  sideOffset={6}
-                  class="rounded-md border border-white/10 bg-slate-950/95 px-2 py-1 text-[0.65rem] text-slate-200 shadow-lg"
-                >
-                  {selectionState.message}
-                </Tooltip.Content>
-              </Tooltip.Root>
-            {/if}
+            <div class="scry-overlay__title-block">
+              <h2 class="scry-overlay__title">{selectionState.title}</h2>
+              {#if scryHeaderSubtitle && !isMinimized}
+                <p class="scry-overlay__subtitle">{scryHeaderSubtitle}</p>
+              {/if}
+            </div>
           </div>
         </div>
       </div>
 
       <div class="scry-overlay__controls">
+        {#if !isMinimized}
+          <Tooltip.Root>
+            <Tooltip.Trigger>
+              {#snippet child({ props })}
+                <button
+                  type="button"
+                  {...props}
+                  class="scry-overlay__help"
+                  aria-label="Show scry instructions"
+                >
+                  <CircleHelpIcon class="size-4" />
+                </button>
+              {/snippet}
+            </Tooltip.Trigger>
+            <Tooltip.Content
+              side="top"
+              sideOffset={6}
+              class="z-[99] rounded-md border border-white/10 bg-slate-950/95 px-2 py-1 text-[0.65rem] text-slate-200 shadow-lg"
+            >
+              {selectionState.message}
+            </Tooltip.Content>
+          </Tooltip.Root>
+        {/if}
         <button
           type="button"
           class="scry-overlay__control"
-          aria-label={isMinimized ? "Expand scry resolution" : "Minimize scry resolution"}
+          aria-label={isMinimized
+            ? 'Expand scry resolution'
+            : 'Minimize scry resolution'}
           aria-pressed={isMinimized}
           onclick={toggleMinimized}
         >
@@ -648,221 +731,351 @@ $effect(() => {
   </header>
 
   {#if !isMinimized}
-    <div class="scry-overlay__body">
-    {#each selectionState.destinations as destination (destination.id)}
-      {@const rowDroppable = createSafeDroppable(
-        buildScryZoneDropId(destination.id),
-        false,
-      )}
-      {@const isRemainderRow = destination.rule.remainder}
-      {@const remainderDestination = getScryRemainderDestination(selectionState)}
-      {@const displayCards = destination.orderingEnabled ? destination.cards.toReversed() : destination.cards}
-
-      <section
-        class="scry-row"
-        class:scry-row--remainder={isRemainderRow}
-        class:scry-row--drop-target={rowDroppable.isDropTarget}
-        class:scry-row--mobile-scroll={isMobileLayout}
-        data-testid={`scry-destination-${destination.id}`}
-        {@attach rowDroppable.attach}
-      >
-        <header class="scry-row__header">
-          <div class="scry-row__copy">
-            <div class="scry-row__title-line">
-              <div class="scry-row__title-main">
-                <h3>{destination.label ?? getScryZoneLabel(destination.zone)}</h3>
-                <span class="scry-row__detail">{destination.detail}</span>
-              </div>
-              {#if isRemainderRow}
-                <Tooltip.Root>
-                  <Tooltip.Trigger>
-                    {#snippet child({ props })}
-                      <button
-                        type="button"
-                        {...props}
-                        class="scry-overlay__help scry-overlay__help--row"
-                        aria-label="Show remainder destination details"
-                      >
-                        <CircleHelpIcon class="size-3.5" />
-                      </button>
-                    {/snippet}
-                  </Tooltip.Trigger>
-                  <Tooltip.Content
-                    side="bottom"
-                    sideOffset={6}
-                    class="rounded-md border border-white/10 bg-slate-950/95 px-2 py-1 text-[0.65rem] text-slate-200 shadow-lg"
-                  >
-                    Unchosen legal cards land here automatically until you move them.
-                  </Tooltip.Content>
-                </Tooltip.Root>
-              {/if}
-            </div>
-            {#if !isRemainderRow && remainderDestination}
-              <p class="scry-row__hint">
-                Tap a card here to send it back to {remainderDestination.label ?? getScryZoneLabel(remainderDestination.zone)}.
-              </p>
-            {/if}
-          </div>
-
-          <div class="scry-row__stats">
-            <span class="scry-row__count">{getScryDestinationCountLabel(destination)}</span>
-          </div>
-        </header>
-
-        {#if destination.orderingEnabled && destination.cards.length >= 2}
-          <div class="scry-row__order-label">
-            {destination.zone === "deck-bottom" ? "← Drawn last" : "← Drawn first"}
-          </div>
-        {/if}
-
-        <div class="scry-row__cards-shell">
-          {#if isMobileLayout}
-            <button
-              type="button"
-              class="mobile-scry-scroll-button mobile-scry-scroll-button--left"
-              aria-label={`Scroll ${destination.label ?? getScryZoneLabel(destination.zone)} left`}
-              disabled={(hiddenCardsByZone[destination.id]?.left ?? 0) === 0}
-              onclick={() => {
-                scrollRow(destination.id, "left");
-              }}
-            >
-              <ChevronLeftIcon class="size-4" />
-            </button>
-          {/if}
-
-        <div
-          class="scry-row__cards"
-          data-testid={`scry-row-cards-${destination.id}`}
-          {@attach attachRowContainer(destination.id)}
-        >
-          {#if destination.cards.length === 0}
-            <div class="scry-row__placeholder">
-              <span class="scry-row__placeholder-title">Drop card here</span>
-              <span class="scry-row__placeholder-detail">
-                {destination.orderingEnabled
-                  ? "Cards placed here can be reordered."
-                  : "Cards placed here stay grouped in this row."}
-              </span>
-            </div>
-          {/if}
-
-          {#each displayCards as cardEntry, cardIndex (cardEntry.id)}
-            {@const card = getEntryCard(cardEntry.cardId)}
-            {@const cardDroppable = createSafeDroppable(
-              buildScryCardDropId(destination.id, cardEntry.cardId ?? ""),
-              !destination.orderingEnabled,
-            )}
-            {@const draggable = createSafeDraggable(
-              buildScryDragId(cardEntry.cardId ?? ""),
-              !cardEntry.cardId,
+    <div class="scry-overlay__card">
+      <div class="scry-overlay__body">
+        {#each selectionState.destinations as destination (destination.id)}
+          {@const rowDroppable = createSafeDroppable(
+            buildScryZoneDropId(destination.id),
+            false,
+          )}
+          {@const isRemainderRow = destination.rule.remainder}
+          {@const remainderDestination =
+            getScryRemainderDestination(selectionState)}
+          {@const displayCards = destination.orderingEnabled
+            ? destination.cards.toReversed()
+            : destination.cards}
+          {@const canDropDraggedHere =
+            activeScryDragCardId !== null &&
+            canAssignScryCardToDestination(
+              selectionState,
+              activeScryDragCardId,
+              destination.id,
             )}
 
-            <div
-              class="scry-card-slot"
-              class:scry-card-slot--mobile-controls={destination.orderingEnabled}
-            >
-              {#if destination.orderingEnabled && cardEntry.cardId}
-                <div class="scry-card-slot__controls">
-                  <button
-                    type="button"
-                    class="scry-card-shift-button"
-                    aria-label={`Move ${cardEntry.label} left`}
-                    data-testid={`reorder-${destination.id}-${cardEntry.cardId}-left`}
-                    disabled={!canMoveCard(cardIndex, destination.cards.length, "up")}
-                    onclick={(event) => {
-                      event.stopPropagation();
-                      onReorderCard?.(destination.id, cardEntry.cardId!, "down");
-                    }}
-                  >
-                    <ChevronLeftIcon class="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    class="scry-card-shift-button"
-                    aria-label={`Move ${cardEntry.label} right`}
-                    data-testid={`reorder-${destination.id}-${cardEntry.cardId}-right`}
-                    disabled={!canMoveCard(cardIndex, destination.cards.length, "down")}
-                    onclick={(event) => {
-                      event.stopPropagation();
-                      onReorderCard?.(destination.id, cardEntry.cardId!, "up");
-                    }}
-                  >
-                    <ChevronRightIcon class="size-3.5" />
-                  </button>
-                </div>
-              {/if}
-
-              <button
-                type="button"
-                class="scry-card"
-                class:scry-card--remainder={isRemainderRow}
-                class:scry-card--drop-target={cardDroppable.isDropTarget}
-                data-testid={`destination-card-${destination.id}-${cardEntry.cardId}`}
-                onclick={() => cardEntry.cardId && handleCardTap(cardEntry.cardId)}
-                {@attach cardDroppable.attach}
-                {@attach draggable.attach}
-              >
-                {#if card}
-                  <div class="scry-card__art">
-                    <LorcanaCard
-                      card={card}
-                      isMasked={card.isMasked}
-                      useContainerSize
-                      imageFormat={SCRY_CARD_IMAGE_FORMAT}
-                      showHoverCard={false}
-                    />
+          <section
+            class="scry-row"
+            class:scry-row--remainder={isRemainderRow}
+            class:scry-row--drop-target={rowDroppable.isDropTarget &&
+              (activeScryDragCardId === null || canDropDraggedHere)}
+            class:scry-row--drag-valid={canDropDraggedHere}
+            class:scry-row--drag-muted={activeScryDragCardId !== null &&
+              !canDropDraggedHere}
+            class:scry-row--mobile-scroll={isMobileLayout}
+            data-testid={`scry-destination-${destination.id}`}
+            {@attach rowDroppable.attach}
+          >
+            <header class="scry-row__header">
+              <div class="scry-row__copy">
+                <div class="scry-row__title-line">
+                  <div class="scry-row__title-main">
+                    <h3>
+                      {destination.label ?? getScryZoneLabel(destination.zone)}
+                    </h3>
+                    <span class="scry-row__detail">{destination.detail}</span>
                   </div>
-                {:else}
-                  <div class="scry-card__fallback">
-                    <p class="scry-card__title">{cardEntry.label}</p>
-                    {#if cardEntry.detail}
-                      <p class="scry-card__detail">{cardEntry.detail}</p>
-                    {/if}
+                  {#if isRemainderRow}
+                    <Tooltip.Root>
+                      <Tooltip.Trigger>
+                        {#snippet child({ props })}
+                          <button
+                            type="button"
+                            {...props}
+                            class="scry-overlay__help scry-overlay__help--row"
+                            aria-label="Show remainder destination details"
+                          >
+                            <CircleHelpIcon class="size-3.5" />
+                          </button>
+                        {/snippet}
+                      </Tooltip.Trigger>
+                      <Tooltip.Content
+                        side="bottom"
+                        sideOffset={6}
+                        class="rounded-md border border-white/10 bg-slate-950/95 px-2 py-1 text-[0.65rem] text-slate-200 shadow-lg"
+                      >
+                        Unchosen legal cards land here automatically until you
+                        move them.
+                      </Tooltip.Content>
+                    </Tooltip.Root>
+                  {/if}
+                </div>
+                {#if !isRemainderRow && remainderDestination}
+                  <p class="scry-row__hint">
+                    Tap a card here to send it back to {remainderDestination.label ??
+                      getScryZoneLabel(remainderDestination.zone)}.
+                  </p>
+                {/if}
+              </div>
+
+              <div class="scry-row__stats">
+                <span class="scry-row__count"
+                  >{getScryDestinationCountLabel(destination)}</span
+                >
+              </div>
+            </header>
+
+            {#if destination.orderingEnabled && destination.cards.length >= 2}
+              <div class="scry-row__order-label">
+                {destination.zone === 'deck-bottom'
+                  ? '← Drawn last'
+                  : '← Drawn first'}
+              </div>
+            {/if}
+
+            <div class="scry-row__cards-shell">
+              {#if isMobileLayout}
+                <button
+                  type="button"
+                  class="mobile-scry-scroll-button mobile-scry-scroll-button--left"
+                  aria-label={`Scroll ${destination.label ?? getScryZoneLabel(destination.zone)} left`}
+                  disabled={(hiddenCardsByZone[destination.id]?.left ?? 0) ===
+                    0}
+                  onclick={() => {
+                    scrollRow(destination.id, 'left');
+                  }}
+                >
+                  <ChevronLeftIcon class="size-4" />
+                </button>
+              {/if}
+
+              <div
+                class="scry-row__cards"
+                class:scry-row__cards--empty={destination.cards.length === 0}
+                data-testid={`scry-row-cards-${destination.id}`}
+                {@attach attachRowContainer(destination.id)}
+              >
+                {#if destination.cards.length === 0}
+                  <div class="scry-row__placeholder">
+                    <span class="scry-row__placeholder-title"
+                      >Drop card here</span
+                    >
+                    <span class="scry-row__placeholder-detail">
+                      {destination.orderingEnabled
+                        ? 'Cards placed here can be reordered.'
+                        : 'Cards placed here stay grouped in this row.'}
+                    </span>
                   </div>
                 {/if}
-              </button>
+
+                {#each displayCards as cardEntry, cardIndex (cardEntry.id)}
+                  {@const card = getEntryCard(cardEntry.cardId)}
+                  {@const cardDroppable = createScryCardSlotDroppable(
+                    destination.id,
+                    cardEntry.cardId ?? '',
+                    destination.orderingEnabled,
+                  )}
+                  {@const draggable = createSafeDraggable(
+                    buildScryDragId(cardEntry.cardId ?? ''),
+                    !cardEntry.cardId,
+                  )}
+
+                  <div
+                    class="scry-card-slot"
+                    class:scry-card-slot--mobile-controls={destination.orderingEnabled}
+                  >
+                    {#if destination.orderingEnabled && cardEntry.cardId}
+                      <div class="scry-card-slot__controls">
+                        <button
+                          type="button"
+                          class="scry-card-shift-button"
+                          aria-label={`Move ${cardEntry.label} left`}
+                          data-testid={`reorder-${destination.id}-${cardEntry.cardId}-left`}
+                          disabled={!canMoveCard(
+                            cardIndex,
+                            destination.cards.length,
+                            'up',
+                          )}
+                          onclick={(event) => {
+                            event.stopPropagation();
+                            onReorderCard?.(
+                              destination.id,
+                              cardEntry.cardId!,
+                              'down',
+                            );
+                          }}
+                        >
+                          <ChevronLeftIcon class="size-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          class="scry-card-shift-button"
+                          aria-label={`Move ${cardEntry.label} right`}
+                          data-testid={`reorder-${destination.id}-${cardEntry.cardId}-right`}
+                          disabled={!canMoveCard(
+                            cardIndex,
+                            destination.cards.length,
+                            'down',
+                          )}
+                          onclick={(event) => {
+                            event.stopPropagation();
+                            onReorderCard?.(
+                              destination.id,
+                              cardEntry.cardId!,
+                              'up',
+                            );
+                          }}
+                        >
+                          <ChevronRightIcon class="size-3.5" />
+                        </button>
+                      </div>
+                    {/if}
+
+                    <div
+                      role="button"
+                      tabindex="0"
+                      class="scry-card"
+                      class:scry-card--remainder={isRemainderRow}
+                      class:scry-card--drop-target={cardDroppable.isDropTarget &&
+                        (activeScryDragCardId === null || canDropDraggedHere)}
+                      data-testid={`destination-card-${destination.id}-${cardEntry.cardId}`}
+                      onclick={() =>
+                        cardEntry.cardId && handleCardTap(cardEntry.cardId)}
+                      onkeydown={(e) =>
+                        handleScryCardKeydown(cardEntry.cardId, e)}
+                      {@attach cardDroppable.attach}
+                      {@attach draggable.attach}
+                    >
+                      {#if card}
+                        <div class="scry-card__art">
+                          <LorcanaCard
+                            {card}
+                            isMasked={card.isMasked}
+                            useContainerSize
+                            imageFormat={SCRY_CARD_IMAGE_FORMAT}
+                            showHoverCard={false}
+                          />
+                        </div>
+                      {:else}
+                        <div class="scry-card__fallback">
+                          <p class="scry-card__title">{cardEntry.label}</p>
+                          {#if cardEntry.detail}
+                            <p class="scry-card__detail">{cardEntry.detail}</p>
+                          {/if}
+                        </div>
+                      {/if}
+                    </div>
+                  </div>
+                {/each}
+              </div>
+
+              {#if isMobileLayout}
+                <button
+                  type="button"
+                  class="mobile-scry-scroll-button mobile-scry-scroll-button--right"
+                  aria-label={`Scroll ${destination.label ?? getScryZoneLabel(destination.zone)} right`}
+                  disabled={(hiddenCardsByZone[destination.id]?.right ?? 0) ===
+                    0}
+                  onclick={() => {
+                    scrollRow(destination.id, 'right');
+                  }}
+                >
+                  <ChevronRightIcon class="size-4" />
+                </button>
+              {/if}
             </div>
-          {/each}
-        </div>
 
-          {#if isMobileLayout}
-            <button
-              type="button"
-              class="mobile-scry-scroll-button mobile-scry-scroll-button--right"
-              aria-label={`Scroll ${destination.label ?? getScryZoneLabel(destination.zone)} right`}
-              disabled={(hiddenCardsByZone[destination.id]?.right ?? 0) === 0}
-              onclick={() => {
-                scrollRow(destination.id, "right");
-              }}
-            >
-              <ChevronRightIcon class="size-4" />
-            </button>
-          {/if}
-        </div>
+            {#if destination.orderingEnabled && destination.cards.length >= 2}
+              <div class="scry-row__order-label">
+                {destination.zone === 'deck-bottom'
+                  ? 'Drawn first →'
+                  : 'Drawn last →'}
+              </div>
+            {/if}
+          </section>
+        {/each}
+        {#if revealedScryEntries.length > 0}
+          <section
+            class="scry-row scry-row--unassigned scry-row--revealed"
+            class:scry-row--mobile-scroll={isMobileLayout}
+            data-testid="scry-revealed-pool"
+          >
+            <header class="scry-row__header">
+              <div class="scry-row__copy">
+                <div class="scry-row__title-line">
+                  <div class="scry-row__title-main">
+                    <h3>{m['sim.actions.scry.revealedCards']({})}</h3>
+                    <span class="scry-row__detail"
+                      >{m['sim.actions.scry.revealedStripHint']({})}</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="scry-row__stats">
+                <span class="scry-row__count">{revealedScryEntries.length}</span
+                >
+              </div>
+            </header>
 
-        {#if destination.orderingEnabled && destination.cards.length >= 2}
-          <div class="scry-row__order-label">
-            {destination.zone === "deck-bottom" ? "Drawn first →" : "Drawn last →"}
-          </div>
+            <div class="scry-row__cards-shell">
+              <div class="scry-row__cards" data-testid="scry-revealed-cards">
+                {#each revealedScryEntries as entry (entry.id)}
+                  {@const card = getEntryCard(entry.cardId)}
+                  {@const assignedElsewhere = Boolean(
+                    entry.cardId &&
+                      findScryCardDestinationId(selectionState, entry.cardId),
+                  )}
+                  {@const draggable = createSafeDraggable(
+                    buildScryDragId(entry.cardId ?? ''),
+                    !entry.cardId,
+                  )}
+
+                  <div class="scry-card-slot">
+                    <div
+                      role="button"
+                      tabindex="0"
+                      class="scry-card scry-card--unassigned"
+                      class:scry-card--assigned-in-strip={assignedElsewhere}
+                      data-testid={`revealed-scry-card-${entry.cardId}`}
+                      onclick={() =>
+                        entry.cardId && handleCardTap(entry.cardId)}
+                      onkeydown={(e) => handleScryCardKeydown(entry.cardId, e)}
+                      {@attach draggable.attach}
+                    >
+                      {#if card}
+                        <div class="scry-card__art">
+                          <LorcanaCard
+                            {card}
+                            isMasked={card.isMasked}
+                            useContainerSize
+                            imageFormat={SCRY_CARD_IMAGE_FORMAT}
+                            showHoverCard={false}
+                          />
+                        </div>
+                      {:else}
+                        <div class="scry-card__fallback">
+                          <p class="scry-card__title">{entry.label}</p>
+                          {#if entry.detail}
+                            <p class="scry-card__detail">{entry.detail}</p>
+                          {/if}
+                        </div>
+                      {/if}
+                    </div>
+                  </div>
+                {/each}
+              </div>
+            </div>
+          </section>
         {/if}
-      </section>
-    {/each}
-    </div>
+      </div>
 
-    <footer class="scry-overlay__footer">
-      <button type="button" class="scry-footer-button scry-footer-button--ghost" onclick={onDismiss}>
-        {m["sim.actions.cancel"]({})}
-      </button>
-      <button
-        type="button"
-        class="scry-footer-button scry-footer-button--primary"
-        disabled={!selectionState.canConfirm}
-        data-testid="scry-confirm-button"
-        onclick={onConfirm}
-      >
-        {m["sim.actions.confirm"]({})}
-      </button>
-    </footer>
+      <footer class="scry-overlay__footer">
+        <button
+          type="button"
+          class="scry-footer-button scry-footer-button--ghost"
+          onclick={onDismiss}
+        >
+          {m['sim.actions.cancel']({})}
+        </button>
+        <button
+          type="button"
+          class="scry-footer-button scry-footer-button--primary"
+          disabled={!selectionState.canConfirm}
+          data-testid="scry-confirm-button"
+          onclick={onConfirm}
+        >
+          {m['sim.actions.confirm']({})}
+        </button>
+      </footer>
+    </div>
   {/if}
 </section>
 
@@ -872,13 +1085,19 @@ $effect(() => {
     width: min(34rem, calc(100% - 1.5rem));
     max-height: min(68vh, 38rem);
     z-index: 80;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.85rem;
+    min-height: 0;
     padding: clamp(0.8rem, 2vw, 1rem);
+    overflow: hidden;
     border: 1px solid rgba(175, 202, 167, 0.28);
     border-radius: 1.35rem;
-    background:
-      linear-gradient(145deg, rgba(12, 25, 28, 0.96), rgba(22, 44, 48, 0.98)),
+    background: linear-gradient(
+        145deg,
+        rgba(12, 25, 28, 0.96),
+        rgba(22, 44, 48, 0.98)
+      ),
       rgba(8, 15, 17, 0.96);
     box-shadow: 0 24px 60px rgba(2, 6, 23, 0.42);
     color: #edf7ef;
@@ -895,8 +1114,21 @@ $effect(() => {
   }
 
   .scry-overlay__header {
+    flex: 0 0 auto;
     display: grid;
     gap: 0.25rem;
+    min-width: 0;
+  }
+
+  /* Scroll region + footer: flex column so the footer stays inside the panel and the body scrolls. */
+  .scry-overlay__card {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .scry-overlay__header-main {
@@ -928,7 +1160,9 @@ $effect(() => {
   .scry-overlay__source-card {
     --scry-source-width: 3.25rem;
     --zone-card-width: var(--scry-source-width);
-    --zone-card-height: calc(var(--scry-source-width) / var(--scry-card-aspect-ratio));
+    --zone-card-height: calc(
+      var(--scry-source-width) / var(--scry-card-aspect-ratio)
+    );
     width: var(--scry-source-width);
     height: var(--zone-card-height);
     padding: 0;
@@ -972,6 +1206,25 @@ $effect(() => {
 
   .scry-overlay__title-line {
     flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .scry-overlay__title-block {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .scry-overlay__subtitle {
+    margin: 0;
+    max-height: 5.25rem;
+    overflow-y: auto;
+    padding-right: 0.15rem;
+    font-size: 0.78rem;
+    line-height: 1.38;
+    font-weight: 500;
+    color: rgba(225, 240, 228, 0.78);
   }
 
   .scry-row__title-line {
@@ -1051,10 +1304,13 @@ $effect(() => {
 
   .scry-overlay__body {
     display: grid;
+    flex: 1 1 auto;
     gap: 0.75rem;
-    max-height: min(48vh, 28rem);
-    overflow: auto;
-    padding-right: 0.1rem;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 0.65rem 0.7rem 0.5rem;
+    padding-right: 0.35rem;
   }
 
   .scry-row {
@@ -1071,12 +1327,32 @@ $effect(() => {
   }
 
   .scry-row--remainder {
-    background: linear-gradient(180deg, rgba(95, 132, 100, 0.16), rgba(255, 255, 255, 0.035));
+    background: linear-gradient(
+      180deg,
+      rgba(95, 132, 100, 0.16),
+      rgba(255, 255, 255, 0.035)
+    );
   }
 
   .scry-row--drop-target {
     border-color: rgba(164, 222, 175, 0.58);
     background: rgba(122, 173, 131, 0.14);
+  }
+
+  .scry-row--drag-valid {
+    border-color: rgba(164, 222, 175, 0.78);
+    background: rgba(122, 173, 131, 0.18);
+    box-shadow: 0 0 0 2px rgba(122, 173, 131, 0.28);
+  }
+
+  .scry-overlay--scry-card-drag .scry-row--drag-muted {
+    opacity: 0.48;
+    filter: saturate(0.65);
+  }
+
+  .scry-row--drag-valid.scry-row--drop-target {
+    border-color: rgba(164, 222, 175, 0.82);
+    background: rgba(122, 173, 131, 0.22);
   }
 
   .scry-row__header,
@@ -1128,6 +1404,16 @@ $effect(() => {
     min-height: 5.5rem;
   }
 
+  .scry-row__cards--empty {
+    min-height: 0;
+    align-items: center;
+  }
+
+  .scry-row__cards--empty .scry-row__placeholder {
+    min-height: 4rem;
+    padding: 0.55rem 0.7rem;
+  }
+
   .scry-row__cards-shell {
     position: relative;
   }
@@ -1143,8 +1429,11 @@ $effect(() => {
     height: 4rem;
     border: 1px solid rgba(147, 197, 253, 0.38);
     border-radius: 999px;
-    background:
-      linear-gradient(180deg, rgba(18, 32, 57, 0.98), rgba(8, 18, 31, 0.96)),
+    background: linear-gradient(
+        180deg,
+        rgba(18, 32, 57, 0.98),
+        rgba(8, 18, 31, 0.96)
+      ),
       rgba(7, 18, 31, 0.96);
     box-shadow:
       0 10px 24px rgba(7, 18, 31, 0.42),
@@ -1194,7 +1483,9 @@ $effect(() => {
 
   .scry-card {
     --scry-card-width: clamp(5.625rem, 22vw, 6.5rem);
-    --scry-card-height: calc(var(--scry-card-width) / var(--scry-card-aspect-ratio));
+    --scry-card-height: calc(
+      var(--scry-card-width) / var(--scry-card-aspect-ratio)
+    );
     --zone-card-width: var(--scry-card-width);
     --zone-card-height: var(--scry-card-height);
     position: relative;
@@ -1250,7 +1541,6 @@ $effect(() => {
     cursor: not-allowed;
   }
 
-
   .scry-row__order-label {
     font-size: 0.7rem;
     font-weight: 600;
@@ -1266,6 +1556,22 @@ $effect(() => {
 
   .scry-card--remainder {
     background: rgba(56, 88, 62, 0.26);
+  }
+
+  .scry-row--unassigned {
+    border-style: dashed;
+    border-color: rgba(194, 227, 198, 0.22);
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .scry-card--unassigned {
+    border-color: rgba(190, 225, 195, 0.28);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .scry-card--assigned-in-strip {
+    opacity: 0.92;
+    border-color: rgba(190, 225, 195, 0.2);
   }
 
   .scry-card--drop-target {
@@ -1289,13 +1595,13 @@ $effect(() => {
   }
 
   .scry-overlay__footer {
-    position: sticky;
-    bottom: 0;
+    flex: 0 0 auto;
     display: flex;
     justify-content: flex-end;
+    align-items: center;
     gap: 0.55rem;
-    padding-top: 0.15rem;
-    background: linear-gradient(180deg, rgba(12, 25, 28, 0), rgba(12, 25, 28, 0.98) 55%);
+    padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid rgba(194, 227, 198, 0.14);
   }
 
   .scry-footer-button {
@@ -1319,7 +1625,11 @@ $effect(() => {
   }
 
   .scry-footer-button--primary {
-    background: linear-gradient(180deg, rgba(125, 180, 111, 0.96), rgba(71, 118, 65, 0.96));
+    background: linear-gradient(
+      180deg,
+      rgba(125, 180, 111, 0.96),
+      rgba(71, 118, 65, 0.96)
+    );
   }
 
   .scry-footer-button--ghost {
@@ -1361,7 +1671,8 @@ $effect(() => {
 
     .scry-overlay__body {
       gap: 0.6rem;
-      max-height: min(31vh, 18rem);
+      padding: 0.55rem 0.6rem 0.45rem;
+      padding-right: 0.3rem;
     }
 
     .scry-row {
@@ -1386,6 +1697,13 @@ $effect(() => {
       padding-inline: 1.5rem;
       scroll-behavior: smooth;
       scrollbar-width: none;
+      /* Horizontal scroll lives on the row; cards use none so vertical drags reach other rows. */
+      touch-action: pan-x pinch-zoom;
+    }
+
+    .scry-row__cards--empty {
+      min-height: 0;
+      padding-inline: 0.25rem;
     }
 
     .scry-row__cards::-webkit-scrollbar {
@@ -1394,6 +1712,7 @@ $effect(() => {
 
     .scry-card {
       --scry-card-width: min(21vw, 4.85rem);
+      touch-action: none;
     }
 
     .scry-card-slot__controls {
@@ -1422,6 +1741,7 @@ $effect(() => {
 
     .scry-overlay__footer {
       gap: 0.45rem;
+      padding: 0.55rem 0.65rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
     }
 
     .scry-footer-button {

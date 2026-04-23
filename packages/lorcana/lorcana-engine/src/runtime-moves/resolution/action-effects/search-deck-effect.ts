@@ -20,7 +20,7 @@ export function isSearchDeckEffect(effect: unknown): effect is SearchDeckEffect 
   );
 }
 
-function matchesSearchFilter(
+export function matchesSearchFilter(
   ctx: PlayCardExecutionContext,
   cardId: CardInstanceId,
   effect: SearchDeckEffect,
@@ -71,6 +71,8 @@ export function resolveSearchDeckEffect(
   effect: SearchDeckEffect,
   resolutionInput: ActionResolutionInput,
 ): void {
+  ctx.framework.undo.markBarrier("search-hidden-zone");
+
   const selectedTargets = Array.isArray(resolutionInput.targets)
     ? resolutionInput.targets.filter(
         (targetId): targetId is CardInstanceId => typeof targetId === "string",

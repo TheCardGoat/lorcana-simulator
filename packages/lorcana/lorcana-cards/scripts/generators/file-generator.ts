@@ -814,10 +814,15 @@ function extractKeywordsFromCard(card: CanonicalCard): Array<{ keyword: string; 
  * Generate the test file name for a card
  * Format: {cardNumber}-{kebab-case-name}.test.ts
  */
-export function generateTestFileName(cardNumber: number, fullName: string): string {
+export function generateTestFileName(
+  cardNumber: number,
+  fullName: string,
+  promoSheetCode?: string,
+): string {
   const paddedNumber = cardNumber.toString().padStart(3, "0");
   const kebabName = toKebabCase(fullName);
-  return `${paddedNumber}-${kebabName}.test.ts`;
+  const prefix = promoSheetCode ? `${promoSheetCode.toLowerCase()}-` : "";
+  return `${prefix}${paddedNumber}-${kebabName}.test.ts`;
 }
 
 /**
@@ -918,12 +923,21 @@ export function organizeCardsForFileGeneration(
     // Unique file/export names for alternate arts (same set+number, different specialRarity)
     const suffix = printing.specialRarity ?? "";
     const displayName = getDisplayName(card);
+    const baseCardFile = generateCardFileName(cardNumber, displayName);
+    const promoPre = printing.promoSheetCode ? `${printing.promoSheetCode.toLowerCase()}-` : "";
     const fileName = suffix
-      ? `${generateCardFileName(cardNumber, displayName).replace(".ts", "")}-${suffix}.ts`
-      : generateCardFileName(cardNumber, displayName);
-    const exportName = suffix
-      ? generateExportName(displayName) + suffix.charAt(0).toUpperCase() + suffix.slice(1)
-      : generateExportName(displayName);
+      ? `${promoPre}${baseCardFile.replace(".ts", "")}-${suffix}.ts`
+      : promoPre
+        ? `${promoPre}${baseCardFile}`
+        : baseCardFile;
+    let exportBase = generateExportName(displayName);
+    if (printing.promoSheetCode) {
+      exportBase += printing.promoSheetCode.toUpperCase();
+    }
+    if (suffix) {
+      exportBase += suffix.charAt(0).toUpperCase() + suffix.slice(1);
+    }
+    const exportName = exportBase;
 
     const cardInfo: CardFileInfo = {
       card,
@@ -976,7 +990,7 @@ function writeFile(filePath: string, content: string): void {
 }
 
 /** Special-rarity suffixes on printing IDs (e.g. set1-098-enchanted). Base printings have none. */
-const SPECIAL_RARITY_SUFFIX = /-(enchanted|epic|iconic|promo)$/i;
+const SPECIAL_RARITY_SUFFIX = /-(enchanted|epic|iconic|promo|challenge)$/i;
 
 function isBasePrintingId(printingId: string): boolean {
   return !SPECIAL_RARITY_SUFFIX.test(printingId);
@@ -985,7 +999,7 @@ function isBasePrintingId(printingId: string): boolean {
 /**
  * Build a map from canonicalId to base printing IDs for that card (reprints).
  * Canonical cards record is keyed by printingId. Only base printings are included
- * (no -enchanted, -epic, -iconic, -promo suffix).
+ * (no -enchanted, -epic, -iconic, -promo, -challenge suffix).
  */
 export function buildPrintingIdsByCanonicalId(
   canonicalCards: Record<string, CanonicalCard>,
@@ -1138,6 +1152,7 @@ export function generateCardFiles(
           const testFileName = generateTestFileName(
             cardInfo.cardNumber,
             getDisplayName(cardInfo.card),
+            printings[cardInfo.printingId]?.promoSheetCode,
           );
           const testFilePath = path.join(typeDir, testFileName);
           writeFile(testFilePath, testContent);

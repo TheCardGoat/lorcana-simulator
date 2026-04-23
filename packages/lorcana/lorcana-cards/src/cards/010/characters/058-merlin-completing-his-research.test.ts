@@ -162,7 +162,14 @@ describe("Merlin - Completing His Research", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(merlinCompletingHisResearch)).toBe("discard");
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      const handBefore = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(merlinCompletingHisResearch),
+      ).toBeSuccessfulCommand();
+      // Condition failed (no card under him), so no cards drawn
+      expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toBe(handBefore);
     });
   });
 });

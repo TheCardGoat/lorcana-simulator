@@ -2,17 +2,25 @@ export interface PendingEffectsPopoverStateSnapshot {
   itemCount: number;
   bagCount: number;
   pendingCount: number;
+  hasOpponentItems: boolean;
   actionableSignature: string;
   previousItemCount: number;
   previousActionableSignature: string;
+  localPlayerIsActive: boolean;
+  hasActiveOverlay?: boolean;
 }
 
 export function shouldDefaultPendingEffectsCollapsed({
   itemCount,
-  bagCount,
-  pendingCount,
-}: Pick<PendingEffectsPopoverStateSnapshot, "itemCount" | "bagCount" | "pendingCount">): boolean {
-  return itemCount === 1 || (itemCount === 2 && bagCount === 1 && pendingCount === 1);
+  hasOpponentItems,
+  hasActiveOverlay,
+}: Pick<
+  PendingEffectsPopoverStateSnapshot,
+  "itemCount" | "hasOpponentItems" | "hasActiveOverlay"
+>): boolean {
+  if (hasActiveOverlay) return true;
+  if (hasOpponentItems) return false;
+  return itemCount === 1;
 }
 
 export function shouldAutoOpenPendingEffects(
@@ -26,6 +34,10 @@ export function shouldAutoOpenPendingEffects(
   }
 
   if (shouldDefaultPendingEffectsCollapsed(snapshot)) {
+    return false;
+  }
+
+  if (snapshot.localPlayerIsActive) {
     return false;
   }
 

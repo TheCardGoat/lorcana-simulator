@@ -5,6 +5,7 @@ import type { BaseCardDefinition } from "./card-contracts";
 import { emitLorcanaDomainEvent } from "../../types";
 import type { ZoneRegistry } from "./zone-registry";
 import { resolveZoneIdFromRegistry } from "./zone-registry";
+import type { UndoBarrierReason } from "./match-runtime.types";
 
 // =============================================================================
 // Zone Operations API
@@ -66,16 +67,18 @@ export interface ZoneMutationAPI {
   reveal: (
     cardIds: string[],
     visibleTo: "all" | string[],
-    duration?: { stateID?: number },
+    options?: { stateID?: number; affectsUndo?: boolean },
   ) => string;
   revealTop: (zone: ZoneRef, count: number, visibleTo: "all" | string[]) => string[];
   clearReveal: (revealId: string) => void;
-  clearRevealsByZone: (zone: ZoneRef) => void;
+  clearRevealsByZone: (zone: ZoneRef, options?: { respectExpiry?: boolean }) => void;
 }
 
 interface ZoneOperationsOptions {
   cardQuery?: Pick<CardQueryAPI, "get">;
+  onUndoBarrier?: (reason: UndoBarrierReason) => void;
   random?: () => number;
+  onCardEnteredZone?: (cardId: string, toZone: string, ownerId: string) => void;
 }
 
 // =============================================================================
@@ -83,7 +86,7 @@ interface ZoneOperationsOptions {
 // =============================================================================
 
 export function createZoneOperations(
-  draft: { ctx: Pick<TCGCtx, "zones">; G: { staticEffectsVersion?: number } },
+  draft: { ctx: Pick<TCGCtx, "zones" | "_stateID">; G: { staticEffectsVersion?: number } },
   zoneRegistry: ZoneRegistry,
   emitEvent?: (event: GameEvent) => void,
   options?: ZoneOperationsOptions,
@@ -91,6 +94,8 @@ export function createZoneOperations(
   const zones = draft.ctx.zones;
   const defaultCause: EventCause = { kind: "SYSTEM", source: "ZONE_OPERATION" };
   const random = options?.random ?? Math.random;
+  const markUndoBarrier = options?.onUndoBarrier;
+  const onCardEnteredZone = options?.onCardEnteredZone;
 
   function getZoneDef(zoneId: string) {
     return zoneRegistry[zoneId];
@@ -123,6 +128,17 @@ export function createZoneOperations(
     const nextSeq = zones.reveals.nextSeq ?? zones.reveals.active.length;
     zones.reveals.nextSeq = nextSeq + 1;
     return `reveal-${nextSeq}`;
+  }
+
+  function markHiddenZoneBarrier(zoneId: string, reason: UndoBarrierReason): void {
+    if (!markUndoBarrier) {
+      return;
+    }
+
+    const visibility = getZoneDef(zoneId)?.visibility ?? "public";
+    if (visibility !== "public") {
+      markUndoBarrier(reason);
+    }
   }
 
   function getSearchView(cardId: string): RuntimeCardWithDefinition {
@@ -213,13 +229,27 @@ export function createZoneOperations(
       const resolvedToZone = resolveZoneId(toZone);
       const previous = setCardZone(cardId, resolvedToZone, options?.index);
 
-      // Invalidate the static-effect registry when cards enter or leave a play zone,
-      // since the set of in-play cards is the primary input to the registry build.
+      onCardEnteredZone?.(cardId, resolvedToZone, previous.ownerId);
+
+      // Invalidate the static-effect registry when cards enter or leave a play, hand,
+      // or inkwell zone. Play zone changes affect which cards emit static abilities;
+      // hand zone changes affect resource-count conditions (e.g. Stone by Day);
+      // inkwell transitions must invalidate the move-registry cache (THE-971) because
+      // `getOrBuildMoveRegistry` keys on `staticEffectsVersion` — e.g. limbo→inkwell
+      // or discard→inkwell would otherwise skip invalidation vs play→inkwell.
+      const zoneKeyIsInkwell = (zoneKey: string | undefined): boolean =>
+        typeof zoneKey === "string" && (zoneKey === "inkwell" || zoneKey.startsWith("inkwell:"));
       const fromIsPlay = previous.fromZone
         ? previous.fromZone === "play" || previous.fromZone.startsWith("play:")
         : false;
       const toIsPlay = resolvedToZone === "play" || resolvedToZone.startsWith("play:");
-      if (fromIsPlay || toIsPlay) {
+      const fromIsHand = previous.fromZone
+        ? previous.fromZone === "hand" || previous.fromZone.startsWith("hand:")
+        : false;
+      const toIsHand = resolvedToZone === "hand" || resolvedToZone.startsWith("hand:");
+      const fromIsInkwell = zoneKeyIsInkwell(previous.fromZone);
+      const toIsInkwell = zoneKeyIsInkwell(resolvedToZone);
+      if (fromIsPlay || toIsPlay || fromIsHand || toIsHand || fromIsInkwell || toIsInkwell) {
         draft.G.staticEffectsVersion = (draft.G.staticEffectsVersion ?? 0) + 1;
       }
 
@@ -271,6 +301,9 @@ export function createZoneOperations(
     // -------------------------------------------------------------------------
 
     drawCards({ from, to, count: normalizedCount }: DrawCardsArgs): string[] {
+      if (normalizedCount > 0) {
+        markUndoBarrier?.("draw");
+      }
       const normalizedFromZone = resolveZoneId(from);
       const normalizedToZone = resolveZoneId(to);
 
@@ -333,6 +366,9 @@ export function createZoneOperations(
     },
 
     mill(from: ZoneRef, to: ZoneRef, count: number): string[] {
+      if (count > 0) {
+        markUndoBarrier?.("mill");
+      }
       const normalizedFromZone = resolveZoneId(from);
       const normalizedToZone = resolveZoneId(to);
       const zoneDef = getZoneDef(normalizedFromZone);
@@ -437,15 +473,18 @@ export function createZoneOperations(
     reveal(
       cardIds: string[],
       visibleTo: "all" | string[],
-      duration?: { stateID?: number },
+      options?: { stateID?: number; affectsUndo?: boolean },
     ): string {
+      if (cardIds.length > 0 && options?.affectsUndo !== false) {
+        markUndoBarrier?.("reveal");
+      }
       const revealId = allocateRevealId();
 
       const revealWindow: ZoneRevealWindow = {
         revealID: revealId,
         cardIDs: cardIds,
         visibleTo,
-        expiresAtStateID: duration?.stateID,
+        expiresAtStateID: options?.stateID,
       };
 
       zones.reveals.active.push(revealWindow);
@@ -484,11 +523,24 @@ export function createZoneOperations(
       }
     },
 
-    clearRevealsByZone(zone: ZoneRef): void {
+    clearRevealsByZone(zone: ZoneRef, clearOptions?: { respectExpiry?: boolean }): void {
       const zoneId = resolveZoneId(zone);
       const zoneCardSet = new Set(getZoneCards(zoneId));
+      const currentStateID = draft.ctx._stateID;
       const toRemove = zones.reveals.active
-        .filter((r) => r.cardIDs.some((id) => zoneCardSet.has(id)))
+        .filter((r) => {
+          if (!r.cardIDs.some((id) => zoneCardSet.has(id))) return false;
+          // When respectExpiry is set, skip reveals that have a valid stateID-based
+          // expiry that hasn't been reached yet — let expireReveals() handle those.
+          if (
+            clearOptions?.respectExpiry &&
+            r.expiresAtStateID !== undefined &&
+            r.expiresAtStateID > currentStateID
+          ) {
+            return false;
+          }
+          return true;
+        })
         .map((r) => r.revealID);
       for (const revealId of toRemove) {
         this.clearReveal(revealId);
@@ -501,6 +553,7 @@ export function createZoneOperations(
 
     search(zone: ZoneRef, predicate: (card: RuntimeCardWithDefinition) => boolean): string[] {
       const zoneId = resolveZoneId(zone);
+      markHiddenZoneBarrier(zoneId, "search-hidden-zone");
       const cards = getZoneCards(zoneId);
       return cards.filter((cardId) => predicate(getSearchView(cardId)));
     },
@@ -511,6 +564,7 @@ export function createZoneOperations(
       predicate?: (card: RuntimeCardWithDefinition) => boolean,
     ): string[] {
       const zoneId = resolveZoneId(zone);
+      markHiddenZoneBarrier(zoneId, "search-hidden-zone");
       let candidates = getZoneCards(zoneId);
 
       if (predicate) {
@@ -526,6 +580,7 @@ export function createZoneOperations(
 
     lookAt(zone: ZoneRef, count: number, playerId: string): string[] {
       const zoneId = resolveZoneId(zone);
+      markHiddenZoneBarrier(zoneId, "look-hidden-zone");
       const cards = getZoneCards(zoneId);
       const lookedCards = cards.slice(0, Math.min(count, cards.length));
 
@@ -538,6 +593,7 @@ export function createZoneOperations(
 
     lookAtTop(zone: ZoneRef, count: number, playerId: string): string[] {
       const zoneId = resolveZoneId(zone);
+      markHiddenZoneBarrier(zoneId, "look-hidden-zone");
       const cards = getZoneCards(zoneId);
       const topCards = cards.slice(-Math.min(count, cards.length)).reverse();
 
@@ -642,6 +698,7 @@ export function performMulligan(
   handSize: number,
   remainingMulligans: number,
   emitEvent?: (event: GameEvent) => void,
+  onUndoBarrier?: (reason: UndoBarrierReason) => void,
 ): MulliganResult {
   if (remainingMulligans <= 0) {
     return { success: false, mulliganedCards: [], drawnCards: [], remainingMulligans: 0 };
@@ -654,7 +711,10 @@ export function performMulligan(
   );
 
   // Move hand to bottom of deck
-  const ops = createZoneOperations(draft, zoneRegistry, emitEvent);
+  onUndoBarrier?.("mulligan");
+  const ops = createZoneOperations(draft, zoneRegistry, emitEvent, {
+    onUndoBarrier,
+  });
   for (const cardId of playerHandCards) {
     ops.moveCard(cardId, { zone: deckZoneId, playerId }, { index: 0 });
   }

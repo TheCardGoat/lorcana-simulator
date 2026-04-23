@@ -12,6 +12,7 @@ import {
   type DraggedCardKind,
   type SupportedDropZone,
 } from "@/features/simulator/context/simulator-dnd-dispatch.js";
+import { isScryDragSourceId } from "@/features/simulator/board/scry-overlay.js";
 import {
   getTurnSide,
   type LorcanaCardSnapshot,
@@ -120,7 +121,7 @@ export function canDragHandCard(args: {
 }): boolean {
   const { card, playableCardIds, ownerSide, turnSide } = args;
   if (
-    card.zoneId !== "hand" ||
+    (card.zoneId !== "hand" && card.zoneId !== "limbo") ||
     !ownerSide ||
     card.ownerSide !== ownerSide ||
     turnSide !== ownerSide
@@ -387,8 +388,8 @@ class LorcanaSimulatorDndController implements LorcanaSimulatorDndContextValue {
   }
 
   handleDragStart: NonNullable<DragProviderProps["onDragStart"]> = (event): void => {
-    this.draggedCardId =
-      typeof event.operation.source?.id === "string" ? event.operation.source.id : null;
+    const rawId = typeof event.operation.source?.id === "string" ? event.operation.source.id : null;
+    this.draggedCardId = isScryDragSourceId(rawId) ? null : rawId;
     this.setHoveredDropIntent(null);
   };
 
@@ -412,6 +413,11 @@ class LorcanaSimulatorDndController implements LorcanaSimulatorDndContextValue {
         ? event.operation.source.id
         : this.draggedCardId;
     if (!cardId) {
+      this.clearDragState();
+      return;
+    }
+
+    if (isScryDragSourceId(cardId)) {
       this.clearDragState();
       return;
     }

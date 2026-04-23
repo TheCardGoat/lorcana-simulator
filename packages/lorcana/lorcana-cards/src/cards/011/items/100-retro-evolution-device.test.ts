@@ -41,7 +41,10 @@ describe("Retro Evolution Device", () => {
     const playId = testEngine.findCardInstanceId(evolvedChampion, "hand", PLAYER_ONE);
 
     const result = testEngine.asPlayerOne().activateAbility(retroEvolutionDevice, {
-      targets: [banishId, playId],
+      effectSelections: {
+        effectBanishCharacterIds: [banishId],
+        effectPlayCardFromHandIds: [playId],
+      },
     });
 
     expect(result).toBeSuccessfulCommand();
@@ -64,7 +67,10 @@ describe("Retro Evolution Device", () => {
 
     expect(
       testEngine.asPlayerOne().activateAbility(retroEvolutionDevice, {
-        targets: [banishId, playId],
+        effectSelections: {
+          effectBanishCharacterIds: [banishId],
+          effectPlayCardFromHandIds: [playId],
+        },
       }),
     ).toBeSuccessfulCommand();
 

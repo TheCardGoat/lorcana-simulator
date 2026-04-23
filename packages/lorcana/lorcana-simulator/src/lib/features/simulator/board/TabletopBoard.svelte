@@ -1,7 +1,12 @@
 <script lang="ts">
-import { tick } from "svelte";
+import { tick, type Snippet } from "svelte";
 import ChevronUpIcon from "@lucide/svelte/icons/chevron-up";
 import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
+import DisconnectedPlayerOverlay from "@/features/gateway/ui/DisconnectedPlayerOverlay.svelte";
+import TimedOutPlayerOverlay from "@/features/gateway/ui/TimedOutPlayerOverlay.svelte";
+import UnauthenticatedPlayerOverlay from "@/features/gateway/ui/UnauthenticatedPlayerOverlay.svelte";
+import { deriveClockView } from "@tcg/lorcana-engine";
+import { useClockNow } from "@/features/simulator/model/clock-ticker.svelte.js";
 import { m } from "$lib/i18n/messages.js";
 import type {
 	ExecutableMoveEntry,
@@ -27,6 +32,8 @@ import HandZone from "@/features/simulator/board/HandZone.svelte";
 import CardTargetDialog from "@/features/simulator/dialogs/CardTargetDialog.svelte";
 import DiscardPileDialog from "@/features/simulator/dialogs/DiscardPileDialog.svelte";
 import InkwellDialog from "@/features/simulator/dialogs/InkwellDialog.svelte";
+import * as Dialog from "$lib/design-system/primitives/dialog";
+import { Button } from "$lib/design-system/primitives/button";
 import ScryResolutionOverlay from "@/features/simulator/board/ScryResolutionOverlay.svelte";
 import ChoiceResolutionOverlay from "@/features/simulator/board/ChoiceResolutionOverlay.svelte";
 import ResolutionTargetOverlay from "@/features/simulator/board/ResolutionTargetOverlay.svelte";
@@ -51,12 +58,14 @@ import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import { toggleHandTuckState } from "@/features/simulator/board/hand-tuck-state.js";
 import type { SimulatorHotkeyDescriptor } from "@/features/simulator/hotkeys/hotkey-bindings.js";
 import {
+	useLorcanaGameContext,
 	useLorcanaBoardPresenter,
 	useLorcanaSidebarPresenter,
 } from "@/features/simulator/context/game-context.svelte.js";
 import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
 import { bugReportContextFromBoard } from "@/features/simulator/support/feedback-api.js";
 import type { SimulatorLayoutMode } from "@/features/simulator/model/layout-mode.svelte.js";
+import type { MatchNavigationContext } from "@/features/simulator/model/contracts.js";
 import type {
 	ConfirmableDirectMoveCategoryId,
 	DirectMoveTriggerSource,
@@ -94,13 +103,14 @@ interface PendingEffectsPopoverItem {
 	inlineActions?: GuidanceAction[];
 }
 
-interface TabletopBoardProps {
+	interface TabletopBoardProps {
 	layoutMode?: SimulatorLayoutMode;
 	compactActionCount?: number;
 	pendingEffectsPopoverItems?: PendingEffectsPopoverItem[];
 	activePlayerGuidance?: ActivePlayerGuidanceItem[];
 	hotkeyDescriptors?: SimulatorHotkeyDescriptor[];
 	supportReminderText?: string | null;
+	supportReminderOpen?: boolean;
 	onDismissSupportReminder?: () => void;
 	onOpenCompactPanels?: (tab?: "moves" | "log") => void;
 	pendingDirectMoveCategoryId?: ConfirmableDirectMoveCategoryId | null;
@@ -111,6 +121,19 @@ interface TabletopBoardProps {
 	onOpenSupportDialog?: () => void;
 	onOpenFeedbackDialog?: () => void;
 	onOpenBugReportDialog?: () => void;
+	opponentPresence?: import("@/features/gateway/opponent-presence.svelte.js").OpponentPresenceTracker | null;
+	onSkipOpponent?: (() => void) | null;
+	onDropOpponent?: (() => void) | null;
+	gatewayStatus?: import("@/features/gateway/gateway-client.js").ConnectionStatus | null;
+	/** True when the server announced a deploy before the socket closed. */
+	serverInitiatedClose?: boolean;
+	viewerMode?: "player" | "spectator";
+	isAuthenticated?: boolean;
+	matchContext?: MatchNavigationContext | null;
+	onNextGame?: (() => void) | null;
+	onReturnToMatchmaking?: (() => void | Promise<void>) | null;
+	/** Optional overlay rendered between the two player lanes (e.g. replay controls). */
+	boardOverlay?: Snippet;
 }
 
 interface PointerPosition {
@@ -127,6 +150,7 @@ let {
 	activePlayerGuidance = [],
 	hotkeyDescriptors = [],
 	supportReminderText = null,
+	supportReminderOpen = $bindable(false),
 	onDismissSupportReminder,
 	onOpenCompactPanels,
 	pendingDirectMoveCategoryId = null,
@@ -134,12 +158,25 @@ let {
 	onOpenSupportDialog,
 	onOpenFeedbackDialog,
 	onOpenBugReportDialog,
+	opponentPresence = null,
+	onSkipOpponent = null,
+	onDropOpponent = null,
+	gatewayStatus = null,
+	serverInitiatedClose = false,
+	viewerMode = "player",
+	isAuthenticated = true,
+	matchContext = null,
+	onNextGame = null,
+	onReturnToMatchmaking = null,
+	boardOverlay,
 }: TabletopBoardProps = $props();
 
 const board = useLorcanaBoardPresenter();
 const sidebar = useLorcanaSidebarPresenter();
+const game = useLorcanaGameContext();
 const simulatorCardContext = useSimulatorCardContext();
 const boardSnapshot = $derived(board.boardSnapshot);
+const isPostGame = $derived(boardSnapshot?.status === "finished" || (matchContext?.matchCompleted ?? false));
 const bugReportContext = $derived(bugReportContextFromBoard(boardSnapshot));
 const ownerSide = $derived(board.ownerSide);
 const questRotationDurationMs = $derived(board.questRotationDurationMs);
@@ -161,6 +198,9 @@ let anchorRevision = 0;
 let measurementRequestId = 0;
 let targetSelectionDialogOpen = $state(false);
 let dismissedTargetDialogSessionKey = $state<string | null>(null);
+let userForcedTargetDialogOpen = $state(false);
+let skipConfirmOpen = $state(false);
+let dropConfirmOpen = $state(false);
 let handTuckState = $state<Record<LorcanaPlayerSide, boolean>>({
 	playerOne: false,
 	playerTwo: false,
@@ -181,6 +221,53 @@ const guidanceAnchor = $derived(sidebar.guidancePosition);
 const topSummary = $derived(board.getPlayerSummary(topSide));
 const bottomSummary = $derived(board.getPlayerSummary(bottomSide));
 const isCompactLayout = $derived(layoutMode !== "desktop");
+const isOpponentDisconnected = $derived(opponentPresence != null && !opponentPresence.opponentConnected);
+
+// Opponent clock view — single source of truth for the skip/drop affordances
+// and the "is the opponent timed out" overlay. Derives from the engine-projected
+// ClockSnapshot plus the shared reactive `now`, so it stays in lockstep with
+// what PlayerTimer renders.
+const clockNow = useClockNow();
+const opponentClockView = $derived(
+	topSummary?.timer ? deriveClockView(topSummary.timer, clockNow.value) : null,
+);
+const isOpponentTimedOut = $derived(opponentClockView?.timedOutWithPriority ?? false);
+const canSkipOpponent = $derived(opponentClockView?.canSkipOpponent ?? false);
+const canDropOpponent = $derived(opponentClockView?.canDropOpponent ?? false);
+// DEPLOYMENT CACHE STRATEGY: Delay showing the self-disconnect overlay by 2 seconds.
+// During blue-green deploys, the socket drops and reconnects within ~1–2 seconds.
+// Without a grace period, players see a jarring "Connection lost" flash that
+// disappears almost immediately. The 2-second delay absorbs the typical deploy
+// reconnect cycle so players never notice routine deployments.
+const isGatewayDisconnected = $derived(gatewayStatus === "disconnected" || gatewayStatus === "reconnecting");
+let isSelfDisconnected = $state(false);
+let disconnectGraceTimer: ReturnType<typeof setTimeout> | null = null;
+const DISCONNECT_GRACE_PERIOD_MS = 2_000;
+$effect(() => {
+  if (isGatewayDisconnected) {
+    disconnectGraceTimer = setTimeout(() => {
+      isSelfDisconnected = true;
+    }, DISCONNECT_GRACE_PERIOD_MS);
+  } else {
+    if (disconnectGraceTimer) {
+      clearTimeout(disconnectGraceTimer);
+      disconnectGraceTimer = null;
+    }
+    isSelfDisconnected = false;
+  }
+  return () => {
+    if (disconnectGraceTimer) {
+      clearTimeout(disconnectGraceTimer);
+      disconnectGraceTimer = null;
+    }
+  };
+});
+const isUnauthenticatedPlayer = $derived(
+  viewerMode === "player" &&
+  gatewayStatus === "connected" &&
+  isAuthenticated === false,
+);
+
 const isMobileLayout = $derived(layoutMode === "mobile");
 const accessibleMobileControls = $derived(sidebar.accessibleMobileControls);
 const isTopHandTucked = $derived(!isMobileLayout && handTuckState[topSide]);
@@ -200,9 +287,13 @@ const selectedCardPlayable = $derived.by(() => {
 		return false;
 	}
 
+	const zoneId = selectedCard.zoneId;
+	const isInkOrPlaySourceZone =
+		zoneId === "hand" || zoneId === "discard" || zoneId === "limbo";
+
 	return (
 		selectedCard.ownerSide === bottomSide &&
-		selectedCard.zoneId === "hand" &&
+		isInkOrPlaySourceZone &&
 		board.playableHandCardIds.includes(selectedCard.cardId)
 	);
 });
@@ -215,26 +306,25 @@ const bottomPlayerLabel = $derived(
 	hasOwnedView ? m["sim.player.you"]({}) : m["sim.player.side.playerOne"]({}),
 );
 const activeTurnTimer = $derived.by(() => {
-	if (topIsTurnPlayer) {
-		return topSummary?.timer;
-	}
-
-	if (bottomIsTurnPlayer) {
-		return bottomSummary?.timer;
-	}
-
+	// Prefer whichever clock is actually ticking (priority may shift mid-turn)
+	if (topSummary?.timer?.isRunning) return topSummary.timer;
+	if (bottomSummary?.timer?.isRunning) return bottomSummary.timer;
+	// Fallback: turn player (clock paused / no active player yet)
+	if (topIsTurnPlayer) return topSummary?.timer;
+	if (bottomIsTurnPlayer) return bottomSummary?.timer;
 	return bottomSummary?.timer ?? topSummary?.timer;
 });
 const activeTurnTimerLabel = $derived.by(() => {
-	if (topIsTurnPlayer) {
-		return `${topPlayerLabel} Clock`;
-	}
+	const toClockLabel = (playerLabel: string) =>
+		playerLabel === m["sim.player.you"]({})
+			? m["sim.clock.label.your"]({})
+			: m["sim.clock.label.player"]({ playerLabel });
 
-	if (bottomIsTurnPlayer) {
-		return `${bottomPlayerLabel} Clock`;
-	}
-
-	return `${bottomPlayerLabel} Clock`;
+	if (topSummary?.timer?.isRunning) return toClockLabel(topPlayerLabel);
+	if (bottomSummary?.timer?.isRunning) return toClockLabel(bottomPlayerLabel);
+	if (topIsTurnPlayer) return toClockLabel(topPlayerLabel);
+	if (bottomIsTurnPlayer) return toClockLabel(bottomPlayerLabel);
+	return toClockLabel(bottomPlayerLabel);
 });
 const moveCategoryCount = $derived(sidebar.moveCategoryCount);
 const moveCategorySummaries = $derived(sidebar.moveCategorySummaries);
@@ -290,6 +380,13 @@ const genericTargetModalState = $derived.by(
 			? targetSelectionState
 			: null,
 );
+const dialogTargetState = $derived.by(
+	(): ResolutionTargetAvailableMovesSelectionState | null =>
+		genericTargetModalState ??
+		(userForcedTargetDialogOpen && targetSelectionState?.mode === "resolution-target"
+			? targetSelectionState
+			: null),
+);
 const scrySelectionState = $derived.by(() => {
   if (availableMovesSelectionState?.mode === "resolution-scry") {
     return availableMovesSelectionState;
@@ -304,15 +401,19 @@ const choiceSelectionState = $derived.by((): ResolutionChoiceAvailableMovesSelec
 
   return null;
 });
+
+const hasActiveOverlay = $derived(
+  Boolean(resolutionTargetOverlayState || scrySelectionState || choiceSelectionState || dialogTargetState),
+);
 const targetSelectionDialogCards = $derived.by(
 	() =>
-		genericTargetModalState?.candidateCardIds
-			.map((cardId) => board.cardSnapshotsById[cardId] ?? null)
+		dialogTargetState?.candidateCardIds
+			.map((cardId) => game.resolveCardSnapshot(cardId))
 			.filter((card): card is LorcanaCardSnapshot => card !== null) ?? [],
 );
 const targetSelectionDialogPlayers = $derived.by(
 	() =>
-		genericTargetModalState?.entries
+		dialogTargetState?.entries
 			.filter(
 				(entry): entry is AvailableMovesSelectionEntry & { playerId: string } =>
 					entry.kind === "player" && typeof entry.playerId === "string",
@@ -326,7 +427,7 @@ const targetSelectionDialogPlayers = $derived.by(
 );
 const selectedTargetCardIds = $derived.by(
 	() =>
-		genericTargetModalState?.entries
+		dialogTargetState?.entries
 			.filter(
 				(entry): entry is AvailableMovesSelectionEntry & { cardId: string } =>
 					entry.kind === "card" &&
@@ -341,28 +442,28 @@ const selectedTargetCount = $derived.by(
 		(targetSelectionDialogPlayers.filter((player) => player.selected).length ?? 0),
 );
 const targetSelectionDialogTitle = $derived.by(() => {
-	if (!genericTargetModalState) {
+	if (!dialogTargetState) {
 		return "";
 	}
 
-	return getTargetSelectionModalTitle(genericTargetModalState);
+	return getTargetSelectionModalTitle(dialogTargetState);
 });
 const targetSelectionDialogDescription = $derived.by(() => {
-	if (!genericTargetModalState) {
+	if (!dialogTargetState) {
 		return "";
 	}
 
 	if (
-		genericTargetModalState.allowedZones.length === 1 &&
-		genericTargetModalState.allowedZones[0] !== "play"
+		dialogTargetState.allowedZones.length === 1 &&
+		dialogTargetState.allowedZones[0] !== "play"
 	) {
-		return genericTargetModalState.message;
+		return dialogTargetState.message;
 	}
 
-	return genericTargetModalState.message;
+	return dialogTargetState.message;
 });
 const activeTargetDialogSessionKey = $derived(
-	genericTargetModalState?.sessionKey ?? null,
+	dialogTargetState?.sessionKey ?? null,
 );
 const hasPendingEffects = $derived(sidebar.hasPendingEffects);
 const opponentPlayHotkeys = $derived.by(
@@ -572,10 +673,13 @@ function handleAdvancePendingEffects(): void {
 }
 
 function openTargetSelectionDialog(): void {
-	if (!genericTargetModalState) {
+	if (!targetSelectionState) {
 		return;
 	}
 
+	if (!genericTargetModalState) {
+		userForcedTargetDialogOpen = true;
+	}
 	dismissedTargetDialogSessionKey = null;
 	targetSelectionDialogOpen = true;
 }
@@ -822,6 +926,12 @@ $effect(() => {
 });
 
 $effect(() => {
+	if (!targetSelectionState) {
+		userForcedTargetDialogOpen = false;
+	}
+});
+
+$effect(() => {
 	const sessionKey = activeTargetDialogSessionKey;
 	if (!sessionKey) {
 		targetSelectionDialogOpen = false;
@@ -908,7 +1018,7 @@ $effect(() => {
 </script>
 
 <div
-  class="tabletop-container w-full h-full overflow-hidden relative"
+  class="tabletop-container w-full h-full relative"
   data-layout-mode={layoutMode}
   data-accessible-controls={accessibleMobileControls ? "true" : undefined}
   role="presentation"
@@ -919,22 +1029,24 @@ $effect(() => {
   <PendingEffectsPopover
     items={pendingEffectsPopoverItems}
     bind:open={pendingEffectsOpen}
-    canOpenTargetModal={Boolean(genericTargetModalState)}
+    canOpenTargetModal={Boolean(targetSelectionState)}
     onOpenTargetModal={openTargetSelectionDialog}
     initialDockPosition={isMobileLayout ? "top" : "middle"}
+    hasActiveOverlay={hasActiveOverlay}
   />
 
-  {#if genericTargetModalState}
+  {#if dialogTargetState}
     <CardTargetDialog
       bind:open={targetSelectionDialogOpen}
       playerSide={ownerSide ?? "playerOne"}
       viewerSide={ownerSide}
-      target={genericTargetModalState.target}
+      target={dialogTargetState.target}
       cards={targetSelectionDialogCards}
+      trustCandidates={true}
       selectable={true}
       players={targetSelectionDialogPlayers}
       selectedCardIds={selectedTargetCardIds}
-      canConfirm={genericTargetModalState.canConfirm}
+      canConfirm={dialogTargetState.canConfirm}
       titleText={targetSelectionDialogTitle}
       descriptionText={targetSelectionDialogDescription}
       selectionSummaryText={`${selectedTargetCount} selected`}
@@ -942,6 +1054,7 @@ $effect(() => {
       onSelectPlayer={sidebar.handleAvailableMovesSelectionPlayer}
       onConfirm={sidebar.confirmActionSelection}
       onCancel={() => {
+        userForcedTargetDialogOpen = false;
         dismissedTargetDialogSessionKey = activeTargetDialogSessionKey;
         targetSelectionDialogOpen = false;
       }}
@@ -993,10 +1106,12 @@ $effect(() => {
             isTurnPlayer: topIsTurnPlayer,
             hasPriority: topHasPriority,
           }}
+          timer={topSummary?.timer}
           logCount={moveLogEntries.length}
           selectedCard={selectedCard}
           selectedCardPlayable={selectedCardPlayable}
           {supportReminderText}
+          bind:supportReminderOpen
           onOpenSettings={openPlayerSettings}
           onOpenSupport={onOpenSupportDialog}
           onDismissSupportReminder={onDismissSupportReminder}
@@ -1004,6 +1119,8 @@ $effect(() => {
           onOpenCardPreview={openCompactPreview}
           onReportPlayer={handleMobileReportPlayer}
           bugReportContext={bugReportContext}
+          {matchContext}
+          ownerSide={board.ownerSide}
         />
       </div>
     {/if}
@@ -1014,6 +1131,7 @@ $effect(() => {
       class:chrome-slot--top={true}
       class:chrome-slot--mobile={isMobileLayout}
       class:chrome-slot--desktop={!isMobileLayout}
+      class:chrome-slot--opponent-hand={hasOwnedView}
       class:chrome-slot--tucked={isTopHandTucked}
       data-hand-shell-side={topSide}
       data-hand-tucked={isTopHandTucked}
@@ -1084,9 +1202,40 @@ $effect(() => {
             seatPosition="top"
             playHotkeyBindings={opponentPlayHotkeys}
             isPlayerEffectTarget={board.activePlayerEffectTargets().has(topSide)}
+            isDisconnected={isOpponentDisconnected}
+            isTimedOut={isOpponentTimedOut}
             onDiscardClick={() => board.handleDiscardClick(topSide)}
             onInkwellClick={() => board.handleInkwellClick(topSide)}
-          />
+          >
+            {#snippet timeoutOverlay()}
+              {#if opponentClockView && (canSkipOpponent || canDropOpponent)}
+                <TimedOutPlayerOverlay
+                  canSkip={canSkipOpponent}
+                  canDrop={canDropOpponent}
+                  isSpectator={viewerMode === "spectator"}
+                  onSkip={() => { skipConfirmOpen = true; }}
+                  onDrop={() => { dropConfirmOpen = true; }}
+                />
+              {/if}
+            {/snippet}
+            {#snippet disconnectOverlay()}
+              {#if opponentPresence}
+                <DisconnectedPlayerOverlay
+                  variant="opponent"
+                  secondsRemaining={opponentPresence.secondsRemaining}
+                  canDrop={opponentPresence.canDrop}
+                  isSpectator={viewerMode === "spectator"}
+                  onDrop={onDropOpponent ?? undefined}
+                />
+              {/if}
+            {/snippet}
+          </SeatLane>
+
+          {#if boardOverlay}
+            <div class="board-overlay-slot">
+              {@render boardOverlay()}
+            </div>
+          {/if}
 
           <SeatLane
             {layoutMode}
@@ -1099,9 +1248,18 @@ $effect(() => {
             seatPosition="bottom"
             playHotkeyBindings={ownedPlayHotkeys}
             isPlayerEffectTarget={board.activePlayerEffectTargets().has(bottomSide)}
+            isDisconnected={isSelfDisconnected || isUnauthenticatedPlayer}
             onDiscardClick={() => board.handleDiscardClick(bottomSide)}
             onInkwellClick={() => board.handleInkwellClick(bottomSide)}
-          />
+          >
+            {#snippet disconnectOverlay()}
+              {#if isUnauthenticatedPlayer}
+                <UnauthenticatedPlayerOverlay />
+              {:else}
+                <DisconnectedPlayerOverlay variant="self" isServerDeploy={serverInitiatedClose} />
+              {/if}
+            {/snippet}
+          </SeatLane>
         </div>
 
         <ChallengeAimOverlay
@@ -1181,6 +1339,7 @@ $effect(() => {
           moveSummaries={moveCategorySummaries}
           activeMoveCategoryId={activeMobileMoveCategoryId}
           timer={bottomSummary?.timer}
+          isOwnClock={hasOwnedView}
           {questAllCount}
           {questAllLore}
           armedDirectCategoryId={pendingDirectMoveCategoryId}
@@ -1199,6 +1358,11 @@ $effect(() => {
           onConcede={handleMobileConcede}
           onOpenPendingEffects={handleAdvancePendingEffects}
           bugReportContext={bugReportContext}
+          {isPostGame}
+          {matchContext}
+          ownerSide={board.ownerSide}
+          onNextGame={onNextGame ?? undefined}
+          onReturnToMatchmaking={onReturnToMatchmaking ?? undefined}
         />
       </div>
     {/if}
@@ -1208,31 +1372,31 @@ $effect(() => {
     <TurnActionRail
       timer={activeTurnTimer}
       timerLabel={activeTurnTimerLabel}
-      {questAllCount}
-      {questAllLore}
+      isOwnClock={!(topSummary?.timer?.isRunning) && hasOwnedView}
       {canPassTurn}
-      {canUndo}
-      {canQuestAll}
       armedCategoryId={pendingDirectMoveCategoryId}
-      onUndo={() => onConfirmableDirectMoveCategory?.("undo", "pointer")}
       onPassTurn={() => onConfirmableDirectMoveCategory?.("pass-turn", "pointer")}
-      onQuestAll={() => onConfirmableDirectMoveCategory?.("quest-all", "pointer")}
     />
   {/if}
 
-  <ActivePlayerGuidance
-    items={activePlayerGuidance}
-    anchor={guidanceAnchor}
-    isBottomHandExpanded={!isBottomHandTucked && !isMobileLayout}
-    isTopHandExpanded={!isTopHandTucked && !isMobileLayout}
-    onToggleAnchor={toggleGuidancePosition}
-  />
+  {#if !hasActiveOverlay}
+    <ActivePlayerGuidance
+      items={activePlayerGuidance}
+      anchor={guidanceAnchor}
+      isBottomHandExpanded={!isBottomHandTucked && !isMobileLayout}
+      isTopHandExpanded={!isTopHandTucked && !isMobileLayout}
+      onToggleAnchor={toggleGuidancePosition}
+      canOpenTargetModal={Boolean(targetSelectionState)}
+      onOpenTargetModal={openTargetSelectionDialog}
+    />
+  {/if}
 
   <DiscardPileDialog
     bind:open={() => board.isDiscardDialogOpen, (open) => board.setDiscardDialogOpen(open)}
     cards={discardCards}
     playerSide={board.discardDialogSide ?? "playerOne"}
     viewerSide={ownerSide}
+    playableCardIds={board.playableHandCardIds}
     target={board.discardTarget}
   />
 
@@ -1243,6 +1407,55 @@ $effect(() => {
     viewerSide={ownerSide}
     target={board.inkwellTarget}
   />
+
+  <!-- Skip opponent turn confirmation -->
+  <Dialog.Root bind:open={skipConfirmOpen}>
+    <Dialog.Portal>
+      <Dialog.Overlay />
+      <Dialog.Content class="max-w-sm">
+        <Dialog.Header>
+          <Dialog.Title>{m["sim.timeout.skip.title"]({})}</Dialog.Title>
+          <Dialog.Description>
+            {m["sim.timeout.skip.description"]({})}
+          </Dialog.Description>
+        </Dialog.Header>
+        <p class="text-muted-foreground text-xs italic">
+          {m["sim.timeout.skip.note"]({})}
+        </p>
+        <Dialog.Footer>
+          <Dialog.Close>
+            <Button variant="outline" size="sm">{m["sim.actions.cancel"]({})}</Button>
+          </Dialog.Close>
+          <Button size="sm" onclick={() => { skipConfirmOpen = false; onSkipOpponent?.(); }}>
+            {m["sim.timeout.skip.confirm"]({})}
+          </Button>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog.Portal>
+  </Dialog.Root>
+
+  <!-- Drop opponent confirmation -->
+  <Dialog.Root bind:open={dropConfirmOpen}>
+    <Dialog.Portal>
+      <Dialog.Overlay />
+      <Dialog.Content class="max-w-sm">
+        <Dialog.Header>
+          <Dialog.Title>{m["sim.timeout.drop.title"]({})}</Dialog.Title>
+          <Dialog.Description>
+            {m["sim.timeout.drop.description"]({})}
+          </Dialog.Description>
+        </Dialog.Header>
+        <Dialog.Footer>
+          <Dialog.Close>
+            <Button variant="outline" size="sm">{m["sim.actions.cancel"]({})}</Button>
+          </Dialog.Close>
+          <Button variant="destructive" size="sm" onclick={() => { dropConfirmOpen = false; onDropOpponent?.(); }}>
+            {m["sim.timeout.drop.confirm"]({})}
+          </Button>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog.Portal>
+  </Dialog.Root>
 </div>
 
 <style>
@@ -1250,15 +1463,21 @@ $effect(() => {
     --hand-guidance-offset: 3rem;
     --hand-guidance-clearance: 1.65rem;
     --top-hand-screen-offset: -2rem;
-    --bottom-hand-screen-offset: 0rem;
+    --bottom-hand-screen-offset: 1rem;
     --hand-tuck-peek: 1.5rem;
     --desktop-footer-gutter: 0px;
     --desktop-footer-left-reserve: 0px;
     --desktop-footer-right-reserve: 0px;
     --desktop-hand-overscan: 0px;
-    /* hand-zone-height = card height (122px / 0.9582) + hand container padding (0.75rem) */
-    --hand-zone-height: calc(122px / 0.9582 + 0.75rem);
+    /* hand-zone-height = card height (122px / 0.9582) */
+    --hand-zone-height: calc(122px / 0.9582);
     --hand-tuck-distance: calc(var(--hand-zone-height) - var(--hand-tuck-peek));
+    /* overflow: clip (not hidden) prevents the browser from auto-scrolling this
+       container when a hand-zone card receives focus. overflow:hidden creates a
+       scroll container that the browser can scroll to reveal out-of-view elements
+       (e.g. the partially-hidden opponent hand at top:-2rem). overflow:clip clips
+       identically but is NOT scrollable by any means. */
+    overflow: clip;
     background: radial-gradient(ellipse at 50% 0%, #1a2744 0%, #0f1720 60%, #080c12 100%);
   }
 
@@ -1266,8 +1485,8 @@ $effect(() => {
     --sim-play-card-width: 180px;
     --sim-hand-card-width: 122px;
     --sim-side-zone-card-width: 50px;
-    --mobile-menubar-height: 3.6rem;
-    --mobile-hand-height: 4.6rem;
+    --mobile-menubar-height: 3.15rem;
+    --mobile-hand-height: 3.8rem;
 
     margin: 0;
     padding: 0;
@@ -1283,7 +1502,7 @@ $effect(() => {
 
   .chrome-slot {
     position: relative;
-    z-index: 50;
+    z-index: 30;
     flex-shrink: 0;
   }
 
@@ -1292,15 +1511,15 @@ $effect(() => {
   }
 
   .chrome-slot--topbar {
-    height: var(--mobile-menubar-height);
-    flex: 0 0 var(--mobile-menubar-height);
+    height: auto;
+    flex: 0 0 auto;
     overflow: hidden;
     margin-bottom: 0;
   }
 
   .chrome-slot--bottombar {
-    height: var(--mobile-menubar-height);
-    flex: 0 0 var(--mobile-menubar-height);
+    height: auto;
+    flex: 0 0 auto;
     overflow: hidden;
     margin-top: 0;
   }
@@ -1324,13 +1543,18 @@ $effect(() => {
     box-shadow: 0 14px 32px rgba(2, 6, 23, 0.26);
   }
 
+  .chrome-slot--mobile.chrome-slot--opponent-hand {
+    height: calc(var(--mobile-hand-height) - 0.95rem);
+    flex-basis: calc(var(--mobile-hand-height) - 0.95rem);
+  }
+
   .chrome-slot--desktop.chrome-slot--hand {
     position: absolute;
     left: 0.45rem;
     right: 0.45rem;
     z-index: 2;
     pointer-events: none;
-    transition: transform 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform 110ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
     will-change: transform;
   }
 
@@ -1397,9 +1621,6 @@ $effect(() => {
     top: 0.35rem;
   }
 
-  .desktop-hand-toggle--bottom {
-    bottom: calc(0.65rem + env(safe-area-inset-bottom) + var(--hand-zone-height) - 1rem);
-  }
 
   .desktop-hand-toggle--visible {
     opacity: 1;
@@ -1479,6 +1700,19 @@ $effect(() => {
     bottom: 0;
   }
 
+  .board-overlay-slot {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .board-overlay-slot > :global(*) {
+    pointer-events: auto;
+  }
+
   .board-center-anchor-region {
     inset: 0;
     z-index: 0;
@@ -1504,7 +1738,7 @@ $effect(() => {
 
   .tabletop-container :global([data-zone-id="play"] .card-face),
   .tabletop-container :global([data-zone-id="play"] .card-back) {
-    transition: transform var(--quest-rotation-duration, 400ms) cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform var(--quest-rotation-duration, 200ms) cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .tabletop-container :global(.ink-segment--available),
@@ -1528,8 +1762,8 @@ $effect(() => {
     }
 
     .tabletop-layout {
-      --mobile-menubar-height: 3.4rem;
-      --mobile-hand-height: 4.2rem;
+      --mobile-menubar-height: 2.7rem;
+      --mobile-hand-height: 3.55rem;
     }
 
     .board-lanes {
@@ -1593,14 +1827,14 @@ $effect(() => {
 
   @media (min-width: 1240px) {
     .tabletop-container {
-      --desktop-footer-gutter: clamp(3.625rem, 6.25vh, 5rem);
+      --desktop-footer-gutter: clamp(4rem, 7vh, 5.75rem);
       --desktop-footer-left-reserve: clamp(10rem, 18vw, 12rem);
       --desktop-footer-right-reserve: clamp(13rem, 22vw, 15rem);
-      --desktop-hand-overscan: calc(var(--hand-zone-height) * 0.16);
+      --desktop-hand-overscan: calc(var(--hand-zone-height) * 0.20);
     }
 
     .tabletop-layout {
-      --sim-play-card-width: clamp(160px, min(24cqh, 20cqw), 220px);
+      --sim-play-card-width: clamp(200px, min(36cqh, 24cqw), 340px);
       --sim-hand-card-width: clamp(104px, min(15.5cqh, 11.5cqw), 146px);
       --sim-side-zone-card-width: clamp(46px, min(8cqh, 5cqw), 72px);
       padding-bottom: calc(var(--desktop-footer-gutter) + env(safe-area-inset-bottom));
@@ -1608,15 +1842,12 @@ $effect(() => {
 
     /* use max clamp value (146px) as safe upper bound for hand height */
     .tabletop-container {
-      --hand-zone-height: calc(146px / 0.9582 + 0.75rem);
+      --hand-zone-height: calc(146px / 0.9582);
     }
 
     .chrome-slot--desktop.chrome-slot--top:hover + .desktop-hand-toggle--top,
     .desktop-hand-toggle--top:hover,
-    .desktop-hand-toggle--top:focus-visible,
-    .chrome-slot--desktop.chrome-slot--bottom:hover + .desktop-hand-toggle--bottom,
-    .desktop-hand-toggle--bottom:hover,
-    .desktop-hand-toggle--bottom:focus-visible {
+    .desktop-hand-toggle--top:focus-visible {
       opacity: 1;
       pointer-events: auto;
       border-color: rgba(147, 197, 253, 0.64);
@@ -1631,23 +1862,24 @@ $effect(() => {
       transform: translate(-50%, -0.1rem);
     }
 
-    .chrome-slot--desktop.chrome-slot--bottom:hover + .desktop-hand-toggle--bottom,
-    .desktop-hand-toggle--bottom:hover,
-    .desktop-hand-toggle--bottom:focus-visible {
-      transform: translate(-50%, 0.1rem);
-    }
   }
 
   @media (min-width: 1240px) and (max-width: 1439px) {
     .tabletop-container {
       --desktop-footer-left-reserve: clamp(9rem, 17vw, 10.5rem);
       --desktop-footer-right-reserve: clamp(11.5rem, 21vw, 13.25rem);
-      --hand-zone-height: calc(136px / 0.9582 + 0.75rem);
-      --desktop-hand-overscan: calc(var(--hand-zone-height) * 0.18);
+      --hand-zone-height: calc(136px / 0.9582);
+      --desktop-hand-overscan: calc(var(--hand-zone-height) * 0.23);
     }
 
     .tabletop-layout {
       --sim-hand-card-width: clamp(98px, min(14.5cqh, 10.75cqw), 136px);
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .tabletop-layout {
+      --sim-play-card-width: clamp(240px, min(40cqh, 26cqw), 380px);
     }
   }
 

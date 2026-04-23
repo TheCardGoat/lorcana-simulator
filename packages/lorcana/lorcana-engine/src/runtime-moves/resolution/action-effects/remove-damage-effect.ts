@@ -1,12 +1,14 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type { CardPlayedPayload } from "../../../types/index";
 import type { RemoveDamageEffect } from "@tcg/lorcana-types";
+import { isUpToAmount } from "@tcg/lorcana-types";
 import type { PlayCardExecutionContext } from "./types";
 import type { DynamicAmountEventSnapshot } from "../../../types/domain-events";
 
 import { queueTriggeredEvent } from "../../../triggered-abilities";
 import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
+import { recordDamageRemovedThisTurn } from "../../state/turn-metrics";
 
 type ResolvedRemoveDamageEffectInput = {
   targets: CardInstanceId[];
@@ -46,7 +48,8 @@ export function resolveRemoveDamageEffect(
         ? Math.max(0, resolvedAmount)
         : 0;
     const maxByEffect = Math.max(0, Math.min(amountCap, currentDamage));
-    const requestedAmount = effect.upTo ? (selectedAmount ?? maxByEffect) : maxByEffect;
+    const allowsUpTo = isUpToAmount(effect.amount);
+    const requestedAmount = allowsUpTo ? (selectedAmount ?? maxByEffect) : maxByEffect;
     const resolvedHealAmount = Math.max(0, Math.min(requestedAmount, maxByEffect, currentDamage));
     const nextDamage = Math.max(0, currentDamage - resolvedHealAmount);
     healedAmount += resolvedHealAmount;
@@ -83,6 +86,8 @@ export function resolveRemoveDamageEffect(
       }
     }
   }
+
+  recordDamageRemovedThisTurn(ctx, cardPlayed.playerId, healedAmount);
 
   if (resolvedInput.eventSnapshot) {
     resolvedInput.eventSnapshot.healedAmount = healedAmount;

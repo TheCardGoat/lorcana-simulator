@@ -12,6 +12,7 @@ import type { DamageEntry, MoveOutcomes } from "../types/move-log";
 import type {
   CardBanishedPayload,
   CardExertedPayload,
+  CardInkedPayload,
   CardReadiedPayload,
   CardReturnedToHandPayload,
   CardsDrawnPayload,
@@ -38,6 +39,7 @@ export class MoveOutcomeAccumulator {
   private cardsMilled: { playerId: PlayerId; amount: number; cardIds: CardInstanceId[] } | null =
     null;
   private cardsReturnedToHand: CardInstanceId[] = [];
+  private cardsInked: Array<{ cardId: CardInstanceId; exerted: boolean; cardName?: string }> = [];
 
   accumulate(event: PublishedGameEvent, context: LogProjectionContext): void {
     const gameEvent = event.event;
@@ -82,6 +84,9 @@ export class MoveOutcomeAccumulator {
         break;
       case "cardReadied":
         this.accumulateCardReadied(gameEvent.data as CardReadiedPayload, context);
+        break;
+      case "cardInked":
+        this.accumulateCardInked(gameEvent.data as CardInkedPayload);
         break;
     }
   }
@@ -147,6 +152,11 @@ export class MoveOutcomeAccumulator {
       hasAny = true;
     }
 
+    if (this.cardsInked.length > 0) {
+      outcomes.cardsInked = [...this.cardsInked];
+      hasAny = true;
+    }
+
     this.reset();
     return hasAny ? outcomes : undefined;
   }
@@ -162,6 +172,7 @@ export class MoveOutcomeAccumulator {
     this.cardsReadied = [];
     this.cardsMilled = null;
     this.cardsReturnedToHand = [];
+    this.cardsInked = [];
   }
 
   // ── Event handlers ────────────────────────────────────────────
@@ -215,6 +226,8 @@ export class MoveOutcomeAccumulator {
   private accumulateCardsDrawn(data: CardsDrawnPayload): void {
     // Skip manual/debug draws
     if ("isManual" in data && (data as { isManual?: boolean }).isManual) return;
+    // Mandatory turn draws are routed to TurnStartLog, not move outcomes
+    if (data.source === "mandatory-draw") return;
 
     this.cardsDrawnAmount += data.amount;
     this.cardsDrawnPlayerId = data.playerId;
@@ -282,5 +295,13 @@ export class MoveOutcomeAccumulator {
       amount: gameEvent.cardIds.length,
       cardIds: gameEvent.cardIds as CardInstanceId[],
     };
+  }
+
+  private accumulateCardInked(data: CardInkedPayload): void {
+    this.cardsInked.push({
+      cardId: data.cardId as CardInstanceId,
+      exerted: data.exerted ?? true,
+      ...(data.cardName ? { cardName: data.cardName } : {}),
+    });
   }
 }

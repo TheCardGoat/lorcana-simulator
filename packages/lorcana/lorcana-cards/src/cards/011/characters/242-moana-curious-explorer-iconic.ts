@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { moanaCuriousExplorer } from "..";
+import { moanaCuriousExplorer } from "./155-moana-curious-explorer";
 
 export const moanaCuriousExplorerIconic: CharacterCard = {
   ...moanaCuriousExplorer,

@@ -1,5 +1,6 @@
 import { resolveLorcanaDeckListText } from "@tcg/lorcana-cards";
 import { getGameServerOrigin } from "$lib/config/public-url-config.js";
+import { requestJson } from "$lib/data/transport/http-client.js";
 import type { PracticeMatchCreationResponse } from "./types.js";
 
 export interface HistoricDeckEntry {
@@ -16,20 +17,15 @@ interface CreatePracticeMatchParams {
 export async function createPracticeMatch(
   params: CreatePracticeMatchParams,
 ): Promise<PracticeMatchCreationResponse> {
-  const res = await fetch(`${getGameServerOrigin()}/v1/play/practice/`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
-  });
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    const message = (body as { message?: string } | null)?.message ?? `HTTP ${res.status}`;
-    throw new Error(`Failed to create practice match: ${message}`);
-  }
-
-  return (await res.json()) as PracticeMatchCreationResponse;
+  return requestJson<PracticeMatchCreationResponse>(
+    `${getGameServerOrigin()}/v1/play/practice/`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    },
+    "Failed to create practice match",
+  );
 }
 
 /**

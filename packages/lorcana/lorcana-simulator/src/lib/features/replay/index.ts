@@ -8,6 +8,8 @@ export {
   isReplaySaved,
   loadReplayData,
   deleteReplay,
+  migrateReplayMetadata,
   type SavedReplay,
   type SavedReplayMeta,
+  type ReplayPlayerMeta,
 } from "./replay-store.js";

@@ -1,3 +1,5 @@
+import { supportsUpTo } from "@tcg/lorcana-types";
+import { flattenSlottedTargets, isSlottedTargetInput } from "../slotted-targets";
 import { resolveTargetBounds } from "./target-resolver";
 
 export type ResolutionRequirementAnalysis = {
@@ -129,10 +131,16 @@ function analyzeChosenPlayerRequirement(
 }
 
 function isOpponentControlledDiscardTarget(target: unknown): boolean {
-  // These targets represent opponents who will choose their own discard via
-  // pending effects — the controller does not provide explicit targets upfront.
+  // These targets represent opponents whose discard is handled via pending
+  // effects — the controller does not provide explicit targets upfront.
+  // Includes OPPONENT because in a 1v1 game the opponent auto-resolves; the
+  // card selection (whether made by the opponent or by the controller via
+  // chosenBy:"you") is deferred to a pending effect, never provided upfront.
   return (
-    target === "EACH_OPPONENT" || target === "EACH_OTHER_PLAYER" || target === "CHOSEN_OPPONENT"
+    target === "OPPONENT" ||
+    target === "EACH_OPPONENT" ||
+    target === "EACH_OTHER_PLAYER" ||
+    target === "CHOSEN_OPPONENT"
   );
 }
 
@@ -172,11 +180,57 @@ function analyzeAmountSelectionRequirement(
   analysis: MutableResolutionRequirementAnalysis,
   record: RecordLike,
 ): void {
-  if ((record.type === "remove-damage" || record.type === "move-damage") && record.upTo === true) {
+  // Any effect registered in the up-to registry opts into chooser-selectable
+  // amounts when its `amount` is wrapped as `{ type: "up-to", value: N }`.
+  if (typeof record.type !== "string" || !supportsUpTo(record.type)) {
+    return;
+  }
+  const amount = record.amount;
+  if (
+    amount !== null &&
+    typeof amount === "object" &&
+    (amount as { type?: unknown }).type === "up-to"
+  ) {
     analysis.requiresAmountSelection = true;
   }
 }
 
+/**
+ * Analyse what kind of player input an effect or ability needs before it can
+ * fully resolve. The result drives two runtime decisions:
+ *
+ * 1. **`canAutoResolve`** — if `true`, the engine drains the bag entry
+ *    automatically without presenting a prompt to the controller. This is
+ *    set when the effect is non-optional AND requires none of:
+ *    explicit target selection, choice selection, named-card selection,
+ *    destination selection, or ordered-target selection.
+ *
+ * 2. **Deferred target selection (`chosenBy`)** — when an effect carries
+ *    `chosenBy: "opponent"` or `chosenBy: "TARGET"`, target selection is
+ *    handled by the opponent via a `pendingEffect` after the controller's
+ *    `resolveBag` is processed. These slots are intentionally excluded from
+ *    the `requiresExplicitTargetSelection` analysis so the controller's bag
+ *    entry gets `canAutoResolve = true` and drains without a click.
+ *
+ * ### Common patterns and their outcomes
+ *
+ * | Pattern | `canAutoResolve` | Who clicks |
+ * |---------|-----------------|------------|
+ * | Mandatory, fixed target (`target: "SELF"`) | `true` | nobody — auto-drains |
+ * | Mandatory, opponent-chosen target (`chosenBy: "opponent"`) | `true` | nobody on controller side; opponent resolves via `resolveEffect` |
+ * | Mandatory, controller-chosen target (`target: { selector: "chosen" }`) | `false` | controller picks at `resolveBag` time |
+ * | Optional (`type: "optional"`) | `false` | controller accepts/declines; if no valid targets exist the engine auto-declines |
+ * | Cross-chooser optional (`type: "optional"`, `chooser: "OPPONENT"`) | `false` | controller submits plain `resolveBag`; opponent then resolves `resolveEffect` |
+ *
+ * ### Call sites
+ *
+ * - `bagEffectNeedsPlayerDecision` in `lorcana-engine-base.ts` — gate for
+ *   auto-drain in `getAutoResolvableBagIdFromState`.
+ * - `shouldSkipEffectWithNoValidTargets` in `optional-skip-analysis.ts` —
+ *   supplementary check that forces auto-decline when any required chosen slot
+ *   has zero candidates (or all options of a `choice` effect are unfillable),
+ *   even when `canAutoResolve` would otherwise be `false`.
+ */
 export function analyzeResolutionRequirements(
   effectOrAbility: unknown,
 ): ResolutionRequirementAnalysis {
@@ -236,9 +290,11 @@ export function analyzeResolutionRequirements(
     analyzeChosenPlayerRequirement(analysis, record.target);
     analyzeChosenPlayerRequirement(analysis, record.chooser);
 
-    // When the effect has chosenBy: "opponent" or "TARGET", target selection is
-    // deferred to the opponent via pending effects — the controller does not need
-    // to provide explicit targets at resolveBag time.
+    // chosenBy: "opponent" / "TARGET" — target selection is deferred to the
+    // opponent (or targeted player) via a pendingEffect after the controller's
+    // resolveBag resolves. Skipping the normal target analysis here keeps
+    // requiresExplicitTargetSelection = false, which lets canAutoResolve = true
+    // and removes the need for a controller click.  See AGENTS.md §Opponent-Chosen Effects.
     const defersTargetSelection = record.chosenBy === "opponent" || record.chosenBy === "TARGET";
 
     if (!defersTargetSelection) {
@@ -315,6 +371,12 @@ export function countExplicitTargetSelections(targets: unknown): number {
   if (Array.isArray(targets)) {
     return targets.filter(
       (target): target is string => typeof target === "string" && target.length > 0,
+    ).length;
+  }
+
+  if (isSlottedTargetInput(targets)) {
+    return flattenSlottedTargets(targets).filter(
+      (target) => typeof target === "string" && target.length > 0,
     ).length;
   }
 

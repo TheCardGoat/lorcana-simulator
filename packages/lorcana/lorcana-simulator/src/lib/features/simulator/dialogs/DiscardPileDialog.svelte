@@ -12,6 +12,7 @@
     cards: LorcanaCardSnapshot[];
     playerSide: LorcanaPlayerSide;
     viewerSide?: LorcanaPlayerSide | null;
+    playableCardIds?: string[];
     target: LorcanaCardTarget;
     selectable?: boolean;
     selectedCardIds?: string[];
@@ -22,6 +23,7 @@
     cards,
     playerSide,
     viewerSide = null,
+    playableCardIds = [],
     target,
     selectable = false,
     selectedCardIds = [],
@@ -37,6 +39,7 @@
   {cards}
   {playerSide}
   {viewerSide}
+  {playableCardIds}
   {target}
   {selectable}
   {selectedCardIds}

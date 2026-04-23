@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { annaTruehearted } from "..";
+import { annaTruehearted } from "./138-anna-true-hearted";
 
 export const annaTrueheartedEnchanted: CharacterCard = {
   ...annaTruehearted,

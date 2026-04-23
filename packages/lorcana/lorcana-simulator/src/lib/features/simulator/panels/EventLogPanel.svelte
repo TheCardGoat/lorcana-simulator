@@ -3,16 +3,20 @@
   import { Droplets, Flag } from "@lucide/svelte";
   import { get } from "svelte/store";
   import { m } from "$lib/i18n/messages.js";
+  import type { ChatMessage } from "@tcg/shared";
   import type {
     LorcanaPlayerSide,
     MoveLogEntrySnapshot,
   } from "@/features/simulator/model/contracts.js";
   import CardLogToken from "./CardLogToken.svelte";
+  import { getEventLogMarkerIcon } from "./event-log-marker-icons.js";
+  import { maybeUseLorcanaSidebarPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import {
+    buildActivityFeed,
     buildEventLogRows,
     filterEntriesToLastTurns,
-    groupEventLogRows,
-    type EventLogGroup,
+    type ActivityFeedGroup,
+    type ChatFeedItem,
     type EventLogPlayerTone,
   } from "./event-log-presentation.js";
   import { isScrolledNearBottom, shouldAutoScrollOnNewRows } from "./event-log-scroll.js";
@@ -22,6 +26,7 @@
     viewerSide?: LorcanaPlayerSide | null;
     showRawLogRegistryJson?: boolean;
     compact?: boolean;
+    chatMessages?: ChatMessage[];
   }
 
   let {
@@ -29,17 +34,20 @@
     viewerSide = null,
     showRawLogRegistryJson = false,
     compact = false,
+    chatMessages = [],
   }: EventLogPanelProps = $props();
+
+  const sidebar = maybeUseLorcanaSidebarPresenter();
 
   let scrollElement = $state<HTMLDivElement | null>(null);
   let isPinnedToBottom = $state(true);
   let hasInitializedScroll = $state(false);
-  let previousRowCount = $state(0);
+  let previousGroupCount = $state(0);
   const browser = typeof window !== "undefined";
 
   const visibleEntries = $derived(filterEntriesToLastTurns(entries));
   const rows = $derived(buildEventLogRows(entries, viewerSide));
-  const groups = $derived(groupEventLogRows(rows));
+  const groups = $derived(buildActivityFeed(entries, chatMessages, viewerSide));
   const entryById = $derived(
     new Map<string, MoveLogEntrySnapshot>(visibleEntries.map((entry) => [entry.id, entry])),
   );
@@ -62,13 +70,13 @@
 
   $effect(() => {
     if (!browser || !scrollElement) {
-      previousRowCount = rows.length;
+      previousGroupCount = groups.length;
       return;
     }
 
     if (!hasInitializedScroll) {
       hasInitializedScroll = true;
-      previousRowCount = rows.length;
+      previousGroupCount = groups.length;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (!scrollElement || groups.length === 0) {
@@ -84,12 +92,12 @@
       return;
     }
 
-    if (!shouldAutoScrollOnNewRows(rows.length, previousRowCount, isPinnedToBottom)) {
-      previousRowCount = rows.length;
+    if (!shouldAutoScrollOnNewRows(groups.length, previousGroupCount, isPinnedToBottom)) {
+      previousGroupCount = groups.length;
       return;
     }
 
-    previousRowCount = rows.length;
+    previousGroupCount = groups.length;
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -113,7 +121,7 @@
     isPinnedToBottom = isScrolledNearBottom(scrollElement);
   }
 
-  function estimateGroupSize(group: EventLogGroup | undefined, debugMode: boolean): number {
+  function estimateGroupSize(group: ActivityFeedGroup | undefined, debugMode: boolean): number {
     if (!group) {
       return debugMode ? 200 : 60;
     }
@@ -122,8 +130,71 @@
       return 36;
     }
 
+    if (group.kind === "chat-message") {
+      return 72;
+    }
+
     // header (~28px) + rows (~20px each, more in debug)
     return debugMode ? 28 + group.rows.length * 120 : 28 + group.rows.length * 22;
+  }
+
+  function resolveChatSenderLabel(senderSeat: 0 | 1 | 2): string {
+    if (senderSeat === 0) return "System";
+    if (viewerSide === "playerOne") {
+      return senderSeat === 1 ? m["sim.player.you"]({}) : m["sim.player.opponent"]({});
+    }
+    if (viewerSide === "playerTwo") {
+      return senderSeat === 2 ? m["sim.player.you"]({}) : m["sim.player.opponent"]({});
+    }
+    return senderSeat === 1 ? m["sim.player.side.playerOne"]({}) : m["sim.player.side.playerTwo"]({});
+  }
+
+  function formatChatTimestamp(epochMs: number): string {
+    return new Date(epochMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function isSelfChatMessage(senderSeat: 0 | 1 | 2): boolean {
+    if (senderSeat === 0) return false;
+    if (viewerSide === "playerOne") return senderSeat === 1;
+    if (viewerSide === "playerTwo") return senderSeat === 2;
+    return false;
+  }
+
+  const SYSTEM_EVENT_LABELS: Record<string, string> = {
+    // cancel_match lifecycle
+    cancel_match_proposed: "Match cancellation proposed",
+    cancel_match_accepted: "Match cancelled by mutual agreement",
+    cancel_match_declined: "Match cancellation declined",
+    cancel_match_expired: "Match cancellation expired",
+    // undo lifecycle
+    undo_proposed: "Undo proposed",
+    undo_accepted: "Undo accepted",
+    undo_declined: "Undo declined",
+    undo_expired: "Undo request expired",
+    // enable_free_text_chat lifecycle
+    enable_free_text_chat_proposed: "Free text chat proposed",
+    free_text_chat_enabled: "Free text chat enabled",
+    enable_free_text_chat_declined: "Free text chat request declined",
+    enable_free_text_chat_expired: "Free text chat request expired",
+    // legacy / fallback (pre-THIS-PR events that may still exist in Redis TTL window)
+    proposal_sent: "Proposal sent",
+    proposal_accepted: "Proposal accepted",
+    proposal_declined: "Proposal declined",
+    proposal_expired: "Proposal expired",
+  };
+
+  function formatSystemEvent(event: string): string {
+    return SYSTEM_EVENT_LABELS[event] ?? event.replaceAll("_", " ");
+  }
+
+  function resolveChatMessageText(item: ChatFeedItem): string {
+    if (item.presetKey) {
+      return m[`sim.tabletop.chat.preset.${item.presetKey}`]({});
+    }
+    if (item.systemEvent) {
+      return formatSystemEvent(item.systemEvent);
+    }
+    return item.text ?? "";
   }
 
   function measureVirtualRow(node: HTMLDivElement): { update: () => void; destroy: () => void } {
@@ -264,6 +335,19 @@
                       <div class="h-px flex-1 bg-gradient-to-l from-transparent via-sky-300/30 to-sky-300/10"></div>
                     </div>
                   </div>
+                {:else if group.kind === "chat-message"}
+                  {@const isOwn = isSelfChatMessage(group.senderSeat)}
+                  <div class="flex flex-col {isOwn ? 'items-end' : 'items-start'} px-1 py-1">
+                    <span class="mb-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.16em] {isOwn ? 'text-emerald-300/60' : 'text-violet-300/60'}">
+                      {resolveChatSenderLabel(group.senderSeat)}
+                    </span>
+                    <div class="max-w-[85%] px-3 py-1.5 {isOwn ? 'rounded-2xl rounded-br-sm border border-emerald-500/30 bg-emerald-600/20 text-emerald-50' : 'rounded-2xl rounded-bl-sm border border-violet-500/30 bg-violet-600/20 text-slate-200'}">
+                      <p class="break-words text-[0.82rem] leading-[1.45]">
+                        {resolveChatMessageText(group)}
+                      </p>
+                    </div>
+                    <span class="mt-0.5 text-[0.58rem] text-slate-500">{formatChatTimestamp(group.epochMs)}</span>
+                  </div>
                 {:else}
                   <div class="border-l-2 {groupBorderClasses(group.actor.tone)} py-1.5 pl-3 pr-1">
                     <div class="mb-1 flex items-center gap-1.5">
@@ -277,8 +361,14 @@
                       {#if showRawLogRegistryJson}
                         {@const debugEntry = entryById.get(row.id)}
                         {#if debugEntry}
+                          {@const DebugMarkerIcon = getEventLogMarkerIcon(row.marker)}
                           <div class="flex gap-2 py-0.5">
-                            <span class="mt-[0.35rem] h-1 w-1 shrink-0 rounded-full bg-slate-500/60"></span>
+                            <span
+                              class="mt-[0.18rem] inline-flex size-3.5 shrink-0 items-center justify-center text-slate-400"
+                              aria-hidden="true"
+                            >
+                              <DebugMarkerIcon class="size-3.5" />
+                            </span>
                             <div class="min-w-0 flex-1 rounded border border-slate-800/80 bg-slate-950/70 px-2 py-1.5">
                               <p class="mb-1 text-[0.72rem] font-medium text-slate-200">{debugEntry.title}</p>
                               <pre class="overflow-x-auto whitespace-pre-wrap break-words text-[0.66rem] leading-5 text-slate-300">{stringifyRawEntry(debugEntry)}</pre>
@@ -286,8 +376,14 @@
                           </div>
                         {/if}
                       {:else}
+                        {@const MarkerIcon = getEventLogMarkerIcon(row.marker)}
                         <div class="flex gap-2 py-[0.1rem]">
-                          <span class="mt-[0.42rem] h-1 w-1 shrink-0 rounded-full bg-slate-500/45"></span>
+                          <span
+                            class="mt-[0.18rem] inline-flex size-3.5 shrink-0 items-center justify-center text-slate-400"
+                            aria-hidden="true"
+                          >
+                            <MarkerIcon class="size-3.5" />
+                          </span>
                           <p class="min-w-0 break-words text-[0.82rem] leading-[1.45] text-slate-200">
                             {#each row.segments as segment}
                               {#if segment.kind === "card"}
@@ -300,7 +396,11 @@
                                 <span
                                   class={`mx-[0.06rem] inline-flex items-center rounded-full border px-1.5 py-px align-baseline text-[0.68rem] font-semibold uppercase tracking-[0.12em] ${playerChipClasses(segment.tone)}`}
                                 >
-                                  {segment.text}
+                                  {#if segment.playerId}
+                                    {sidebar?.resolvePlayerName?.(segment.playerId) ?? segment.text}
+                                  {:else}
+                                    {segment.text}
+                                  {/if}
                                 </span>
                               {:else if segment.kind === "stat"}
                                 <span class="font-semibold text-sky-100">{segment.text}</span>
@@ -346,6 +446,19 @@
                   </div>
                   <div class="h-px flex-1 bg-gradient-to-l from-transparent via-sky-300/30 to-sky-300/10"></div>
                 </div>
+              </div>
+            {:else if group.kind === "chat-message"}
+              {@const isOwn = isSelfChatMessage(group.senderSeat)}
+              <div class="flex flex-col {isOwn ? 'items-end' : 'items-start'} px-1 py-1">
+                <span class="mb-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.16em] {isOwn ? 'text-emerald-300/60' : 'text-violet-300/60'}">
+                  {resolveChatSenderLabel(group.senderSeat)}
+                </span>
+                <div class="max-w-[85%] px-3 py-1.5 {isOwn ? 'rounded-2xl rounded-br-sm border border-emerald-500/30 bg-emerald-600/20 text-emerald-50' : 'rounded-2xl rounded-bl-sm border border-violet-500/30 bg-violet-600/20 text-slate-200'}">
+                  <p class="break-words text-[0.82rem] leading-[1.45]">
+                    {resolveChatMessageText(group)}
+                  </p>
+                </div>
+                <span class="mt-0.5 text-[0.58rem] text-slate-500">{formatChatTimestamp(group.epochMs)}</span>
               </div>
             {:else}
               <div class="border-l-2 {groupBorderClasses(group.actor.tone)} py-1.5 pl-3 pr-1">

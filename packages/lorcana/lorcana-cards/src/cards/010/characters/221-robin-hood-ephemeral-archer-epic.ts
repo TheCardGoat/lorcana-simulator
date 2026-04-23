@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { robinHoodEphemeralArcher } from "..";
+import { robinHoodEphemeralArcher } from "./171-robin-hood-ephemeral-archer";
 
 export const robinHoodEphemeralArcherEpic: CharacterCard = {
   ...robinHoodEphemeralArcher,

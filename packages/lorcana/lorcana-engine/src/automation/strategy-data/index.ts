@@ -9,6 +9,8 @@ import type {
 } from "../types";
 import { BEST_AI_CARD_PROFILES } from "./cards";
 import { BEST_AI_DECK_DOSSIERS } from "./fixtures";
+
+export { BEST_AI_CARD_PROFILES, BEST_AI_DECK_DOSSIERS };
 import { BEST_AI_MATCHUP_PLANS } from "./matchups";
 import type {
   CardStrategyProfile,

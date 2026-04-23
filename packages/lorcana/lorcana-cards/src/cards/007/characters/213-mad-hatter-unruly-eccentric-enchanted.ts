@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { madHatterUnrulyEccentric } from "..";
+import { madHatterUnrulyEccentric } from "./094-mad-hatter-unruly-eccentric";
 
 export const madHatterUnrulyEccentricEnchanted: CharacterCard = {
   ...madHatterUnrulyEccentric,

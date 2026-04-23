@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { auroraWakingBeauty } from "..";
+import { auroraWakingBeauty } from "./014-aurora-waking-beauty";
 
 export const auroraWakingBeautyEnchanted: CharacterCard = {
   ...auroraWakingBeauty,

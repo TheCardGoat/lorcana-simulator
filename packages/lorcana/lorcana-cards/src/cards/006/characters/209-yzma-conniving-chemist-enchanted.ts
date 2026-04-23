@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { yzmaConnivingChemist } from "..";
+import { yzmaConnivingChemist } from "./056-yzma-conniving-chemist";
 
 export const yzmaConnivingChemistEnchanted: CharacterCard = {
   ...yzmaConnivingChemist,

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { herculesSpectralDemigod } from "..";
+import { herculesSpectralDemigod } from "./117-hercules-spectral-demigod";
 
 export const herculesSpectralDemigodEpic: CharacterCard = {
   ...herculesSpectralDemigod,

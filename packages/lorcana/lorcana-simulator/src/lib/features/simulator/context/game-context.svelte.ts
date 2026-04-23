@@ -1,14 +1,20 @@
 import { getContext, hasContext, onDestroy, onMount, setContext, untrack } from "svelte";
 import { getLocale, locales, setLocale } from "$lib/paraglide/runtime.js";
 import { m } from "$lib/i18n/messages.js";
-import { getApiOrigin } from "$lib/config/public-url-config.js";
 import { searchCardsByName } from "@tcg/lorcana-cards/data";
+import {
+  updateUserSettings,
+  updateUserVisualSettings,
+} from "@/features/settings/user-settings-api.js";
 import type {
   AvailableMove,
   CardInstanceId,
   ChallengePreviewResult,
   EnginePacketUpdate,
   LorcanaCardDefinition,
+  MoveOptionSelectableCost,
+  MoveOptionSelectableCostKind,
+  ProtocolError,
   ResolutionSelectionContext,
   ResolutionSelectionDestinationRule,
   ResolutionSelectionRevealedCard,
@@ -20,6 +26,7 @@ import type {
   LorcanaEngineBase,
   LorcanaProjectedBoardView,
 } from "@tcg/lorcana-engine";
+import type { SelectorScope } from "@tcg/lorcana-types";
 
 import {
   type AvailableMovesSelectionEntry,
@@ -69,12 +76,15 @@ import {
 } from "@/features/simulator/model/pending-effect-payload.js";
 import {
   buildResolutionTargetPromptState,
+  buildSlottedTargetsFromSelection,
   getResolutionTargetPromptMessage,
   isSupportedResolutionTargetEffectType,
   type SupportedResolutionTargetEffectType,
 } from "@/features/simulator/model/resolution-target-prompt.js";
+import { SLOTTED_TARGET_SLOT_KEYS } from "@tcg/lorcana-engine";
 import {
   buildResolutionCopyBundle,
+  buildScryOverlayHeaderHeading,
   getResolutionInteractionStatusMessage,
 } from "@/features/simulator/model/resolution-copy.js";
 import {
@@ -178,42 +188,54 @@ import {
   cardEffectKindToSoundId,
   overlayKindToSoundId,
 } from "@/features/simulator/animations/sound-service.js";
+import { trackEvent } from "$lib/analytics/analytics.js";
 
 const LORCANA_GAME_CONTEXT_KEY = Symbol.for("lorcana.game");
 const LORCANA_SIDEBAR_PRESENTER_CONTEXT_KEY = Symbol.for("lorcana.sidebar-presenter");
-const PLAYER_LOCALE_STORAGE_KEY = "lorcana.simulator.playerLocale";
 const RAW_LOG_REGISTRY_STORAGE_KEY = "lorcana.simulator.rawLogRegistryJson";
-const SKIP_ACTION_CONFIRMATION_STORAGE_KEY = "lorcana.simulator.skipActionConfirmation";
-const HOTKEYS_ENABLED_STORAGE_KEY = "lorcana.simulator.hotkeysEnabled";
-const CARD_PREVIEW_DELAY_STORAGE_KEY = "lorcana.simulator.cardPreviewDelay";
-const PRIMARY_CLICK_ACTION_STORAGE_KEY = "lorcana.simulator.primaryClickAction";
-const ANIMATION_SPEED_STORAGE_KEY = "lorcana.simulator.animationSpeed";
-const SOUND_VOLUME_STORAGE_KEY = "lorcana.simulator.soundVolume";
-const ACCESSIBLE_MOBILE_CONTROLS_STORAGE_KEY = "lorcana.simulator.accessibleMobileControls";
 
-export type CardPreviewMode = "disabled" | "immediate" | "delayed";
-export type PrimaryClickAction = "challenge" | "quest" | "none";
-export type AnimationSpeed = "fast" | "normal" | "slow";
-export type HotkeyMode = "off" | "confirm-only" | "on";
+export type {
+  CardPreviewMode,
+  PrimaryClickAction,
+  AnimationSpeed,
+  HotkeyMode,
+  SupportedLocale,
+} from "@/features/settings/player-settings-store.svelte.js";
+
+import type {
+  CardPreviewMode,
+  PrimaryClickAction,
+  AnimationSpeed,
+  HotkeyMode,
+  SupportedLocale,
+} from "@/features/settings/player-settings-store.svelte.js";
+
+import {
+  PlayerSettingsStore,
+  type ServerGameplaySettings,
+} from "@/features/settings/player-settings-store.svelte.js";
 
 export const ANIMATION_SPEED_MS: Record<AnimationSpeed, number> = {
-  fast: 500,
-  normal: 1000,
-  slow: 1500,
+  off: 0,
+  fast: 250,
+  normal: 500,
+  slow: 750,
 };
 
 // Challenge animations include a result panel that requires more time to read.
 // These durations are longer than the base ANIMATION_SPEED_MS values.
 export const CHALLENGE_ANIMATION_DURATION_MS: Record<AnimationSpeed, number> = {
-  fast: 1800,
-  normal: 2500,
-  slow: 3200,
+  off: 0,
+  fast: 900,
+  normal: 1250,
+  slow: 1600,
 };
 
 export const QUEST_ROTATION_DURATION_MS: Record<AnimationSpeed, number> = {
-  fast: 250,
-  normal: 400,
-  slow: 600,
+  off: 0,
+  fast: 125,
+  normal: 200,
+  slow: 300,
 };
 
 const SECOND_LAYER_GUIDANCE_ID = "available-moves-second-layer";
@@ -221,7 +243,6 @@ const SECOND_LAYER_GUIDANCE_ID = "available-moves-second-layer";
 type BoardAnimationBatch = ResolvedBoardMoveAnimation[];
 
 export type PregamePhase = "chooseFirstPlayer" | "mulligan";
-type SupportedLocale = (typeof locales)[number];
 
 export interface ExecuteMoveOptions {
   clearChallengeMode?: boolean;
@@ -269,6 +290,8 @@ export interface LorcanaGameContextValue {
   boardSnapshot: () => LorcanaProjectedBoardView | null;
   cardSnapshotsById: () => CardSnapshotMap;
   resolveCardSnapshot: (cardId: string) => LorcanaCardSnapshot | null;
+  resolvePlayerName: (playerId: string) => string | null;
+  isPlayerMobile: (playerId: string) => boolean;
   getPlayerSummary: (side: LorcanaPlayerSide) => LorcanaPlayerSummary | null;
   executableMoves: () => ExecutableMoveEntry[];
   moveCategorySummaries: () => MoveCategorySummary[];
@@ -309,6 +332,8 @@ export interface LorcanaGameContextValue {
   setAnimationSpeed: (speed: AnimationSpeed) => void;
   soundVolume: () => number;
   setSoundVolume: (volume: number) => void;
+  showZoneCounters: () => boolean;
+  setShowZoneCounters: (show: boolean) => void;
   previewChallenge: (attackerId: string, defenderId: string) => ChallengePreviewResult | null;
   executeMove: <K extends LorcanaSimulatorMoveId>(
     moveId: K,
@@ -330,6 +355,7 @@ export interface LorcanaGameContextValue {
   onCardEffectAnimationFinished: (animationId: string) => void;
   onOverlayAnnouncementFinished: (animationId: string) => void;
   getOwnerIdForSide: (side: LorcanaPlayerSide) => string | null;
+  getRelativePlayerLabel: (side: LorcanaPlayerSide) => string;
   getPlayerVisualSettings: (side: LorcanaPlayerSide) => LorcanaResolvedPlayerVisualSettings;
   getPlayerVisualSettingsByOwnerId: (
     ownerId: string | null | undefined,
@@ -370,6 +396,8 @@ export interface SetLorcanaGameContextOptions {
   engine: LorcanaEngineBase;
   readModel?: SimulatorShellReadModel;
   playerSettings?: LorcanaPlayerSettingsMap;
+  playerDisplayNames?: Record<string, string>;
+  playerIsMobileMap?: Record<string, boolean>;
   debugPerformance?: boolean;
 }
 
@@ -381,8 +409,8 @@ const LORCANA_PREGAME_SEGMENT_ID = "startingAGame";
 // via WAAPI (.finished promise) in the animation layer. This timeout only fires
 // if the WAAPI callback doesn't (e.g., prefers-reduced-motion disables the
 // CSS animation, or the element is removed before the animation starts).
-const BOARD_ANIMATION_SAFETY_BUFFER_MS = 500;
-const DEBUG_ACTION_PREVIEW_DURATION_MS = 2000;
+const BOARD_ANIMATION_SAFETY_BUFFER_MS = 250;
+const DEBUG_ACTION_PREVIEW_DURATION_MS = 1000;
 const DEBUG_REACTIVITY_LOGS = false;
 const DEBUG_PERFORMANCE_LOGS = false;
 
@@ -611,9 +639,14 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     firePlayerEffectAnimations: (animations) => this.#firePlayerEffectAnimations(animations),
   });
   #engine: LorcanaEngineBase | null = null;
+  #gameStartTime = Date.now();
+  #gameEndTracked = false;
   #readModel: SimulatorShellReadModel | undefined = undefined;
   #playerSettings: LorcanaPlayerSettingsMap = {};
+  #playerDisplayNames: Record<string, string> = {};
+  #playerIsMobile: Record<string, boolean> = {};
   #unsubscribeReadModelStateUpdates: (() => void) | null = null;
+  #unsubscribeProtocolErrors: (() => void) | null = null;
   #lastStateID = $state(0);
   #lastVisibleRevision = $state<number | null>(null);
   #boardSnapshot = $state<LorcanaProjectedBoardView | null>(null);
@@ -667,8 +700,9 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
   #cardEffectAnimationTimeouts: ReturnType<typeof setTimeout>[] = [];
   #activePlayerEffectTargets = $state<Set<LorcanaPlayerSide>>(new Set());
   #playerEffectAnimationTimeouts: ReturnType<typeof setTimeout>[] = [];
-  #animationSpeed = $state<AnimationSpeed>("normal");
+  #animationSpeed = $state<AnimationSpeed>("off");
   #soundVolume = $state<number>(50);
+  #showZoneCounters = $state(false);
   #snapshotRefreshCallCount = 0;
   #previousMulliganContextKey: string | null = null;
   #boardAnimationTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -686,10 +720,14 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     engine: LorcanaEngineBase,
     readModel?: SimulatorShellReadModel,
     playerSettings: LorcanaPlayerSettingsMap = {},
+    playerDisplayNames: Record<string, string> = {},
     debugPerformance = DEBUG_PERFORMANCE_LOGS,
+    playerIsMobileMap: Record<string, boolean> = {},
   ) {
     initSoundService();
     this.#debugPerformance = debugPerformance;
+    this.#playerDisplayNames = playerDisplayNames;
+    this.#playerIsMobile = playerIsMobileMap;
     (globalThis as Record<string, unknown>).__TCG_DEBUG_PERFORMANCE__ = debugPerformance;
     this.syncEngine(engine, readModel, playerSettings);
   }
@@ -720,6 +758,13 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
 
   readonly boardSnapshot = (): LorcanaProjectedBoardView | null => this.#boardSnapshot;
   readonly cardSnapshotsById = (): CardSnapshotMap => this.#cardSnapshotsById;
+  readonly resolvePlayerName = (playerId: string): string | null => {
+    return this.#playerDisplayNames[playerId] ?? null;
+  };
+
+  readonly isPlayerMobile = (playerId: string): boolean => {
+    return this.#playerIsMobile[playerId] ?? false;
+  };
   readonly resolveCardSnapshot = (cardId: string): LorcanaCardSnapshot | null => {
     const snapshot = this.#cardSnapshotsById[cardId] ?? null;
     if (snapshot) {
@@ -935,6 +980,10 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     this.#soundVolume = Math.max(0, Math.min(100, Math.round(volume)));
     setSoundServiceVolume(this.#soundVolume);
   };
+  readonly showZoneCounters = (): boolean => this.#showZoneCounters;
+  readonly setShowZoneCounters = (show: boolean): void => {
+    this.#showZoneCounters = show;
+  };
   readonly previewChallenge = (
     attackerId: string,
     defenderId: string,
@@ -956,6 +1005,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       this.#readModel = nextReadModel;
       this.#playerSettings = nextPlayerSettings;
       this.#subscribeToReadModelStateUpdates();
+      this.#subscribeToProtocolErrors();
       this.#clearInteractionState();
       this.#resetBoardAnimations();
       this.#lastStateID = 0;
@@ -971,6 +1021,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
 
   destroy(): void {
     this.#unsubscribeFromReadModelStateUpdates();
+    this.#unsubscribeFromProtocolErrors();
     this.#orchestrator.cancel();
     this.#clearBoardAnimationTimer();
     this.#clearQuestAnimationTimers();
@@ -983,6 +1034,41 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
 
   #isGameFinished(): boolean {
     return this.#boardSnapshot?.status === "finished";
+  }
+
+  /** Player-facing move IDs that should be tracked (excludes manual/judge and resolution sub-steps). */
+  static readonly #TRACKED_MOVE_IDS = new Set([
+    "activateAbility",
+    "challenge",
+    "moveCharacterToLocation",
+    "passTurn",
+    "playCard",
+    "putCardIntoInkwell",
+    "quest",
+    "questWithAll",
+    "sing",
+    "singTogether",
+    "undo",
+  ]);
+
+  #trackMoveAnalytics<K extends LorcanaSimulatorMoveId>(
+    moveId: K,
+    params: LorcanaSimulatorMoveParams[K],
+  ): void {
+    const turn = this.#boardSnapshot?.turnNumber ?? 0;
+
+    if (moveId === "concede") {
+      trackEvent("game_concede");
+    } else if (moveId === "chooseWhoGoesFirst") {
+      const p = params as LorcanaSimulatorMoveParams["chooseWhoGoesFirst"];
+      const playerId = this.#engine?.getClientPlayerId();
+      trackEvent("game_pregame_first", { chose_first: p.playerId === playerId ? "true" : "false" });
+    } else if (moveId === "alterHand") {
+      const p = params as LorcanaSimulatorMoveParams["alterHand"];
+      trackEvent("game_mulligan", { cards_mulliganed: p.cardsToMulligan.length });
+    } else if (LorcanaGameContext.#TRACKED_MOVE_IDS.has(moveId)) {
+      trackEvent("game_move", { move_id: moveId, turn });
+    }
   }
 
   readonly executeMove = <K extends LorcanaSimulatorMoveId>(
@@ -1035,6 +1121,9 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     this.#pendingMoveError = null;
     this.#statusMessage = options.status ?? m["sim.status.actionExecuted"]({});
     this.#refreshSnapshot(`execute:${moveId}`);
+
+    // Analytics: track player-facing moves
+    this.#trackMoveAnalytics(moveId, params);
     this.#pendingResolutionAutoOpenStateId =
       moveId === "playCard" || moveId === "resolveBag" || moveId === "resolveEffect"
         ? this.#lastStateID
@@ -1063,7 +1152,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     }
 
     const cardInput = cardId as CardInput;
-    const result = engine.playCard(playerId, cardInput);
+    const result = engine.playCard(playerId, cardInput, { cost: "standard" });
     if (!result.success) {
       const nextPendingMoveError = buildPendingMoveError(
         "playCard",
@@ -1157,14 +1246,18 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       this.#isGameFinished() ||
       !ownerSide ||
       !card ||
-      card.zoneId !== "hand" ||
+      (card.zoneId !== "hand" && card.zoneId !== "limbo" && card.zoneId !== "discard") ||
       card.ownerSide !== ownerSide
     ) {
       return false;
     }
 
     if (zoneId === "play") {
-      return engine.canPlayCard(cardId as CardInput);
+      // Only allow dropping to play zone if the card can be played with standard
+      // ink cost. Alternative costs (sing, shift) require explicit selection
+      // through the action menu, not drag-and-drop.
+      const playCardMove = this.#currentAvailableMoves.find((m) => m.moveId === "playCard");
+      return playCardMove?.selectableCardIds.includes(cardId as CardInstanceId) ?? false;
     }
 
     return canValidateInk(engine, cardId);
@@ -1172,7 +1265,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
 
   readonly shouldOpenPlayCardSelectionOnDrop = (cardId: string): boolean => {
     const card = this.#cardSnapshotsById[cardId];
-    if (!card || card.zoneId !== "hand") {
+    if (!card || (card.zoneId !== "hand" && card.zoneId !== "limbo")) {
       return false;
     }
 
@@ -1247,6 +1340,22 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       return null;
     }
     return getOwnerIdForSideFromBoard(this.#boardSnapshot, side);
+  };
+
+  readonly getRelativePlayerLabel = (side: LorcanaPlayerSide): string => {
+    const ownerSide = this.#ownerSide;
+    const playerId = this.getOwnerIdForSide(side);
+    const displayName = playerId ? (this.#playerDisplayNames[playerId] ?? null) : null;
+
+    if (!ownerSide) {
+      return side === "playerOne"
+        ? m["sim.player.side.playerOne"]({})
+        : m["sim.player.side.playerTwo"]({});
+    }
+
+    const baseLabel = side === ownerSide ? m["sim.player.you"]({}) : m["sim.player.opponent"]({});
+
+    return displayName ? `${baseLabel} (${displayName})` : baseLabel;
   };
   readonly getPlayerVisualSettingsByOwnerId = (
     ownerId: string | null | undefined,
@@ -1532,6 +1641,44 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     });
   }
 
+  #subscribeToProtocolErrors(): void {
+    this.#unsubscribeFromProtocolErrors();
+
+    const engine = this.#engine;
+    if (!engine || !("onProtocolError" in engine) || typeof engine.onProtocolError !== "function") {
+      return;
+    }
+
+    this.#unsubscribeProtocolErrors = engine.onProtocolError((error: ProtocolError) => {
+      const message = error.resyncRequired
+        ? m["sim.errors.execution.staleState"]({})
+        : m["sim.errors.execution.invalidMove"]({});
+
+      this.#pendingMoveError = {
+        code: error.code,
+        message,
+        moveId: "unknown" as LorcanaSimulatorMoveId,
+        rawReason: error.message,
+      };
+      this.#pendingErrorReason = message;
+      this.#statusMessage = m["sim.status.actionRejected"]({});
+    });
+  }
+
+  #unsubscribeFromProtocolErrors(): void {
+    if (!this.#unsubscribeProtocolErrors) {
+      return;
+    }
+
+    try {
+      this.#unsubscribeProtocolErrors();
+    } catch {
+      // Ignore cleanup failures so teardown cannot strand later cleanup work.
+    } finally {
+      this.#unsubscribeProtocolErrors = null;
+    }
+  }
+
   #unsubscribeFromReadModelStateUpdates(): void {
     if (!this.#unsubscribeReadModelStateUpdates) {
       return;
@@ -1605,7 +1752,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       return;
     }
 
-    const STAGGER_MS = 100;
+    const STAGGER_MS = 50;
 
     for (let i = 0; i < animations.length; i++) {
       const animation = animations[i];
@@ -1645,7 +1792,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       count: animations.length,
     });
 
-    const STAGGER_MS = 100;
+    const STAGGER_MS = 50;
 
     for (let i = 0; i < animations.length; i++) {
       const animation = animations[i];
@@ -1697,7 +1844,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       return;
     }
 
-    const STAGGER_MS = 100;
+    const STAGGER_MS = 50;
 
     for (let i = 0; i < animations.length; i++) {
       const animation = animations[i];
@@ -1839,6 +1986,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
         playback: "serial",
         renderFace: "faceUp",
         sourceRect,
+        sourceZoneId: "hand",
         variant: "play-action-preview",
         viaRect: centerRect,
       };
@@ -1885,6 +2033,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
         playback: "serial",
         renderFace: isInk && variant === "ink-faceDown" ? "faceDown" : "faceUp",
         sourceRect,
+        sourceZoneId: "hand",
         variant,
         viaRect: isInk ? undefined : centerRect,
       };
@@ -1895,10 +2044,6 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
 
   #queueResolvedBoardAnimations(animations: ResolvedBoardMoveAnimation[]): void {
     if (animations.length === 0) {
-      debugLog("animations", "No resolved animations to queue");
-      console.info("[simulator][animations][board][queue]", {
-        status: "empty",
-      });
       return;
     }
 
@@ -1911,25 +2056,10 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       debugLog("animations", "Resolved animations were already queued or active", {
         animationIds: animations.map((animation) => animation.id),
       });
-      console.info("[simulator][animations][board][queue]", {
-        status: "deduped",
-        animationIds: animations.map((animation) => animation.id),
-      });
+
       return;
     }
 
-    console.info("[simulator][animations][board][queue]", {
-      status: "queued",
-      animations: uniqueAnimations.map((animation) => ({
-        id: animation.id,
-        cardId: animation.card.cardId,
-        groupId: animation.groupId,
-        playback: animation.playback,
-        phase: animation.phase,
-        variant: animation.variant,
-        durationMs: animation.durationMs,
-      })),
-    });
     this.#queuedBoardAnimations = [
       ...this.#queuedBoardAnimations,
       ...this.#createBoardAnimationBatches(uniqueAnimations),
@@ -2057,8 +2187,14 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     // catches up. Using both ensures derived state (legal moves, pending effects)
     // is recalculated whenever the engine runtime changes — even when the board
     // stateID happens to match across optimistic and confirmed phases.
+    //
+    // Note: canUndo is intentionally included in the cache key because the
+    // optimistic stateID and the confirmed stateID are equal (both advance
+    // together). Without this, a quest→confirm transition would not invalidate
+    // the cache, and "undo" would never appear in moveCategorySummaries.
     const boardStateID = this.#boardSnapshot.stateID;
-    const stateID = boardStateID * 100_000 + engine.getStateID();
+    const canUndoFlag = engine.canUndo?.() ? 1 : 0;
+    const stateID = (boardStateID * 100_000 + engine.getStateID()) * 2 + canUndoFlag;
     const activeSide = getActiveSide(this.#boardSnapshot);
     let nextMoveCategorySummaries: MoveCategorySummary[] = [];
     let nextChallengeReadyCardIds: string[] = [];
@@ -2226,33 +2362,49 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     const nextMoveLogEntries =
       this.#readModel?.getMoveLog() ?? (hasMoveLog(engine) ? engine.getMoveLog() : []);
     const packetUpdate = this.#getFilteredPacketUpdate(engine);
-    const nextQueuedAnimations = deriveQueuedBoardMoveAnimationsFromPacket(
-      previousSnapshot,
-      nextBoardSnapshot,
-      packetUpdate,
-      (cardId) => nextCardSnapshotsById[cardId] ?? null,
-      getAnimationSpeedMultiplier(this.#animationSpeed),
-    );
-    const nextQueuedQuestAnimations = deriveQueuedQuestAnimationsFromPacket(
-      packetUpdate,
-      ANIMATION_SPEED_MS[this.#animationSpeed],
-    );
-    const nextQueuedChallengeAnimations = deriveQueuedChallengeAnimationsFromPacket(
-      packetUpdate,
-      CHALLENGE_ANIMATION_DURATION_MS[this.#animationSpeed],
-    );
-    const nextQueuedOverlayAnnouncements = deriveQueuedOverlayAnnouncementsFromPacket(
-      packetUpdate,
-      ANIMATION_SPEED_MS[this.#animationSpeed],
-    );
-    const nextQueuedCardEffectAnimations = deriveQueuedCardEffectAnimationsFromPacket(
-      packetUpdate,
-      ANIMATION_SPEED_MS[this.#animationSpeed],
-    );
-    const nextQueuedPlayerEffectAnimations = deriveQueuedPlayerEffectAnimationsFromPacket(
-      packetUpdate,
-      ANIMATION_SPEED_MS[this.#animationSpeed],
-    );
+    const animationsOff = this.#animationSpeed === "off";
+    if (animationsOff) {
+      this.#orchestrator.cancel();
+    }
+    const nextQueuedAnimations = animationsOff
+      ? []
+      : deriveQueuedBoardMoveAnimationsFromPacket(
+          previousSnapshot,
+          nextBoardSnapshot,
+          packetUpdate,
+          (cardId) => nextCardSnapshotsById[cardId] ?? null,
+          getAnimationSpeedMultiplier(this.#animationSpeed),
+        );
+    const nextQueuedQuestAnimations = animationsOff
+      ? []
+      : deriveQueuedQuestAnimationsFromPacket(
+          packetUpdate,
+          ANIMATION_SPEED_MS[this.#animationSpeed],
+        );
+    const nextQueuedChallengeAnimations = animationsOff
+      ? []
+      : deriveQueuedChallengeAnimationsFromPacket(
+          packetUpdate,
+          CHALLENGE_ANIMATION_DURATION_MS[this.#animationSpeed],
+        );
+    const nextQueuedOverlayAnnouncements = animationsOff
+      ? []
+      : deriveQueuedOverlayAnnouncementsFromPacket(
+          packetUpdate,
+          ANIMATION_SPEED_MS[this.#animationSpeed],
+        );
+    const nextQueuedCardEffectAnimations = animationsOff
+      ? []
+      : deriveQueuedCardEffectAnimationsFromPacket(
+          packetUpdate,
+          ANIMATION_SPEED_MS[this.#animationSpeed],
+        );
+    const nextQueuedPlayerEffectAnimations = animationsOff
+      ? []
+      : deriveQueuedPlayerEffectAnimationsFromPacket(
+          packetUpdate,
+          ANIMATION_SPEED_MS[this.#animationSpeed],
+        );
 
     if (nextQueuedQuestAnimations.length > 0) {
       debugLog("quest-animations", "Derived quest animations from packet", {
@@ -2268,6 +2420,29 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     this.#boardSnapshot = nextBoardSnapshot;
     this.#cardSnapshotsById = nextCardSnapshotsById;
     this.#ownerSide = getOwnerSideFromEngine(engine, nextBoardSnapshot);
+
+    // Track game end on the first transition to "finished" status
+    if (
+      nextBoardSnapshot.status === "finished" &&
+      previousSnapshot?.status !== "finished" &&
+      !this.#gameEndTracked
+    ) {
+      this.#gameEndTracked = true;
+      const playerId = engine.getClientPlayerId();
+      const winner = nextBoardSnapshot.winner;
+      let result: "win" | "loss" | "draw";
+      if (winner == null || !playerId) {
+        result = "draw";
+      } else {
+        result = winner === playerId ? "win" : "loss";
+      }
+      trackEvent("game_end", {
+        result,
+        turns: nextBoardSnapshot.turnNumber ?? 0,
+        duration_seconds: Math.round((Date.now() - this.#gameStartTime) / 1000),
+        mode: "unknown",
+      });
+    }
     this.#lastStateID = currentStateID;
     this.#lastVisibleRevision =
       typeof visibleRevision === "number" ? visibleRevision : this.#lastVisibleRevision;
@@ -2412,10 +2587,13 @@ export type ActionSelectionSessionCategoryId =
 export type ActionSelectionPhase =
   | "idle"
   | "choose-source"
+  | "choose-cost"
   | "choose-option"
   | "choose-target"
   | "confirm"
   | "executing";
+
+type ActionSelectionCostSelections = Partial<Record<MoveOptionSelectableCostKind, string[]>>;
 
 export interface ActionSelectionSession {
   categoryId: ActionSelectionSessionCategoryId;
@@ -2425,6 +2603,7 @@ export interface ActionSelectionSession {
   sourceCardId: string | null;
   targetCardId: string | null;
   selectedCardIds: string[];
+  selectedCosts: ActionSelectionCostSelections;
   selectedMoveId: string | null;
   confirmationRequired: boolean;
 }
@@ -2453,6 +2632,7 @@ interface ResolutionSelectionSession {
   context: ResolutionSelectionContext;
   promptMessage: string;
   promptInlineReference: GuidanceInlineReference | null;
+  abilityDescription: string | null;
   sessionStatusMessage: string;
   phase: ResolutionSelectionPhase;
   inline: boolean;
@@ -2644,6 +2824,171 @@ function isActivateAbilityMove(move: ExecutableMoveEntry): move is ExecutableMov
   return move.moveId === "activateAbility";
 }
 
+function getMoveSelectableCosts(
+  move: ExecutableMoveEntry | null | undefined,
+): MoveOptionSelectableCost[] {
+  return move?.presentation.kind === "targeted" && Array.isArray(move.presentation.selectableCosts)
+    ? [...move.presentation.selectableCosts]
+    : [];
+}
+
+function getSelectedCostCardIds(
+  session: ActionSelectionSession,
+  costKind: MoveOptionSelectableCostKind,
+): string[] {
+  return [...(session.selectedCosts[costKind] ?? [])];
+}
+
+function getNextSelectableCost(
+  session: ActionSelectionSession,
+  move: ExecutableMoveEntry | null | undefined,
+): MoveOptionSelectableCost | null {
+  for (const selectableCost of getMoveSelectableCosts(move)) {
+    if (getSelectedCostCardIds(session, selectableCost.kind).length < selectableCost.count) {
+      return selectableCost;
+    }
+  }
+
+  return null;
+}
+
+function hasOutstandingSelectableCosts(
+  session: ActionSelectionSession,
+  move: ExecutableMoveEntry | null | undefined,
+): boolean {
+  return getNextSelectableCost(session, move) !== null;
+}
+
+function getCurrentMoveForActionSelectionSession(
+  session: ActionSelectionSession,
+): ExecutableMoveEntry | null {
+  return session.selectedMoveId
+    ? (session.candidateMoves.find((move) => move.id === session.selectedMoveId) ?? null)
+    : null;
+}
+
+function getRelevantMovesForActionSelectionSession(
+  session: ActionSelectionSession,
+): ExecutableMoveEntry[] {
+  return session.candidateMoves.filter((move) => {
+    if (
+      session.sourceCardId &&
+      getSourceCardIdForActionSelectionMove(session.categoryId, move) !== session.sourceCardId
+    ) {
+      return false;
+    }
+
+    if (
+      session.targetCardId &&
+      getTargetCardIdForActionSelectionMove(session.categoryId, move) !== session.targetCardId
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function getReferenceMoveForActionSelectionSession(
+  session: ActionSelectionSession,
+): ExecutableMoveEntry | null {
+  return (
+    getCurrentMoveForActionSelectionSession(session) ??
+    getRelevantMovesForActionSelectionSession(session)[0] ??
+    null
+  );
+}
+
+function getCurrentSelectableCostForActionSelectionSession(
+  session: ActionSelectionSession,
+): MoveOptionSelectableCost | null {
+  return getNextSelectableCost(session, getReferenceMoveForActionSelectionSession(session));
+}
+
+function getPostCostActionSelectionPhase(
+  session: ActionSelectionSession,
+  move: ExecutableMoveEntry,
+): "choose-cost" | "choose-target" | "confirm" | "executing" {
+  if (hasOutstandingSelectableCosts(session, move)) {
+    return "choose-cost";
+  }
+
+  if (
+    !session.targetCardId &&
+    (isSingTogetherSelectionMove(move) ||
+      (session.sourceCardId &&
+        usesTargetSelectionForActionSelectionMoves(
+          session.categoryId,
+          getSourceMovesForActionSelectionSession(session, session.sourceCardId),
+        )))
+  ) {
+    return "choose-target";
+  }
+
+  return session.confirmationRequired ? "confirm" : "executing";
+}
+
+function applySelectedCostsToMoveParams(
+  move: ExecutableMoveEntry,
+  session: ActionSelectionSession,
+): LorcanaSimulatorMoveParams[LorcanaSimulatorMoveId] {
+  const selectableCosts = getMoveSelectableCosts(move);
+  if (selectableCosts.length === 0) {
+    return move.params;
+  }
+
+  if (move.moveId === "activateAbility") {
+    const activateAbilityParams = move.params as LorcanaSimulatorMoveParams["activateAbility"];
+    return {
+      ...activateAbilityParams,
+      costs: {
+        ...activateAbilityParams.costs,
+        ...(session.selectedCosts.banishCharacters
+          ? { banishCharacters: [...session.selectedCosts.banishCharacters] }
+          : {}),
+        ...(session.selectedCosts.banishItems
+          ? { banishItems: [...session.selectedCosts.banishItems] }
+          : {}),
+        ...(session.selectedCosts.discardCards
+          ? { discardCards: [...session.selectedCosts.discardCards] }
+          : {}),
+        ...(session.selectedCosts.exertCharacters
+          ? { exertCharacters: [...session.selectedCosts.exertCharacters] }
+          : {}),
+        ...(session.selectedCosts.exertItems
+          ? { exertItems: [...session.selectedCosts.exertItems] }
+          : {}),
+      },
+    } satisfies LorcanaSimulatorMoveParams["activateAbility"];
+  }
+
+  if (move.moveId === "playCard") {
+    const playCardParams = move.params as LorcanaSimulatorMoveParams["playCard"];
+    if (playCardParams.cost === "shift") {
+      return {
+        ...playCardParams,
+        ...(session.selectedCosts.discardCards
+          ? { discardCards: [...session.selectedCosts.discardCards] }
+          : {}),
+      } satisfies LorcanaSimulatorMoveParams["playCard"];
+    }
+    if (playCardParams.cost === "sacrifice" && session.selectedCosts.banishItems?.length) {
+      return {
+        ...playCardParams,
+        sacrificeTarget: session.selectedCosts.banishItems[0],
+      } satisfies LorcanaSimulatorMoveParams["playCard"];
+    }
+    if (playCardParams.cost === "exert-items" && session.selectedCosts.exertItems?.length) {
+      return {
+        ...playCardParams,
+        exertTargets: [...session.selectedCosts.exertItems],
+      } satisfies LorcanaSimulatorMoveParams["playCard"];
+    }
+  }
+
+  return move.params;
+}
+
 function buildActionSelectionSession(
   categoryId: ActionSelectionSessionCategoryId,
   moves: readonly ExecutableMoveEntry[],
@@ -2661,6 +3006,7 @@ function buildActionSelectionSession(
     sourceCardId: null,
     targetCardId: null,
     selectedCardIds: [],
+    selectedCosts: {},
     selectedMoveId: null,
     confirmationRequired,
   };
@@ -2835,6 +3181,7 @@ function buildResolutionSelectionSession(
   context: ResolutionSelectionContext,
   promptMessage: string,
   promptInlineReference: GuidanceInlineReference | null,
+  abilityDescription: string | null,
   sessionStatusMessage: string,
 ): ResolutionSelectionSession {
   const scryDestinations =
@@ -2856,6 +3203,7 @@ function buildResolutionSelectionSession(
     context,
     promptMessage,
     promptInlineReference,
+    abilityDescription,
     sessionStatusMessage,
     phase: "selecting",
     inline: isInlineResolutionSelectionContext(context),
@@ -2877,19 +3225,58 @@ function buildResolutionSelectionSession(
   };
 }
 
+/**
+ * Distinguishes player-only DSL entries from card targets, including when both use
+ * `selector: "chosen"` — mirrors `isPlayerTargetDescriptor` in engine `target-resolver.ts`.
+ */
+function isPlayerOnlyTargetDslForResolutionFinder(target: object): boolean {
+  const descriptor = target as Record<string, unknown>;
+  const selector = descriptor.selector;
+
+  if (
+    selector !== "you" &&
+    selector !== "opponent" &&
+    selector !== "each-opponent" &&
+    selector !== "each-player" &&
+    selector !== "chosen" &&
+    selector !== "challenging-player"
+  ) {
+    return false;
+  }
+
+  return (
+    descriptor.reference === undefined &&
+    descriptor.owner === undefined &&
+    descriptor.cardType === undefined &&
+    descriptor.cardTypes === undefined &&
+    descriptor.zones === undefined
+  );
+}
+
+const CARD_TARGET_SELECTOR_SCOPES = new Set<string>([
+  "self",
+  "chosen",
+  "all",
+  "each",
+  "any",
+  "random",
+] satisfies readonly SelectorScope[]);
+
 function isCardTargetDsl(target: unknown): target is LorcanaCardTarget {
   if (!target || typeof target !== "object" || Array.isArray(target)) {
     return false;
   }
 
+  if (isPlayerOnlyTargetDslForResolutionFinder(target)) {
+    return false;
+  }
+
   const selector = (target as { selector?: unknown }).selector;
-  return (
-    selector !== "you" &&
-    selector !== "opponent" &&
-    selector !== "each-opponent" &&
-    selector !== "each-player" &&
-    selector !== "chosen"
-  );
+  if (typeof selector !== "string" || !CARD_TARGET_SELECTOR_SCOPES.has(selector)) {
+    return false;
+  }
+
+  return true;
 }
 
 function getTargetOwnerForViewer(params: {
@@ -2971,7 +3358,12 @@ function usesTargetSelectionForActionSelectionMoves(
     return moves.length > 0;
   }
 
-  if (categoryId !== "play-card" && categoryId !== "shift-card" && categoryId !== "sing-card") {
+  if (
+    categoryId !== "play-card" &&
+    categoryId !== "shift-card" &&
+    categoryId !== "sing-card" &&
+    categoryId !== "activate-ability"
+  ) {
     return false;
   }
 
@@ -2999,6 +3391,10 @@ function getChooseTargetStatusMessage(
 
   if (categoryId === "play-card") {
     return `Choose a target for ${sourceCardLabel}.`;
+  }
+
+  if (categoryId === "shift-card") {
+    return `Choose a shift target for ${sourceCardLabel}.`;
   }
 
   return `Choose a target for ${sourceCardLabel}.`;
@@ -3048,6 +3444,69 @@ function getChooseOptionStatusMessage(
     : `Choose an ability for ${sourceCardLabel}.`;
 }
 
+function getCostSelectionSummary(
+  selectableCost: MoveOptionSelectableCost,
+  selectedCount: number,
+): string | undefined {
+  const noun =
+    selectableCost.kind === "discardCards"
+      ? selectableCost.count === 1
+        ? "card"
+        : "cards"
+      : selectableCost.kind === "exertCharacters"
+        ? selectableCost.count === 1
+          ? "character to exert"
+          : "characters to exert"
+        : selectableCost.kind === "exertItems"
+          ? selectableCost.count === 1
+            ? "item to exert"
+            : "items to exert"
+          : selectableCost.kind === "banishCharacters"
+            ? selectableCost.count === 1
+              ? "character to banish"
+              : "characters to banish"
+            : selectableCost.count === 1
+              ? "item to banish"
+              : "items to banish";
+  return selectedCount > 0
+    ? `${selectedCount}/${selectableCost.count} ${noun} selected`
+    : undefined;
+}
+
+function getChooseCostStatusMessage(
+  sourceCardLabel: string,
+  selectableCost: MoveOptionSelectableCost,
+): string {
+  const countPrefix = selectableCost.count === 1 ? "a" : `${selectableCost.count}`;
+  const qualifier = selectableCost.cardName
+    ? ` named ${selectableCost.cardName}`
+    : selectableCost.classification
+      ? ` with ${selectableCost.classification}`
+      : selectableCost.cardType
+        ? ` ${selectableCost.cardType}`
+        : "";
+
+  if (selectableCost.kind === "discardCards") {
+    return `Choose ${countPrefix} card${selectableCost.count === 1 ? "" : "s"}${qualifier} to discard for ${sourceCardLabel}.`;
+  }
+
+  if (selectableCost.kind === "exertCharacters" || selectableCost.kind === "exertItems") {
+    return `Choose ${countPrefix} ${selectableCost.kind === "exertCharacters" ? "character" : "item"}${selectableCost.count === 1 ? "" : "s"}${qualifier} to exert for ${sourceCardLabel}.`;
+  }
+
+  return `Choose ${countPrefix} ${selectableCost.kind === "banishCharacters" ? "character" : "item"}${selectableCost.count === 1 ? "" : "s"}${qualifier} to banish for ${sourceCardLabel}.`;
+}
+
+function getInvalidCostSelectionReason(selectableCost: MoveOptionSelectableCost): string {
+  if (selectableCost.kind === "discardCards") {
+    return "This card is not a valid discard cost.";
+  }
+  if (selectableCost.kind === "exertCharacters" || selectableCost.kind === "exertItems") {
+    return "This card is not a valid exert cost.";
+  }
+  return "This card is not a valid banish cost.";
+}
+
 function capitalize(value: string): string {
   return value.length > 0 ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : value;
 }
@@ -3074,17 +3533,22 @@ function buildAvailableMovesCardDetail(card: LorcanaCardSnapshot): string | unde
   return fragments.length > 0 ? fragments.join(" · ") : undefined;
 }
 
+async function saveGameplaySettings(update: {
+  gameplaySettings: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    await updateUserSettings(update);
+  } catch {
+    // Silently fail - gameplay settings are non-critical
+  }
+}
+
 async function saveVisualSettings(settings: {
   cardBack?: string;
   playmat?: string;
 }): Promise<void> {
   try {
-    await fetch(`${getApiOrigin()}/v1/users/me/visual-settings`, {
-      method: "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(settings),
-    });
+    await updateUserVisualSettings({ visualSettings: settings });
   } catch {
     // Silently fail - visual settings are non-critical
   }
@@ -3092,21 +3556,68 @@ async function saveVisualSettings(settings: {
 
 export class LorcanaSidebarPresenter {
   readonly #game: LorcanaGameContextValue;
+  readonly #settings: PlayerSettingsStore;
   #mobileNoticeId = 0;
 
-  selectedLocale = $state<SupportedLocale>(getLocale());
+  get selectedLocale() {
+    return this.#settings.selectedLocale;
+  }
+  set selectedLocale(v) {
+    this.#settings.selectedLocale = v;
+  }
   isPlayerSettingsOpen = $state(false);
   showRawLogRegistryJson = $state(false);
   showRawErrorDialog = $state(false);
   mobileNotice = $state<{ id: number; message: string; tone: "info" } | null>(null);
   pendingMulliganDangerConfirm = $state<"keepHand" | "allCards" | null>(null);
-  skipActionConfirmation = $state(false);
-  hotkeyMode = $state<HotkeyMode>("confirm-only");
-  cardPreviewMode = $state<CardPreviewMode>("delayed");
-  primaryClickAction = $state<PrimaryClickAction>("challenge");
-  animationSpeed = $state<AnimationSpeed>("normal");
-  soundVolume = $state<number>(50);
-  accessibleMobileControls = $state(false);
+  get skipActionConfirmation() {
+    return this.#settings.skipActionConfirmation;
+  }
+  set skipActionConfirmation(v) {
+    this.#settings.skipActionConfirmation = v;
+  }
+  get hotkeyMode() {
+    return this.#settings.hotkeyMode;
+  }
+  set hotkeyMode(v) {
+    this.#settings.hotkeyMode = v;
+  }
+  get cardPreviewMode() {
+    return this.#settings.cardPreviewMode;
+  }
+  set cardPreviewMode(v) {
+    this.#settings.cardPreviewMode = v;
+  }
+  get primaryClickAction() {
+    return this.#settings.primaryClickAction;
+  }
+  set primaryClickAction(v) {
+    this.#settings.primaryClickAction = v;
+  }
+  get animationSpeed() {
+    return this.#settings.animationSpeed;
+  }
+  set animationSpeed(v) {
+    this.#settings.animationSpeed = v;
+  }
+  get soundVolume() {
+    return this.#settings.soundVolume;
+  }
+  set soundVolume(v) {
+    this.#settings.soundVolume = v;
+  }
+  get accessibleMobileControls() {
+    return this.#settings.accessibleMobileControls;
+  }
+  set accessibleMobileControls(v) {
+    this.#settings.accessibleMobileControls = v;
+  }
+  get showZoneCounters() {
+    return this.#settings.showZoneCounters;
+  }
+  set showZoneCounters(v) {
+    this.#settings.showZoneCounters = v;
+  }
   guidancePosition = $state<GuidancePosition>("bottom");
   #mulliganSelectionActive = $state(false);
   #actionSelectionSession = $state<ActionSelectionSession | null>(null);
@@ -3122,6 +3633,10 @@ export class LorcanaSidebarPresenter {
 
   constructor(game: LorcanaGameContextValue) {
     this.#game = game;
+    this.#settings = new PlayerSettingsStore();
+    this.#settings.setSaveToServer((update) => {
+      saveGameplaySettings(update).catch(() => {});
+    });
 
     this.activePlayerGuidanceController = {
       upsert: (item: {
@@ -3175,87 +3690,33 @@ export class LorcanaSidebarPresenter {
       this.showRawLogRegistryJson = false;
     }
 
-    const storedSkipActionConfirmation = localStorage.getItem(SKIP_ACTION_CONFIRMATION_STORAGE_KEY);
-    if (storedSkipActionConfirmation === "true") {
-      this.skipActionConfirmation = true;
-    } else if (storedSkipActionConfirmation === "false") {
-      this.skipActionConfirmation = false;
-    }
+    // Delegate bulk hydration to the shared settings store
+    this.#settings.initialize();
 
-    const storedHotkeysEnabled = localStorage.getItem(HOTKEYS_ENABLED_STORAGE_KEY);
-    if (
-      storedHotkeysEnabled === "off" ||
-      storedHotkeysEnabled === "confirm-only" ||
-      storedHotkeysEnabled === "on"
-    ) {
-      this.hotkeyMode = storedHotkeysEnabled;
-    } else if (storedHotkeysEnabled === "true") {
-      this.hotkeyMode = "on";
-    } else if (storedHotkeysEnabled === "false") {
-      this.hotkeyMode = "off";
+    // Apply game-specific side effects that the shared store doesn't know about
+    this.#game.setAnimationSpeed(this.animationSpeed);
+    this.#game.setSoundVolume(this.soundVolume);
+    this.#game.setShowZoneCounters(this.showZoneCounters);
+    if (this.selectedLocale !== getLocale()) {
+      this.#game.handleLocaleChanged();
     }
+  }
 
-    const storedCardPreviewMode = localStorage.getItem(CARD_PREVIEW_DELAY_STORAGE_KEY);
-    if (
-      storedCardPreviewMode === "disabled" ||
-      storedCardPreviewMode === "immediate" ||
-      storedCardPreviewMode === "delayed"
-    ) {
-      this.cardPreviewMode = storedCardPreviewMode;
-    }
-
-    const storedPrimaryClickAction = localStorage.getItem(PRIMARY_CLICK_ACTION_STORAGE_KEY);
-    if (
-      storedPrimaryClickAction === "challenge" ||
-      storedPrimaryClickAction === "quest" ||
-      storedPrimaryClickAction === "none"
-    ) {
-      this.primaryClickAction = storedPrimaryClickAction;
-    }
-
-    const storedAnimationSpeed = localStorage.getItem(ANIMATION_SPEED_STORAGE_KEY);
-    if (
-      storedAnimationSpeed === "fast" ||
-      storedAnimationSpeed === "normal" ||
-      storedAnimationSpeed === "slow"
-    ) {
-      this.animationSpeed = storedAnimationSpeed;
-      this.#game.setAnimationSpeed(storedAnimationSpeed);
-    }
-
-    const storedSoundVolume = localStorage.getItem(SOUND_VOLUME_STORAGE_KEY);
-    if (storedSoundVolume !== null) {
-      const parsed = Number(storedSoundVolume);
-      if (!Number.isNaN(parsed)) {
-        this.soundVolume = Math.max(0, Math.min(100, Math.round(parsed)));
-        this.#game.setSoundVolume(this.soundVolume);
-      }
-    }
-
-    const storedAccessibleMobileControls = localStorage.getItem(
-      ACCESSIBLE_MOBILE_CONTROLS_STORAGE_KEY,
-    );
-    if (storedAccessibleMobileControls === "true") {
-      this.accessibleMobileControls = true;
-    } else if (storedAccessibleMobileControls === "false") {
-      this.accessibleMobileControls = false;
-    }
-
-    const storedLocale = localStorage.getItem(PLAYER_LOCALE_STORAGE_KEY);
-    if (storedLocale && locales.includes(storedLocale as SupportedLocale)) {
-      const nextLocale = storedLocale as SupportedLocale;
-      this.selectedLocale = nextLocale;
-      if (nextLocale !== getLocale()) {
-        setLocale(nextLocale, { reload: false });
-        this.#game.handleLocaleChanged();
-      }
-      return;
-    }
-
-    localStorage.setItem(PLAYER_LOCALE_STORAGE_KEY, this.selectedLocale);
+  /**
+   * Hydrate gameplay settings from server data, overriding localStorage values.
+   * Call once after construction with data from GET /v1/users/me/settings.
+   */
+  initializeFromServer(serverSettings: ServerGameplaySettings): void {
+    this.#settings.initializeFromServer(serverSettings);
+    // Re-apply game-specific side effects with server values
+    this.#game.setAnimationSpeed(this.animationSpeed);
+    this.#game.setSoundVolume(this.soundVolume);
+    this.#game.setShowZoneCounters(this.showZoneCounters);
   }
 
   syncAutoOpenPendingResolution(): void {
+    this.#reconcileLocalInteractionSessions();
+
     const candidate = this.#getAutoOpenResolutionCandidate();
     if (!candidate || candidate.key === this.#lastHandledAutoOpenResolutionKey) {
       return;
@@ -3274,6 +3735,76 @@ export class LorcanaSidebarPresenter {
     }
   }
 
+  #reconcileLocalInteractionSessions(): void {
+    const resolutionSession = this.#resolutionSelectionSession;
+    if (resolutionSession) {
+      const nextMove =
+        resolutionSession.move.moveId === "resolveEffect"
+          ? this.pendingResolutionMoveByEffectId.get(resolutionSession.move.params.effectId)
+          : resolutionSession.move.moveId === "resolveBag"
+            ? this.pendingResolutionMoveByBagId.get(resolutionSession.move.params.bagId)
+            : null;
+
+      if (!nextMove) {
+        this.#resolutionSelectionSession = null;
+      } else {
+        const nextContext = this.#getSelectionContextForPendingResolutionMove(nextMove);
+        if (
+          !nextContext ||
+          nextContext.kind !== resolutionSession.context.kind ||
+          nextContext.requestId !== resolutionSession.context.requestId ||
+          nextContext.origin !== resolutionSession.context.origin
+        ) {
+          this.#resolutionSelectionSession = null;
+        } else if (
+          nextMove !== resolutionSession.move ||
+          nextContext !== resolutionSession.context
+        ) {
+          this.#resolutionSelectionSession = this.#normalizeResolutionSelectionSession({
+            ...resolutionSession,
+            move: nextMove,
+            context: nextContext,
+          });
+        }
+      }
+    }
+
+    const actionSession = this.#actionSelectionSession;
+    if (!actionSession) {
+      return;
+    }
+
+    const nextCandidateMoves = this.expandCategoryMoves(actionSession.categoryId).filter((move) =>
+      actionSession.candidateMoves.some((candidate) => candidate.id === move.id),
+    );
+
+    if (nextCandidateMoves.length === 0) {
+      this.#setActionSelectionSession(null);
+      return;
+    }
+
+    const selectedMoveId =
+      actionSession.selectedMoveId &&
+      nextCandidateMoves.some((move) => move.id === actionSession.selectedMoveId)
+        ? actionSession.selectedMoveId
+        : null;
+
+    const candidateMovesUnchanged =
+      nextCandidateMoves.length === actionSession.candidateMoves.length &&
+      nextCandidateMoves.every(
+        (move, index) => move.id === actionSession.candidateMoves[index]?.id,
+      );
+    if (candidateMovesUnchanged && selectedMoveId === actionSession.selectedMoveId) {
+      return;
+    }
+
+    this.#setActionSelectionSession({
+      ...actionSession,
+      candidateMoves: nextCandidateMoves,
+      selectedMoveId,
+    });
+  }
+
   get boardSnapshot(): LorcanaProjectedBoardView | null {
     return this.#game.boardSnapshot();
   }
@@ -3284,6 +3815,10 @@ export class LorcanaSidebarPresenter {
 
   resolveCardSnapshot(cardId: string): LorcanaCardSnapshot | null {
     return this.#game.resolveCardSnapshot(cardId);
+  }
+
+  resolvePlayerName(playerId: string): string | null {
+    return this.#game.resolvePlayerName(playerId);
   }
 
   get executableMoves(): ExecutableMoveEntry[] {
@@ -3444,7 +3979,24 @@ export class LorcanaSidebarPresenter {
   ): boolean {
     const selectionContext =
       fallbackContext ?? this.#getSelectionContextForPendingResolutionMove(move);
-    return selectionContext ? this.startResolutionSelectionSession(move, selectionContext) : false;
+    if (!selectionContext) {
+      return false;
+    }
+    // Don't start a selection session when the selection's chooser is a
+    // different player — e.g. resolving Anastasia's bag as its controller while
+    // the downstream discard belongs to the challenging player. In that case
+    // the local player just submits resolveBag without targets, which creates
+    // a pending effect the downstream chooser can then resolve on their side.
+    const localOwnerSide = this.#game.ownerSide();
+    const localPlayerId = localOwnerSide ? this.#game.getOwnerIdForSide(localOwnerSide) : null;
+    if (
+      localPlayerId != null &&
+      selectionContext.chooserId != null &&
+      selectionContext.chooserId !== localPlayerId
+    ) {
+      return false;
+    }
+    return this.startResolutionSelectionSession(move, selectionContext);
   }
 
   #buildResolutionPromptContent(
@@ -3564,6 +4116,24 @@ export class LorcanaSidebarPresenter {
     return this.#game.getPlayerSummary(this.bottomSide);
   }
 
+  get headerPlayerLabel(): string {
+    return this.#game.getRelativePlayerLabel(this.topSide);
+  }
+
+  get footerPlayerLabel(): string {
+    return this.#game.getRelativePlayerLabel(this.bottomSide);
+  }
+
+  get headerPlayerIsMobile(): boolean {
+    const id = this.#game.getOwnerIdForSide(this.topSide);
+    return id ? this.#game.isPlayerMobile(id) : false;
+  }
+
+  get footerPlayerIsMobile(): boolean {
+    const id = this.#game.getOwnerIdForSide(this.bottomSide);
+    return id ? this.#game.isPlayerMobile(id) : false;
+  }
+
   get pendingResolutionMoveByBagId(): Map<string, PendingResolutionMoveEntry> {
     const entries = this.pendingResolutionMoves
       .filter((move) => move.moveId === "resolveBag")
@@ -3613,6 +4183,9 @@ export class LorcanaSidebarPresenter {
     const autoOpenStateId = this.#game.pendingResolutionAutoOpenStateId();
     const isAutoOpenState = autoOpenStateId === board.stateID;
 
+    const localOwnerSide = this.#game.ownerSide();
+    const localPlayerId = localOwnerSide ? this.#game.getOwnerIdForSide(localOwnerSide) : null;
+
     const activePendingEffectId = board.pendingChoice?.requestID ?? null;
     const activePendingEffect = activePendingEffectId
       ? (board.pendingEffects.find((effect) => effect.id === activePendingEffectId) ?? null)
@@ -3623,8 +4196,11 @@ export class LorcanaSidebarPresenter {
     if (activePendingEffect) {
       const pendingKind = activePendingEffect.selectionContext?.kind;
       const isMandatory = pendingKind !== "optional-selection";
+      const pendingChooser = activePendingEffect.selectionContext?.chooserId ?? null;
+      const isLocalChooser =
+        localPlayerId == null || pendingChooser == null || pendingChooser === localPlayerId;
 
-      if (isMandatory) {
+      if (isMandatory && isLocalChooser) {
         const move = this.pendingResolutionMoveByEffectId.get(activePendingEffect.id);
         if (move) {
           const context = activePendingEffect.selectionContext ?? null;
@@ -3642,9 +4218,12 @@ export class LorcanaSidebarPresenter {
     if (resolvableBagEffect && this.pendingResolutionMoveByBagId.size === 1) {
       const bagKind = resolvableBagEffect.selectionContext?.kind;
       const isMandatory = bagKind !== "optional-selection";
+      const bagChooser = resolvableBagEffect.selectionContext?.chooserId ?? null;
+      const isLocalChooser =
+        localPlayerId == null || bagChooser == null || bagChooser === localPlayerId;
       const move = this.pendingResolutionMoveByBagId.get(resolvableBagEffect.id);
 
-      if (isMandatory && move) {
+      if (isMandatory && isLocalChooser && move) {
         const context = resolvableBagEffect.selectionContext ?? null;
         const key = this.#buildAutoOpenResolutionKey(move, context);
         if (key) {
@@ -3666,30 +4245,42 @@ export class LorcanaSidebarPresenter {
 
     const pendingEffect = board.pendingEffects[0] ?? null;
     if (pendingEffect?.selectionContext) {
-      const move = this.pendingResolutionMoveByEffectId.get(pendingEffect.id);
-      const key = move
-        ? this.#buildAutoOpenResolutionKey(move, pendingEffect.selectionContext)
-        : null;
-      return move && key
-        ? {
-            key,
-            move,
-            context: pendingEffect.selectionContext,
-          }
-        : null;
+      const pendingChooser = pendingEffect.selectionContext.chooserId ?? null;
+      const isLocalChooser =
+        localPlayerId == null || pendingChooser == null || pendingChooser === localPlayerId;
+      if (isLocalChooser) {
+        const move = this.pendingResolutionMoveByEffectId.get(pendingEffect.id);
+        const key = move
+          ? this.#buildAutoOpenResolutionKey(move, pendingEffect.selectionContext)
+          : null;
+        return move && key
+          ? {
+              key,
+              move,
+              context: pendingEffect.selectionContext,
+            }
+          : null;
+      }
     }
 
     const bagEffect = board.bagEffects[0] ?? null;
     if (bagEffect?.selectionContext) {
-      const move = this.pendingResolutionMoveByBagId.get(bagEffect.id);
-      const key = move ? this.#buildAutoOpenResolutionKey(move, bagEffect.selectionContext) : null;
-      return move && key
-        ? {
-            key,
-            move,
-            context: bagEffect.selectionContext,
-          }
-        : null;
+      const bagChooser = bagEffect.selectionContext.chooserId ?? null;
+      const isLocalChooser =
+        localPlayerId == null || bagChooser == null || bagChooser === localPlayerId;
+      if (isLocalChooser) {
+        const move = this.pendingResolutionMoveByBagId.get(bagEffect.id);
+        const key = move
+          ? this.#buildAutoOpenResolutionKey(move, bagEffect.selectionContext)
+          : null;
+        return move && key
+          ? {
+              key,
+              move,
+              context: bagEffect.selectionContext,
+            }
+          : null;
+      }
     }
 
     return null;
@@ -3726,8 +4317,31 @@ export class LorcanaSidebarPresenter {
             abilityIndex: payloadMeta.abilityIndex ?? null,
           })
         : null;
-      const isOptionalSelection = selectionContext?.kind === "optional-selection";
-      const isLocallyActionable = localPlayerId != null && bagEffect.chooserId === localPlayerId;
+      const rawSelectionKind = selectionContext?.kind;
+      const effectiveChooser = selectionContext?.chooserId ?? bagEffect.chooserId;
+      // "Cross-chooser" bag: the downstream selection belongs to someone other
+      // than the bag's controller (e.g. Anastasia's CHALLENGING_PLAYER discard,
+      // Donald Duck's OPPONENT optional draw). The engine only lets the direct
+      // chooser submit resolveBag atomically for discard selections — optional
+      // cross-chooser triggers require the controller to submit first, which
+      // creates a pending effect the chooser then resolves.
+      const isCrossChooserBag =
+        selectionContext?.chooserId != null &&
+        selectionContext.chooserId !== bagEffect.controllerId;
+      const allowsDirectChooserResolve =
+        isCrossChooserBag &&
+        (rawSelectionKind === "target-selection" || rawSelectionKind === "discard-choice");
+      const isLocallyActionable =
+        localPlayerId != null &&
+        (bagEffect.controllerId === localPlayerId ||
+          (allowsDirectChooserResolve && effectiveChooser === localPlayerId));
+      // Suppress Accept/Reject on the controller's side for cross-chooser
+      // optional triggers — they submit a plain resolveBag that creates a
+      // pending effect, and the opponent (the real chooser) gets the actual
+      // Accept/Reject prompt on that pending effect.
+      const isOptionalSelection =
+        rawSelectionKind === "optional-selection" &&
+        (!isCrossChooserBag || effectiveChooser === localPlayerId);
       const card = bagEffect.sourceId ? (this.cardSnapshotsById[bagEffect.sourceId] ?? null) : null;
       const availableAbilityMoves = card
         ? this.#game
@@ -3832,7 +4446,7 @@ export class LorcanaSidebarPresenter {
             activeSession.context.kind === "optional-selection"
               ? undefined
               : this.cancelResolutionSelectionSession,
-          isLocalPlayer: localPlayerId != null ? bagEffect.chooserId === localPlayerId : undefined,
+          isLocalPlayer: localPlayerId != null ? isLocallyActionable : undefined,
           namedCardSearch:
             activeSession.context.kind === "name-card-selection"
               ? {
@@ -3868,7 +4482,7 @@ export class LorcanaSidebarPresenter {
         canResolve: isLocallyActionable && !isOptionalSelection && Boolean(resolveMove),
         canAccept: isLocallyActionable && isOptionalSelection && Boolean(resolveMove),
         canReject: isLocallyActionable && isOptionalSelection && Boolean(resolveMove),
-        isLocalPlayer: localPlayerId != null ? bagEffect.chooserId === localPlayerId : undefined,
+        isLocalPlayer: localPlayerId != null ? isLocallyActionable : undefined,
         disabledReason: resolveMove ? undefined : "Not actionable from this view right now.",
         onResolve:
           isLocallyActionable && resolveMove ? () => this.handleResolveBag(resolveMove) : undefined,
@@ -4130,14 +4744,14 @@ export class LorcanaSidebarPresenter {
           actions: [
             {
               id: "choose-first-player-one",
-              label: m["sim.pregame.chooseFirst.button.playerOne"]({}),
+              label: `${this.#game.getRelativePlayerLabel("playerOne")} ${this.#game.ownerSide() === "playerOne" ? "go" : "goes"} first`,
               onClick: () => {
                 this.executeChooseFirstPlayer("playerOne");
               },
             },
             {
               id: "choose-first-player-two",
-              label: m["sim.pregame.chooseFirst.button.playerTwo"]({}),
+              label: `${this.#game.getRelativePlayerLabel("playerTwo")} ${this.#game.ownerSide() === "playerTwo" ? "go" : "goes"} first`,
               onClick: () => {
                 this.executeChooseFirstPlayer("playerTwo");
               },
@@ -4211,6 +4825,76 @@ export class LorcanaSidebarPresenter {
       .map((card) => card.cardId);
   }
 
+  #resolveChoiceSelectionTargetLabel(context: ResolutionSelectionContext): string | null {
+    if (context.kind !== "choice-selection" || context.origin !== "pending-effect") {
+      return null;
+    }
+
+    const pendingEffect = this.boardSnapshot?.pendingEffects.find(
+      (pe) => pe.id === context.requestId,
+    );
+    if (!pendingEffect) {
+      return null;
+    }
+
+    const payloadRecord = pendingEffect.payload as Record<string, unknown> | null;
+    const resolutionInput =
+      (payloadRecord?.resolutionInput as Record<string, unknown> | null) ?? null;
+    const contextTargets = resolutionInput?.contextTargets;
+
+    let targetCardId: string | null = null;
+    if (typeof contextTargets === "string" && contextTargets.length > 0) {
+      targetCardId = contextTargets;
+    } else if (Array.isArray(contextTargets) && contextTargets.length > 0) {
+      const first = contextTargets[0];
+      if (typeof first === "string" && first.length > 0) {
+        targetCardId = first;
+      }
+    }
+
+    if (!targetCardId || targetCardId === context.sourceCardId) {
+      return null;
+    }
+
+    return this.cardSnapshotsById[targetCardId]?.label ?? null;
+  }
+
+  #resolveChoiceSelectionTargetCard(
+    context: ResolutionSelectionContext,
+  ): LorcanaCardSnapshot | null {
+    if (context.kind !== "choice-selection" || context.origin !== "pending-effect") {
+      return null;
+    }
+
+    const pendingEffect = this.boardSnapshot?.pendingEffects.find(
+      (pe) => pe.id === context.requestId,
+    );
+    if (!pendingEffect) {
+      return null;
+    }
+
+    const payloadRecord = pendingEffect.payload as Record<string, unknown> | null;
+    const resolutionInput =
+      (payloadRecord?.resolutionInput as Record<string, unknown> | null) ?? null;
+    const contextTargets = resolutionInput?.contextTargets;
+
+    let targetCardId: string | null = null;
+    if (typeof contextTargets === "string" && contextTargets.length > 0) {
+      targetCardId = contextTargets;
+    } else if (Array.isArray(contextTargets) && contextTargets.length > 0) {
+      const first = contextTargets[0];
+      if (typeof first === "string" && first.length > 0) {
+        targetCardId = first;
+      }
+    }
+
+    if (!targetCardId || targetCardId === context.sourceCardId) {
+      return null;
+    }
+
+    return this.cardSnapshotsById[targetCardId] ?? null;
+  }
+
   #getResolutionSelectionEffectType(
     session: ResolutionSelectionSession,
   ): SupportedResolutionTargetEffectType | null {
@@ -4269,9 +4953,19 @@ export class LorcanaSidebarPresenter {
       return null;
     }
 
+    // Use the prompt's effective slot targets so that auto-resolved slots
+    // (e.g. from: { ref: "self" }) appear at the correct position.
+    // move-damage's getSelectionMax reads selectedCardTargets[0] as the source —
+    // if we pass session.selectedTargets the auto-resolved "from" card is missing
+    // and the cap defaults to baseAmount or picks the wrong card.
+    const prompt = this.#getResolutionTargetPromptState(session);
+    const effectiveSelectedTargets = prompt
+      ? (prompt.slots.map((slot) => slot.targetId).filter(Boolean) as string[])
+      : session.selectedTargets;
+
     return buildResolutionAmountSelectionState({
       payload,
-      selectedTargets: session.selectedTargets,
+      selectedTargets: effectiveSelectedTargets,
       currentAmount: session.selectedAmount,
       cardSnapshotsById: this.cardSnapshotsById,
     });
@@ -4293,30 +4987,38 @@ export class LorcanaSidebarPresenter {
     }
 
     const effectType = this.#getResolutionSelectionEffectType(session);
-    const allEntries = this.#getResolutionSelectionCardCandidateIds(session.context).flatMap(
-      (cardId) => {
-        const card = this.cardSnapshotsById[cardId] ?? null;
-        return card
-          ? [
-              {
-                id: `resolution:card:${card.cardId}`,
-                kind: "card" as const,
-                cardId: card.cardId,
-                label: card.label,
-                detail: buildAvailableMovesCardDetail(card),
-                selected: session.selectedTargets.includes(card.cardId),
-              },
-            ]
-          : [];
-      },
-    );
+    const candidateCardIds = this.#getResolutionSelectionCardCandidateIds(session.context);
+    const cardSnapshotsByIdForPrompt: Record<string, LorcanaCardSnapshot> = {
+      ...this.cardSnapshotsById,
+    };
+    for (const cardId of candidateCardIds) {
+      const card = this.resolveCardSnapshot(cardId);
+      if (card) {
+        cardSnapshotsByIdForPrompt[cardId] = card;
+      }
+    }
+    const allEntries = candidateCardIds.flatMap((cardId) => {
+      const card = cardSnapshotsByIdForPrompt[cardId] ?? null;
+      return card
+        ? [
+            {
+              id: `resolution:card:${card.cardId}`,
+              kind: "card" as const,
+              cardId: card.cardId,
+              label: card.label,
+              detail: buildAvailableMovesCardDetail(card),
+              selected: includesSelectionId(session.selectedTargets, card.cardId),
+            },
+          ]
+        : [];
+    });
 
     return buildResolutionTargetPromptState({
       effectType,
       context: session.context,
       entries: allEntries,
       selectedTargets: session.selectedTargets,
-      cardSnapshotsById: this.cardSnapshotsById,
+      cardSnapshotsById: cardSnapshotsByIdForPrompt,
       preferredActiveSlotIndex: session.activeTargetSlotIndex,
     });
   }
@@ -4334,7 +5036,7 @@ export class LorcanaSidebarPresenter {
       ) ?? this.#getResolutionSelectionCardCandidateIds(session.context);
 
     return candidateIds
-      .map((cardId) => this.cardSnapshotsById[cardId] ?? null)
+      .map((cardId) => this.resolveCardSnapshot(cardId))
       .filter((card): card is LorcanaCardSnapshot => card !== null);
   }
 
@@ -4384,6 +5086,7 @@ export class LorcanaSidebarPresenter {
           this.#actionSelectionSession.sourceCardId,
           this.#actionSelectionSession.targetCardId,
           ...this.#actionSelectionSession.selectedCardIds,
+          ...Object.values(this.#actionSelectionSession.selectedCosts).flat(),
         ])
       : [];
   }
@@ -4412,6 +5115,10 @@ export class LorcanaSidebarPresenter {
           getSourceCardIdForActionSelectionMove(session.categoryId, move),
         ),
       );
+    }
+
+    if (session.phase === "choose-cost") {
+      return getCurrentSelectableCostForActionSelectionSession(session)?.candidateCardIds ?? [];
     }
 
     if (session.phase === "choose-target" && session.sourceCardId) {
@@ -4457,11 +5164,38 @@ export class LorcanaSidebarPresenter {
       !session ||
       (session.categoryId !== "challenge" &&
         session.categoryId !== "play-card" &&
-        session.categoryId !== "sing-card") ||
-      session.phase !== "choose-target" ||
+        session.categoryId !== "sing-card" &&
+        session.categoryId !== "shift-card" &&
+        session.phase !== "choose-cost") ||
+      (session.phase !== "choose-target" && session.phase !== "choose-cost") ||
       !this.boardSnapshot
     ) {
       return [];
+    }
+
+    if (session.phase === "choose-cost") {
+      const selectableCost = getCurrentSelectableCostForActionSelectionSession(session);
+      if (!selectableCost) {
+        return [];
+      }
+
+      const validTargetIds = new Set(this.selectableActionSessionCardIds);
+      const sourceOwnerSide = session.sourceCardId
+        ? (this.cardSnapshotsById[session.sourceCardId]?.ownerSide ?? this.ownerSide)
+        : this.ownerSide;
+
+      if (!sourceOwnerSide) {
+        return [];
+      }
+
+      return getCardsForZone(
+        this.cardSnapshotsById,
+        this.boardSnapshot,
+        sourceOwnerSide,
+        selectableCost.zone,
+      )
+        .map((card) => card.cardId)
+        .filter((cardId) => !validTargetIds.has(cardId));
     }
 
     const validTargetIds = new Set(this.selectableActionSessionCardIds);
@@ -4559,11 +5293,13 @@ export class LorcanaSidebarPresenter {
           : m["sim.actions.label.resolveEffect"]({});
       const sourceCard = this.cardSnapshotsById[context.sourceCardId] ?? null;
       const abilityIndex = this.#getResolutionMoveAbilityIndex(resolutionSession.move);
+      const resolutionTargetLabel = this.#resolveChoiceSelectionTargetLabel(context);
       const resolutionCopy = buildResolutionCopyBundle({
         kind: context.kind,
         sourceCard,
         abilityIndex,
         targetSelectionContext: isTargetResolutionSelectionContext(context) ? context : undefined,
+        targetLabel: resolutionTargetLabel,
       });
       const sourceLabel = sourceCard?.label ?? "Pending effect";
       const selectionTitle = isOptionalContinuationResolutionContext(context)
@@ -4593,10 +5329,7 @@ export class LorcanaSidebarPresenter {
               getOwnerIdForSideFromBoard(this.boardSnapshot, "playerOne") === playerId
                 ? "playerOne"
                 : "playerTwo";
-            const label =
-              side === "playerOne"
-                ? m["sim.player.side.playerOne"]({})
-                : m["sim.player.side.playerTwo"]({});
+            const label = this.#game.getRelativePlayerLabel(side);
 
             return [
               {
@@ -4604,12 +5337,12 @@ export class LorcanaSidebarPresenter {
                 kind: "player" as const,
                 playerId,
                 label,
-                selected: resolutionSession.selectedTargets.includes(playerId),
+                selected: includesSelectionId(resolutionSession.selectedTargets, playerId),
               },
             ];
           }) ?? [];
         const cardEntries = cardCandidateIds.flatMap((cardId) => {
-          const card = this.cardSnapshotsById[cardId] ?? null;
+          const card = this.resolveCardSnapshot(cardId);
           return card
             ? [
                 {
@@ -4618,21 +5351,23 @@ export class LorcanaSidebarPresenter {
                   cardId: card.cardId,
                   label: card.label,
                   detail: buildAvailableMovesCardDetail(card),
-                  selected: resolutionSession.selectedTargets.includes(card.cardId),
+                  selected: includesSelectionId(resolutionSession.selectedTargets, card.cardId),
                 },
               ]
             : [];
         });
         const selectedTargetLabels = resolutionSession.selectedTargets.flatMap((targetId) => {
-          const card = this.cardSnapshotsById[targetId] ?? null;
+          const card = this.resolveCardSnapshot(targetId);
           if (card) {
             return [card.label];
           }
 
           if (includesSelectionId(context.playerCandidateIds, targetId)) {
+            const ownerOne = this.boardSnapshot
+              ? getOwnerIdForSideFromBoard(this.boardSnapshot, "playerOne")
+              : null;
             const side =
-              this.boardSnapshot &&
-              getOwnerIdForSideFromBoard(this.boardSnapshot, "playerOne") === targetId
+              ownerOne != null && matchesSelectionId(ownerOne, targetId)
                 ? "playerOne"
                 : "playerTwo";
             return [
@@ -4678,6 +5413,9 @@ export class LorcanaSidebarPresenter {
       }
 
       if (context.kind === "choice-selection") {
+        const choiceTargetCard = resolutionTargetLabel
+          ? this.#resolveChoiceSelectionTargetCard(context)
+          : null;
         return {
           mode: "resolution-choice",
           categoryId: "unknown",
@@ -4693,6 +5431,7 @@ export class LorcanaSidebarPresenter {
             disabled: !option.legal,
             disabledReason: option.legal ? undefined : "Unavailable",
           })),
+          targetCard: choiceTargetCard,
           canBack: false,
           canCancel: true,
           canDecline,
@@ -4790,12 +5529,15 @@ export class LorcanaSidebarPresenter {
             : [];
         });
 
+        const scryHeader = buildScryOverlayHeaderHeading(selectionTitle, sourceCard?.label ?? null);
+
         return {
           mode: "resolution-scry",
           categoryId: "unknown",
           categoryLabel,
           sourceCardId: sourceCard?.cardId ?? null,
-          title: selectionTitle,
+          title: scryHeader.title,
+          headerSubtitle: scryHeader.headerSubtitle,
           message:
             unassignedCardIds.length > 0
               ? `${resolutionSession.promptMessage} ${unassignedCardIds.length} card${unassignedCardIds.length === 1 ? "" : "s"} still need a destination.`
@@ -4864,6 +5606,7 @@ export class LorcanaSidebarPresenter {
     const confirmMessage = session.confirmationRequired
       ? m["sim.guidance.session.confirmWithHint"]({ label: session.label })
       : m["sim.guidance.session.confirm"]({ label: session.label });
+    const currentSelectableCost = getCurrentSelectableCostForActionSelectionSession(session);
     const singTogetherMove = getSingTogetherSelectionMove(session);
     const singTogetherMetadata = getSingTogetherSelectionMetadata(singTogetherMove);
     const singTogetherTotal =
@@ -4886,6 +5629,24 @@ export class LorcanaSidebarPresenter {
                 label: card.label,
                 detail: buildAvailableMovesCardDetail(card),
                 selected: session.sourceCardId === card.cardId,
+              },
+            ]
+          : [];
+      });
+    } else if (session.phase === "choose-cost" && currentSelectableCost) {
+      const selectedCostIds = new Set(getSelectedCostCardIds(session, currentSelectableCost.kind));
+      message = getChooseCostStatusMessage(sourceCardLabel, currentSelectableCost);
+      entries = this.selectableActionSessionCardIds.flatMap((cardId) => {
+        const card = this.cardSnapshotsById[cardId] ?? null;
+        return card
+          ? [
+              {
+                id: `available-moves:card:${card.cardId}`,
+                kind: "card" as const,
+                cardId: card.cardId,
+                label: card.label,
+                detail: buildAvailableMovesCardDetail(card),
+                selected: selectedCostIds.has(card.cardId),
               },
             ]
           : [];
@@ -4943,7 +5704,21 @@ export class LorcanaSidebarPresenter {
               attacker: sourceCard.label,
               defender: targetCard.label,
             })}`
-          : confirmMessage;
+          : session.categoryId === "play-card" && sourceCard && targetCard
+            ? session.confirmationRequired
+              ? m["sim.guidance.session.confirmPlayingWithTargetHint"]({
+                  cardName: sourceCard.label,
+                  targetName: targetCard.label,
+                })
+              : m["sim.guidance.session.confirmPlayingWithTarget"]({
+                  cardName: sourceCard.label,
+                  targetName: targetCard.label,
+                })
+            : session.categoryId === "play-card" && sourceCard
+              ? session.confirmationRequired
+                ? m["sim.guidance.session.confirmPlayingHint"]({ cardName: sourceCard.label })
+                : m["sim.guidance.session.confirmPlaying"]({ cardName: sourceCard.label })
+              : confirmMessage;
     }
 
     return {
@@ -4954,9 +5729,11 @@ export class LorcanaSidebarPresenter {
       title:
         session.phase === "choose-option" && sourceCard
           ? sourceCard.label
-          : session.phase === "choose-target" && sourceCard
+          : session.phase === "choose-cost" && sourceCard
             ? sourceCard.label
-            : session.label,
+            : session.phase === "choose-target" && sourceCard
+              ? sourceCard.label
+              : session.label,
       message,
       entries,
       sourceCardId: session.sourceCardId,
@@ -5035,6 +5812,16 @@ export class LorcanaSidebarPresenter {
       this.invalidActionSessionCardIds.includes(cardId)
     ) {
       return "This card is not a valid target for the current effect.";
+    }
+
+    if (
+      this.#actionSelectionSession?.phase === "choose-cost" &&
+      this.invalidActionSessionCardIds.includes(cardId)
+    ) {
+      const selectableCost = getCurrentSelectableCostForActionSelectionSession(
+        this.#actionSelectionSession,
+      );
+      return selectableCost ? getInvalidCostSelectionReason(selectableCost) : null;
     }
 
     if (
@@ -5206,21 +5993,39 @@ export class LorcanaSidebarPresenter {
 
       const sourceMoves = getSourceMovesForActionSelectionSession(session, action.cardId);
       const singleMove = sourceMoves.length === 1 ? sourceMoves[0] : null;
+      const singleMovePreviewSession = singleMove
+        ? ({
+            ...session,
+            sourceCardId: action.cardId,
+            selectedMoveId: singleMove.id,
+          } satisfies ActionSelectionSession)
+        : null;
+      const singleMovePhase =
+        singleMove && singleMovePreviewSession
+          ? getPostCostActionSelectionPhase(singleMovePreviewSession, singleMove)
+          : null;
       this.#setActionSelectionSession({
         ...session,
         sourceCardId: action.cardId,
         selectedMoveId: singleMove?.id ?? null,
-        phase: singleMove
-          ? session.confirmationRequired
-            ? "confirm"
-            : "executing"
-          : "choose-option",
+        phase: singleMove ? (singleMovePhase ?? "choose-option") : "choose-option",
       });
       this.pendingMulliganDangerConfirm = null;
       this.#secondLayerCategoryLabel = null;
       this.#game.setPendingError(null);
 
       if (singleMove) {
+        if (singleMovePhase === "choose-cost") {
+          this.#game.setStatusMessage(
+            getChooseCostStatusMessage(
+              this.cardSnapshotsById[action.cardId]?.label ?? m["sim.card.unknown"]({}),
+              getCurrentSelectableCostForActionSelectionSession(singleMovePreviewSession!) ??
+                getMoveSelectableCosts(singleMove)[0]!,
+            ),
+          );
+          return true;
+        }
+
         if (session.confirmationRequired) {
           this.#game.setStatusMessage(
             m["sim.guidance.session.confirm"]({ label: singleMove.label }),
@@ -5275,19 +6080,18 @@ export class LorcanaSidebarPresenter {
       const nextSession = {
         ...session,
         sourceCardId: action.cardId,
-        targetCardId:
-          preselectedTargetMoves.length > 0 && options?.preselectedTargetCardId
-            ? options.preselectedTargetCardId
-            : null,
-        selectedMoveId: preselectedMove?.id ?? null,
+        targetCardId: null,
+        selectedMoveId: null,
         phase:
-          preselectedTargetMoves.length > 1
-            ? "choose-option"
-            : preselectedMove
-              ? session.confirmationRequired
-                ? "confirm"
-                : "executing"
-              : "choose-target",
+          getMoveSelectableCosts(actionMoves[0]).length > 0
+            ? "choose-cost"
+            : preselectedTargetMoves.length > 1
+              ? "choose-option"
+              : preselectedMove
+                ? session.confirmationRequired
+                  ? "confirm"
+                  : "executing"
+                : "choose-target",
       } satisfies ActionSelectionSession;
 
       this.pendingMulliganDangerConfirm = null;
@@ -5300,6 +6104,17 @@ export class LorcanaSidebarPresenter {
           getChooseOptionStatusMessage(
             session,
             this.cardSnapshotsById[action.cardId]?.label ?? m["sim.card.unknown"]({}),
+          ),
+        );
+        return true;
+      }
+
+      if (nextSession.phase === "choose-cost") {
+        this.#setActionSelectionSession(nextSession);
+        this.#game.setStatusMessage(
+          getChooseCostStatusMessage(
+            this.cardSnapshotsById[action.cardId]?.label ?? m["sim.card.unknown"]({}),
+            getMoveSelectableCosts(actionMoves[0])[0]!,
           ),
         );
         return true;
@@ -5438,11 +6253,12 @@ export class LorcanaSidebarPresenter {
     });
 
     const moveParams = (() => {
+      const paramsWithCosts = applySelectedCostsToMoveParams(move, session);
       if (!isSingTogetherSelectionMove(move) || session.selectedCardIds.length === 0) {
-        return move.params;
+        return paramsWithCosts;
       }
 
-      const playCardParams = move.params as LorcanaSimulatorMoveParams["playCard"];
+      const playCardParams = paramsWithCosts as LorcanaSimulatorMoveParams["playCard"];
       return {
         ...playCardParams,
         singers: [...session.selectedCardIds],
@@ -5471,11 +6287,29 @@ export class LorcanaSidebarPresenter {
     if (resolutionSession && isTargetResolutionSelectionContext(resolutionSession.context)) {
       const canDecline = canDeclineResolutionSelectionSession(resolutionSession);
       const selectedCount = resolutionSession.selectedTargets.length;
+      const minSelections = resolutionSession.context.minSelections;
+      // Display uses the printed max (e.g. "up to 2") so the counter matches
+      // the card text, even if fewer candidates currently exist on board.
+      const displayMaxSelections =
+        resolutionSession.context.declaredMaxSelections ?? resolutionSession.context.maxSelections;
+      const isOptional = minSelections === 0;
+      // For "up to N" with nothing picked, the confirm action IS a skip. Show
+      // "Skip" so the affordance is obvious; otherwise show "Confirm (selected/max)"
+      // so the player can see how many of the allowed targets they've chosen.
+      const confirmLabel =
+        isOptional && selectedCount === 0
+          ? m["sim.actions.skip"]({})
+          : displayMaxSelections > 1
+            ? `${m["sim.actions.confirm"]({})} (${selectedCount}/${displayMaxSelections})`
+            : selectedCount > 0
+              ? `${m["sim.actions.confirm"]({})} (${selectedCount})`
+              : m["sim.actions.confirm"]({});
 
       return [
         {
           id: "resolution-selection-inline",
           message: resolutionSession.promptMessage,
+          abilityDescription: resolutionSession.abilityDescription ?? undefined,
           inlineReference: resolutionSession.promptInlineReference ?? undefined,
           actions: [
             ...(canDecline
@@ -5489,12 +6323,12 @@ export class LorcanaSidebarPresenter {
               : []),
             {
               id: "resolution-selection-cancel",
-              label: m["sim.actions.cancel"]({}),
+              label: m["sim.actions.hide"]({}),
               onClick: this.cancelResolutionSelectionSession,
             },
             {
               id: "resolution-selection-confirm",
-              label: `${m["sim.actions.confirm"]({})}${selectedCount > 0 ? ` (${selectedCount})` : ""}`,
+              label: confirmLabel,
               onClick: this.confirmResolutionSelection,
               disabled: !this.canConfirmResolutionSelection,
               emphasis: true,
@@ -5511,6 +6345,7 @@ export class LorcanaSidebarPresenter {
         {
           id: "resolution-optional-inline",
           message: resolutionSession.promptMessage,
+          abilityDescription: resolutionSession.abilityDescription ?? undefined,
           inlineReference: resolutionSession.promptInlineReference ?? undefined,
           actions: [
             {
@@ -5567,7 +6402,7 @@ export class LorcanaSidebarPresenter {
               : []),
             {
               id: "resolution-choice-cancel",
-              label: m["sim.actions.cancel"]({}),
+              label: m["sim.actions.hide"]({}),
               onClick: this.cancelResolutionSelectionSession,
             },
             {
@@ -5616,7 +6451,7 @@ export class LorcanaSidebarPresenter {
               : []),
             {
               id: "resolution-name-card-cancel",
-              label: m["sim.actions.cancel"]({}),
+              label: m["sim.actions.hide"]({}),
               onClick: this.cancelResolutionSelectionSession,
             },
             {
@@ -5796,7 +6631,21 @@ export class LorcanaSidebarPresenter {
               attacker: sourceCard.label,
               defender: targetCard.label,
             })}`
-          : confirmMessage;
+          : session.categoryId === "play-card" && sourceCard && targetCard
+            ? session.confirmationRequired
+              ? m["sim.guidance.session.confirmPlayingWithTargetHint"]({
+                  cardName: sourceCard.label,
+                  targetName: targetCard.label,
+                })
+              : m["sim.guidance.session.confirmPlayingWithTarget"]({
+                  cardName: sourceCard.label,
+                  targetName: targetCard.label,
+                })
+            : session.categoryId === "play-card" && sourceCard
+              ? session.confirmationRequired
+                ? m["sim.guidance.session.confirmPlayingHint"]({ cardName: sourceCard.label })
+                : m["sim.guidance.session.confirmPlaying"]({ cardName: sourceCard.label })
+              : confirmMessage;
 
       return [
         {
@@ -5829,24 +6678,34 @@ export class LorcanaSidebarPresenter {
     const message =
       session.phase === "choose-source"
         ? getChooseSourceStatusMessage(session.categoryId)
-        : isSingTogetherSelectionSession(session)
-          ? getChooseSingTogetherStatusMessage(
+        : session.phase === "choose-cost"
+          ? getChooseCostStatusMessage(
               sourceCard?.label ?? m["sim.card.unknown"]({}),
-              getSingTogetherSelectionTotal(session),
-              getSingTogetherSelectionMetadata(getSingTogetherSelectionMove(session))
-                ?.requiredValue ?? 0,
+              getCurrentSelectableCostForActionSelectionSession(session) ?? {
+                kind: "discardCards",
+                count: 1,
+                candidateCardIds: [],
+                zone: "hand",
+              },
             )
-          : getChooseTargetStatusMessage(
-              session.categoryId,
-              sourceCard?.label ?? m["sim.card.unknown"]({}),
-            );
+          : isSingTogetherSelectionSession(session)
+            ? getChooseSingTogetherStatusMessage(
+                sourceCard?.label ?? m["sim.card.unknown"]({}),
+                getSingTogetherSelectionTotal(session),
+                getSingTogetherSelectionMetadata(getSingTogetherSelectionMove(session))
+                  ?.requiredValue ?? 0,
+              )
+            : getChooseTargetStatusMessage(
+                session.categoryId,
+                sourceCard?.label ?? m["sim.card.unknown"]({}),
+              );
 
     return [
       {
         id: "action-selection",
         message,
         actions: [
-          ...(session.phase === "choose-target"
+          ...(session.phase === "choose-target" || session.phase === "choose-cost"
             ? [
                 {
                   id: "action-selection-back",
@@ -5939,11 +6798,13 @@ export class LorcanaSidebarPresenter {
     if (isTargetResolutionSelectionContext(context)) {
       const prompt = this.#getResolutionTargetPromptState(session);
       if (prompt) {
-        const selectionCount = prompt.slots.filter((slot) => slot.targetId).length;
-        return (
-          selectionCount >= context.minSelections &&
-          (context.maxSelections <= 0 || selectionCount <= context.maxSelections)
-        );
+        // When maxSelections < total slots (e.g. move-damage with from: ALL_CHARACTERS),
+        // only the last `maxSelections` slots are required user selections.
+        // The earlier slots may be filled as context but should not block confirmation.
+        const requiredSlots =
+          context.maxSelections > 0 ? prompt.slots.slice(-context.maxSelections) : prompt.slots;
+        const selectionCount = requiredSlots.filter((slot) => slot.targetId).length;
+        return selectionCount >= context.minSelections && selectionCount <= requiredSlots.length;
       }
 
       // Validate that all selected targets are still valid candidates
@@ -5992,15 +6853,58 @@ export class LorcanaSidebarPresenter {
     move: PendingResolutionMoveEntry,
     context: ResolutionSelectionContext,
   ): boolean => {
+    // Phase 1 #3: Don't open a picker on a player's view when the engine
+    // assigned the choice to a different player. The auto-open path already
+    // gates on this; the manual entry point ("Resolve" click in pending-effects
+    // popover) used to bypass it, letting player_one open a dialog meant for
+    // player_two and submit choices that the engine would silently reject.
+    const localOwnerSide = this.#game.ownerSide();
+    const localPlayerId = localOwnerSide ? this.#game.getOwnerIdForSide(localOwnerSide) : null;
+    if (localPlayerId != null && context.chooserId !== localPlayerId) {
+      return false;
+    }
+
+    // Phase 1 #1: When the engine flagged the context as `autoRejected`, no
+    // legal targets exist and the engine expects an empty resolution rather
+    // than a prompt. Submit immediately and skip the picker — otherwise the
+    // user sees an empty dialog with a dead Confirm button.
+    if (
+      isTargetResolutionSelectionContext(context) &&
+      context.autoRejected === true &&
+      (move.moveId === "resolveEffect" || move.moveId === "resolveBag")
+    ) {
+      const nestedParams = { targets: [] as readonly string[] };
+      const params =
+        move.moveId === "resolveBag"
+          ? (mergeNestedResolveBagParams(
+              move.params,
+              nestedParams,
+            ) as LorcanaSimulatorMoveParams["resolveBag"])
+          : (mergeNestedResolveEffectParams(
+              move.params,
+              nestedParams,
+            ) as LorcanaSimulatorMoveParams["resolveEffect"]);
+      this.#game.executeMove(move.moveId, params, {
+        clearChallengeMode: false,
+        clearSelection: false,
+        status: "Auto-resolved (no legal targets)",
+      });
+      return true;
+    }
+
     const promptContent = this.#buildResolutionPromptContent(move, context);
     const abilityIndex = this.#getResolutionMoveAbilityIndex(move);
-    const sessionStatusMessage = buildResolutionCopyBundle({
+    const resolutionTargetLabel = this.#resolveChoiceSelectionTargetLabel(context);
+    const resolutionCopyBundle = buildResolutionCopyBundle({
       kind: context.kind,
       sourceCard: this.cardSnapshotsById[context.sourceCardId] ?? null,
       explicitReferenceLabel: promptContent.inlineReference?.label ?? null,
       abilityIndex,
       targetSelectionContext: isTargetResolutionSelectionContext(context) ? context : undefined,
-    }).sessionStatusMessage;
+      targetLabel: resolutionTargetLabel,
+    });
+    const sessionStatusMessage = resolutionCopyBundle.sessionStatusMessage;
+    const abilityDescription = resolutionCopyBundle.abilityDescription;
     this.#actionSelectionSession = null;
     this.#resolutionSelectionSession = this.#normalizeResolutionSelectionSession(
       buildResolutionSelectionSession(
@@ -6008,6 +6912,7 @@ export class LorcanaSidebarPresenter {
         context,
         promptContent.message,
         promptContent.inlineReference,
+        abilityDescription,
         sessionStatusMessage,
       ),
     );
@@ -6029,6 +6934,7 @@ export class LorcanaSidebarPresenter {
       this.#lastHandledAutoOpenResolutionKey = sessionKey;
     }
     this.#resolutionSelectionSession = null;
+    this.#game.setSelectedCardId(null);
     this.#game.setPendingError(null);
     this.#game.setStatusMessage(m["sim.status.selectionCleared"]({}));
   };
@@ -6048,13 +6954,15 @@ export class LorcanaSidebarPresenter {
       return false;
     }
 
-    const isSelected = session.selectedTargets.includes(targetId);
+    const isSelected = includesSelectionId(session.selectedTargets, targetId);
     const isAtMaxCapacity =
       session.context.maxSelections > 0 &&
       session.selectedTargets.length >= session.context.maxSelections;
 
     const nextSelectedTargets = isSelected
-      ? session.selectedTargets.filter((selectedTargetId) => selectedTargetId !== targetId)
+      ? session.selectedTargets.filter(
+          (selectedTargetId) => !matchesSelectionId(selectedTargetId, targetId),
+        )
       : session.context.maxSelections === 1
         ? [targetId]
         : isAtMaxCapacity
@@ -6097,8 +7005,12 @@ export class LorcanaSidebarPresenter {
       return false;
     }
 
+    // prompt.activeSlotIndex is the visual slot index, but session.selectedTargets
+    // is indexed without the leading auto-resolved slots (e.g. from: { ref: "self" }).
+    // Subtract the offset so we write to the correct raw storage position.
+    const rawSlotIndex = prompt.activeSlotIndex - prompt.autoResolvedFromSlots;
     const nextSelectedTargets = [...session.selectedTargets];
-    nextSelectedTargets[prompt.activeSlotIndex] = targetId;
+    nextSelectedTargets[rawSlotIndex] = targetId;
     const nextSession = {
       ...session,
       activeTargetSlotIndex: null,
@@ -6415,7 +7327,28 @@ export class LorcanaSidebarPresenter {
                   session.context.originatesFromOptional === true
                     ? { resolveOptional: true }
                     : {}),
-                  targets: [...session.selectedTargets],
+                  targets: (() => {
+                    const prompt = this.#getResolutionTargetPromptState(session);
+                    const ctx = session.context;
+                    const maxSel = isTargetResolutionSelectionContext(ctx) ? ctx.maxSelections : 0;
+                    const flat =
+                      prompt && maxSel > 0 && session.selectedTargets.length > maxSel
+                        ? session.selectedTargets.slice(-maxSel)
+                        : [...session.selectedTargets];
+
+                    // Engine opted into slotted serialization for this pending
+                    // effect — convert once both slots are filled, otherwise
+                    // fall through to the flat path (engine accepts both).
+                    if (
+                      isTargetResolutionSelectionContext(ctx) &&
+                      ctx.expectedSlottedKind &&
+                      flat.length >= SLOTTED_TARGET_SLOT_KEYS[ctx.expectedSlottedKind].length
+                    ) {
+                      return buildSlottedTargetsFromSelection(ctx.expectedSlottedKind, flat);
+                    }
+
+                    return flat;
+                  })(),
                   ...(amountSelection ? { amount: amountSelection.value } : {}),
                 };
 
@@ -6430,13 +7363,18 @@ export class LorcanaSidebarPresenter {
             nestedParams,
           ) as LorcanaSimulatorMoveParams["resolveEffect"]);
 
+    const previousSelectedCardId = this.#game.selectedCardId();
+    this.#resolutionSelectionSession = null;
     const success = this.#game.executeMove(session.move.moveId, params, {
       clearChallengeMode: false,
-      clearSelection: false,
+      clearSelection: true,
       status: "Resolved effect input",
     });
 
-    this.#resolutionSelectionSession = success ? null : { ...session, phase: "selecting" };
+    if (!success) {
+      this.#resolutionSelectionSession = { ...session, phase: "selecting" };
+      this.#game.setSelectedCardId(previousSelectedCardId);
+    }
     return success;
   };
 
@@ -6782,12 +7720,64 @@ export class LorcanaSidebarPresenter {
         return false;
       }
 
+      const sourceMovePreviewSession = {
+        ...session,
+        sourceCardId: card.cardId,
+        targetCardId: null,
+        selectedCardIds: [],
+        selectedCosts: {},
+        selectedMoveId: sourceMoves.length === 1 ? (sourceMoves[0]?.id ?? null) : null,
+      } satisfies ActionSelectionSession;
+
+      if (
+        sourceMoves.length === 1 &&
+        getPostCostActionSelectionPhase(sourceMovePreviewSession, sourceMoves[0]!) === "choose-cost"
+      ) {
+        const selectableCost =
+          getCurrentSelectableCostForActionSelectionSession(sourceMovePreviewSession);
+        if (!selectableCost) {
+          return false;
+        }
+
+        this.#setActionSelectionSession({
+          ...sourceMovePreviewSession,
+          phase: "choose-cost",
+        });
+        this.#game.setPendingError(null);
+        this.#game.setStatusMessage(getChooseCostStatusMessage(card.label, selectableCost));
+        return true;
+      }
+
+      if (
+        getMoveSelectableCosts(sourceMoves[0]).length > 0 &&
+        usesTargetSelectionForActionSelectionMoves(session.categoryId, sourceMoves)
+      ) {
+        const selectableCost = getMoveSelectableCosts(sourceMoves[0])[0];
+        if (!selectableCost) {
+          return false;
+        }
+
+        this.#setActionSelectionSession({
+          ...session,
+          sourceCardId: card.cardId,
+          targetCardId: null,
+          selectedCardIds: [],
+          selectedCosts: {},
+          selectedMoveId: null,
+          phase: "choose-cost",
+        });
+        this.#game.setPendingError(null);
+        this.#game.setStatusMessage(getChooseCostStatusMessage(card.label, selectableCost));
+        return true;
+      }
+
       if (usesTargetSelectionForActionSelectionMoves(session.categoryId, sourceMoves)) {
         this.#setActionSelectionSession({
           ...session,
           sourceCardId: card.cardId,
           targetCardId: null,
           selectedCardIds: [],
+          selectedCosts: {},
           selectedMoveId: null,
           phase: "choose-target",
         });
@@ -6804,12 +7794,11 @@ export class LorcanaSidebarPresenter {
           sourceCardId: card.cardId,
           targetCardId: null,
           selectedCardIds: [],
+          selectedCosts: {},
           selectedMoveId: sourceMoves.length === 1 ? (move?.id ?? null) : null,
           phase:
             sourceMoves.length === 1
-              ? session.confirmationRequired
-                ? "confirm"
-                : "executing"
+              ? getPostCostActionSelectionPhase(sourceMovePreviewSession, move!)
               : "choose-option",
         } satisfies ActionSelectionSession;
 
@@ -6822,6 +7811,18 @@ export class LorcanaSidebarPresenter {
 
         if (!move) {
           return false;
+        }
+
+        if (nextSession.phase === "choose-cost") {
+          this.#setActionSelectionSession(nextSession);
+          this.#game.setStatusMessage(
+            getChooseCostStatusMessage(
+              card.label,
+              getCurrentSelectableCostForActionSelectionSession(nextSession) ??
+                getMoveSelectableCosts(move)[0]!,
+            ),
+          );
+          return true;
         }
 
         if (session.confirmationRequired) {
@@ -6875,11 +7876,34 @@ export class LorcanaSidebarPresenter {
         sourceCardId: card.cardId,
         targetCardId: null,
         selectedCardIds: [],
+        selectedCosts: {},
         selectedMoveId: move.id,
-        phase: session.confirmationRequired ? "confirm" : "executing",
+        phase: getPostCostActionSelectionPhase(
+          {
+            ...session,
+            sourceCardId: card.cardId,
+            targetCardId: null,
+            selectedCardIds: [],
+            selectedCosts: {},
+            selectedMoveId: move.id,
+          },
+          move,
+        ),
       } satisfies ActionSelectionSession;
 
       this.#game.setPendingError(null);
+      if (nextSession.phase === "choose-cost") {
+        this.#setActionSelectionSession(nextSession);
+        this.#game.setStatusMessage(
+          getChooseCostStatusMessage(
+            card.label,
+            getCurrentSelectableCostForActionSelectionSession(nextSession) ??
+              getMoveSelectableCosts(move)[0]!,
+          ),
+        );
+        return true;
+      }
+
       if (session.confirmationRequired) {
         this.#setActionSelectionSession(nextSession);
         this.#game.setStatusMessage(m["sim.guidance.session.confirm"]({ label: move.label }));
@@ -6887,6 +7911,72 @@ export class LorcanaSidebarPresenter {
       }
 
       return this.#executeActionSelectionMove(nextSession, move);
+    }
+
+    if (session.phase === "choose-cost") {
+      const referenceMove = getReferenceMoveForActionSelectionSession(session);
+      const selectableCost = getCurrentSelectableCostForActionSelectionSession(session);
+      if (!referenceMove || !selectableCost) {
+        return false;
+      }
+
+      if (!includesSelectionId(selectableCost.candidateCardIds, card.cardId)) {
+        this.#game.setPendingError(getInvalidCostSelectionReason(selectableCost));
+        return false;
+      }
+
+      const selectedCostIds = getSelectedCostCardIds(session, selectableCost.kind);
+      const nextSelectedCostIds = selectedCostIds.includes(card.cardId)
+        ? selectedCostIds.filter((selectedCardId) => selectedCardId !== card.cardId)
+        : selectedCostIds.length >= selectableCost.count
+          ? [...selectedCostIds.slice(1), card.cardId]
+          : [...selectedCostIds, card.cardId];
+      const nextSession = {
+        ...session,
+        selectedCosts: {
+          ...session.selectedCosts,
+          [selectableCost.kind]: nextSelectedCostIds,
+        },
+      } satisfies ActionSelectionSession;
+      const nextPhase = getPostCostActionSelectionPhase(nextSession, referenceMove);
+      const sourceLabel =
+        this.cardSnapshotsById[nextSession.sourceCardId ?? ""]?.label ?? m["sim.card.unknown"]({});
+
+      this.#setActionSelectionSession({
+        ...nextSession,
+        phase: nextPhase,
+      });
+      this.#game.setPendingError(null);
+
+      if (nextPhase === "choose-cost") {
+        const nextSelectableCost = getCurrentSelectableCostForActionSelectionSession(nextSession);
+        if (!nextSelectableCost) {
+          return false;
+        }
+
+        this.#game.setStatusMessage(getChooseCostStatusMessage(sourceLabel, nextSelectableCost));
+        return true;
+      }
+
+      if (nextPhase === "choose-target") {
+        this.#game.setStatusMessage(getChooseTargetStatusMessage(session.categoryId, sourceLabel));
+        return true;
+      }
+
+      if (nextPhase === "confirm") {
+        this.#game.setStatusMessage(
+          m["sim.guidance.session.confirm"]({ label: referenceMove.label }),
+        );
+        return true;
+      }
+
+      return this.#executeActionSelectionMove(
+        {
+          ...nextSession,
+          phase: "executing",
+        },
+        referenceMove,
+      );
     }
 
     if (session.phase === "choose-target" && session.sourceCardId) {
@@ -7084,11 +8174,32 @@ export class LorcanaSidebarPresenter {
       ...session,
       label: session.categoryId === "activate-ability" ? move.label : session.label,
       selectedCardIds: [],
+      selectedCosts: {},
       selectedMoveId: move.id,
-      phase: session.confirmationRequired ? "confirm" : "executing",
+      phase: getPostCostActionSelectionPhase(
+        {
+          ...session,
+          selectedCardIds: [],
+          selectedCosts: {},
+          selectedMoveId: move.id,
+        },
+        move,
+      ),
     } satisfies ActionSelectionSession;
 
     this.#game.setPendingError(null);
+    if (nextSession.phase === "choose-cost") {
+      this.#setActionSelectionSession(nextSession);
+      this.#game.setStatusMessage(
+        getChooseCostStatusMessage(
+          this.cardSnapshotsById[session.sourceCardId ?? ""]?.label ?? m["sim.card.unknown"]({}),
+          getCurrentSelectableCostForActionSelectionSession(nextSession) ??
+            getMoveSelectableCosts(move)[0]!,
+        ),
+      );
+      return true;
+    }
+
     if (session.confirmationRequired) {
       this.#setActionSelectionSession(nextSession);
       this.#game.setStatusMessage(m["sim.guidance.session.confirm"]({ label: move.label }));
@@ -7110,6 +8221,25 @@ export class LorcanaSidebarPresenter {
     }
 
     if (session.phase === "choose-target") {
+      const referenceMove = getReferenceMoveForActionSelectionSession(session);
+      if (referenceMove && getMoveSelectableCosts(referenceMove).length > 0) {
+        this.#setActionSelectionSession({
+          ...session,
+          phase: "choose-cost",
+          targetCardId: null,
+          selectedCardIds: [],
+          selectedMoveId: session.categoryId === "activate-ability" ? session.selectedMoveId : null,
+        });
+        this.#game.setStatusMessage(
+          getChooseCostStatusMessage(
+            this.cardSnapshotsById[session.sourceCardId ?? ""]?.label ?? m["sim.card.unknown"]({}),
+            getCurrentSelectableCostForActionSelectionSession(session) ??
+              getMoveSelectableCosts(referenceMove)[0]!,
+          ),
+        );
+        return;
+      }
+
       if (isSingTogetherSelectionSession(session)) {
         if (
           session.sourceCardId &&
@@ -7166,6 +8296,7 @@ export class LorcanaSidebarPresenter {
           phase: "choose-source",
           sourceCardId: null,
           selectedCardIds: [],
+          selectedCosts: {},
           selectedMoveId: null,
         });
         this.#game.setStatusMessage(getChooseSourceStatusMessage(session.categoryId));
@@ -7178,13 +8309,53 @@ export class LorcanaSidebarPresenter {
         sourceCardId: null,
         targetCardId: null,
         selectedCardIds: [],
+        selectedCosts: {},
         selectedMoveId: null,
       });
       this.#game.setStatusMessage(m["sim.guidance.session.choosePlaySource"]({}));
       return;
     }
 
+    if (session.phase === "choose-cost") {
+      if (session.selectedMoveId) {
+        const sourceMoveCount = session.sourceCardId
+          ? getSourceMovesForActionSelectionSession(session, session.sourceCardId).length
+          : 0;
+
+        if (sourceMoveCount > 1) {
+          this.#setActionSelectionSession({
+            ...session,
+            phase: "choose-option",
+            selectedCardIds: [],
+            selectedCosts: {},
+            selectedMoveId: null,
+          });
+          this.#game.setStatusMessage(
+            getChooseOptionStatusMessage(
+              session,
+              this.cardSnapshotsById[session.sourceCardId ?? ""]?.label ??
+                m["sim.card.unknown"]({}),
+            ),
+          );
+          return;
+        }
+      }
+
+      this.#setActionSelectionSession({
+        ...session,
+        phase: "choose-source",
+        sourceCardId: null,
+        targetCardId: null,
+        selectedCardIds: [],
+        selectedCosts: {},
+        selectedMoveId: null,
+      });
+      this.#game.setStatusMessage(getChooseSourceStatusMessage(session.categoryId));
+      return;
+    }
+
     if (session.phase === "confirm") {
+      const currentMove = getCurrentMoveForActionSelectionSession(session);
       if (
         session.sourceCardId &&
         usesTargetSelectionForActionSelectionMoves(
@@ -7197,12 +8368,28 @@ export class LorcanaSidebarPresenter {
           phase: "choose-target",
           targetCardId: null,
           selectedCardIds: [],
+          selectedCosts: session.selectedCosts,
           selectedMoveId: null,
         });
         this.#game.setStatusMessage(
           getChooseTargetStatusMessage(
             session.categoryId,
             this.cardSnapshotsById[session.sourceCardId]?.label ?? m["sim.card.unknown"]({}),
+          ),
+        );
+        return;
+      }
+
+      if (currentMove && getMoveSelectableCosts(currentMove).length > 0) {
+        this.#setActionSelectionSession({
+          ...session,
+          phase: "choose-cost",
+        });
+        this.#game.setStatusMessage(
+          getChooseCostStatusMessage(
+            this.cardSnapshotsById[session.sourceCardId ?? ""]?.label ?? m["sim.card.unknown"]({}),
+            getCurrentSelectableCostForActionSelectionSession(session) ??
+              getMoveSelectableCosts(currentMove)[0]!,
           ),
         );
         return;
@@ -7223,6 +8410,7 @@ export class LorcanaSidebarPresenter {
           ...session,
           phase: "choose-option",
           selectedCardIds: [],
+          selectedCosts: {},
           selectedMoveId: null,
         });
         this.#game.setStatusMessage(
@@ -7241,6 +8429,7 @@ export class LorcanaSidebarPresenter {
           ...session,
           phase: "choose-option",
           selectedCardIds: [],
+          selectedCosts: {},
           selectedMoveId: null,
         });
         this.#game.setStatusMessage(getChooseOptionStatusMessage(session, sourceCardLabel));
@@ -7253,6 +8442,7 @@ export class LorcanaSidebarPresenter {
         sourceCardId: null,
         targetCardId: null,
         selectedCardIds: [],
+        selectedCosts: {},
         selectedMoveId: null,
       });
       this.#game.setStatusMessage(getChooseSourceStatusMessage(session.categoryId));
@@ -7294,6 +8484,32 @@ export class LorcanaSidebarPresenter {
       this.#game.setSelectedMulliganCardIds([]);
       this.#game.setPendingError(null);
       this.#game.setStatusMessage(m["sim.guidance.pregame.mulligan"]({}));
+      return;
+    }
+
+    const selectableCosts = getMoveSelectableCosts(move);
+    if (selectableCosts.length > 0 && isActionSelectionCategoryId(move.presentation.categoryId)) {
+      const sourceCardId = getCardActionSourceCardId(move);
+      const session: ActionSelectionSession = {
+        categoryId: move.presentation.categoryId,
+        label: move.presentation.categoryLabel ?? getMoveCategoryLabel(move.moveId),
+        phase: "choose-cost",
+        candidateMoves: [move],
+        sourceCardId,
+        targetCardId: null,
+        selectedCardIds: [],
+        selectedCosts: {},
+        selectedMoveId: move.id,
+        confirmationRequired: false,
+      };
+      this.#game.setPendingError(null);
+      this.#setActionSelectionSession(session);
+      this.#game.setStatusMessage(
+        getChooseCostStatusMessage(
+          this.cardSnapshotsById[sourceCardId ?? ""]?.label ?? m["sim.card.unknown"]({}),
+          selectableCosts[0]!,
+        ),
+      );
       return;
     }
 
@@ -7395,20 +8611,14 @@ export class LorcanaSidebarPresenter {
   }
 
   handleLocaleSelection = (nextLocale: SupportedLocale): void => {
-    if (!locales.includes(nextLocale)) {
-      return;
+    const prev = this.selectedLocale;
+    this.#settings.handleLocaleSelection(nextLocale);
+    if (this.selectedLocale !== prev) {
+      this.#game.setStatusMessage(
+        m["sim.status.languageChanged"]({ localeLabel: getLocaleLabel(nextLocale) }),
+      );
+      this.#game.handleLocaleChanged();
     }
-    if (nextLocale === this.selectedLocale) {
-      return;
-    }
-
-    this.selectedLocale = nextLocale;
-    setLocale(nextLocale, { reload: false });
-    localStorage.setItem(PLAYER_LOCALE_STORAGE_KEY, nextLocale);
-    this.#game.setStatusMessage(
-      m["sim.status.languageChanged"]({ localeLabel: getLocaleLabel(nextLocale) }),
-    );
-    this.#game.handleLocaleChanged();
   };
 
   handleRawLogRegistryToggle = (enabled: boolean): void => {
@@ -7417,8 +8627,7 @@ export class LorcanaSidebarPresenter {
   };
 
   handleSkipActionConfirmationToggle = (enabled: boolean): void => {
-    this.skipActionConfirmation = enabled;
-    localStorage.setItem(SKIP_ACTION_CONFIRMATION_STORAGE_KEY, enabled ? "true" : "false");
+    this.#settings.handleSkipActionConfirmationToggle(enabled);
     this.#game.setStatusMessage(
       enabled
         ? m["sim.settings.skipActionConfirmationEnabled"]({})
@@ -7427,8 +8636,7 @@ export class LorcanaSidebarPresenter {
   };
 
   handleHotkeyModeChange = (mode: HotkeyMode): void => {
-    this.hotkeyMode = mode;
-    localStorage.setItem(HOTKEYS_ENABLED_STORAGE_KEY, mode);
+    this.#settings.handleHotkeyModeChange(mode);
     this.#game.setStatusMessage(
       mode === "on"
         ? m["sim.settings.hotkeysModeOn"]({})
@@ -7439,31 +8647,30 @@ export class LorcanaSidebarPresenter {
   };
 
   handleCardPreviewModeChange = (mode: CardPreviewMode): void => {
-    this.cardPreviewMode = mode;
-    localStorage.setItem(CARD_PREVIEW_DELAY_STORAGE_KEY, mode);
+    this.#settings.handleCardPreviewModeChange(mode);
   };
 
   handlePrimaryClickActionChange = (action: PrimaryClickAction): void => {
-    this.primaryClickAction = action;
-    localStorage.setItem(PRIMARY_CLICK_ACTION_STORAGE_KEY, action);
+    this.#settings.handlePrimaryClickActionChange(action);
   };
 
   handleAnimationSpeedChange = (speed: AnimationSpeed): void => {
-    this.animationSpeed = speed;
+    this.#settings.handleAnimationSpeedChange(speed);
     this.#game.setAnimationSpeed(speed);
-    localStorage.setItem(ANIMATION_SPEED_STORAGE_KEY, speed);
   };
 
   handleSoundVolumeChange = (volume: number): void => {
-    if (!Number.isFinite(volume)) return;
-    this.soundVolume = Math.max(0, Math.min(100, Math.round(volume)));
+    this.#settings.handleSoundVolumeChange(volume);
     this.#game.setSoundVolume(this.soundVolume);
-    localStorage.setItem(SOUND_VOLUME_STORAGE_KEY, String(this.soundVolume));
   };
 
   handleAccessibleMobileControlsToggle = (enabled: boolean): void => {
-    this.accessibleMobileControls = enabled;
-    localStorage.setItem(ACCESSIBLE_MOBILE_CONTROLS_STORAGE_KEY, enabled ? "true" : "false");
+    this.#settings.handleAccessibleMobileControlsToggle(enabled);
+  };
+
+  handleShowZoneCountersToggle = (enabled: boolean): void => {
+    this.#settings.handleShowZoneCountersToggle(enabled);
+    this.#game.setShowZoneCounters(enabled);
   };
 
   handleGuidancePositionToggle = (): void => {
@@ -7492,7 +8699,9 @@ export function setLorcanaGameContext(value: SetLorcanaGameContextOptions): Lorc
     value.engine,
     value.readModel,
     value.playerSettings,
+    value.playerDisplayNames,
     value.debugPerformance,
+    value.playerIsMobileMap,
   );
   onDestroy(() => {
     context.destroy();

@@ -1,8 +1,11 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type { MoveDamageEffect } from "@tcg/lorcana-types";
+import { isUpToAmount, unwrapAmount } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
-import { resolveEffectTargets } from "../../../targeting/runtime";
+import { effectTargetUsesSelectionContext, getEffectTargetSelectionInput } from "./selection-state";
+import { normalizeSelectedTargets, resolveEffectTargets } from "../../../targeting/runtime";
+import { isSlotted } from "../../../targeting/slotted-targets";
 import { applyReplacementEffects } from "../../effects/replacement-effects";
 import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
 import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
@@ -26,11 +29,14 @@ function resolveEffectAmount(effect: MoveDamageEffect): number | undefined {
     return undefined;
   }
 
-  if (typeof effect.amount !== "number" || !Number.isFinite(effect.amount) || effect.amount <= 0) {
+  // Peek through an "up-to" wrapper to find the concrete numeric cap.
+  const { inner } = unwrapAmount(effect.amount);
+
+  if (typeof inner !== "number" || !Number.isFinite(inner) || inner <= 0) {
     return undefined;
   }
 
-  return Math.floor(effect.amount);
+  return Math.floor(inner);
 }
 
 function getCardDamage(ctx: PlayCardExecutionContext, cardId: CardInstanceId): number {
@@ -52,18 +58,35 @@ export function resolveMoveDamageEffect(
   effect: MoveDamageEffect,
   resolutionInput: ActionResolutionInput,
 ): void {
-  const destinationTargets =
-    resolveEffectTargets(
-      ctx,
-      cardPlayed,
-      effect.to ?? "chosen-for-effect",
-      resolutionInput.targets,
-    ) ?? [];
-  const destinationId = destinationTargets[0];
-  if (!destinationId) {
+  // Slot-aware path: when the caller supplied a `move-damage` slotted input,
+  // read source and destination directly by slot key — no positional guessing,
+  // no need to filter source out of destination candidates.
+  if (isSlotted(resolutionInput.slottedTargets, "move-damage")) {
+    const slottedFromInput = [...resolutionInput.slottedTargets.from];
+    const slottedToInput = [...resolutionInput.slottedTargets.to];
+    const sourceTargets =
+      resolveEffectTargets(ctx, cardPlayed, effect.from ?? "ALL_CHARACTERS", slottedFromInput) ??
+      [];
+    if (sourceTargets.length === 0) {
+      return;
+    }
+    const toTarget = effect.to ?? "chosen-for-effect";
+    const destinationSelectionInput = effectTargetUsesSelectionContext(effect.to)
+      ? getEffectTargetSelectionInput(toTarget, resolutionInput)
+      : slottedToInput;
+    const destinationTargets =
+      resolveEffectTargets(ctx, cardPlayed, toTarget, destinationSelectionInput) ?? [];
+    const destinationId = destinationTargets[0];
+    if (!destinationId) {
+      return;
+    }
+    applyMoveDamage(ctx, cardPlayed, effect, resolutionInput, sourceTargets, destinationId);
     return;
   }
 
+  // Legacy positional path: targets is a flat array where (by convention) the
+  // UI collected source at index 0 and destination at later indices. Kept for
+  // back-compat until all call sites emit slotted inputs.
   const sourceTargets =
     resolveEffectTargets(
       ctx,
@@ -75,9 +98,40 @@ export function resolveMoveDamageEffect(
     return;
   }
 
+  const selectedTargets = normalizeSelectedTargets(resolutionInput.targets);
+  const remainingTargets = selectedTargets
+    ? selectedTargets.filter((id) => !sourceTargets.includes(id))
+    : undefined;
+  const destinationTargetInput =
+    remainingTargets !== undefined && remainingTargets.length > 0
+      ? remainingTargets
+      : resolutionInput.targets;
+  const toTarget = effect.to ?? "chosen-for-effect";
+  const destinationSelectionInput = effectTargetUsesSelectionContext(effect.to)
+    ? getEffectTargetSelectionInput(toTarget, resolutionInput)
+    : destinationTargetInput;
+  const destinationTargets =
+    resolveEffectTargets(ctx, cardPlayed, toTarget, destinationSelectionInput) ?? [];
+  const destinationId = destinationTargets[0];
+  if (!destinationId) {
+    return;
+  }
+
+  applyMoveDamage(ctx, cardPlayed, effect, resolutionInput, sourceTargets, destinationId);
+}
+
+function applyMoveDamage(
+  ctx: PlayCardExecutionContext,
+  cardPlayed: CardPlayedPayload,
+  effect: MoveDamageEffect,
+  resolutionInput: ActionResolutionInput,
+  sourceTargets: CardInstanceId[],
+  destinationId: CardInstanceId,
+): void {
   const effectAmount = resolveEffectAmount(effect);
+  const allowsUpTo = isUpToAmount(effect.amount);
   const selectedAmount =
-    effect.upTo === true &&
+    allowsUpTo &&
     typeof resolutionInput.amount === "number" &&
     Number.isFinite(resolutionInput.amount) &&
     resolutionInput.amount >= 0
@@ -166,6 +220,9 @@ export function resolveMoveDamageEffect(
           destinationId,
           cardPlayed.playerId,
         );
+        const subjectAtLocationId = ctx.cards.get(destinationId)?.meta?.atLocationId as
+          | CardInstanceId
+          | undefined;
         const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, destinationId);
         moveCardOutOfPlayWithStack(ctx, destinationId, {
           zone: "discard",
@@ -177,7 +234,7 @@ export function resolveMoveDamageEffect(
           {
             cardId: destinationId,
             sourceId: cardPlayed.cardId,
-            snapshot: { damageDealt: movedTotal, keywordsBeforeBanish },
+            snapshot: { damageDealt: movedTotal, keywordsBeforeBanish, subjectAtLocationId },
             reason: "lethal damage",
           },
           {
@@ -186,7 +243,7 @@ export function resolveMoveDamageEffect(
             subjectCardId: destinationId,
             triggerSourceCardId: destinationId,
             triggerCandidates,
-            eventSnapshot: { keywordsBeforeBanish },
+            eventSnapshot: { keywordsBeforeBanish, subjectAtLocationId },
           },
         );
         recordBanishedCharacterThisTurn(ctx, destinationId);

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { simbaKingInTheMaking } from "..";
+import { simbaKingInTheMaking } from "./020-simba-king-in-the-making";
 
 export const simbaKingInTheMakingEnchanted: CharacterCard = {
   ...simbaKingInTheMaking,

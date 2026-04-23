@@ -17,6 +17,7 @@ import { createProjectionState, getEffectiveStrength } from "../../../rules/deri
 import { projectLorcanaCardDerived } from "../../../projection/card-derived";
 import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
 import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
+import { sweepLethalDamageInPlay } from "../../state/lethal-damage-sweep";
 
 type ResolvedBanishEffectInput = {
   eventSnapshot?: DynamicAmountEventSnapshot;
@@ -133,7 +134,6 @@ export function resolveBanishEffect(
       zone: "discard",
       playerId: ownerId,
     });
-
     emitTriggeredLorcanaEvent(
       ctx,
       "cardBanished",
@@ -176,4 +176,10 @@ export function resolveBanishEffect(
   }
 
   markLastEffectPerformed(resolvedInput.eventSnapshot, banishedAny);
+
+  // A banished card may have been a source of continuous static abilities
+  // (e.g. +Willpower aura). Re-check all remaining cards for lethal damage.
+  if (banishedAny) {
+    sweepLethalDamageInPlay(ctx, { reasonCardId: cardPlayed.cardId });
+  }
 }

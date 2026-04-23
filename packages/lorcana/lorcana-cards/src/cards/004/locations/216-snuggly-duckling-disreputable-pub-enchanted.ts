@@ -1,5 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { snugglyDucklingDisreputablePub } from "..";
+import { snugglyDucklingDisreputablePub } from "./135-snuggly-duckling-disreputable-pub";
 
 export const snugglyDucklingDisreputablePubEnchanted: LocationCard = {
   ...snugglyDucklingDisreputablePub,

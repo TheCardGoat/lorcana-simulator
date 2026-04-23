@@ -3,6 +3,7 @@ import {
   LorcanaMultiplayerTestEngine,
   PLAYER_ONE,
   createMockCharacter,
+  createMockLocation,
 } from "@tcg/lorcana-engine/testing";
 import { faZhouWarHero } from "./188-fa-zhou-war-hero";
 
@@ -134,6 +135,43 @@ describe("Fa Zhou - War Hero", () => {
 
       // 3 lore gained on second challenge (Fa Zhou challenged)
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(3);
+    });
+
+    it("does NOT gain lore when the second challenge of the turn targets a location", () => {
+      const location = createMockLocation({
+        id: "fa-zhou-test-location",
+        name: "Test Location",
+        cost: 2,
+        willpower: 8,
+        lore: 0,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: faZhouWarHero, isDrying: false },
+            { card: challenger, isDrying: false },
+          ],
+          deck: 2,
+        },
+        {
+          play: [{ card: defender, exerted: true }, location],
+          deck: 2,
+        },
+      );
+
+      // First challenge: character vs character
+      expect(testEngine.asPlayerOne().challenge(challenger, defender)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
+
+      // Ready the challenger so it can challenge again
+      const challengerId = testEngine.findCardInstanceId(challenger, "play", PLAYER_ONE);
+      testEngine.asServer().manualReadyCard(challengerId);
+
+      // Second challenge: targets a location. Card text says "another character",
+      // so lore must NOT be gained even though it's the second challenge of the turn.
+      expect(testEngine.asPlayerOne().challenge(challenger, location)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
     });
   });
 });

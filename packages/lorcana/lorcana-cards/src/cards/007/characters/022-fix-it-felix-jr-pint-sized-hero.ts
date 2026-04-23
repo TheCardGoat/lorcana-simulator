@@ -69,7 +69,7 @@ export const fixitFelixJrPintsizedHero: CharacterCard = {
       name: "LET'S GET TO WORK",
       text: "LET'S GET TO WORK Whenever you return a Racer character card from your discard to your hand, you may ready chosen Racer character. They can't quest for the rest of this turn.",
       trigger: {
-        event: "return-to-hand",
+        event: "leave-discard",
         on: {
           controller: "you",
           cardType: "character",
@@ -77,7 +77,7 @@ export const fixitFelixJrPintsizedHero: CharacterCard = {
         },
         restrictions: [
           {
-            type: "from-discard",
+            type: "to-hand",
           },
         ],
         timing: "whenever",

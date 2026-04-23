@@ -20,6 +20,25 @@ export function createZoneQueryAPI(
   cardsApi: CardQueryAPI,
   zoneRegistry: ZoneRegistry,
 ): ZoneQueryAPI {
+  const resolveZoneCardIds = (zoneId: string): string[] => {
+    const directCards = state.ctx.zones.private.zoneCards[zoneId];
+    if (Array.isArray(directCards) && directCards.length > 0) {
+      return directCards;
+    }
+
+    // In filtered player views, owner-scoped secret zones (like deck) keep an empty
+    // zoneCards array but retain cardIndex entries so the owner can still resolve
+    // legal targeting choices without revealing hidden information to others.
+    return Object.entries(state.ctx.zones.private.cardIndex)
+      .filter(([, entry]) => entry?.zoneKey === zoneId)
+      .sort(([, left], [, right]) => {
+        const leftIndex = typeof left?.index === "number" ? left.index : Number.MAX_SAFE_INTEGER;
+        const rightIndex = typeof right?.index === "number" ? right.index : Number.MAX_SAFE_INTEGER;
+        return leftIndex - rightIndex;
+      })
+      .map(([cardId]) => cardId);
+  };
+
   const getFallbackCardView = (cardId: string) => {
     const indexEntry = state.ctx.zones.private.cardIndex[cardId];
     return (
@@ -43,12 +62,12 @@ export function createZoneQueryAPI(
   return {
     search: (zone, predicate) => {
       const zoneId = resolveZoneId(zone);
-      const cards = state.ctx.zones.private.zoneCards[zoneId] || [];
+      const cards = resolveZoneCardIds(zoneId);
       return cards.filter((cardId) => predicate(getFallbackCardView(cardId)));
     },
     searchAndPick: (zone, count: number, predicate) => {
       const zoneId = resolveZoneId(zone);
-      let cards = [...(state.ctx.zones.private.zoneCards[zoneId] || [])];
+      let cards = [...resolveZoneCardIds(zoneId)];
       if (predicate) {
         cards = cards.filter((cardId) => predicate(getFallbackCardView(cardId)));
       }
@@ -59,7 +78,7 @@ export function createZoneQueryAPI(
     lookAtBottom: () => [],
     getCards: (zone) => {
       const zoneId = resolveZoneId(zone);
-      return state.ctx.zones.private.zoneCards[zoneId] || [];
+      return resolveZoneCardIds(zoneId);
     },
     getCardCount: (zone) => {
       const zoneId = resolveZoneId(zone);
@@ -67,12 +86,12 @@ export function createZoneQueryAPI(
     },
     getTopCard: (zone) => {
       const zoneId = resolveZoneId(zone);
-      const cards = state.ctx.zones.private.zoneCards[zoneId] || [];
+      const cards = resolveZoneCardIds(zoneId);
       return cards.length > 0 ? cards[cards.length - 1] : undefined;
     },
     getBottomCard: (zone) => {
       const zoneId = resolveZoneId(zone);
-      const cards = state.ctx.zones.private.zoneCards[zoneId] || [];
+      const cards = resolveZoneCardIds(zoneId);
       return cards.length > 0 ? cards[0] : undefined;
     },
     getCardZone: (cardId) => state.ctx.zones.private.cardIndex[cardId]?.zoneKey,

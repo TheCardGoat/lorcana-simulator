@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { secondStarToTheRight } from "..";
+import { secondStarToTheRight } from "./061-second-star-to-the-right";
 
 export const secondStarToTheRightEnchanted: ActionCard = {
   ...secondStarToTheRight,

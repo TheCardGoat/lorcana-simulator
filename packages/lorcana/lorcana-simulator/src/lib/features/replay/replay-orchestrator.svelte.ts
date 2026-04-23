@@ -1,85 +1,51 @@
 /**
  * Replay Orchestrator
  *
- * Reconstructs match states from a persisted replay for step-through viewing.
- * Supports server-authority games (patches available) and provides move log
- * for all game types.
+ * Reconstructs match states from a persisted replay by applying patches
+ * to the initial state. Supports step-through viewing and move log display.
  */
 
 import { getLorcanaCardCatalogSync } from "@tcg/lorcana-cards/cards/sync";
 import {
   createLorcanaClient,
   createPlayerId,
-  type AcceptedMoveRecord,
   type CardsMaps,
-  type EngineLogRecord,
   type LorcanaClient,
   type LorcanaMatchState,
 } from "@tcg/lorcana-engine";
+import { apply, type Patch } from "mutative";
 import type { LorcanaPlayerSide, MoveLogEntrySnapshot } from "../simulator/model/contracts.js";
 import {
   createSpectatorHistoryEntries,
   extractMatchState,
 } from "../spectator/spectator-match-orchestrator.svelte.js";
-import type { PersistedReplayData } from "./fetch-replay.js";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-interface ReplayMove {
-  stateVersion: number;
-  acceptedMove: AcceptedMoveRecord;
-  patches: unknown[];
-  state?: unknown;
-  engineLogs: EngineLogRecord[];
-}
-
-// ---------------------------------------------------------------------------
-// Read Model
-// ---------------------------------------------------------------------------
-
-class ReplayReadModel {
-  #listeners = new Set<(stateID: number) => void>();
-  #stateId = 0;
-  #moveLog: MoveLogEntrySnapshot[] = [];
-
-  getMoveLog(limit = 50): MoveLogEntrySnapshot[] {
-    return limit > 0 ? this.#moveLog.slice(-limit) : [...this.#moveLog];
-  }
-
-  subscribeStateUpdates(handler: (stateID: number) => void): () => void {
-    this.#listeners.add(handler);
-    return () => {
-      this.#listeners.delete(handler);
-    };
-  }
-
-  setMoveLog(entries: MoveLogEntrySnapshot[]): void {
-    this.#moveLog = entries;
-  }
-
-  notify(): void {
-    this.#stateId += 1;
-    for (const listener of this.#listeners) {
-      listener(this.#stateId);
-    }
-  }
-}
+import type {
+  PersistedReplayData,
+  PersistedReplayMetadata,
+  ReplayChatMessage,
+} from "./fetch-replay.js";
 
 // ---------------------------------------------------------------------------
 // State parsing
 // ---------------------------------------------------------------------------
 
+/**
+ * Parse the initialState JSON string into a LorcanaMatchState.
+ * Handles v2 format (state-only, no cardsMaps) and legacy formats.
+ */
 export function parseReplayInitialState(
   initialState: string,
+  cardsMaps?: CardsMaps,
 ): { state: LorcanaMatchState; cardsMaps: CardsMaps } | null {
   try {
     const parsed = JSON.parse(initialState) as Record<string, unknown>;
 
-    // Server-authority EngineSnapshot format: { state: LorcanaMatchState, cardsMaps, historyLength }
-    // Must be checked first — the state field has a ctx which also matches extractMatchState,
-    // but we need the cardsMaps at the top level for proper card name resolution.
+    // v2 format: { state: LorcanaMatchState, historyLength } — cardsMaps is top-level on PersistedReplayData
+    if (parsed.state && typeof parsed.state === "object" && cardsMaps) {
+      return { state: parsed.state as LorcanaMatchState, cardsMaps };
+    }
+
+    // Legacy: EngineSnapshot format { state, cardsMaps, historyLength } — cardsMaps embedded
     if (
       parsed.state &&
       typeof parsed.state === "object" &&
@@ -102,7 +68,7 @@ export function parseReplayInitialState(
     if ("ctx" in parsed) {
       return {
         state: parsed as unknown as LorcanaMatchState,
-        cardsMaps: {} as CardsMaps,
+        cardsMaps: cardsMaps ?? ({} as CardsMaps),
       };
     }
 
@@ -125,6 +91,10 @@ export class ReplayOrchestrator {
   readonly #states: LorcanaMatchState[];
   /** Turn number per step (step 0 = 0 / pre-game). */
   readonly #turnNumbers: number[];
+  readonly #chatMessages: ReplayChatMessage[];
+  /** Step timestamps (index N = steps[N-1].acceptedMove.timestamp; index 0 = 0). */
+  readonly #stepTimestamps: number[];
+  readonly #metadata: PersistedReplayMetadata;
 
   #currentStep = $state(0);
   #isPlaying = $state(false);
@@ -132,7 +102,9 @@ export class ReplayOrchestrator {
   #timer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(replayData: PersistedReplayData) {
-    const parsed = parseReplayInitialState(replayData.initialState);
+    // Use top-level cardsMaps (v2) — no longer buried inside initialState
+    const topLevelCardsMaps = replayData.cardsMaps as CardsMaps | undefined;
+    const parsed = parseReplayInitialState(replayData.initialState, topLevelCardsMaps);
 
     if (!parsed) {
       throw new Error("Failed to parse replay initial state");
@@ -141,9 +113,10 @@ export class ReplayOrchestrator {
     const { state, cardsMaps } = parsed;
     this.#cardsMaps = cardsMaps;
     this.#playerIds = replayData.playerIds;
+    this.#chatMessages = replayData.chatMessages ?? [];
+    this.#stepTimestamps = [0, ...replayData.steps.map((s) => s.acceptedMove.timestamp)];
+    this.#metadata = replayData.metadata;
 
-    // Prefer cardsMaps.owners for player list (server-authority);
-    // fall back to playerIds for client-authority games.
     const playerIdList =
       Object.keys(cardsMaps.owners ?? {}).length > 0
         ? Object.keys(cardsMaps.owners)
@@ -163,35 +136,49 @@ export class ReplayOrchestrator {
       goingFirst: createPlayerId(String(players[0]?.id ?? replayData.playerIds[0])),
     });
 
-    // Pre-compute states from replay snapshots when available.
-    const moves = replayData.moves as unknown as ReplayMove[];
+    // Reconstruct states by applying patches to the initial state
     this.#states = [state];
-    this.#turnNumbers = [0]; // step 0 is pre-game
+    this.#turnNumbers = [0];
 
-    for (const move of moves) {
-      if (move.state) {
-        const extracted = extractMatchState(move.state);
-        if (extracted) {
-          this.#states.push(extracted.state);
-          this.#turnNumbers.push(move.acceptedMove?.turnNumber ?? 0);
-        }
+    let currentState: unknown = state;
+    for (const step of replayData.steps) {
+      const turnNumber = step.acceptedMove.turnNumber;
+
+      if (step.patches.length === 0) {
+        this.#states.push(currentState as LorcanaMatchState);
+        this.#turnNumbers.push(turnNumber);
+        continue;
+      }
+
+      try {
+        currentState = apply(currentState as object, step.patches as Patch[]);
+        this.#states.push(currentState as LorcanaMatchState);
+        this.#turnNumbers.push(turnNumber);
+      } catch {
+        break;
       }
     }
 
-    // Build move log using spectator history helper
-    const acceptedMoves = moves.map((m) => m.acceptedMove).filter(Boolean) as Array<{
-      actorId: string;
-      moveId: string;
-      stateVersion: number;
-      timestamp: number;
-      turnNumber: number;
-      input?: unknown;
-    }>;
+    // Strip time context — replay data does not capture per-move clock state,
+    // so showing stale/frozen timers is misleading. Setting mode to "none"
+    // causes the projection pipeline to omit all timer UI.
+    for (let i = 0; i < this.#states.length; i++) {
+      const s = this.#states[i]!;
+      this.#states[i] = {
+        ...s,
+        ctx: { ...s.ctx, time: { mode: "none" as const, running: false, players: {} } },
+      } as LorcanaMatchState;
+    }
 
-    const engineLogs = moves.flatMap((m) => m.engineLogs ?? []) as Array<{
-      stateVersion: number;
-      log: unknown;
-    }>;
+    // Build move log from step data — acceptedMove already has the shape spectator history expects
+    const acceptedMoves = replayData.steps.map((step) => step.acceptedMove);
+
+    const engineLogs = replayData.steps.flatMap((step) =>
+      step.logs.map((log) => ({
+        stateVersion: step.acceptedMove.stateVersion,
+        log,
+      })),
+    );
 
     const entries = createSpectatorHistoryEntries({
       acceptedMoves,
@@ -202,9 +189,27 @@ export class ReplayOrchestrator {
     });
 
     this.readModel.setMoveLog(entries);
+    this.readModel.setVisibleStep(0);
 
     // Load initial state into engine
     this.#engine.loadState(state);
+  }
+
+  /** Returns the pre-computed game state at a given step (0 = initial). */
+  getStateAtStep(step: number): LorcanaMatchState | undefined {
+    return this.#states[step];
+  }
+
+  get cardsMaps(): CardsMaps {
+    return this.#cardsMaps;
+  }
+
+  get playerIds(): [string, string] {
+    return this.#playerIds;
+  }
+
+  get metadata(): PersistedReplayMetadata {
+    return this.#metadata;
   }
 
   get currentEngine(): LorcanaClient {
@@ -235,9 +240,20 @@ export class ReplayOrchestrator {
     return this.#speedMs;
   }
 
-  /** True when replay snapshots are available and step-through is possible. */
+  /** True when replay patches produced more than the initial state. */
   get hasPatchData(): boolean {
     return this.#states.length > 1;
+  }
+
+  /** True when the current step is the final step (game over). */
+  get isAtEnd(): boolean {
+    return this.#currentStep >= this.#states.length - 1;
+  }
+
+  /** Chat messages visible up to (and including) the current step's timestamp. */
+  get chatMessages(): ReplayChatMessage[] {
+    const cutoff = this.#stepTimestamps[this.#currentStep] ?? 0;
+    return this.#chatMessages.filter((msg) => msg.timestamp <= cutoff);
   }
 
   goToStep(step: number): void {
@@ -247,6 +263,7 @@ export class ReplayOrchestrator {
     const nextState = this.#states[clamped];
     if (nextState) {
       this.#engine.loadState(nextState);
+      this.readModel.setVisibleStep(clamped);
       this.readModel.notify();
     }
   }
@@ -343,5 +360,45 @@ export class ReplayOrchestrator {
     if (actorId === p1) return "playerOne";
     if (actorId === p2) return "playerTwo";
     return undefined;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Read Model
+// ---------------------------------------------------------------------------
+
+class ReplayReadModel {
+  #listeners = new Set<(stateID: number) => void>();
+  #stateId = 0;
+  #allEntries: MoveLogEntrySnapshot[] = [];
+  /** Number of visible entries (step 0 = 0 entries, step N = N entries). */
+  #visibleCount = 0;
+
+  getMoveLog(limit = 50): MoveLogEntrySnapshot[] {
+    const visible = this.#allEntries.slice(0, this.#visibleCount);
+    return limit > 0 ? visible.slice(-limit) : visible;
+  }
+
+  subscribeStateUpdates(handler: (stateID: number) => void): () => void {
+    this.#listeners.add(handler);
+    return () => {
+      this.#listeners.delete(handler);
+    };
+  }
+
+  setMoveLog(entries: MoveLogEntrySnapshot[]): void {
+    this.#allEntries = entries;
+  }
+
+  /** Update the number of visible log entries (matches replay step index). */
+  setVisibleStep(step: number): void {
+    this.#visibleCount = step;
+  }
+
+  notify(): void {
+    this.#stateId += 1;
+    for (const listener of this.#listeners) {
+      listener(this.#stateId);
+    }
   }
 }

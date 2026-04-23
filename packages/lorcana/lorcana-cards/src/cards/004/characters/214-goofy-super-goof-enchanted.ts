@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { goofySuperGoof } from "..";
+import { goofySuperGoof } from "./107-goofy-super-goof";
 
 export const goofySuperGoofEnchanted: CharacterCard = {
   ...goofySuperGoof,

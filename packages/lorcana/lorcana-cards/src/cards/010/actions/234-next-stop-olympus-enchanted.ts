@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { nextStopOlympus } from "..";
+import { nextStopOlympus } from "./129-next-stop-olympus";
 
 export const nextStopOlympusEnchanted: ActionCard = {
   ...nextStopOlympus,

@@ -29,6 +29,10 @@
     "./expressions": {
       "types": "./src/expressions/index.ts",
       "default": "./src/expressions/index.ts"
+    },
+    "./name-generator": {
+      "types": "./src/name-generator/generator.ts",
+      "default": "./src/name-generator/generator.ts"
     }
   },
   "scripts": {
@@ -37,10 +41,12 @@
     "check-types": "tsc --noEmit",
     "format": "bun x oxfmt --write ./src",
     "lint": "bun x oxlint --fix ./src",
-    "test": "echo 'No tests for types-only package'",
+    "test": "bun test src",
     "check": "turbo format lint check-types"
   },
-  "dependencies": {},
+  "dependencies": {
+    "unique-names-generator": "^4.7.1"
+  },
   "devDependencies": {
     "@types/bun": "1.2.14",
     "typescript": "5.8.3"

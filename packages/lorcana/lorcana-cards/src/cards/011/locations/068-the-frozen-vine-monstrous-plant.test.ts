@@ -59,7 +59,13 @@ describe("The Frozen Vine - Monstrous Plant", () => {
     expect(
       testEngine.asPlayerTwo().challenge(locationAttacker, theFrozenVineMonstrousPlant),
     ).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+    // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(theFrozenVineMonstrousPlant, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getCardZone(theFrozenVineMonstrousPlant)).toBe("discard");
   });
 
@@ -77,7 +83,13 @@ describe("The Frozen Vine - Monstrous Plant", () => {
     expect(
       testEngine.asPlayerTwo().challenge(locationAttacker, theFrozenVineMonstrousPlant),
     ).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+    // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(theFrozenVineMonstrousPlant, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getCardZone(theFrozenVineMonstrousPlant)).toBe("discard");
   });
 });

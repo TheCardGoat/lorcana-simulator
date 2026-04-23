@@ -19,12 +19,15 @@ import type {
 } from "@tcg/lorcana-engine";
 import {
   AUTOMATED_ACTION_STRATEGIES,
+  BEST_AI_CARD_PROFILES,
+  BEST_AI_DECK_DOSSIERS,
   BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID,
   BEST_DECK_AWARE_ORACLE_LORE_RACE_STRATEGY_ID,
   DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
   buildBestAiMatchupWeightReport,
   buildBestAiMatchupWeightReportMarkdown,
   computeAutomatedActionStateFingerprint,
+  getSafeAutomatedActionStrategyOption,
 } from "@tcg/lorcana-engine";
 import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import {
@@ -120,12 +123,21 @@ export type StrategyDecisionLogEntry = AutomatedActionDecisionTrace & {
   seed: string;
 };
 
+export type QuestionableDecision = {
+  category: "challenge-over-quest" | "traded-last-quester" | "inked-key-card";
+  matchId: string;
+  moveNumber: number;
+  turnNumber: number;
+  reason: string;
+};
+
 export type StrategyMatchSummary = {
   actions: number;
   artifactPaths: {
     gameRuntime: string;
     strategyDecisions: string;
   };
+  challengeOverQuestCount: number;
   deadlockConcedeCount: number;
   deadlock: boolean;
   diagnosticCounts: {
@@ -145,6 +157,7 @@ export type StrategyMatchSummary = {
   playerOneStrategyId: string;
   playerTwoDeckId: string;
   playerTwoStrategyId: string;
+  questionableDecisions?: QuestionableDecision[];
   seed: string;
   turns: number;
   winner?: PlayerId;
@@ -304,6 +317,7 @@ export type StrategyLabScoreMetrics = {
   fallbackCount: number;
   games: number;
   mirrorScore: number;
+  signalDiagnostics: number;
   totalDeadlockGames: number;
   totalDiagnostics: number;
 };
@@ -324,6 +338,7 @@ export type StrategyLabCandidateScorecard = {
     diagnosticPenalty: number;
     fallbackCount: number;
     mirrorScore: number;
+    signalDiagnostics: number;
     totalDeadlockGames: number;
     totalDiagnostics: number;
   };
@@ -348,6 +363,7 @@ export type StrategyLabReport = {
   artifactRoot: string;
   baselineStrategyId: string;
   candidateManifests: StrategyCandidateManifest[];
+  challengeOverQuestCount: number;
   crossDeck: {
     deckRecords: StrategyLabCrossDeckDeckRecord[];
     orderedPairRecords: StrategyLabCrossDeckOrderedPairRecord[];
@@ -377,6 +393,7 @@ export type StrategyLabReport = {
     winnerCounts: Record<PlayerId | "no-winner", number>;
   };
   preset?: StrategyBenchmarkPreset;
+  questionableDecisions: QuestionableDecision[];
   scorecards: StrategyLabCandidateScorecard[];
   strategyIds: string[];
   strategyRecords: StrategyLabStrategyRecord[];
@@ -390,9 +407,6 @@ export type StrategyLabReport = {
   };
 };
 
-type StrategyGameLogEntry = ReturnType<
-  ReturnType<ReturnType<LorcanaMultiplayerTestEngine["asServer"]>["getRuntime"]>["getGameLog"]
->[number];
 type StrategyExecutionTrace = StrategyDecisionLogEntry;
 type StrategyParticipantPerspectiveRecord = {
   artifactPaths: StrategyMatchSummary["artifactPaths"];
@@ -418,6 +432,7 @@ type StrategyScoreAggregate = {
   games: number;
   mirrorGames: number;
   mirrorWins: number;
+  signalDiagnostics: number;
   totalDiagnostics: number;
 };
 type StrategyTriageSignal = {
@@ -880,6 +895,120 @@ function countDiagnostics(entries: readonly StrategyDecisionLogEntry[]) {
   );
 }
 
+function countChallengeOverQuest(entries: readonly StrategyDecisionLogEntry[]): number {
+  let count = 0;
+
+  for (const entry of entries) {
+    if (
+      entry.selectedCandidate?.family === "challenge" &&
+      entry.orderedCandidates.some((candidate) => candidate.family === "quest")
+    ) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
+const QUESTIONABLE_CATEGORY_SEVERITY: Record<QuestionableDecision["category"], number> = {
+  "challenge-over-quest": 3,
+  "traded-last-quester": 2,
+  "inked-key-card": 1,
+};
+
+const KEY_CARD_DEFINITION_IDS = new Set(
+  BEST_AI_CARD_PROFILES.filter(
+    (profile) => profile.baseAdjust?.ink !== undefined && profile.baseAdjust.ink < 0,
+  ).map((profile) => profile.definitionId),
+);
+
+function buildMatchDecisionAnalysis(
+  matchId: string,
+  entries: readonly StrategyDecisionLogEntry[],
+): QuestionableDecision[] {
+  const decisions: QuestionableDecision[] = [];
+
+  for (const entry of entries) {
+    const selectedFamily = entry.selectedCandidate?.family;
+
+    // challenge-over-quest
+    if (
+      selectedFamily === "challenge" &&
+      entry.orderedCandidates.some((candidate) => candidate.family === "quest")
+    ) {
+      const loreTotals = entry.boardSnapshot.loreTotals;
+      const loreValues = Object.values(loreTotals) as number[];
+      const maxLore = Math.max(...loreValues);
+      const minLore = Math.min(...loreValues);
+      const loreDeficit = maxLore - minLore;
+
+      decisions.push({
+        category: "challenge-over-quest",
+        matchId,
+        moveNumber: entry.moveNumber,
+        turnNumber: entry.turnNumber,
+        reason: `Challenged instead of questing (lore: ${loreValues.join(" vs ")}, deficit: ${loreDeficit})`,
+      });
+    }
+
+    // traded-last-quester
+    if (selectedFamily === "challenge" && entry.selectedCandidate) {
+      const attackerSurvivesHeuristic = entry.selectedCandidate.heuristics.find(
+        (heuristic) => heuristic.key === "challengeAttackerSurvives",
+      );
+      const attackerDies =
+        attackerSurvivesHeuristic !== undefined && attackerSurvivesHeuristic.value === false;
+
+      if (attackerDies) {
+        const questCandidatesExcludingAttacker = entry.orderedCandidates.filter(
+          (candidate) =>
+            candidate.family === "quest" &&
+            candidate.stableKey !== entry.selectedCandidate?.stableKey,
+        );
+
+        if (questCandidatesExcludingAttacker.length === 0) {
+          decisions.push({
+            category: "traded-last-quester",
+            matchId,
+            moveNumber: entry.moveNumber,
+            turnNumber: entry.turnNumber,
+            reason: "Traded last quester in a challenge where attacker would be banished",
+          });
+        }
+      }
+    }
+
+    // inked-key-card
+    if (
+      selectedFamily === "putCardIntoInkwell" &&
+      entry.selectedCandidate?.sourceDefinitionId &&
+      KEY_CARD_DEFINITION_IDS.has(entry.selectedCandidate.sourceDefinitionId)
+    ) {
+      const profile = BEST_AI_CARD_PROFILES.find(
+        (p) => p.definitionId === entry.selectedCandidate?.sourceDefinitionId,
+      );
+
+      decisions.push({
+        category: "inked-key-card",
+        matchId,
+        moveNumber: entry.moveNumber,
+        turnNumber: entry.turnNumber,
+        reason: `Inked key card ${profile?.label ?? entry.selectedCandidate.sourceDefinitionId} (ink adjust: ${profile?.baseAdjust?.ink ?? "n/a"})`,
+      });
+    }
+  }
+
+  // Sort by severity (highest first), then by lore deficit for challenge-over-quest
+  decisions.sort((a, b) => {
+    const severityDiff =
+      QUESTIONABLE_CATEGORY_SEVERITY[b.category] - QUESTIONABLE_CATEGORY_SEVERITY[a.category];
+    if (severityDiff !== 0) return severityDiff;
+    return a.moveNumber - b.moveNumber;
+  });
+
+  return decisions.slice(0, 3);
+}
+
 function readStrategyDecisionLogEntries(path: string): StrategyDecisionLogEntry[] {
   if (!existsSync(path)) {
     return [];
@@ -1036,19 +1165,6 @@ function getStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
-function formatVisibility(entry: StrategyGameLogEntry): string {
-  switch (entry.visibility.mode) {
-    case "PUBLIC":
-      return "public";
-    case "PRIVATE":
-      return `private:${entry.visibility.visibleTo.join(",")}`;
-    case "PUBLIC_WITH_OVERRIDES":
-      return "public-with-overrides";
-  }
-
-  throw new Error(`Unhandled log visibility mode: ${String(entry.visibility)}`);
-}
-
 function getExecutionTraces(
   entries: readonly StrategyDecisionLogEntry[],
 ): StrategyExecutionTrace[] {
@@ -1160,284 +1276,6 @@ function formatCandidateActionDetail(args: {
     move,
     prefix,
   });
-}
-
-function resolveTraceMoveId(trace: StrategyExecutionTrace): string | undefined {
-  return trace.fallbackTaken ?? trace.selectedCandidate?.candidate.family;
-}
-
-function formatGameLogEntry(args: {
-  executionTraces: readonly StrategyExecutionTrace[];
-  finalLoreTotals: StrategyLoreTotals;
-  engine: LorcanaMultiplayerTestEngine;
-  entry: StrategyGameLogEntry;
-  match: StrategyMatchDefinition;
-  nextExecutionTraceIndex: number;
-  runningLore: StrategyLoreTotals;
-}): { line: string; nextMoveHistoryCursor: number } {
-  const {
-    engine,
-    entry,
-    executionTraces,
-    finalLoreTotals,
-    match,
-    nextExecutionTraceIndex,
-    runningLore,
-  } = args;
-  const prefix = `[seq:${entry.seq}] [${entry.category}] [${formatVisibility(entry)}]`;
-  const message = entry.defaultMessage;
-
-  if (!message) {
-    return {
-      line: `${prefix} log entry emitted without default message`,
-      nextMoveHistoryCursor: nextExecutionTraceIndex,
-    };
-  }
-
-  switch (message.key) {
-    case "move.executed": {
-      const move = typeof message.values.move === "string" ? message.values.move : "unknown-move";
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      const resolvedPlayerId = resolveStrategyPlayerId(playerId);
-      const actorLabel = resolveStrategyPlayerLabel(playerId, match);
-      const executionTrace = executionTraces[nextExecutionTraceIndex];
-      const traceMatchesLog =
-        Boolean(executionTrace) &&
-        resolvedPlayerId === executionTrace?.actorId &&
-        move === resolveTraceMoveId(executionTrace);
-
-      if (traceMatchesLog && executionTrace && resolvedPlayerId) {
-        const afterLoreTotals = executionTraces[nextExecutionTraceIndex + 1]
-          ? normalizeLoreTotals(
-              executionTraces[nextExecutionTraceIndex + 1].boardSnapshot.loreTotals,
-            )
-          : finalLoreTotals;
-        const detail = formatCandidateActionDetail({
-          actorLabel,
-          actorId: resolvedPlayerId,
-          afterLoreTotals,
-          beforeLoreTotals: normalizeLoreTotals(executionTrace.boardSnapshot.loreTotals),
-          engine,
-          move,
-          prefix,
-          trace: executionTrace,
-        });
-
-        if (detail) {
-          return {
-            line: detail,
-            nextMoveHistoryCursor: nextExecutionTraceIndex + 1,
-          };
-        }
-
-        return {
-          line: `${prefix} ${actorLabel}: executed ${move}`,
-          nextMoveHistoryCursor: nextExecutionTraceIndex + 1,
-        };
-      }
-
-      return {
-        line: `${prefix} ${actorLabel}: executed ${move}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "lorcana.move.quest": {
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      const cardId = typeof message.values.cardId === "string" ? message.values.cardId : undefined;
-      const loreGained =
-        typeof message.values.loreGained === "number" ? message.values.loreGained : 0;
-      const actorLabel = resolveStrategyPlayerLabel(playerId, match);
-      const resolvedPlayerSlot = resolveStrategyPlayerSlot(playerId);
-      const cardName = resolveStrategyCardName(engine, cardId) ?? cardId ?? "unknown-card";
-
-      if (resolvedPlayerSlot) {
-        const afterLore = runningLore[resolvedPlayerSlot] + loreGained;
-        runningLore[resolvedPlayerSlot] = afterLore;
-        return {
-          line: `${prefix} ${actorLabel}: Quested with ${cardName} for ${loreGained} lore (total: ${afterLore})`,
-          nextMoveHistoryCursor: nextExecutionTraceIndex,
-        };
-      }
-
-      return {
-        line: `${prefix} ${actorLabel}: Quested with ${cardName} for ${loreGained} lore`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "lorcana.move.questWithAll": {
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      const count = typeof message.values.count === "number" ? message.values.count : 0;
-      const loreGained =
-        typeof message.values.loreGained === "number" ? message.values.loreGained : 0;
-      const actorLabel = resolveStrategyPlayerLabel(playerId, match);
-      const resolvedPlayerSlot = resolveStrategyPlayerSlot(playerId);
-
-      if (resolvedPlayerSlot) {
-        const afterLore = runningLore[resolvedPlayerSlot] + loreGained;
-        runningLore[resolvedPlayerSlot] = afterLore;
-        return {
-          line: `${prefix} ${actorLabel}: Quested with ${count} character${count === 1 ? "" : "s"} for ${loreGained} lore (total: ${afterLore})`,
-          nextMoveHistoryCursor: nextExecutionTraceIndex,
-        };
-      }
-
-      return {
-        line: `${prefix} ${actorLabel}: Quested with ${count} character${count === 1 ? "" : "s"} for ${loreGained} lore`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "turn.started": {
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      const turn = typeof message.values.turn === "number" ? message.values.turn : "?";
-      const phase = typeof message.values.phase === "string" ? message.values.phase : undefined;
-      const actorLabel = resolveStrategyPlayerLabel(playerId, match);
-      return {
-        line: `${prefix} Turn ${turn} started for ${actorLabel}${phase ? ` (${phase})` : ""}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "priority.passed": {
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      return {
-        line: `${prefix} ${resolveStrategyPlayerLabel(playerId, match)} passed priority`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "game.ended": {
-      const winner = typeof message.values.winner === "string" ? message.values.winner : undefined;
-      const reason =
-        typeof message.values.reason === "string" && message.values.reason.length > 0
-          ? message.values.reason
-          : "unspecified";
-      return {
-        line: `${prefix} Game ended. Winner: ${resolveStrategyPlayerLabel(winner, match)}. Reason: ${reason}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "card.moved": {
-      const cardId = typeof message.values.cardId === "string" ? message.values.cardId : undefined;
-      const fromZone =
-        typeof message.values.fromZone === "string" ? message.values.fromZone : "unknown-zone";
-      const toZone =
-        typeof message.values.toZone === "string" ? message.values.toZone : "unknown-zone";
-      const cardName = resolveStrategyCardName(engine, cardId) ?? cardId ?? "unknown-card";
-      return {
-        line: `${prefix} ${cardName} moved from ${fromZone} to ${toZone}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "cards.drawn": {
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      const count = typeof message.values.count === "number" ? message.values.count : "?";
-      return {
-        line: `${prefix} ${resolveStrategyPlayerLabel(playerId, match)} drew ${count} card${count === 1 ? "" : "s"}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "lorcana.setup.firstPlayerChosen": {
-      const chooser =
-        typeof message.values.chooser === "string" ? message.values.chooser : undefined;
-      const chosen = typeof message.values.chosen === "string" ? message.values.chosen : undefined;
-      return {
-        line: `${prefix} ${resolveStrategyPlayerLabel(chooser, match)} chose ${resolveStrategyPlayerLabel(chosen, match)} to start`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "lorcana.setup.mulligan.count": {
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      const count = typeof message.values.count === "number" ? message.values.count : 0;
-      return {
-        line: `${prefix} ${resolveStrategyPlayerLabel(playerId, match)} mulliganed ${count} card${count === 1 ? "" : "s"}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "lorcana.setup.mulligan.detail": {
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      const mulliganed = getStringArray(message.values.mulliganed).map(
-        (cardId) => resolveStrategyCardName(engine, cardId) ?? cardId,
-      );
-      return {
-        line: `${prefix} ${resolveStrategyPlayerLabel(playerId, match)} mulliganed: ${mulliganed.join(", ") || "none"}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "lorcana.setup.done":
-      return {
-        line: `${prefix} Setup completed`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-
-    case "lorcana.ability.activated": {
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      const cardId = typeof message.values.cardId === "string" ? message.values.cardId : undefined;
-      const abilityName =
-        typeof message.values.abilityName === "string" ? message.values.abilityName : undefined;
-      const cardName = resolveStrategyCardName(engine, cardId) ?? cardId ?? "unknown-card";
-      return {
-        line: `${prefix} ${resolveStrategyPlayerLabel(playerId, match)} activated ${abilityName ? `${cardName} (${abilityName})` : cardName}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "lorcana.card.inked": {
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      const cardId = typeof message.values.cardId === "string" ? message.values.cardId : undefined;
-      const cardName = resolveStrategyCardName(engine, cardId) ?? cardId ?? "unknown-card";
-      return {
-        line: `${prefix} ${resolveStrategyPlayerLabel(playerId, match)} inked ${cardName}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "lorcana.scry.count": {
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      const count = typeof message.values.count === "number" ? message.values.count : 0;
-      return {
-        line: `${prefix} ${resolveStrategyPlayerLabel(playerId, match)} scried ${count} card${count === 1 ? "" : "s"}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    case "lorcana.scry.detail": {
-      const playerId =
-        typeof message.values.playerId === "string" ? message.values.playerId : undefined;
-      const lookedAt = getStringArray(message.values.lookedAt).map(
-        (cardId) => resolveStrategyCardName(engine, cardId) ?? cardId,
-      );
-      return {
-        line: `${prefix} ${resolveStrategyPlayerLabel(playerId, match)} looked at: ${lookedAt.join(", ") || "unknown cards"}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-    }
-
-    default:
-      return {
-        line: `${prefix} ${message.key} ${JSON.stringify(message.values)}`,
-        nextMoveHistoryCursor: nextExecutionTraceIndex,
-      };
-  }
 }
 
 function buildGameLogTranscript(
@@ -1652,12 +1490,16 @@ function runStrategyMatch(
     ? buildGameLogTranscript(engine, decisionEntries, loreTotals, match)
     : undefined;
 
+  const challengeOverQuestCount = countChallengeOverQuest(decisionEntries);
+  const questionableDecisions = buildMatchDecisionAnalysis(match.id, decisionEntries);
+
   return {
     actions: actionCount,
     artifactPaths: {
       gameRuntime: gameRuntimePath,
       strategyDecisions: strategyDecisionsPath,
     },
+    challengeOverQuestCount,
     deadlockConcedeCount,
     deadlock: endReason === "repeated-state-deadlock",
     diagnosticCounts: countDiagnostics(decisionEntries),
@@ -1672,6 +1514,7 @@ function runStrategyMatch(
     playerOneStrategyId: match.playerOne.strategyId,
     playerTwoDeckId: match.playerTwo.id,
     playerTwoStrategyId: match.playerTwo.strategyId,
+    ...(questionableDecisions.length > 0 ? { questionableDecisions } : {}),
     seed: match.seed,
     turns: engine.asServer().getTurnNumber(),
     ...(winner ? { winner } : {}),
@@ -1804,6 +1647,7 @@ function createStrategyScoreAggregate(): StrategyScoreAggregate {
     games: 0,
     mirrorGames: 0,
     mirrorWins: 0,
+    signalDiagnostics: 0,
     totalDiagnostics: 0,
   };
 }
@@ -1861,6 +1705,8 @@ function accumulateScoreAggregate(
   target.deadlockGames += record.deadlock ? 1 : 0;
   target.fallbackCount += record.fallbackCounts.concede + record.fallbackCounts.passTurn;
   target.totalDiagnostics += record.diagnosticCounts.total;
+  target.signalDiagnostics +=
+    record.diagnosticCounts.unsupported + record.diagnosticCounts.validation;
 
   if (record.classification === "mirror") {
     target.mirrorGames += 1;
@@ -1879,7 +1725,7 @@ function finalizeScoreAggregate(aggregate: StrategyScoreAggregate): StrategyLabS
       ? 0
       : (aggregate.deadlockGames + aggregate.fallbackCount) / aggregate.games;
   const diagnosticPenalty =
-    aggregate.games === 0 ? 0 : aggregate.totalDiagnostics / aggregate.games;
+    aggregate.games === 0 ? 0 : aggregate.signalDiagnostics / aggregate.games;
   const mirrorScore =
     aggregate.mirrorGames === 0 ? 0 : aggregate.mirrorWins / aggregate.mirrorGames;
   const crossDeckScore =
@@ -1898,6 +1744,7 @@ function finalizeScoreAggregate(aggregate: StrategyScoreAggregate): StrategyLabS
     fallbackCount: aggregate.fallbackCount,
     games: aggregate.games,
     mirrorScore: roundScore(mirrorScore),
+    signalDiagnostics: aggregate.signalDiagnostics,
     totalDeadlockGames: aggregate.deadlockGames,
     totalDiagnostics: aggregate.totalDiagnostics,
   };
@@ -2094,7 +1941,7 @@ function buildStrategyPromotionGate(args: {
 
   const reasons: string[] = [];
   const fallbackIncreaseLimit = Math.ceil(baselineScore.fallbackCount * 0.05);
-  const diagnosticIncreaseLimit = Math.ceil(baselineScore.totalDiagnostics * 0.05);
+  const diagnosticIncreaseLimit = Math.ceil(baselineScore.signalDiagnostics * 0.05);
 
   if (candidateScore.blendedScore - baselineScore.blendedScore < 0.02) {
     reasons.push("Blended score did not improve by at least 0.02.");
@@ -2112,7 +1959,10 @@ function buildStrategyPromotionGate(args: {
     reasons.push("Fallback count increased by more than 5%.");
   }
 
-  if (candidateScore.totalDiagnostics > baselineScore.totalDiagnostics + diagnosticIncreaseLimit) {
+  if (
+    candidateScore.signalDiagnostics >
+    baselineScore.signalDiagnostics + diagnosticIncreaseLimit
+  ) {
     reasons.push("Diagnostic count increased by more than 5%.");
   }
 
@@ -2180,6 +2030,8 @@ function buildStrategyCandidateScorecards(args: {
                 ),
                 fallbackCount: candidateScore.fallbackCount - baselineScore.fallbackCount,
                 mirrorScore: roundScore(candidateScore.mirrorScore - baselineScore.mirrorScore),
+                signalDiagnostics:
+                  candidateScore.signalDiagnostics - baselineScore.signalDiagnostics,
                 totalDeadlockGames:
                   candidateScore.totalDeadlockGames - baselineScore.totalDeadlockGames,
                 totalDiagnostics: candidateScore.totalDiagnostics - baselineScore.totalDiagnostics,
@@ -2273,14 +2125,14 @@ function buildBenchmarkSummaryMarkdown(report: StrategyLabReport): string {
     `- Match classifications: mirror ${report.matchClassifications.mirror}, mirror-same-strategy ${report.matchClassifications["mirror-same-strategy"]}, cross-deck ${report.matchClassifications["cross-deck"]}`,
     "",
     "## Candidate Scorecards",
-    "| Candidate | Status | Parent | Blended | Mirror | Cross-Deck | Deadlock/Fallback Penalty | Diagnostic Penalty | Delta Vs Baseline | Gate |",
-    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+    "| Candidate | Status | Parent | Blended | Mirror | Cross-Deck | Deadlock/Fallback Penalty | Diagnostic Penalty | Signal Diag | Delta Vs Baseline | Gate |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ...(topScorecards.length > 0
       ? topScorecards.map(
           (scorecard) =>
-            `| ${scorecard.candidateId} | ${scorecard.status} | ${scorecard.parentStrategyId} | ${scorecard.score.blendedScore.toFixed(4)} | ${scorecard.score.mirrorScore.toFixed(4)} | ${scorecard.score.crossDeckScore.toFixed(4)} | ${scorecard.score.deadlockFallbackPenalty.toFixed(4)} | ${scorecard.score.diagnosticPenalty.toFixed(4)} | ${scorecard.deltaVsBaseline?.blendedScore?.toFixed(4) ?? "n/a"} | ${scorecard.promotionGate.passed ? "pass" : "hold"} |`,
+            `| ${scorecard.candidateId} | ${scorecard.status} | ${scorecard.parentStrategyId} | ${scorecard.score.blendedScore.toFixed(4)} | ${scorecard.score.mirrorScore.toFixed(4)} | ${scorecard.score.crossDeckScore.toFixed(4)} | ${scorecard.score.deadlockFallbackPenalty.toFixed(4)} | ${scorecard.score.diagnosticPenalty.toFixed(4)} | ${scorecard.score.signalDiagnostics} | ${scorecard.deltaVsBaseline?.blendedScore?.toFixed(4) ?? "n/a"} | ${scorecard.promotionGate.passed ? "pass" : "hold"} |`,
         )
-      : ["| none | n/a | n/a | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | n/a | hold |"]),
+      : ["| none | n/a | n/a | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0 | n/a | hold |"]),
     ...(topScorecards.length > 0
       ? topScorecards.flatMap((scorecard) => [
           `- ${scorecard.candidateId}: ${scorecard.hypothesis}`,
@@ -2316,6 +2168,17 @@ function buildBenchmarkSummaryMarkdown(report: StrategyLabReport): string {
     `- Deadlock concedes: ${report.overall.deadlockConcedeCount}`,
     `- Fallbacks: ${formatFallbackCountsForMarkdown(report.overall.fallbackCounts)}`,
     `- Diagnostics: ${formatDiagnosticCountsForMarkdown(report.overall.diagnosticCounts)}`,
+    `- Challenge over quest: ${report.challengeOverQuestCount}`,
+    "",
+    "## Questionable Decisions",
+    "| Match | Turn | Category | Reason |",
+    "| --- | --- | --- | --- |",
+    ...(report.questionableDecisions.length > 0
+      ? report.questionableDecisions.map(
+          (decision) =>
+            `| ${decision.matchId} | ${decision.turnNumber} | ${decision.category} | ${decision.reason} |`,
+        )
+      : ["| none | 0 | n/a | n/a |"]),
     "",
     "## Triage Backlog",
     "| Category | Signals | Matches | Recommended Transcripts |",
@@ -2728,10 +2591,25 @@ export function buildStrategyLabReport(summary: StrategySuiteRunSummary): Strate
     summary,
   });
 
+  const totalChallengeOverQuestCount = summary.matches.reduce(
+    (total, match) => total + match.challengeOverQuestCount,
+    0,
+  );
+  const allQuestionableDecisions = summary.matches
+    .flatMap((match) => match.questionableDecisions ?? [])
+    .sort((a, b) => {
+      const severityDiff =
+        QUESTIONABLE_CATEGORY_SEVERITY[b.category] - QUESTIONABLE_CATEGORY_SEVERITY[a.category];
+      if (severityDiff !== 0) return severityDiff;
+      return a.moveNumber - b.moveNumber;
+    })
+    .slice(0, 5);
+
   return {
     artifactRoot: summary.artifactRoot,
     baselineStrategyId: summary.baselineStrategyId,
     candidateManifests,
+    challengeOverQuestCount: totalChallengeOverQuestCount,
     crossDeck: {
       deckRecords: crossDeckDeckRecords,
       orderedPairRecords: crossDeckOrderedPairRecords,
@@ -2762,6 +2640,7 @@ export function buildStrategyLabReport(summary: StrategySuiteRunSummary): Strate
     },
     preset: summary.preset,
     scorecards,
+    questionableDecisions: allQuestionableDecisions,
     strategyIds: summary.strategyIds,
     strategyRecords,
     triage,
@@ -2770,12 +2649,116 @@ export function buildStrategyLabReport(summary: StrategySuiteRunSummary): Strate
   };
 }
 
-function writeStrategyRunArtifacts(summary: StrategySuiteRunSummary): StrategyLabReport {
+// ---------------------------------------------------------------------------
+// Card strategy coverage report
+// ---------------------------------------------------------------------------
+
+type CardStrategyCoverageEntry = {
+  definitionId: string;
+  fixtureCount: number;
+  totalCopies: number;
+};
+
+export function buildCardStrategyCoverageReport(): CardStrategyCoverageEntry[] {
+  const coveredIds = new Set<string>(BEST_AI_CARD_PROFILES.map((profile) => profile.definitionId));
+
+  const uncoveredCounts = new Map<string, { fixtureCount: number; totalCopies: number }>();
+
+  for (const dossier of BEST_AI_DECK_DOSSIERS) {
+    const entries = dossier.signature.split("|");
+    for (const entry of entries) {
+      const [defId, countStr] = entry.split(":");
+      if (coveredIds.has(defId)) continue;
+
+      const count = Number(countStr);
+      const existing = uncoveredCounts.get(defId);
+      if (existing) {
+        existing.fixtureCount += 1;
+        existing.totalCopies += count;
+      } else {
+        uncoveredCounts.set(defId, { fixtureCount: 1, totalCopies: count });
+      }
+    }
+  }
+
+  return [...uncoveredCounts.entries()]
+    .map(([definitionId, { fixtureCount, totalCopies }]) => ({
+      definitionId,
+      fixtureCount,
+      totalCopies,
+    }))
+    .sort((a, b) => b.totalCopies - a.totalCopies);
+}
+
+export function buildCardStrategyCoverageMarkdown(report: CardStrategyCoverageEntry[]): string {
+  const lines: string[] = [
+    "# Card Strategy Coverage Report",
+    "",
+    `Uncovered cards: **${report.length}**`,
+    "",
+    "| Definition ID | Fixtures | Copies |",
+    "| --- | ---: | ---: |",
+  ];
+
+  for (const entry of report) {
+    lines.push(`| ${entry.definitionId} | ${entry.fixtureCount} | ${entry.totalCopies} |`);
+  }
+
+  lines.push("");
+  return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Smoke-level summary line
+// ---------------------------------------------------------------------------
+
+export function buildCuratedSuiteSummaryLine(summary: StrategySuiteRunSummary): string {
+  const matchCount = summary.matches.length;
+
+  const winsByStrategy = new Map<string, number>();
+  for (const match of summary.matches) {
+    if (match.winner === undefined) continue;
+    const winnerStrategyId =
+      match.winner === "player_one" ? match.playerOneStrategyId : match.playerTwoStrategyId;
+    winsByStrategy.set(winnerStrategyId, (winsByStrategy.get(winnerStrategyId) ?? 0) + 1);
+  }
+
+  const winsSegment = [...winsByStrategy.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([strategyId, wins]) => `${strategyId} ${wins}`)
+    .join(", ");
+
+  let signalDiag = 0;
+  let fallbacks = 0;
+  for (const match of summary.matches) {
+    signalDiag += match.diagnosticCounts.unsupported + match.diagnosticCounts.validation;
+    fallbacks += match.fallbackCounts.concede + match.fallbackCounts.passTurn;
+  }
+
+  return `Smoke: ${matchCount} matches | wins: ${winsSegment} | signal diag: ${signalDiag} | fallbacks: ${fallbacks}`;
+}
+
+type StrategyRunArtifactResult = {
+  digest: StrategyTriageDigest;
+  report: StrategyLabReport;
+};
+
+function writeStrategyRunArtifacts(
+  summary: StrategySuiteRunSummary,
+  previousSummary?: StrategySuiteRunSummary,
+): StrategyRunArtifactResult {
   writeFileSync(
     join(summary.artifactRoot, "run-summary.json"),
     `${JSON.stringify(summary, null, 2)}\n`,
     "utf8",
   );
+  if (previousSummary) {
+    writeFileSync(
+      join(summary.artifactRoot, "previous-run-summary.json"),
+      `${JSON.stringify(previousSummary, null, 2)}\n`,
+      "utf8",
+    );
+  }
 
   const report = buildStrategyLabReport(summary);
   writeFileSync(
@@ -2788,6 +2771,14 @@ function writeStrategyRunArtifacts(summary: StrategySuiteRunSummary): StrategyLa
     buildBenchmarkSummaryMarkdown(report),
     "utf8",
   );
+
+  const digest = buildTriageDigest(report);
+  writeFileSync(
+    join(summary.artifactRoot, "triage-digest.md"),
+    buildTriageDigestMarkdown(digest),
+    "utf8",
+  );
+
   const matchupWeightStrategies = summary.strategyIds.reduce<
     Array<{ informationPolicy: StrategyInformationPolicy; strategyId: string }>
   >((entries, strategyId) => {
@@ -2819,10 +2810,20 @@ function writeStrategyRunArtifacts(summary: StrategySuiteRunSummary): StrategyLa
     "utf8",
   );
 
-  return report;
+  const coverageReport = buildCardStrategyCoverageReport();
+  const coverageMarkdown = buildCardStrategyCoverageMarkdown(coverageReport);
+  writeFileSync(join(summary.artifactRoot, "card-coverage-report.md"), coverageMarkdown);
+
+  return { digest, report };
 }
 
-export function runStrategyLab(options: StrategyLabOptions = {}): StrategySuiteRunSummary {
+export type StrategySuiteRunResult = {
+  digest: StrategyTriageDigest;
+  report: StrategyLabReport;
+  summary: StrategySuiteRunSummary;
+};
+
+export function runStrategyLab(options: StrategyLabOptions = {}): StrategySuiteRunResult {
   const resolvedOptions = resolveStrategyLabPresetOptions(options);
   const artifactBaseRoot = resolvedOptions.artifactRoot ?? STRATEGY_ARTIFACT_ROOT;
   const matchMode = resolvedOptions.matchMode ?? "both";
@@ -2832,6 +2833,7 @@ export function runStrategyLab(options: StrategyLabOptions = {}): StrategySuiteR
         ...resolveStrategyBenchmarkPresetConfig(resolvedOptions.preset).artifactSegment,
       )
     : join(artifactBaseRoot, matchMode);
+  const previousSummary = loadRunSummaryFromDisk(artifactRoot);
   ensureArtifactRoot(artifactRoot);
 
   const matches = buildStrategyLabMatchDefinitions(resolvedOptions).map((match) =>
@@ -2861,12 +2863,13 @@ export function runStrategyLab(options: StrategyLabOptions = {}): StrategySuiteR
     preset: resolvedOptions.preset,
     strategyIds: resolveRunStrategyIds(matches, resolvedOptions.strategyIds),
   };
-  writeStrategyRunArtifacts(summary);
+  const { digest, report } = writeStrategyRunArtifacts(summary, previousSummary);
 
-  return summary;
+  return { digest, report, summary };
 }
 
-export function runCuratedStrategySuite(): StrategySuiteRunSummary {
+export function runCuratedStrategySuite(): StrategySuiteRunResult {
+  const previousSummary = loadRunSummaryFromDisk(STRATEGY_ARTIFACT_ROOT);
   ensureArtifactRoot(STRATEGY_ARTIFACT_ROOT);
 
   const matches = buildMatchDefinitions().map((match) => runStrategyMatch(match));
@@ -2885,9 +2888,151 @@ export function runCuratedStrategySuite(): StrategySuiteRunSummary {
     mode: "curated",
     strategyIds: resolveRunStrategyIds(matches),
   };
-  writeStrategyRunArtifacts(summary);
+  const { digest, report } = writeStrategyRunArtifacts(summary, previousSummary);
 
-  return summary;
+  return { digest, report, summary };
+}
+
+function loadRunSummaryFromDisk(artifactRoot: string): StrategySuiteRunSummary | undefined {
+  const path = join(artifactRoot, "run-summary.json");
+  if (!existsSync(path)) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(readFileSync(path, "utf-8")) as StrategySuiteRunSummary;
+  } catch {
+    return undefined;
+  }
+}
+
+export function loadPreviousRunSummary(artifactRoot: string): StrategySuiteRunSummary | undefined {
+  const previousPath = join(artifactRoot, "previous-run-summary.json");
+  if (!existsSync(previousPath)) {
+    return undefined;
+  }
+
+  return JSON.parse(readFileSync(previousPath, "utf-8")) as StrategySuiteRunSummary;
+}
+
+export function runQuickReplayCheck(): StrategySuiteRunResult {
+  const artifactRoot = join(STRATEGY_ARTIFACT_ROOT, "..", "quick-replay");
+  const previousSummary = loadRunSummaryFromDisk(artifactRoot);
+  ensureArtifactRoot(artifactRoot);
+
+  const gamesPerDeck = 5;
+  const matches: StrategyMatchSummary[] = [];
+
+  for (const deckId of CORE_STRATEGY_BENCHMARK_DECK_IDS) {
+    const fixture = DECK_FIXTURES.find((f) => f.id === deckId);
+    if (!fixture) {
+      throw new Error(`Deck fixture not found for ID: ${deckId}`);
+    }
+
+    for (let index = 0; index < gamesPerDeck; index += 1) {
+      matches.push(
+        simulateAutomatedDeckMatch({
+          artifactRoot,
+          matchId: `quick-replay-${deckId}-${index}`,
+          playerOne: {
+            fixture,
+            id: deckId,
+          },
+          playerTwo: {
+            fixture,
+            id: deckId,
+          },
+          seed: `quick-replay:${deckId}:${index}`,
+          turnLimit: 60,
+        }),
+      );
+    }
+  }
+
+  const summary: StrategySuiteRunSummary = {
+    artifactRoot,
+    baselineStrategyId: PROMOTED_STRATEGY_BASELINE_ID,
+    candidateManifests: [],
+    deckIds: resolveRunDeckIds(matches),
+    gameCount: gamesPerDeck,
+    gameCounts: {
+      crossDeck: 0,
+      mirror: gamesPerDeck,
+    },
+    generatedAt: new Date().toISOString(),
+    matches,
+    mode: "mirror",
+    strategyIds: resolveRunStrategyIds(matches),
+  };
+  const { digest, report } = writeStrategyRunArtifacts(summary, previousSummary);
+
+  return { digest, report, summary };
+}
+
+export function replayStrategyMatch(args: {
+  playerOneDeckId: string;
+  playerTwoDeckId: string;
+  playerOneStrategyId: string;
+  playerTwoStrategyId: string;
+  seed: string;
+  artifactRoot?: string;
+}): StrategyMatchSummary {
+  const playerOneFixture = DECK_FIXTURES.find((f) => f.id === args.playerOneDeckId);
+  if (!playerOneFixture) {
+    throw new Error(`Deck fixture not found for player one deck ID: ${args.playerOneDeckId}`);
+  }
+
+  const playerTwoFixture = DECK_FIXTURES.find((f) => f.id === args.playerTwoDeckId);
+  if (!playerTwoFixture) {
+    throw new Error(`Deck fixture not found for player two deck ID: ${args.playerTwoDeckId}`);
+  }
+
+  const playerOneOption = getSafeAutomatedActionStrategyOption(args.playerOneStrategyId);
+  const playerTwoOption = getSafeAutomatedActionStrategyOption(args.playerTwoStrategyId);
+
+  const replayArtifactRoot = args.artifactRoot ?? join(STRATEGY_ARTIFACT_ROOT, "..", "replay");
+  ensureArtifactRoot(replayArtifactRoot);
+
+  return simulateAutomatedDeckMatch({
+    artifactRoot: replayArtifactRoot,
+    playerOne: {
+      fixture: playerOneFixture,
+      id: args.playerOneDeckId,
+      strategy: playerOneOption.strategy,
+      strategyId: playerOneOption.id,
+    },
+    playerTwo: {
+      fixture: playerTwoFixture,
+      id: args.playerTwoDeckId,
+      strategy: playerTwoOption.strategy,
+      strategyId: playerTwoOption.id,
+    },
+    seed: args.seed,
+    turnLimit: 60,
+  });
+}
+
+export function replayMatchFromRunSummary(
+  summary: StrategySuiteRunSummary,
+  matchIndex: number,
+  artifactRoot?: string,
+): StrategyMatchSummary {
+  if (matchIndex < 0 || matchIndex >= summary.matches.length) {
+    throw new Error(
+      `Match index ${matchIndex} is out of bounds (0..${summary.matches.length - 1})`,
+    );
+  }
+
+  const match = summary.matches[matchIndex]!;
+
+  return replayStrategyMatch({
+    playerOneDeckId: match.playerOneDeckId,
+    playerTwoDeckId: match.playerTwoDeckId,
+    playerOneStrategyId: match.playerOneStrategyId,
+    playerTwoStrategyId: match.playerTwoStrategyId,
+    seed: match.seed,
+    artifactRoot,
+  });
 }
 
 export function strategyArtifactsExist(summary: StrategySuiteRunSummary): boolean {
@@ -2896,4 +3041,332 @@ export function strategyArtifactsExist(summary: StrategySuiteRunSummary): boolea
       existsSync(match.artifactPaths.strategyDecisions) &&
       existsSync(match.artifactPaths.gameRuntime),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Triage digest
+// ---------------------------------------------------------------------------
+
+type StrategyTriageTrack = "A" | "B" | "C" | "D";
+
+export type StrategyTriageDigest = {
+  deadlockGames: number;
+  inspectNext: Array<{ matchId: string; path: string; reason: string }>;
+  questionableDecisionCount: number;
+  signalDiagnosticCount: number;
+  topTriageCategory: { count: number; label: string } | undefined;
+  topWeakness:
+    | {
+        evidence: string;
+        inspectPath?: string;
+        label: string;
+        track: StrategyTriageTrack;
+      }
+    | undefined;
+  worstMatchup: { label: string; winRate: number } | undefined;
+};
+
+const TRIAGE_CATEGORY_TRACK: Record<StrategyLabTriageCategory, StrategyTriageTrack> = {
+  "bad-ability-timing": "B",
+  "bad-play-before-quest": "B",
+  "fallback-churn": "A",
+  "missed-challenge": "B",
+  "over-inking": "C",
+};
+
+export function buildTriageDigest(report: StrategyLabReport): StrategyTriageDigest {
+  const signalDiagnosticCount =
+    report.overall.diagnosticCounts.unsupported + report.overall.diagnosticCounts.validation;
+
+  const worstMatchup =
+    report.worstMatchups.length > 0
+      ? { label: report.worstMatchups[0]!.label, winRate: report.worstMatchups[0]!.winRate }
+      : undefined;
+
+  const topTriageCategory =
+    report.triage.categories.length > 0
+      ? { count: report.triage.categories[0]!.count, label: report.triage.categories[0]!.label }
+      : undefined;
+
+  const inspectNext = report.inspectNext.slice(0, 3).map((rec) => ({
+    matchId: rec.matchId,
+    path: rec.artifactPaths.strategyDecisions,
+    reason: rec.reason,
+  }));
+
+  const topWeakness = resolveTopWeakness({
+    deadlockGames: report.overall.deadlockGames,
+    inspectNext,
+    signalDiagnosticCount,
+    topTriageCategory,
+    worstMatchup,
+  });
+
+  return {
+    deadlockGames: report.overall.deadlockGames,
+    inspectNext,
+    questionableDecisionCount: report.questionableDecisions.length,
+    signalDiagnosticCount,
+    topTriageCategory,
+    topWeakness,
+    worstMatchup,
+  };
+}
+
+function resolveTopWeakness(args: {
+  deadlockGames: number;
+  inspectNext: StrategyTriageDigest["inspectNext"];
+  signalDiagnosticCount: number;
+  topTriageCategory: StrategyTriageDigest["topTriageCategory"];
+  worstMatchup: StrategyTriageDigest["worstMatchup"];
+}): StrategyTriageDigest["topWeakness"] {
+  const firstInspectPath = args.inspectNext[0]?.path;
+
+  if (args.deadlockGames > 0) {
+    return {
+      evidence: `${args.deadlockGames} game(s) ended in deadlock`,
+      inspectPath: firstInspectPath,
+      label: "Deadlock games detected",
+      track: "A",
+    };
+  }
+
+  if (args.signalDiagnosticCount > 0) {
+    return {
+      evidence: `${args.signalDiagnosticCount} signal diagnostic(s) (unsupported-shape or validation-reject)`,
+      inspectPath: firstInspectPath,
+      label: "Signal diagnostics present",
+      track: "A",
+    };
+  }
+
+  if (args.worstMatchup && args.worstMatchup.winRate < 0.3) {
+    return {
+      evidence: `${args.worstMatchup.label} has ${(args.worstMatchup.winRate * 100).toFixed(0)}% win rate`,
+      inspectPath: firstInspectPath,
+      label: "Low win-rate matchup",
+      track: "B",
+    };
+  }
+
+  if (args.topTriageCategory && args.topTriageCategory.count > 0) {
+    const category = args.topTriageCategory.label.toLowerCase().replace(/\s+/g, "-") as string;
+    const track =
+      TRIAGE_CATEGORY_TRACK[category as StrategyLabTriageCategory] ?? ("B" as StrategyTriageTrack);
+
+    return {
+      evidence: `${args.topTriageCategory.count} instance(s) of ${args.topTriageCategory.label}`,
+      inspectPath: firstInspectPath,
+      label: args.topTriageCategory.label,
+      track,
+    };
+  }
+
+  return undefined;
+}
+
+export function buildTriageDigestMarkdown(digest: StrategyTriageDigest): string {
+  const lines = [
+    "# Triage Digest",
+    "",
+    "## Top Weakness",
+    digest.topWeakness
+      ? [
+          `- **Track ${digest.topWeakness.track}**: ${digest.topWeakness.label}`,
+          `- Evidence: ${digest.topWeakness.evidence}`,
+          digest.topWeakness.inspectPath ? `- Inspect: ${digest.topWeakness.inspectPath}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n")
+      : "- No actionable weakness detected",
+    "",
+    "## Summary",
+    `- Deadlock games: ${digest.deadlockGames}`,
+    `- Signal diagnostics: ${digest.signalDiagnosticCount}`,
+    `- Questionable decisions: ${digest.questionableDecisionCount}`,
+    `- Worst matchup: ${digest.worstMatchup ? `${digest.worstMatchup.label} (${(digest.worstMatchup.winRate * 100).toFixed(0)}%)` : "none"}`,
+    `- Top triage: ${digest.topTriageCategory ? `${digest.topTriageCategory.label} (${digest.topTriageCategory.count})` : "none"}`,
+    "",
+    "## Inspect Next",
+    ...(digest.inspectNext.length > 0
+      ? digest.inspectNext.map((rec) => `- ${rec.matchId}: ${rec.reason}\n  ${rec.path}`)
+      : ["- No recommendations"]),
+    "",
+  ];
+
+  return lines.join("\n");
+}
+
+export function buildTriageDigestConsoleOutput(digest: StrategyTriageDigest): string {
+  const lines: string[] = [];
+
+  if (digest.topWeakness) {
+    lines.push(
+      `Triage: Track ${digest.topWeakness.track} — ${digest.topWeakness.label}`,
+      `  ${digest.topWeakness.evidence}`,
+    );
+    if (digest.topWeakness.inspectPath) {
+      lines.push(`  Inspect: ${digest.topWeakness.inspectPath}`);
+    }
+  } else {
+    lines.push("Triage: No actionable weakness detected");
+  }
+
+  const stats = [
+    `deadlocks=${digest.deadlockGames}`,
+    `signal-diag=${digest.signalDiagnosticCount}`,
+    `questionable=${digest.questionableDecisionCount}`,
+  ];
+  if (digest.worstMatchup) {
+    stats.push(`worst-matchup=${(digest.worstMatchup.winRate * 100).toFixed(0)}%`);
+  }
+  lines.push(`  ${stats.join(" | ")}`);
+
+  return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Run comparison
+// ---------------------------------------------------------------------------
+
+export type StrategyRunComparison = {
+  after: { artifactRoot: string; games: number };
+  before: { artifactRoot: string; games: number };
+  delta: {
+    concedeFallbacks: number;
+    deadlockGames: number;
+    questionableDecisions: number;
+    signalDiagnostics: number;
+    worstMatchupWinRate: number | undefined;
+  };
+  improved: string[];
+  regressed: string[];
+};
+
+export function compareStrategyRuns(
+  before: StrategySuiteRunSummary,
+  after: StrategySuiteRunSummary,
+): StrategyRunComparison {
+  const beforeReport = buildStrategyLabReport(before);
+  const afterReport = buildStrategyLabReport(after);
+
+  const beforeSignalDiag =
+    beforeReport.overall.diagnosticCounts.unsupported +
+    beforeReport.overall.diagnosticCounts.validation;
+  const afterSignalDiag =
+    afterReport.overall.diagnosticCounts.unsupported +
+    afterReport.overall.diagnosticCounts.validation;
+
+  const beforeWorstWinRate =
+    beforeReport.worstMatchups.length > 0 ? beforeReport.worstMatchups[0]!.winRate : undefined;
+  const afterWorstWinRate =
+    afterReport.worstMatchups.length > 0 ? afterReport.worstMatchups[0]!.winRate : undefined;
+
+  const delta = {
+    concedeFallbacks:
+      afterReport.overall.fallbackCounts.concede - beforeReport.overall.fallbackCounts.concede,
+    deadlockGames: afterReport.overall.deadlockGames - beforeReport.overall.deadlockGames,
+    questionableDecisions:
+      afterReport.questionableDecisions.length - beforeReport.questionableDecisions.length,
+    signalDiagnostics: afterSignalDiag - beforeSignalDiag,
+    worstMatchupWinRate:
+      afterWorstWinRate !== undefined && beforeWorstWinRate !== undefined
+        ? afterWorstWinRate - beforeWorstWinRate
+        : undefined,
+  };
+
+  const improved: string[] = [];
+  const regressed: string[] = [];
+
+  if (delta.deadlockGames < 0) improved.push(`Deadlocks: ${delta.deadlockGames}`);
+  if (delta.deadlockGames > 0) regressed.push(`Deadlocks: +${delta.deadlockGames}`);
+
+  if (delta.signalDiagnostics < 0) improved.push(`Signal diagnostics: ${delta.signalDiagnostics}`);
+  if (delta.signalDiagnostics > 0)
+    regressed.push(`Signal diagnostics: +${delta.signalDiagnostics}`);
+
+  if (delta.concedeFallbacks < 0) improved.push(`Concede fallbacks: ${delta.concedeFallbacks}`);
+  if (delta.concedeFallbacks > 0) regressed.push(`Concede fallbacks: +${delta.concedeFallbacks}`);
+
+  if (delta.questionableDecisions < 0)
+    improved.push(`Questionable decisions: ${delta.questionableDecisions}`);
+  if (delta.questionableDecisions > 0)
+    regressed.push(`Questionable decisions: +${delta.questionableDecisions}`);
+
+  if (delta.worstMatchupWinRate !== undefined) {
+    if (delta.worstMatchupWinRate > 0.01)
+      improved.push(`Worst matchup win rate: +${(delta.worstMatchupWinRate * 100).toFixed(1)}%`);
+    if (delta.worstMatchupWinRate < -0.01)
+      regressed.push(`Worst matchup win rate: ${(delta.worstMatchupWinRate * 100).toFixed(1)}%`);
+  }
+
+  return {
+    after: { artifactRoot: after.artifactRoot, games: after.matches.length },
+    before: { artifactRoot: before.artifactRoot, games: before.matches.length },
+    delta,
+    improved,
+    regressed,
+  };
+}
+
+export function buildRunComparisonMarkdown(comparison: StrategyRunComparison): string {
+  const lines = [
+    "# Strategy Run Comparison",
+    "",
+    `- Before: ${comparison.before.artifactRoot} (${comparison.before.games} games)`,
+    `- After: ${comparison.after.artifactRoot} (${comparison.after.games} games)`,
+    "",
+    "## Delta",
+    `| Metric | Change |`,
+    `| --- | --- |`,
+    `| Deadlock games | ${formatDelta(comparison.delta.deadlockGames)} |`,
+    `| Signal diagnostics | ${formatDelta(comparison.delta.signalDiagnostics)} |`,
+    `| Concede fallbacks | ${formatDelta(comparison.delta.concedeFallbacks)} |`,
+    `| Questionable decisions | ${formatDelta(comparison.delta.questionableDecisions)} |`,
+    `| Worst matchup win rate | ${comparison.delta.worstMatchupWinRate !== undefined ? formatDelta(Number((comparison.delta.worstMatchupWinRate * 100).toFixed(1)), "%", true) : "n/a"} |`,
+    "",
+    "## Improved",
+    ...(comparison.improved.length > 0
+      ? comparison.improved.map((line) => `- ${line}`)
+      : ["- No improvements detected"]),
+    "",
+    "## Regressed",
+    ...(comparison.regressed.length > 0
+      ? comparison.regressed.map((line) => `- ${line}`)
+      : ["- No regressions detected"]),
+    "",
+  ];
+
+  return lines.join("\n");
+}
+
+function formatDelta(value: number, suffix = "", higherIsBetter = false): string {
+  if (value === 0) return `0${suffix}`;
+  const sign = value > 0 ? "+" : "";
+  const indicator = higherIsBetter
+    ? value > 0
+      ? " (better)"
+      : " (worse)"
+    : value < 0
+      ? " (better)"
+      : " (worse)";
+  return `${sign}${value}${suffix}${indicator}`;
+}
+
+export function buildRunComparisonConsoleOutput(comparison: StrategyRunComparison): string {
+  const lines: string[] = [
+    `Comparison: ${comparison.before.games} games (before) vs ${comparison.after.games} games (after)`,
+  ];
+
+  if (comparison.improved.length > 0) {
+    lines.push(`  Improved: ${comparison.improved.join(", ")}`);
+  }
+  if (comparison.regressed.length > 0) {
+    lines.push(`  Regressed: ${comparison.regressed.join(", ")}`);
+  }
+  if (comparison.improved.length === 0 && comparison.regressed.length === 0) {
+    lines.push("  No significant changes detected");
+  }
+
+  return lines.join("\n");
 }

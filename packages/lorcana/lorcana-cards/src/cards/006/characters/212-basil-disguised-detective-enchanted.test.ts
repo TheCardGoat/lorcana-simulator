@@ -56,15 +56,9 @@ describe("Basil - Disguised Detective (Enchanted)", () => {
           .resolvePendingByCard(basilDisguisedDetectiveEnchanted, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
-      // Player one targets the opponent's card, then opponent chooses
+      // The inner effect carries `chosenBy: "opponent"` — the discard prompt
+      // is owned by player_two, who submits the target directly.
       const oppCard1Id = testEngine.findCardInstanceId(opponentCard1, "hand", "player_two");
-
-      // Try player one first (targeting opponent)
-      expect(
-        testEngine.asPlayerOne().resolveNextPending({ targets: [oppCard1Id] }),
-      ).toBeSuccessfulCommand();
-
-      // Then opponent confirms the discard
       expect(
         testEngine.asPlayerTwo().resolveNextPending({ targets: [oppCard1Id] }),
       ).toBeSuccessfulCommand();

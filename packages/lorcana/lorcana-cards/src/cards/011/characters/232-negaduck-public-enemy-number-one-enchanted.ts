@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { negaduckPublicEnemyNumberOne } from "..";
+import { negaduckPublicEnemyNumberOne } from "./116-negaduck-public-enemy-number-one";
 
 export const negaduckPublicEnemyNumberOneEnchanted: CharacterCard = {
   ...negaduckPublicEnemyNumberOne,

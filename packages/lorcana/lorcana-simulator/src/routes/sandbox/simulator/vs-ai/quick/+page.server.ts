@@ -6,7 +6,8 @@ import { createAutomatedMatchSeed } from "@/features/simulator-devtools/ai-match
 import { getSafeAutomatedActionStrategyOption } from "@tcg/lorcana-engine";
 import { getApiOrigin } from "$lib/config/public-url-config.js";
 import { configureCoreSimulatorLogging } from "$lib/logtape/logger.js";
-import { getServerApiOrigin, serverFetch } from "$lib/server/fetch-with-cf.js";
+import { getServerApiOrigin } from "$lib/server/fetch-with-cf.js";
+import { serverJsonOrNull } from "$lib/data/server/server-json.js";
 import { getLogger } from "@logtape/logtape";
 
 configureCoreSimulatorLogging();
@@ -276,7 +277,7 @@ export async function load(event: ServerLoadEvent): Promise<QuickMatchErrorData>
   try {
     logger.trace("calling API", { apiOrigin, hasCookie: !!cookie });
 
-    const response = await serverFetch(apiUrl, {
+    const result = await serverJsonOrNull<QuickMatchApiResult>(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -291,13 +292,11 @@ export async function load(event: ServerLoadEvent): Promise<QuickMatchErrorData>
       }),
     });
 
-    if (response.ok) {
-      const result = (await response.json()) as QuickMatchApiResult;
+    if (result) {
       serverGameId = result.gameId;
       logger.trace("API success", { gameId: serverGameId, matchId: result.matchId });
     } else {
-      fallbackReason = `api-status-${response.status}`;
-      const body = await response.text().catch(() => "");
+      fallbackReason = "api-status-error";
       console.error("[quick-match/create] Falling back to local mode after API error", {
         ...matchDebugContext,
         fallbackReason,
@@ -307,18 +306,8 @@ export async function load(event: ServerLoadEvent): Promise<QuickMatchErrorData>
         cookieByteLength: cookie.length,
         request: requestDebugContext,
         response: {
-          status: response.status,
-          statusText: response.statusText,
-          contentType: response.headers.get("content-type"),
-          contentLength: response.headers.get("content-length"),
-          requestId: response.headers.get("x-request-id"),
-          cfRay: response.headers.get("cf-ray"),
-          server: response.headers.get("server"),
-          rateLimitLimit: response.headers.get("ratelimit-limit"),
-          rateLimitRemaining: response.headers.get("ratelimit-remaining"),
-          rateLimitReset: response.headers.get("ratelimit-reset"),
-          retryAfter: response.headers.get("retry-after"),
-          bodyPreview: truncateText(body),
+          status: "unknown",
+          bodyPreview: "Request returned a non-OK response",
         },
       });
     }

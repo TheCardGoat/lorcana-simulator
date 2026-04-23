@@ -1,5 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
-import { maleficentsStaff } from "..";
+import { maleficentsStaff } from "./065-maleficents-staff";
 
 export const maleficentsStaffEnchanted: ItemCard = {
   ...maleficentsStaff,

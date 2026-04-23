@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { youreWelcome } from "..";
+import { youreWelcome } from "./096-youre-welcome";
 
 export const youreWelcomeEnchanted: ActionCard = {
   ...youreWelcome,

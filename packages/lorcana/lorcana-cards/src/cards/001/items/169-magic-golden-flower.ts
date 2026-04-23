@@ -30,10 +30,9 @@ export const magicGoldenFlower: ItemCard = {
         banishSelf: true,
       },
       effect: {
-        amount: 3,
+        amount: { type: "up-to", value: 3 },
         target: "CHOSEN_CHARACTER",
         type: "remove-damage",
-        upTo: true,
       },
       id: "1dk-1",
       name: "HEALING POLLEN",

@@ -19,6 +19,7 @@ import type {
 import type { CardInstanceId, MatchState, PlayerId } from "#core";
 import type { CardPlayedPayload, DynamicAmountEventSnapshot } from "./domain-events";
 import type { ResolutionSelectionContext } from "./resolution-selection";
+import type { SlottedTargetInput } from "../targeting/slotted-targets";
 
 // Re-export MatchState for convenience
 export type { MatchState };
@@ -64,8 +65,8 @@ export type ContinuousEffectStat =
   | "strength"
   | "willpower"
   | "lore"
-  | "singer-threshold"
-  | "moveCost";
+  | "moveCost"
+  | "singer-threshold";
 
 /**
  * Continuous effect instance for stat modifiers.
@@ -124,6 +125,8 @@ export interface TurnMetadata {
   challengesByPlayerThisTurn: Record<PlayerId, number>;
   /** Characters that took damage this turn, grouped by owner */
   damagedCharactersByOwnerThisTurn: Record<PlayerId, number>;
+  /** Total damage removed from characters this turn, grouped by the player who caused the heal */
+  damageRemovedByPlayerThisTurn: Record<PlayerId, number>;
   /** Character instance IDs that were challenged this turn */
   challengedCharactersThisTurn: CardInstanceId[];
   /** Character instance IDs banished this turn */
@@ -132,12 +135,12 @@ export interface TurnMetadata {
   banishedCharactersInChallengeByOwnerThisTurn: Record<PlayerId, number>;
   /** Number of cards that left any discard pile this turn */
   discardCardsLeftThisTurn: number;
+  /** Number of cards that were put into a discard pile this turn, grouped by owner */
+  cardsPutIntoDiscardThisTurnByOwner: Record<PlayerId, number>;
   /** Pending temporary play-cost reductions keyed by controller */
   pendingCostReductionsByPlayer: Record<PlayerId, PendingCostReduction[]>;
   /** Cards drawn this turn, counted per player (for Ink Amplifier and similar) */
   cardsDrawnThisTurnByPlayer: Record<PlayerId, number>;
-  /** Temporary permission to play characters from under an item this turn */
-  pendingPlayFromUnder: PlayFromUnderPermission[];
   /** Cards put under a character this turn, keyed by the character's instance ID */
   cardsUnderThisTurn?: Record<CardInstanceId, CardInstanceId[]>;
 }
@@ -164,6 +167,15 @@ export interface PlayFromUnderPermission {
   cardType?: string;
   /** The player who activated the effect (only their cards should be playable) */
   controllerId: PlayerId;
+}
+
+/**
+ * Player-level continuous effect state for play-from-under permissions.
+ * Tracked at the `LorcanaG` level (not turnMetadata) so permissions are
+ * managed via expiry-based cleanup alongside other continuous effects.
+ */
+export interface PlayFromUnderPermissionsState {
+  permissionsByPlayer: Record<PlayerId, PlayFromUnderPermission[]>;
 }
 
 export interface TemporaryGrantedAbilityPayload {
@@ -270,6 +282,8 @@ export interface BagEffectEntry {
   abilityIndex?: number;
   abilityKey: string;
   abilityName?: string;
+  /** Copied from printed/generated triggered ability when present */
+  autoResolve?: boolean;
   controllerId: PlayerId;
   chooserId: PlayerId;
   sourceId: CardInstanceId;
@@ -298,6 +312,7 @@ export interface TriggerRegistrationAbility {
   sourceZones?: ("play" | "hand" | "discard" | "inkwell")[];
   condition?: Condition;
   effect: Effect;
+  autoResolve?: boolean;
 }
 
 export interface TriggeredEventCandidate {
@@ -351,6 +366,7 @@ export interface TriggeredAbilitiesState {
 export type ReplacementEventKind =
   | "modify-stat"
   | "deal-damage"
+  | "put-damage"
   | "remove-damage"
   | "challenge-damage"
   | "gain-lore"
@@ -424,6 +440,12 @@ export interface PendingActionEffectContinuation {
 
 export interface PendingActionResolutionInput {
   targets?: CardInstanceId | PlayerId | readonly (CardInstanceId | PlayerId)[];
+  /**
+   * Structured selections for multi-slot effects. Populated at the move input
+   * boundary (e.g. `resolveEffect`) when the caller passes a
+   * {@link SlottedTargetInput}. See `targeting/slotted-targets.ts`.
+   */
+  slottedTargets?: SlottedTargetInput;
   currentTargets?: CardInstanceId | PlayerId | readonly (CardInstanceId | PlayerId)[];
   contextTargets?: CardInstanceId | PlayerId | readonly (CardInstanceId | PlayerId)[];
   targetSelectionResolved?: boolean;
@@ -454,6 +476,8 @@ export interface PendingActionEffect {
   continuation?: PendingActionEffectContinuation;
   resolutionInput: PendingActionResolutionInput;
   selectionContext?: ResolutionSelectionContext;
+  /** Propagates {@link ActionEffectResolutionOptions.allowSuspendWithZeroTargetCandidates} for resolve-effect continuations. */
+  allowSuspendWithZeroTargetCandidates?: boolean;
 }
 
 /**
@@ -515,6 +539,8 @@ export interface LorcanaCardMeta extends Record<string, unknown> {
   activatedAbilityUseTurns?: Record<string, number>;
   /** Printed replacement abilities currently active on this card */
   replacementAbilities?: ReplacementAbilityKind[];
+  /** Where to send this card when its action effects finish resolving, overriding the default discard */
+  afterPlayDestination?: "bottom-of-deck";
 }
 
 /**
@@ -560,6 +586,9 @@ export interface LorcanaG {
   /** Temporary play restrictions tracked on players rather than cards */
   temporaryPlayerRestrictions: TemporaryPlayerRestrictionsState;
 
+  /** Player-level permissions to play cards from under items (continuous effect) */
+  playFromUnderPermissions: PlayFromUnderPermissionsState;
+
   /** Replacement effects created by resolving cards and abilities */
   replacementEffects: ReplacementEffectsState;
 
@@ -601,13 +630,14 @@ export function createInitialLorcanaG(player1Id: PlayerId, player2Id: PlayerId):
       shiftPlayedThisTurn: [],
       challengesByPlayerThisTurn: {},
       damagedCharactersByOwnerThisTurn: {},
+      damageRemovedByPlayerThisTurn: {},
       challengedCharactersThisTurn: [],
       banishedCharactersThisTurn: [],
       banishedCharactersInChallengeByOwnerThisTurn: {},
       discardCardsLeftThisTurn: 0,
+      cardsPutIntoDiscardThisTurnByOwner: {},
       pendingCostReductionsByPlayer: {},
       cardsDrawnThisTurnByPlayer: {} as Record<PlayerId, number>,
-      pendingPlayFromUnder: [],
     },
     triggeredAbilities: {
       pendingEvents: [],
@@ -635,6 +665,9 @@ export function createInitialLorcanaG(player1Id: PlayerId, player2Id: PlayerId):
       restrictionsByPlayer: {},
       startsByPlayer: {},
       payloadsByPlayer: {},
+    },
+    playFromUnderPermissions: {
+      permissionsByPlayer: {},
     },
     replacementEffects: {
       nextSeq: 1,

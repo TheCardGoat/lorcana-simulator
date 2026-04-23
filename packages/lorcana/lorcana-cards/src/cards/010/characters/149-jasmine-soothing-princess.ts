@@ -42,7 +42,7 @@ export const jasmineSoothingPrincess: CharacterCard = {
           type: "has-card-under",
         },
         then: {
-          amount: 3,
+          amount: { type: "up-to", value: 3 },
           target: {
             selector: "all",
             count: "all",
@@ -51,7 +51,6 @@ export const jasmineSoothingPrincess: CharacterCard = {
             cardTypes: ["character"],
           },
           type: "remove-damage",
-          upTo: true,
         },
         type: "conditional",
       },

@@ -15,7 +15,7 @@ import {
   questWithAll,
 } from "./moves/core";
 import { alterHand, chooseWhoGoesFirst } from "./moves/setup";
-import { concede, passTurn } from "./moves/turn";
+import { concede, forfeitGame, passTurn } from "./moves/turn";
 import { resolveBag, resolveEffect } from "./resolution";
 import {
   manualDryCard,
@@ -83,6 +83,9 @@ export const lorcanaRuntimeMoves = {
   passTurn,
   concede,
 
+  // Server-only
+  forfeitGame,
+
   // Debug
   manualMoveCard,
   manualExertCard,
@@ -105,7 +108,7 @@ export {
   questWithAll,
 } from "./moves/core";
 export { alterHand, chooseWhoGoesFirst } from "./moves/setup";
-export { concede, passTurn } from "./moves/turn";
+export { concede, forfeitGame, passTurn } from "./moves/turn";
 export { resolveBag, resolveEffect } from "./resolution";
 export {
   manualExertCard,

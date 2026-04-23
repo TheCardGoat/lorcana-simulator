@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { maleficentMistressOfAllEvil } from "..";
+import { maleficentMistressOfAllEvil } from "./051-maleficent-mistress-of-all-evil";
 
 export const maleficentMistressOfAllEvilEnchanted: CharacterCard = {
   ...maleficentMistressOfAllEvil,

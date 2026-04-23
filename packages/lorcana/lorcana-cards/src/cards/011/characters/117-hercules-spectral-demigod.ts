@@ -48,7 +48,7 @@ export const herculesSpectralDemigod: CharacterCard = {
         type: "modify-stat",
       },
       type: "static",
-      text: "SUPERHUMAN STRENGTH While there's a card under this character, he gets +3 {S}.",
+      text: "SUPERHUMAN STRENGTH While there’s a card under this character, he gets +3 {S}.",
     },
   ],
   i18n: herculesSpectralDemigodI18n,

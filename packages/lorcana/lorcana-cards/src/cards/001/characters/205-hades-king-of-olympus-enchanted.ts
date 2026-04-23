@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { hadesKingOfOlympus } from "..";
+import { hadesKingOfOlympus } from "./005-hades-king-of-olympus";
 
 export const hadesKingOfOlympusEnchanted: CharacterCard = {
   ...hadesKingOfOlympus,

@@ -36,13 +36,7 @@ export const cantHoldItBackAnymore: ActionCard = {
           },
           {
             from: "ALL_CHARACTERS",
-            to: {
-              cardTypes: ["character"],
-              count: 1,
-              owner: "opponent",
-              selector: "chosen",
-              zones: ["play"],
-            },
+            to: { ref: "previous-target" },
             type: "move-damage",
           },
         ],

@@ -4,6 +4,9 @@
 builder = "DOCKERFILE"
 dockerfilePath = "packages/lorcana/lorcana-simulator/Dockerfile"
 
+[build.buildArgs]
+GHA_PAT_TOKEN = "{{ secrets.GHA_PAT_TOKEN }}"
+
 [deploy]
 #healthcheckPath = "/health"
 healthcheckTimeout = 60

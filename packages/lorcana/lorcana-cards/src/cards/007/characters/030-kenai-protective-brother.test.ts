@@ -62,8 +62,13 @@ describe("Kenai - Protective Brother", () => {
 
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
-      // No bag effect because Kenai is not exerted
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kenaiProtectiveBrother, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
       // Ally should still be exerted with damage
       expect(testEngine.asPlayerOne().isExerted(damagedAlly)).toBe(true);

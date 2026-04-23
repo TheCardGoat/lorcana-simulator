@@ -75,6 +75,50 @@ describe("Anastasia - Bossy Stepsister", () => {
       expect(testEngine.asPlayerOne().getCardZone(handCard)).toBe("discard");
     });
 
+    it("challenging player can resolve the bag directly when they own the opposing Anastasia trigger", () => {
+      // Player one owns Anastasia; player two is the challenger who must discard.
+      // This is the regression scenario for bug-16: the challenging player (player two)
+      // is the directBagChooser and must be able to resolve the bag themselves.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: anastasiaBossyStepsister, exerted: true }],
+          deck: 1,
+        },
+        {
+          play: [{ card: attacker, isDrying: false }],
+          hand: [handCard],
+          deck: 0,
+        },
+      );
+
+      const handCardId = testEngine.findCardInstanceId(handCard, "hand", PLAYER_TWO);
+
+      // Pass so player two gets priority to challenge
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Player two challenges player one's Anastasia
+      expect(
+        testEngine.asPlayerTwo().challenge(attacker, anastasiaBossyStepsister),
+      ).toBeSuccessfulCommand();
+
+      // Bag should have triggered
+      const totalBag =
+        testEngine.asPlayerOne().getBagCount() + testEngine.asPlayerTwo().getBagCount();
+      expect(totalBag).toBeGreaterThan(0);
+
+      // The challenging player (player two) must be able to resolve the bag directly
+      // (they are the direct chooser for the CHALLENGING_PLAYER discard effect)
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(anastasiaBossyStepsister),
+      ).toBeSuccessfulCommand();
+
+      // Player two must now choose a card to discard
+      expect(testEngine.asPlayerTwo().respondWith(handCardId)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getZonesCardCount(PLAYER_TWO).hand).toBe(0);
+      expect(testEngine.asPlayerTwo().getCardZone(handCard)).toBe("discard");
+    });
+
     it("does not trigger when Anastasia is the attacker", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

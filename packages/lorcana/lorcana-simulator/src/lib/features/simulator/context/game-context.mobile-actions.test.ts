@@ -15,6 +15,7 @@ import type {
   LorcanaSimulatorMoveParams,
 } from "@/features/simulator/model/contracts.js";
 import type { LorcanaProjectedBoardView } from "@tcg/lorcana-engine";
+import type { CardSnapshotMap } from "@/features/simulator/model/board-utils.js";
 
 function asCardId(value: string): CardInstanceId {
   return value as CardInstanceId;
@@ -28,10 +29,16 @@ function createGameContextStub(
   overrides: Partial<LorcanaGameContextValue> = {},
 ): LorcanaGameContextValue {
   const executableMovesFn = overrides.executableMoves ?? (() => []);
+  const cardSnapshotsByIdFn = overrides.cardSnapshotsById ?? (() => ({}));
 
   return {
     boardSnapshot: () => null,
-    cardSnapshotsById: () => ({}),
+    cardSnapshotsById: cardSnapshotsByIdFn,
+    resolveCardSnapshot:
+      overrides.resolveCardSnapshot ??
+      ((cardId: string) => (cardSnapshotsByIdFn() as CardSnapshotMap)[cardId] ?? null),
+    resolvePlayerName: () => null,
+    isPlayerMobile: () => false,
     getPlayerSummary: () => null,
     executableMoves: executableMovesFn,
     moveCategorySummaries: () => [],
@@ -67,6 +74,8 @@ function createGameContextStub(
     setAnimationSpeed: () => {},
     soundVolume: () => 50,
     setSoundVolume: () => {},
+    showZoneCounters: () => false,
+    setShowZoneCounters: () => {},
     previewChallenge: () => null,
     executeMove: () => false,
     playCard: () => false,
@@ -1054,6 +1063,85 @@ describe("LorcanaSidebarPresenter mobile actions", () => {
     });
   });
 
+  it("clears stale target-selection guidance when the pending effect disappears", () => {
+    const sourceCard = createCardSnapshot({
+      cardId: "source-1",
+      label: "Jasmine - Resourceful Infiltrator",
+      textEntries: [
+        {
+          title: "JUST WHAT YOU NEED",
+          description:
+            "When you play this character, you may give another chosen character Resist +1 until the start of your next turn.",
+        },
+      ],
+    });
+    const targetCard = createCardSnapshot({
+      cardId: "target-1",
+      label: "Donald Duck - Pie Slinger",
+    });
+
+    let pendingResolutionMoves = [createPendingResolutionMove()];
+    let boardSnapshot = {
+      ...createBoardSnapshot(),
+      pendingChoice: { requestID: "effect-1" },
+      pendingEffects: [
+        {
+          id: "effect-1",
+          type: "action-effect",
+          sourceId: asCardId(sourceCard.cardId),
+          selectionContext: createTargetSelectionContext({
+            sourceCardId: asCardId(sourceCard.cardId),
+            cardCandidateIds: [asCardId(targetCard.cardId)],
+          }),
+          payload: {
+            abilityIndex: 0,
+            cardPlayed: {
+              cardType: "character",
+            },
+          },
+        },
+      ],
+    } as never;
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        pendingResolutionMoves: () => pendingResolutionMoves,
+        boardSnapshot: () => boardSnapshot,
+        cardSnapshotsById: () => ({
+          [sourceCard.cardId]: sourceCard,
+          [targetCard.cardId]: targetCard,
+        }),
+      }),
+    );
+
+    expect(
+      presenter.startResolutionSelectionSession(
+        createPendingResolutionMove(),
+        createTargetSelectionContext({
+          sourceCardId: asCardId(sourceCard.cardId),
+          cardCandidateIds: [asCardId(targetCard.cardId)],
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      presenter.activePlayerGuidance.some((item) => item.id === "resolution-selection-inline"),
+    ).toBe(true);
+
+    pendingResolutionMoves = [];
+    boardSnapshot = {
+      ...createBoardSnapshot(),
+      pendingChoice: null,
+      pendingEffects: [],
+    } as never;
+
+    presenter.syncAutoOpenPendingResolution();
+
+    expect(presenter.resolutionSelectionSession).toBeNull();
+    expect(
+      presenter.activePlayerGuidance.some((item) => item.id === "resolution-selection-inline"),
+    ).toBe(false);
+  });
+
   it("keeps the localized effect label when a pending trigger carries abilityIndex", () => {
     const sourceCard = createCardSnapshot({
       cardId: "source-1",
@@ -1146,8 +1234,7 @@ describe("LorcanaSidebarPresenter mobile actions", () => {
                 payload: {
                   effect: {
                     type: "remove-damage",
-                    amount: 3,
-                    upTo: true,
+                    amount: { type: "up-to", value: 3 },
                   },
                 },
               },
@@ -1193,6 +1280,118 @@ describe("LorcanaSidebarPresenter mobile actions", () => {
           effectId: "effect-1",
           params: {
             amount: 2,
+            targets: [targetCard.cardId],
+          },
+        },
+      },
+    ]);
+  });
+
+  it("emits a slotted `move-damage` targets object when the engine asks for it", () => {
+    const sourceCard = createCardSnapshot({
+      cardId: "source-1",
+      label: "Alma Madrigal - Heart of the Family",
+    });
+    const fromCard = createCardSnapshot({
+      cardId: "friendly-1",
+      label: "Friendly Character",
+    });
+    const toCard = createCardSnapshot({
+      cardId: "opposing-1",
+      label: "Opposing Character",
+    });
+    const executed: Array<{ moveId: string; params: Record<string, unknown> }> = [];
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        cardSnapshotsById: () => ({
+          [sourceCard.cardId]: sourceCard,
+          [fromCard.cardId]: fromCard,
+          [toCard.cardId]: toCard,
+        }),
+        executeMove: (moveId, params) => {
+          executed.push({ moveId, params: params as Record<string, unknown> });
+          return true;
+        },
+      }),
+    );
+
+    expect(
+      presenter.startResolutionSelectionSession(
+        createPendingResolutionMove(),
+        createTargetSelectionContext({
+          sourceCardId: asCardId(sourceCard.cardId),
+          cardCandidateIds: [asCardId(fromCard.cardId), asCardId(toCard.cardId)],
+          minSelections: 2,
+          maxSelections: 2,
+          ordered: true,
+          expectedSlottedKind: "move-damage",
+        }),
+      ),
+    ).toBe(true);
+
+    expect(presenter.handleAvailableMovesSelectionCard(fromCard.cardId)).toBe(true);
+    expect(presenter.handleAvailableMovesSelectionCard(toCard.cardId)).toBe(true);
+    expect(presenter.confirmResolutionSelection()).toBe(true);
+
+    expect(executed).toEqual([
+      {
+        moveId: "resolveEffect",
+        params: {
+          effectId: "effect-1",
+          params: {
+            targets: {
+              kind: "move-damage",
+              from: [fromCard.cardId],
+              to: [toCard.cardId],
+            },
+          },
+        },
+      },
+    ]);
+  });
+
+  it("falls back to a flat targets array when no expectedSlottedKind is set", () => {
+    const sourceCard = createCardSnapshot({
+      cardId: "source-1",
+      label: "Any Source",
+    });
+    const targetCard = createCardSnapshot({
+      cardId: "target-1",
+      label: "Any Target",
+    });
+    const executed: Array<{ moveId: string; params: Record<string, unknown> }> = [];
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        cardSnapshotsById: () => ({
+          [sourceCard.cardId]: sourceCard,
+          [targetCard.cardId]: targetCard,
+        }),
+        executeMove: (moveId, params) => {
+          executed.push({ moveId, params: params as Record<string, unknown> });
+          return true;
+        },
+      }),
+    );
+
+    expect(
+      presenter.startResolutionSelectionSession(
+        createPendingResolutionMove(),
+        createTargetSelectionContext({
+          sourceCardId: asCardId(sourceCard.cardId),
+          cardCandidateIds: [asCardId(targetCard.cardId)],
+        }),
+      ),
+    ).toBe(true);
+
+    expect(presenter.handleAvailableMovesSelectionCard(targetCard.cardId)).toBe(true);
+    expect(presenter.confirmResolutionSelection()).toBe(true);
+
+    expect(executed).toEqual([
+      {
+        moveId: "resolveEffect",
+        params: {
+          effectId: "effect-1",
+          params: {
             targets: [targetCard.cardId],
           },
         },

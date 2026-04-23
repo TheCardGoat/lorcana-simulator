@@ -28,6 +28,11 @@ Treat those as migration debt, not proof that the card is healthy.
 - A generated placeholder was mistaken for a trustworthy implementation.
 - A parser/generator gap was mistaken for a one-card authoring problem.
 - A runtime gap was papered over in the card file instead of leaving `missingImplementation: true`.
+- "May enter play exerted" was modeled as a single ability instead of the required two-ability pattern (static + triggered with `is-exerted` condition).
+- Enchanted/epic variants had different abilities than their base card — they should be identical.
+- `condition: { type: "is-exerted" }` was omitted on triggered abilities that require the character to be exerted.
+- "Counts as named X for Shift" was modeled as a keyword instead of a static `property-modification` effect.
+- Trigger `on: "OPPONENT_CHARACTERS"` was confused with `on: "OPPONENT"` (the latter is for player events like discard).
 
 ## Card-Type-Specific Traps
 

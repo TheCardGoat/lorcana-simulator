@@ -71,10 +71,8 @@ describe("Anna - Diplomatic Queen", () => {
           .resolvePendingByCard(annaDiplomaticQueen, { resolveOptional: true, choiceIndex: 0 }),
       ).toBeSuccessfulCommand();
 
-      expect(
-        testEngine.asPlayerOne().resolveNextPending({ targets: [opponentHandCardId] }),
-      ).toBeSuccessfulCommand();
-
+      // "Each opponent chooses and discards" — the chooser flips to player_two
+      // and submits their target directly.
       expect(
         testEngine.asPlayerTwo().resolveNextPending({ targets: [opponentHandCardId] }),
       ).toBeSuccessfulCommand();

@@ -1,4 +1,5 @@
 import {
+  DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
   getAutomatedActionStrategyOption,
   getSafeAutomatedActionStrategyOption,
   computeAutomatedActionStateFingerprint,
@@ -45,17 +46,17 @@ export type HumanVsAiStateChangeCallback = (orchestrator: HumanVsAiOrchestrator)
 const HUMAN_VS_AI_AUTOMATION_PLAYER_ID = createPlayerId("player_two");
 
 export class HumanVsAiOrchestrator {
-  #session: AutomatedMatchPlaybackSession<LorcanaServer, LorcanaSimulatorReadModel>;
-  #testEngine: LorcanaMultiplayerTestEngine;
-  #cardsMaps: CardsMaps;
-  #requestedStrategyId: string;
-  #strategyOption: AutomatedActionStrategyOption;
+  #session!: AutomatedMatchPlaybackSession<LorcanaServer, LorcanaSimulatorReadModel>;
+  #testEngine!: LorcanaMultiplayerTestEngine;
+  #cardsMaps!: CardsMaps;
+  #requestedStrategyId!: string;
+  #strategyOption!: AutomatedActionStrategyOption;
   #deadlockTracker = createRepeatedStateDeadlockTracker();
   #timer: ReturnType<typeof setTimeout> | null = null;
   #timerRevision = 0;
   #listeners = new Set<() => void>();
   #stateUnsubscribe: (() => void) | null = null;
-  #gameId: string;
+  #gameId!: string;
   #onStateChange: HumanVsAiStateChangeCallback | null = null;
 
   sessionRevision = $state(0);
@@ -71,7 +72,12 @@ export class HumanVsAiOrchestrator {
 
   constructor(
     config: HumanVsAiMatchConfig,
-    options?: { onStateChange?: HumanVsAiStateChangeCallback },
+    options?: {
+      onStateChange?: HumanVsAiStateChangeCallback;
+      initialPerspective?: "playerOne" | "playerTwo";
+      /** Pre-built engine — when provided, deck fixtures are skipped. Used by replay fork. */
+      engine?: LorcanaMultiplayerTestEngine;
+    },
   ) {
     this.#onStateChange = options?.onStateChange ?? null;
     const strategyOption = getSafeAutomatedActionStrategyOption(config.strategyId);
@@ -80,26 +86,39 @@ export class HumanVsAiOrchestrator {
     this.#strategyOption = strategyOption;
     this.#gameId = config.seed;
 
-    const fixture = createAutomatedMatchFixture({
-      playerOneDeckText: config.playerOneDeckText,
-      playerTwoDeckText: config.playerTwoDeckText,
-      playerOneFixtureId: config.playerOneFixtureId,
-      playerTwoFixtureId: config.playerTwoFixtureId,
-      playerOneStrategyId: config.strategyId,
-      playerTwoStrategyId: config.strategyId,
-      seed: config.seed,
-    });
+    if (options?.engine) {
+      this.#testEngine = options.engine;
+    } else {
+      const fixture = createAutomatedMatchFixture({
+        playerOneDeckText: config.playerOneDeckText,
+        playerTwoDeckText: config.playerTwoDeckText,
+        playerOneFixtureId: config.playerOneFixtureId,
+        playerTwoFixtureId: config.playerTwoFixtureId,
+        playerOneStrategyId: config.strategyId,
+        playerTwoStrategyId: config.strategyId,
+        seed: config.seed,
+      });
 
-    this.#testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-      fixture.playerOne,
-      fixture.playerTwo,
-      {
-        seed: fixture.seed,
-        skipPreGame: false,
-        validateSync: false,
-        timeControl: { mode: "dynamic", config: DEFAULT_DYNAMIC_CLOCK_CONFIG },
-      },
+      this.#testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        fixture.playerOne,
+        fixture.playerTwo,
+        {
+          seed: fixture.seed,
+          skipPreGame: false,
+          validateSync: false,
+          timeControl: { mode: "dynamic", config: DEFAULT_DYNAMIC_CLOCK_CONFIG },
+        },
+      );
+    }
+
+    this.#initSession(
+      config.initialAiPlayMode ?? "auto",
+      options?.initialPerspective ?? "playerOne",
     );
+  }
+
+  /** Shared initialization used by both the constructor and `fromEngine`. */
+  #initSession(initialAiPlayMode: AiPlayMode, initialPerspective: "playerOne" | "playerTwo"): void {
     this.#cardsMaps = this.#testEngine.getCardsMaps();
 
     const readModel = new AutomatedMatchPlaybackReadModel(this.#testEngine);
@@ -114,16 +133,45 @@ export class HumanVsAiOrchestrator {
 
     this.state = {
       mode: "waiting-for-human",
-      aiPlayMode: "auto",
+      aiPlayMode: initialAiPlayMode,
       aiSpeed: "balanced",
       strategyId: this.#strategyOption.id,
       strategyLabel: this.#strategyOption.label,
-      currentPerspective: "playerOne",
+      currentPerspective: initialPerspective,
       turnNumber: this.#session.server.getTurnNumber(),
     };
 
     this.#subscribeToStateUpdates();
     this.#syncMode();
+  }
+
+  /**
+   * Create an orchestrator from a pre-built test engine.
+   *
+   * Used by replay fork: the engine is constructed with the replay's cardsMaps/staticResources,
+   * then the replay state is loaded before the orchestrator takes over AI control.
+   */
+  static fromEngine(
+    testEngine: LorcanaMultiplayerTestEngine,
+    options: {
+      strategyId?: string;
+      initialAiPlayMode?: AiPlayMode;
+      initialPerspective?: "playerOne" | "playerTwo";
+      gameId?: string;
+    } = {},
+  ): HumanVsAiOrchestrator {
+    const config: HumanVsAiMatchConfig = {
+      playerOneDeckText: "",
+      playerTwoDeckText: "",
+      strategyId: options.strategyId ?? DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
+      seed: options.gameId ?? `fork:${Date.now()}`,
+      initialAiPlayMode: options.initialAiPlayMode ?? "step",
+    };
+
+    return new HumanVsAiOrchestrator(config, {
+      initialPerspective: options.initialPerspective ?? "playerOne",
+      engine: testEngine,
+    });
   }
 
   get gameId(): string {

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { gastonFrightfulBully } from "..";
+import { gastonFrightfulBully } from "./002-gaston-frightful-bully";
 
 export const gastonFrightfulBullyEpic: CharacterCard = {
   ...gastonFrightfulBully,

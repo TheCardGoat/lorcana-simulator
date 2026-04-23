@@ -70,6 +70,22 @@ describe("support reminder state", () => {
     expect(hasSupportReminderCooldown(storage, now)).toBe(true);
   });
 
+  it("stays hidden for a week after it auto-opened", () => {
+    const storage = createStorageMock();
+    const now = 1_000_000;
+    storage.setItem(SUPPORT_REMINDER_LAST_SHOWN_AT_KEY, String(now - 1_000));
+
+    const state = resolveSupportReminderState({
+      storage,
+      random: () => 0.2,
+      variantCount: 12,
+      now,
+    });
+
+    expect(state.visible).toBe(false);
+    expect(hasSupportReminderCooldown(storage, now)).toBe(true);
+  });
+
   it("dismisses for a week", () => {
     const storage = createStorageMock();
     const now = 9_999;

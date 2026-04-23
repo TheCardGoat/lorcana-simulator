@@ -57,10 +57,9 @@ export const baymaxPersonalHealthcareCompanion: CharacterCard = {
         ink: 2,
       },
       effect: {
-        amount: 1,
+        amount: { type: "up-to", value: 1 },
         target: "ANOTHER_CHOSEN_CHARACTER",
         type: "remove-damage",
-        upTo: true,
       },
       id: "1p5-2",
       name: "YOU SAID 'OW'",

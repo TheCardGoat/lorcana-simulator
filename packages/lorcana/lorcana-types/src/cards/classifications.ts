@@ -44,6 +44,7 @@ export const CLASSIFICATIONS = [
   "Super",
   "Tigger",
   "Titan",
+  "Toy",
   "Villain",
   "Whisper",
 ] as const;

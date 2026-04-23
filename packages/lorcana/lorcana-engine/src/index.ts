@@ -24,8 +24,8 @@ export type {
   DeepReadonly,
   EngineMoveHistoryEntry,
   EngineMoveId,
-  GameLogEntry,
   EnginePacketUpdate,
+  ProtocolError,
   EnginePendingEffectProjection,
   MatchRuntime,
   MatchRuntimeConfig,
@@ -44,6 +44,7 @@ export type {
 export {
   createCardsMapsFromStaticResources,
   createEmptyMatchStaticResources,
+  createMatchStaticResourcesFromCardsMaps,
   createGameId,
   createPlayerId,
   createRecordCardCatalog,
@@ -60,6 +61,8 @@ export { LorcanaServer, createLorcanaServerGame } from "./lorcana-server";
 export {
   AUTOMATED_ACTION_STRATEGIES,
   AGGRESSIVE_BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
+  BEST_AI_CARD_PROFILES,
+  BEST_AI_DECK_DOSSIERS,
   BOARD_CONTROL_LORE_RACE_STRATEGY_ID,
   BEST_DECK_AWARE_LORE_RACE_STRATEGY_ID,
   BEST_DECK_AWARE_ORACLE_LORE_RACE_STRATEGY_ID,
@@ -109,6 +112,8 @@ export type {
   MoveOption,
   MoveOptionTarget,
   MoveOptionAbility,
+  MoveOptionSelectableCost,
+  MoveOptionSelectableCostKind,
   EffectTargetInfo,
 } from "./available-moves";
 export type {
@@ -129,7 +134,7 @@ export {
 } from "./serialization";
 export type {
   LorcanaServerAuthoritativeSnapshot,
-  LorcanaUndoCheckpointSnapshot,
+  LorcanaUndoStackEntrySnapshot,
 } from "./serialization";
 
 // ============================================================================
@@ -221,6 +226,33 @@ export {
 // ============================================================================
 
 export * from "./targeting";
+
+// ============================================================================
+// Time Control
+// ============================================================================
+
+export {
+  checkTimeout,
+  settleClocks,
+  getActivePlayerDecisionMs,
+  resetPlayerTimeAfterSkip,
+  DEFAULT_DYNAMIC_CLOCK_CONFIG,
+} from "./core/runtime/time-control";
+export type { ChessClockContext, DynamicClockContext } from "#core";
+
+export { deriveClockView, formatClockTime } from "./core/runtime/clock-view";
+export type { ClockSnapshot, ClockView, DeriveClockViewOptions } from "./core/runtime/clock-view";
+
+export {
+  createInMemoryTransportPair,
+  type InMemoryTransport,
+  type InMemoryTransportPair,
+  type Transport,
+  type ClientMessage,
+  type ServerMessage,
+  type ConnectionState,
+  type ErrorCode,
+} from "#core";
 
 // ============================================================================
 // Types

@@ -35,11 +35,23 @@ export const honkerMuddlefootTimidGenius: CharacterCard = {
       name: "BE CAREFUL!",
       effect: {
         keyword: "Resist",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-name",
+              name: "Darkwing Duck",
+            },
+          ],
+        },
         type: "gain-keyword",
         value: 1,
       },
-      type: "action",
+      type: "static",
       text: "BE CAREFUL! Your characters named Darkwing Duck gain Resist +1.",
     },
   ],

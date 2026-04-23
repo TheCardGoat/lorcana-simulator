@@ -1,5 +1,5 @@
 import { dev } from "$app/environment";
-import { error } from "@sveltejs/kit";
+import { redirect } from "@sveltejs/kit";
 import type { PageLoad } from "./$types";
 import {
   generalFixtureRouteLinks,
@@ -13,7 +13,7 @@ export const ssr = false;
 
 export const load: PageLoad = () => {
   if (!dev) {
-    throw error(404, "Not found");
+    throw redirect(302, "/matchmaking");
   }
 
   return {

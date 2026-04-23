@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { jiminyCricketGhostOfChristmasPast } from "..";
+import { jiminyCricketGhostOfChristmasPast } from "./146-jiminy-cricket-ghost-of-christmas-past";
 
 export const jiminyCricketGhostOfChristmasPastEpic: CharacterCard = {
   ...jiminyCricketGhostOfChristmasPast,

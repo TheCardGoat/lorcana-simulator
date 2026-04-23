@@ -63,6 +63,12 @@ describe("Chief Bogo - Commanding Officer", () => {
 
     expect(testEngine.asServer().manualSetDamage(bodyguardId, 10)).toBeSuccessfulCommand();
 
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(chiefBogoCommandingOfficer, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
   });
 });

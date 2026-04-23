@@ -64,7 +64,7 @@ export const isabelaMadrigalGoldenChild: CharacterCard = {
       id: "qop-2",
       name: "LADIES FIRST",
       text: "LADIES FIRST During your turn, if no other character has quested this turn, this character gets +3 {L}.",
-      type: "action",
+      type: "static",
     },
     {
       effect: {

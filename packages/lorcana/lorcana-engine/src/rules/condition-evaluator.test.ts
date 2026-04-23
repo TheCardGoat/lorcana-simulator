@@ -1,7 +1,79 @@
 import { describe, expect, it } from "bun:test";
+import type { CardInstanceId, PlayerId } from "#core";
+import { evaluateCondition, type ConditionEvaluationContext } from "./condition-evaluator";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "../testing";
 
 describe("condition-evaluator", () => {
+  it("evaluates during-turn using status.turnOwnerId over priority holder", () => {
+    const p1 = "player_one" as PlayerId;
+    const p2 = "player_two" as PlayerId;
+    const ctx: ConditionEvaluationContext = {
+      framework: {
+        state: {
+          priority: { holder: p1, windowOpen: true, passSequence: [], stackDepth: 0 },
+          status: { turn: 2, gameEnded: false, otp: p1, turnOwnerId: p2 },
+          playerIds: [p1, p2],
+          currentPlayer: p1,
+        },
+        zones: {
+          getCards: () => [],
+        },
+      },
+      cards: {
+        getDefinition: () => undefined,
+        require: () => ({}),
+        get: () => undefined,
+      },
+      G: {
+        lore: { [p1]: 0, [p2]: 0 },
+        turnMetadata: {
+          cardsPlayedThisTurn: [],
+          charactersQuesting: [],
+          inkedThisTurn: [],
+          cardsPutIntoInkwellThisTurn: [],
+          additionalInkwellActions: 0,
+          shiftPlayedThisTurn: [],
+          challengesByPlayerThisTurn: {},
+          damagedCharactersByOwnerThisTurn: {},
+          damageRemovedByPlayerThisTurn: {},
+          challengedCharactersThisTurn: [],
+          banishedCharactersThisTurn: [],
+          banishedCharactersInChallengeByOwnerThisTurn: {},
+          discardCardsLeftThisTurn: 0,
+          cardsPutIntoDiscardThisTurnByOwner: {},
+          pendingCostReductionsByPlayer: {},
+          cardsDrawnThisTurnByPlayer: {},
+        },
+        triggeredAbilities: {
+          pendingEvents: [],
+          registrations: [],
+          bag: { nextSeq: 1, items: [] },
+          usageLedger: { occurrences: {}, resolutions: {} },
+        },
+        pendingEffects: [],
+        turnsCompletedByPlayer: { [p1]: 1, [p2]: 0 },
+        continuousEffects: { nextSeq: 1, instances: [], byTarget: {} },
+        temporaryPlayerRestrictions: {
+          restrictionsByPlayer: {},
+          startsByPlayer: {},
+          payloadsByPlayer: {},
+        },
+        playFromUnderPermissions: { permissionsByPlayer: {} },
+        replacementEffects: {
+          nextSeq: 1,
+          registrations: [],
+          usageLedger: { perTurn: {} },
+          byEventKind: {},
+        },
+        staticEffectsVersion: 0,
+      },
+      playerId: p1,
+      sourceCardId: "source" as CardInstanceId,
+    };
+
+    expect(evaluateCondition({ type: "during-turn", whose: "opponent" }, ctx)).toBe(true);
+  });
+
   describe("stat-threshold condition", () => {
     const conditionalLoreCard = createMockCharacter({
       id: "stat-threshold-source",

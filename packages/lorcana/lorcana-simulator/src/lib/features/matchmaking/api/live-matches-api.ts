@@ -1,8 +1,10 @@
 import { getGameServerOrigin } from "$lib/config/public-url-config.js";
+import { requestJson } from "$lib/data/transport/http-client.js";
 
 export interface LiveMatchPlayer {
   id: string;
   displayName: string;
+  isMobile?: boolean;
 }
 
 export interface LiveMatchEntry {
@@ -27,18 +29,25 @@ export interface LiveMatchListResponse {
   total: number;
 }
 
-export async function fetchLiveMatches(limit = 25): Promise<LiveMatchListResponse> {
+export interface LiveMatchFetchFilters {
+  matchType?: string;
+  format?: "best_of_1" | "best_of_3";
+  inks?: string[];
+}
+
+export async function fetchLiveMatches(
+  limit = 25,
+  filters: LiveMatchFetchFilters = {},
+): Promise<LiveMatchListResponse> {
   const url = new URL(`${getGameServerOrigin()}/v1/play/matches/live`);
   url.searchParams.set("limit", String(limit));
+  if (filters.matchType) url.searchParams.set("matchType", filters.matchType);
+  if (filters.format) url.searchParams.set("format", filters.format);
+  if (filters.inks && filters.inks.length > 0) url.searchParams.set("inks", filters.inks.join(","));
 
-  const res = await fetch(url.toString(), {
-    credentials: "include",
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "(unreadable body)");
-    throw new Error(`Failed to fetch live matches: ${res.status} — ${body}`);
-  }
-
-  return res.json() as Promise<LiveMatchListResponse>;
+  return requestJson<LiveMatchListResponse>(
+    url.toString(),
+    undefined,
+    "Failed to fetch live matches",
+  );
 }

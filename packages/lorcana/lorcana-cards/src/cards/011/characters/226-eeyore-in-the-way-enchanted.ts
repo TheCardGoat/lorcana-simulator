@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { eeyoreInTheWay } from "..";
+import { eeyoreInTheWay } from "./045-eeyore-in-the-way";
 
 export const eeyoreInTheWayEnchanted: CharacterCard = {
   ...eeyoreInTheWay,

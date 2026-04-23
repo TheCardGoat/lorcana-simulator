@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { jasmineSteadyStrategist } from "..";
+import { jasmineSteadyStrategist } from "./171-jasmine-steady-strategist";
 
 export const jasmineSteadyStrategistEnchanted: CharacterCard = {
   ...jasmineSteadyStrategist,

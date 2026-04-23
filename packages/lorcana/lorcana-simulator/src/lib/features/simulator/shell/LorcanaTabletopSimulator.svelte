@@ -1,6 +1,6 @@
 <script lang="ts">
   import "../../../app.css";
-  import { untrack } from "svelte";
+  import { untrack, type Snippet } from "svelte";
   import { m } from "$lib/i18n/messages.js";
   import { Button } from "$lib/design-system/primitives/button";
   import * as Dialog from "$lib/design-system/primitives/dialog";
@@ -21,11 +21,13 @@
   import type { LorcanaEngineBase } from "@tcg/lorcana-engine";
   import type {
     ExecutableMovePresentationCategoryId,
+    LorcanaPlayerSide,
     LorcanaSimulatorReadModel,
     SimulatorMoveError,
   } from "@/features/simulator/model/contracts.js";
   import type { PendingEffectsPopoverItem } from "@/features/simulator/context/game-context.svelte.js";
   import type { LorcanaPlayerSettingsMap } from "@/features/simulator/model/player-visual-settings.js";
+  import type { MatchChatController } from "@/features/match-chat/match-chat-controller.svelte.js";
 
   import LorcanaSimulatorSidebar from "./LorcanaSimulatorSidebar.svelte";
   import LorcanaCompactPanels from "./LorcanaCompactPanels.svelte";
@@ -42,13 +44,15 @@
   } from "@/features/simulator/support/support-reminder-copy.js";
   import { setSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
   import { setLorcanaSimulatorDndContext } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
-  import { GlobalCardPreview, TabletopBoard } from "@/features/simulator/index.js";
+  import GlobalCardPreview from "@/features/simulator/dialogs/GlobalCardPreview.svelte";
+  import TabletopBoard from "@/features/simulator/board/TabletopBoard.svelte";
   import {
     type LorcanaGameContext,
     setLorcanaGameContext,
     useLorcanaBoardPresenter,
     useLorcanaSidebarPresenter,
   } from "@/features/simulator/context/game-context.svelte.js";
+  import { setMatchChatController } from "@/features/match-chat/match-chat-controller.svelte.js";
   import { SimulatorLayoutModeObserver } from "@/features/simulator/model/layout-mode.svelte.js";
   import PostGameSummaryDialog from "@/features/simulator/post-game/PostGameSummaryDialog.svelte";
   import ConfettiOverlay from "@/features/simulator/board/ConfettiOverlay.svelte";
@@ -69,27 +73,64 @@
   } from "@/features/simulator/model/direct-action-state.js";
   import { bugReportContextFromBoard } from "@/features/simulator/support/feedback-api.js";
 
+  import type { ServerGameplaySettings } from "@/features/settings/player-settings-store.svelte.js";
+  import type { OpponentPresenceTracker } from "@/features/gateway/opponent-presence.svelte.js";
+  import type { OpponentAfkTracker } from "@/features/gateway/opponent-afk.svelte.js";
+  import type { ConnectionStatus } from "@/features/gateway/gateway-client.js";
+  import type { MatchNavigationContext } from "@/features/simulator/model/contracts.js";
+
   interface LorcanaTabletopSimulatorProps {
     engine: LorcanaEngineBase;
     readModel?: Pick<LorcanaSimulatorReadModel, "getMoveLog"> &
       Partial<Pick<LorcanaSimulatorReadModel, "subscribeStateUpdates">>;
     playerSettings?: LorcanaPlayerSettingsMap;
+    playerDisplayNames?: Record<string, string>;
+    playerIsMobileMap?: Record<string, boolean>;
+    serverGameplaySettings?: ServerGameplaySettings;
     gameContext?: LorcanaGameContext | null;
     postGameGameId?: string | null;
     onReturnToMatchmaking?: (() => void | Promise<void>) | null;
     viewerMode?: "player" | "spectator";
     isAuthenticated?: boolean;
+    matchChatController?: MatchChatController | null;
+    opponentPresence?: OpponentPresenceTracker | null;
+    opponentAfk?: OpponentAfkTracker | null;
+    onSkipOpponent?: (() => void) | null;
+    onDropOpponent?: (() => void) | null;
+    gatewayStatus?: ConnectionStatus | null;
+    /** True when the server announced a deploy before the socket closed. */
+    serverInitiatedClose?: boolean;
+    matchContext?: MatchNavigationContext | null;
+    onNextGame?: (() => void) | null;
+    /** Optional overlay rendered between the two player lanes (e.g. replay controls). */
+    boardOverlay?: Snippet;
+    /** Override which side appears at the bottom (e.g. replay viewer perspective). */
+    ownerSide?: LorcanaPlayerSide | null;
   }
 
   let {
     engine,
     readModel,
     playerSettings = {},
+    playerDisplayNames = {},
+    playerIsMobileMap = {},
+    serverGameplaySettings,
     gameContext = $bindable(null),
     postGameGameId = null,
     onReturnToMatchmaking = null,
     viewerMode = "player",
     isAuthenticated = false,
+    matchChatController = null,
+    opponentPresence = null,
+    opponentAfk = null,
+    onSkipOpponent = null,
+    onDropOpponent = null,
+    gatewayStatus = null,
+    serverInitiatedClose = false,
+    matchContext = null,
+    onNextGame = null,
+    boardOverlay,
+    ownerSide: ownerSideOverride = null,
   }: LorcanaTabletopSimulatorProps = $props();
   let sidebarOpen = $state(true);
 
@@ -103,10 +144,21 @@
     get playerSettings() {
       return playerSettings;
     },
+    get playerDisplayNames() {
+      return playerDisplayNames;
+    },
+    get playerIsMobileMap() {
+      return playerIsMobileMap;
+    },
   });
   gameContext = game;
 
   const sidebar = useLorcanaSidebarPresenter();
+  $effect(() => {
+    if (serverGameplaySettings) {
+      sidebar.initializeFromServer(serverGameplaySettings);
+    }
+  });
   const board = useLorcanaBoardPresenter();
 
   const simulatorCardContext = setSimulatorCardContext({
@@ -115,17 +167,23 @@
     },
   });
   const dndContext = setLorcanaSimulatorDndContext();
+  const matchChatContext = setMatchChatController(null);
 
-  const boardSnapshot = $derived(game.boardSnapshot());
-  const bugReportContext = $derived(bugReportContextFromBoard(boardSnapshot));
-  const moveLogEntries = $derived(game.moveLogEntries());
-  const ownerSide = $derived(game.ownerSide());
-  const pendingMoveError = $derived(sidebar.pendingMoveError);
-  const mobileNotice = $derived(sidebar.mobileNotice);
+  $effect(() => {
+    matchChatContext.controller = matchChatController;
+  });
+
   const layout = new SimulatorLayoutModeObserver();
   const layoutMode = $derived(layout.current);
+  const boardSnapshot = $derived(game.boardSnapshot());
+  const bugReportContext = $derived(bugReportContextFromBoard(boardSnapshot, { platform: layoutMode }));
+  const moveLogEntries = $derived(game.moveLogEntries());
+  const ownerSide = $derived(ownerSideOverride ?? game.ownerSide());
+  const pendingMoveError = $derived(sidebar.pendingMoveError);
+  const mobileNotice = $derived(sidebar.mobileNotice);
   const isCompactLayout = $derived(layout.isCompact);
-  const isPostGame = $derived(boardSnapshot?.status === "finished");
+  const isEngineFinished = $derived(boardSnapshot?.status === "finished");
+  const isPostGame = $derived(isEngineFinished || (matchContext?.matchCompleted ?? false));
   const isSpectator = $derived(viewerMode === "spectator");
   const readOnlyMode = $derived(isPostGame || isSpectator);
   const compactActionCount = $derived(isPostGame ? 0 : sidebar.moveCategoryCount);
@@ -158,12 +216,12 @@
     ownerSide ? board.getZoneCards(bottomSide, "hand").slice(0, HAND_CARD_HOTKEYS.length) : [],
   );
   const finishedGameKey = $derived.by(() =>
-    isPostGame && boardSnapshot && postGameGameId
+    isEngineFinished && boardSnapshot && postGameGameId
       ? `${postGameGameId}:${boardSnapshot.stateID ?? boardSnapshot.turnNumber}`
       : null,
   );
   const postGameSummary = $derived.by(() => {
-    if (!boardSnapshot || !isPostGame || !postGameGameId) {
+    if (!boardSnapshot || !isEngineFinished || !postGameGameId) {
       return null;
     }
 
@@ -189,7 +247,7 @@
   ];
   let lastToastedMoveError = $state<SimulatorMoveError | null>(null);
   let compactPanelsOpen = $state(false);
-  let compactPanelsTab = $state<"moves" | "log">("moves");
+  let compactPanelsTab = $state<"moves" | "log" | "chat">("moves");
   let lastMobileNoticeId = $state<number | null>(null);
   let showConfetti = $state(false);
   let postGameModalState = $state(createInitialPostGameModalState());
@@ -200,6 +258,7 @@
   let feedbackDialogOpen = $state(false);
   let bugReportDialogOpen = $state(false);
   let supportReminderVisible = $state(false);
+  let supportReminderOpen = $state(false);
   let supportReminderVariantIndex = $state<number | null>(null);
   const supportReminderText = $derived(
     supportReminderVisible && supportReminderVariantIndex !== null
@@ -213,6 +272,7 @@
     });
 
     supportReminderVisible = nextReminderState.visible;
+    supportReminderOpen = nextReminderState.visible;
     supportReminderVariantIndex = nextReminderState.variantIndex;
   });
 
@@ -249,7 +309,7 @@
   });
 
   $effect(() => {
-    if (!isPostGame || !postGameSummary) {
+    if (!isEngineFinished || !postGameSummary) {
       return;
     }
 
@@ -491,11 +551,13 @@
 
   function openFeedbackDialog(): void {
     supportDialogOpen = false;
+    postGameDialogOpen = false;
     feedbackDialogOpen = true;
   }
 
   function openBugReportDialog(): void {
     supportDialogOpen = false;
+    postGameDialogOpen = false;
     bugReportDialogOpen = true;
   }
 </script>
@@ -514,19 +576,28 @@
       {#if !isCompactLayout}
         <LorcanaSimulatorSidebar
           readOnly={readOnlyMode}
+          isOpponentAfk={opponentAfk?.isAfk ?? false}
           {supportReminderText}
+          bind:supportReminderOpen
           onDismissSupportReminder={() => {
             dismissSupportReminderForAWeek();
             supportReminderVisible = false;
+            supportReminderOpen = false;
           }}
           pendingDirectMoveCategoryId={pendingDirectMove?.categoryId ?? null}
           onTriggerUndo={() => {
             handleConfirmableDirectMoveCategory("undo", "pointer");
           }}
+          onTriggerQuestAll={() => {
+            handleConfirmableDirectMoveCategory("quest-all", "pointer");
+          }}
           onOpenHotkeys={() => {
             hotkeysDialogOpen = true;
           }}
           onOpenSupport={openSupportDialog}
+          {matchContext}
+          onNextGame={onNextGame ?? undefined}
+          onReturnToMatchmaking={handleReturnToMatchmaking}
         />
       {/if}
 
@@ -542,10 +613,19 @@
               {compactActionCount}
               {pendingEffectsPopoverItems}
               {activePlayerGuidance}
+              {opponentPresence}
+              {onSkipOpponent}
+              {onDropOpponent}
+              {gatewayStatus}
+              {serverInitiatedClose}
+              {viewerMode}
+              {isAuthenticated}
               {supportReminderText}
+              bind:supportReminderOpen
               onDismissSupportReminder={() => {
                 dismissSupportReminderForAWeek();
                 supportReminderVisible = false;
+                supportReminderOpen = false;
               }}
               hotkeyDescriptors={visibleHotkeyDescriptors}
               pendingDirectMoveCategoryId={pendingDirectMove?.categoryId ?? null}
@@ -553,6 +633,10 @@
               onOpenSupportDialog={openSupportDialog}
               onOpenFeedbackDialog={openFeedbackDialog}
               onOpenBugReportDialog={openBugReportDialog}
+              {matchContext}
+              onNextGame={onNextGame ?? undefined}
+              onReturnToMatchmaking={handleReturnToMatchmaking}
+              {boardOverlay}
             />
           {:else}
             <div class="loading">{m["sim.tabletop.loading"]({})}</div>
@@ -563,14 +647,23 @@
         <main class="compact-inset" aria-label={m["sim.tabletop.aria"]({})}>
           {#if boardSnapshot}
             <TabletopBoard
+              {opponentPresence}
+              {onSkipOpponent}
+              {onDropOpponent}
+              {gatewayStatus}
+              {serverInitiatedClose}
+              {viewerMode}
+              {isAuthenticated}
               {layoutMode}
               {compactActionCount}
               {pendingEffectsPopoverItems}
               {activePlayerGuidance}
               {supportReminderText}
+              bind:supportReminderOpen
               onDismissSupportReminder={() => {
                 dismissSupportReminderForAWeek();
                 supportReminderVisible = false;
+                supportReminderOpen = false;
               }}
               onOpenCompactPanels={openCompactPanels}
               hotkeyDescriptors={visibleHotkeyDescriptors}
@@ -579,6 +672,10 @@
               onOpenSupportDialog={openSupportDialog}
               onOpenFeedbackDialog={openFeedbackDialog}
               onOpenBugReportDialog={openBugReportDialog}
+              {matchContext}
+              onNextGame={onNextGame ?? undefined}
+              onReturnToMatchmaking={handleReturnToMatchmaking}
+              {boardOverlay}
             />
           {:else}
             <div class="loading">{m["sim.tabletop.loading"]({})}</div>
@@ -636,6 +733,8 @@
         onSoundVolumeChange={sidebar.handleSoundVolumeChange}
         accessibleMobileControls={sidebar.accessibleMobileControls}
         onToggleAccessibleMobileControls={sidebar.handleAccessibleMobileControlsToggle}
+        showZoneCounters={sidebar.showZoneCounters}
+        onToggleShowZoneCounters={sidebar.handleShowZoneCountersToggle}
         selectedCardBack={sidebar.selectedCardBack}
         selectedPlaymat={sidebar.selectedPlaymat}
         onCardBackChange={sidebar.handleCardBackChange}
@@ -654,11 +753,11 @@
       <SimulatorFeedbackDialog bind:open={feedbackDialogOpen} />
       <SimulatorBugReportDialog bind:open={bugReportDialogOpen} gameContext={bugReportContext} />
       {#if isCompactLayout}
-        <LorcanaCompactPanels
-          bind:open={compactPanelsOpen}
-          bind:activeTab={compactPanelsTab}
-          readOnly={readOnlyMode}
-        />
+      <LorcanaCompactPanels
+        bind:open={compactPanelsOpen}
+        bind:activeTab={compactPanelsTab}
+        readOnly={readOnlyMode}
+      />
       {/if}
 
       {#if postGameGameId && postGameSummary}
@@ -668,6 +767,11 @@
           summary={postGameSummary}
           {isAuthenticated}
           onReturnToMatchmaking={handleReturnToMatchmaking}
+          {matchContext}
+          ownerSide={ownerSide}
+          onNextGame={onNextGame ?? undefined}
+          onOpenBugReport={openBugReportDialog}
+          onOpenFeedback={openFeedbackDialog}
         />
 
         {#if !postGameDialogOpen}

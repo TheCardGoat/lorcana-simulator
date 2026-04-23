@@ -35,7 +35,7 @@ export const rapunzelSunshine: CharacterCard = {
         exert: true,
       },
       effect: {
-        amount: 2,
+        amount: { type: "up-to", value: 2 },
         target: {
           cardTypes: ["character"],
           count: 1,
@@ -44,7 +44,6 @@ export const rapunzelSunshine: CharacterCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       id: "zai-1",
       name: "MAGIC HAIR",

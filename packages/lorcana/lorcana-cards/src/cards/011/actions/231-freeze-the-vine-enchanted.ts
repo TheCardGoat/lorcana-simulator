@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { freezeTheVine } from "..";
+import { freezeTheVine } from "./096-freeze-the-vine";
 
 export const freezeTheVineEnchanted: ActionCard = {
   ...freezeTheVine,

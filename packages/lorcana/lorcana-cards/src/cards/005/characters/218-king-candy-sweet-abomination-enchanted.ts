@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { kingCandySweetAbomination } from "..";
+import { kingCandySweetAbomination } from "./154-king-candy-sweet-abomination";
 
 export const kingCandySweetAbominationEnchanted: CharacterCard = {
   ...kingCandySweetAbomination,

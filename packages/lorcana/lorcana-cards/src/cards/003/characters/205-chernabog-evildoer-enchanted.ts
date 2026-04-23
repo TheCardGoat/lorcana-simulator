@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { chernabogEvildoer } from "..";
+import { chernabogEvildoer } from "./003-chernabog-evildoer";
 
 export const chernabogEvildoerEnchanted: CharacterCard = {
   ...chernabogEvildoer,

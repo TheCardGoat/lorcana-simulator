@@ -105,7 +105,7 @@ class SimulatorCardController implements SimulatorCardContextValue {
     const hoverCard = card ?? null;
     const mode = this.#sidebar.cardPreviewMode;
 
-    if (mode === "disabled") {
+    if (this.shouldUseTouchInspect || mode === "disabled") {
       this.#delayedHoveredCard = null;
     } else if (mode === "immediate") {
       this.#delayedHoveredCard = hoverCard;
@@ -148,9 +148,10 @@ class SimulatorCardController implements SimulatorCardContextValue {
     }
 
     if (!this.canSelectCard(card, meta)) {
-      if (this.shouldUseTouchInspect) {
-        this.openCardInspect({ card, meta });
+      if (meta?.suppressInspectOnSelect) {
+        return;
       }
+      this.openCardInspect({ card, meta });
       return;
     }
 
@@ -224,10 +225,6 @@ class SimulatorCardController implements SimulatorCardContextValue {
       return true;
     }
 
-    if (this.#sidebar.getSingleClickItemAbilityAction(card)) {
-      return true;
-    }
-
     const ownerSide = this.#game.ownerSide();
 
     if (
@@ -239,15 +236,6 @@ class SimulatorCardController implements SimulatorCardContextValue {
     ) {
       return true;
     }
-
-    //if (
-    //  ownerSide &&
-    //  card.zoneId === "play" &&
-    //  card.ownerSide === ownerSide &&
-    //  this.#game.challengeReadyCardIds().includes(card.cardId)
-    //) {
-    //  return true;
-    //}
 
     return false;
   }
@@ -311,16 +299,6 @@ class SimulatorCardController implements SimulatorCardContextValue {
       this.toggleMultiSelection(card);
       return;
     }
-
-    if (ownerSide && card.zoneId === "play" && card.ownerSide === ownerSide) {
-      const itemAbilityAction = this.#sidebar.getSingleClickItemAbilityAction(card);
-      if (itemAbilityAction) {
-        this.#sidebar.handleCardActionClick(itemAbilityAction);
-        return;
-      }
-
-      this.#triggerClickAction(card, this.#sidebar.primaryClickAction);
-    }
   }
 
   #triggerClickAction(card: LorcanaCardSnapshot, action: PrimaryClickAction): void {
@@ -333,9 +311,23 @@ class SimulatorCardController implements SimulatorCardContextValue {
     }
   }
 
-  handleContextMenu = ({ card }: CardSelectPayload): void => {
+  handleContextMenu = ({ card, meta }: CardSelectPayload): void => {
     if (!card) return;
+    if (meta?.selectable === true || this.#sidebar.isCardSelectableForActionSession(card)) {
+      return;
+    }
+
     const ownerSide = this.#game.ownerSide();
+    if (
+      this.#game.pregamePhase() === "mulligan" &&
+      this.#game.canActInPregame() &&
+      ownerSide &&
+      card.zoneId === "hand" &&
+      card.ownerSide === ownerSide
+    ) {
+      return;
+    }
+
     if (!ownerSide || card.zoneId !== "play" || card.ownerSide !== ownerSide) return;
 
     const itemAbilityAction = this.#sidebar.getSingleClickItemAbilityAction(card);
@@ -344,10 +336,7 @@ class SimulatorCardController implements SimulatorCardContextValue {
       return;
     }
 
-    const primary = this.#sidebar.primaryClickAction;
-    const secondary: PrimaryClickAction =
-      primary === "challenge" ? "quest" : primary === "quest" ? "challenge" : "none";
-    this.#triggerClickAction(card, secondary);
+    this.#triggerClickAction(card, this.#sidebar.primaryClickAction);
   };
 }
 

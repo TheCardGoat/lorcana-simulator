@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { theQueenDiviner } from "..";
+import { theQueenDiviner } from "./156-the-queen-diviner";
 
 export const theQueenDivinerEnchanted: CharacterCard = {
   ...theQueenDiviner,

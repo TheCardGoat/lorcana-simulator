@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mauiHeroToAll } from "..";
+import { mauiHeroToAll } from "./114-maui-hero-to-all";
 
 export const mauiHeroToAllEnchanted: CharacterCard = {
   ...mauiHeroToAll,

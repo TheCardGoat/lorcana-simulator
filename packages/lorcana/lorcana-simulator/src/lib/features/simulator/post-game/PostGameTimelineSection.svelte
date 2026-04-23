@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import {
     ChevronDown,
     CircleHelp,
@@ -46,11 +47,8 @@
     defaultTechnicalTurnNumbers = [],
   }: PostGameTimelineSectionProps = $props();
 
-  const initialExpandedTurnNumbersSnapshot = initialExpandedTurnNumbers;
-  const defaultTechnicalTurnNumbersSnapshot = defaultTechnicalTurnNumbers;
-
-  let expandedTurns = $state<Set<number>>(new Set(initialExpandedTurnNumbersSnapshot));
-  let technicalTurns = $state<Set<number>>(new Set(defaultTechnicalTurnNumbersSnapshot));
+  let expandedTurns = $state<Set<number>>(new Set(untrack(() => initialExpandedTurnNumbers)));
+  let technicalTurns = $state<Set<number>>(new Set(untrack(() => defaultTechnicalTurnNumbers)));
 
   function formatClock(timestamp: number): string {
     const date = new Date(timestamp);

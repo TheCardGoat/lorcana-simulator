@@ -1,6 +1,7 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type { PutIntoInkwellEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
+import { getLorcanaCardName } from "../../../runtime-trace";
 import {
   emitTriggeredLorcanaEvent,
   snapshotTriggeredCandidatesForCard,
@@ -16,6 +17,7 @@ import {
   recordDiscardExitThisTurn,
 } from "../../state/turn-metrics";
 import { resolveEffectTargets } from "../../../targeting/runtime";
+import { runGameStateCheck } from "../../state/game-state-check";
 
 export function isPutIntoInkwellEffect(effect: unknown): effect is PutIntoInkwellEffect {
   return (
@@ -79,6 +81,9 @@ function moveCardIntoInkwell(
     typeof sourceZoneKey === "string" &&
     (sourceZoneKey === "play" || sourceZoneKey.startsWith("play:"));
 
+  // Capture the card name before moving (for log rendering after it's face-down)
+  const cardName = getLorcanaCardName(cardId, (id) => ctx.cards.getDefinition(id));
+
   if (isFromPlay) {
     const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId);
     const ownerId =
@@ -93,6 +98,16 @@ function moveCardIntoInkwell(
       ctx.cards.patchMeta(movedCardId, { state, publicFaceState });
     }
 
+    // Reveal the card (face-down in inkwell) to all players for the rest of the turn
+    // so both players understand what was put into the inkwell
+    if (movedCardIds.length > 0) {
+      const revealUntilStateID = (ctx.framework.state.stateID ?? 0) + 3;
+      ctx.framework.zones.reveal(movedCardIds, "all", {
+        stateID: revealUntilStateID,
+        affectsUndo: false,
+      });
+    }
+
     emitTriggeredLorcanaEvent(
       ctx,
       "cardInked",
@@ -101,6 +116,8 @@ function moveCardIntoInkwell(
         cardId,
         from: sourceZoneKey,
         to: "inkwell",
+        exerted: state === "exerted",
+        cardName,
       },
       {
         event: "ink",
@@ -122,6 +139,12 @@ function moveCardIntoInkwell(
 
   if (isDiscardZoneKey(sourceZoneKey)) {
     recordDiscardExitThisTurn(ctx);
+    // Reveal from discard to all players for the rest of the turn
+    const revealUntilStateID = (ctx.framework.state.stateID ?? 0) + 3;
+    ctx.framework.zones.reveal([cardId], "all", {
+      stateID: revealUntilStateID,
+      affectsUndo: false,
+    });
     const ownerId = resolveCardOwnerId(ctx, cardId, destinationPlayerId);
     emitTriggeredLorcanaEvent(
       ctx,
@@ -145,6 +168,8 @@ function moveCardIntoInkwell(
       cardId,
       from: sourceZoneKey ?? "unknown",
       to: `inkwell:${destinationPlayerId}`,
+      exerted: state === "exerted",
+      cardName,
     },
     {
       event: "ink",
@@ -269,6 +294,9 @@ export function resolvePutIntoInkwellEffect(
       movedAny = true;
     }
     markLastEffectPerformed(resolutionInput.eventSnapshot, movedAny);
+    if (movedAny) {
+      runGameStateCheck(ctx, { reasonCardId: cardPlayed.cardId });
+    }
     return;
   }
 
@@ -298,4 +326,7 @@ export function resolvePutIntoInkwellEffect(
   }
 
   markLastEffectPerformed(resolutionInput.eventSnapshot, movedAny);
+  if (movedAny) {
+    runGameStateCheck(ctx, { reasonCardId: cardPlayed.cardId });
+  }
 }

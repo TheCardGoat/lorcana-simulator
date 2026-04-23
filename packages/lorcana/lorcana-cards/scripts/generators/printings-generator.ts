@@ -114,7 +114,12 @@ export function computePrintingIdsInOrder(items: PrintingItem[]): string[] {
       continue;
     }
     const specialRarity = getSpecialRarity(card);
-    let printingId = generatePrintingId(setId, parsed.cardNumber, specialRarity ?? undefined);
+    let printingId = generatePrintingId(
+      setId,
+      parsed.cardNumber,
+      specialRarity ?? undefined,
+      parsed.promoSheetCode,
+    );
     if (seen[printingId]) {
       const suffix = nextAvailableNumericSuffix((n) => Boolean(seen[`${printingId}-${n}`]));
       printingId = `${printingId}-${suffix}`;
@@ -147,6 +152,7 @@ function buildPrintingFromIds(
     variants: deduplicateFoilImages((card.variants || []).map(transformVariant)),
   };
   if (specialRarity) printing.specialRarity = specialRarity;
+  if (parsed.promoSheetCode) printing.promoSheetCode = parsed.promoSheetCode;
   if (card.author) printing.author = card.author;
   if (card.flavor_text) printing.flavorText = card.flavor_text;
   if (card.set_rotation_state) printing.setRotationState = card.set_rotation_state;
@@ -167,7 +173,12 @@ export function transformToPrinting(
   if (!parsed) return null;
 
   const specialRarity = getSpecialRarity(card);
-  const printingId = generatePrintingId(setId, parsed.cardNumber, specialRarity ?? undefined);
+  const printingId = generatePrintingId(
+    setId,
+    parsed.cardNumber,
+    specialRarity ?? undefined,
+    parsed.promoSheetCode,
+  );
   const canonicalKey = getFullNameFromCard(card).toLowerCase();
   const shortId = idMapping.byPrintingId[printingId] ?? idMapping.byCanonicalKey[canonicalKey];
 

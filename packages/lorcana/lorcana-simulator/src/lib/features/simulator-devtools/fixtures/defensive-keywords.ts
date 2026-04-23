@@ -3,6 +3,7 @@ import {
   donaldDuckStruttingHisStuff,
   fireTheCannons,
   hakunaMatata,
+  letItGo,
   plasmaBlaster,
   reflection,
   stitchNewDog,
@@ -17,7 +18,7 @@ export const defensiveKeywordsFixture = createFixture({
   skipPreGame: true,
   playerOne: {
     inkwell: 6,
-    hand: [fireTheCannons],
+    hand: [fireTheCannons, letItGo],
     play: [plasmaBlaster, stitchNewDog],
     deck: [reflection, hakunaMatata],
   },

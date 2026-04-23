@@ -61,7 +61,9 @@ export interface TestFixtureCardState {
   exerted?: boolean;
   damage?: number;
   lore?: number;
-  cardsUnder?: TestCardInput[];
+  cardsUnder?: Array<
+    TestCardInput | { card: TestCardInput; publicFaceState?: "faceUp" | "faceDown" }
+  >;
   atLocation?: TestCardInput;
   isDrying?: boolean;
   publicFaceState?: "faceUp" | "faceDown";

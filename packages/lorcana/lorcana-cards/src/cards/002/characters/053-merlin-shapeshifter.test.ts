@@ -4,6 +4,32 @@ import { merlinShapeshifter } from "./053-merlin-shapeshifter";
 import { madamMimFox } from "./046-madam-mim-fox";
 import { createMockCharacter } from "@tcg/lorcana-engine/testing";
 
+const returnFromDiscardCharacter = createMockCharacter({
+  id: "merlin-return-from-discard",
+  name: "Return From Discard",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+  abilities: [
+    {
+      id: "merlin-return-from-discard-ability",
+      type: "triggered",
+      name: "RETURN FROM DISCARD",
+      text: "When you play this character, you may return a character from your discard to your hand.",
+      trigger: { event: "play", on: "SELF", timing: "when" },
+      effect: {
+        chooser: "CONTROLLER" as const,
+        effect: {
+          target: "CONTROLLER" as const,
+          type: "return-from-discard" as const,
+          cardType: "character" as const,
+        },
+        type: "optional" as const,
+      },
+    },
+  ],
+});
+
 const otherCharacter = createMockCharacter({
   id: "test_other_char",
   name: "Test Character",
@@ -102,6 +128,48 @@ describe("Merlin - Shapeshifter", () => {
 
       const loreAfterTurn = testEngine.asPlayerOne().getCard(merlinShapeshifter).lore;
       expect(loreAfterTurn).toBe(merlinShapeshifter.lore);
+    });
+
+    it("does NOT gain +1 lore when another character is returned from discard to hand (not from play)", () => {
+      const characterInDiscard = createMockCharacter({
+        id: "test_char_in_discard",
+        name: "Character In Discard",
+        cost: 2,
+        strength: 2,
+        willpower: 2,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: returnFromDiscardCharacter.cost,
+          hand: [returnFromDiscardCharacter],
+          play: [merlinShapeshifter],
+          discard: [{ card: characterInDiscard }],
+          deck: 5,
+        },
+        { deck: 1 },
+      );
+
+      const loreBefore = testEngine.asPlayerOne().getCard(merlinShapeshifter).lore;
+      expect(loreBefore).toBe(merlinShapeshifter.lore);
+
+      expect(testEngine.asPlayerOne().playCard(returnFromDiscardCharacter)).toBeSuccessfulCommand();
+
+      // Resolve the return-from-discard ability
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(returnFromDiscardCharacter, {
+          resolveOptional: true,
+          targets: [characterInDiscard],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(characterInDiscard)).toBe("hand");
+
+      // Merlin should NOT gain lore — the character came from discard, not from play
+      const loreAfter = testEngine.asPlayerOne().getCard(merlinShapeshifter).lore;
+      expect(loreAfter).toBe(merlinShapeshifter.lore);
     });
 
     it("accumulates bonuses when multiple characters are returned to hand", () => {

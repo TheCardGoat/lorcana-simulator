@@ -40,10 +40,9 @@ export const jasmineQueenOfAgrabah: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 2,
+          amount: { type: "up-to", value: 2 },
           target: "YOUR_CHARACTERS",
           type: "remove-damage",
-          upTo: true,
         },
         type: "optional",
       },
@@ -61,10 +60,9 @@ export const jasmineQueenOfAgrabah: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 2,
+          amount: { type: "up-to", value: 2 },
           target: "YOUR_CHARACTERS",
           type: "remove-damage",
-          upTo: true,
         },
         type: "optional",
       },

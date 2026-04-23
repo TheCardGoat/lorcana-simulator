@@ -275,4 +275,152 @@ describe("buildCardSnapshotMap", () => {
       ownerSide: "playerOne",
     });
   });
+
+  describe("textEntries projection from plain string text", () => {
+    function makeBoard(cardId: string, definitionId: string): LorcanaProjectedBoardView {
+      return {
+        stateID: 99,
+        cards: {
+          [cardId]: {
+            id: cardId,
+            ownerId: "player_one",
+            zone: "hand",
+            definitionId,
+          },
+        },
+        players: {
+          player_one: {
+            hand: [cardId],
+            play: [],
+            inkwell: [],
+            discard: [],
+            deckCount: 0,
+          },
+          player_two: {
+            hand: [],
+            play: [],
+            inkwell: [],
+            discard: [],
+            deckCount: 0,
+          },
+        },
+        playerOrder: ["player_one", "player_two"],
+        pendingEffects: [],
+        bagEffects: [],
+      } as unknown as LorcanaProjectedBoardView;
+    }
+
+    function makeStaticResources(
+      instanceId: string,
+      definitionId: string,
+      cardDefinition: object,
+    ): MatchStaticResources {
+      return {
+        instances: new Map([
+          [
+            instanceId,
+            {
+              instanceId,
+              definitionId,
+              ownerID: "player_one",
+            },
+          ],
+        ]),
+        cards: new Map([[definitionId, { id: definitionId, ...cardDefinition }]]),
+      } as unknown as MatchStaticResources;
+    }
+
+    it("produces a single textEntry for a plain string keyword (e.g. 'Support')", () => {
+      const board = makeBoard("card-1", "def-1");
+      const staticResources = makeStaticResources("card-1", "def-1", {
+        name: "Tiana",
+        cardNumber: 5,
+        set: "011",
+        cardType: "character",
+        cost: 3,
+        inkType: ["amber"],
+        inkable: true,
+        rarity: "common",
+        strength: 2,
+        willpower: 3,
+        lore: 1,
+        classifications: ["Storyborn"],
+        text: "Support",
+      });
+
+      const snapshots = buildCardSnapshotMap(board, staticResources);
+      expect(snapshots["card-1"].textEntries).toEqual([{ title: "Support" }]);
+    });
+
+    it("produces a textEntry for a plain string with 'Boost N {I}' so the Boost button can render", () => {
+      const board = makeBoard("card-2", "def-2");
+      const staticResources = makeStaticResources("card-2", "def-2", {
+        name: "Genie",
+        version: "Magical Researcher",
+        cardNumber: 49,
+        set: "011",
+        cardType: "character",
+        cost: 3,
+        inkType: ["amethyst"],
+        inkable: true,
+        rarity: "rare",
+        strength: 3,
+        willpower: 4,
+        lore: 1,
+        classifications: ["Storyborn"],
+        text: "Boost 1 {I} INCREASING WISDOM This character gets +1 {L} for each card under him.",
+      });
+
+      const snapshots = buildCardSnapshotMap(board, staticResources);
+      expect(snapshots["card-2"].textEntries).toBeDefined();
+      expect(snapshots["card-2"].textEntries!.length).toBeGreaterThan(0);
+    });
+
+    it("splits a multiline plain string into separate textEntries", () => {
+      const board = makeBoard("card-3", "def-3");
+      const staticResources = makeStaticResources("card-3", "def-3", {
+        name: "Test Card",
+        cardNumber: 1,
+        set: "001",
+        cardType: "character",
+        cost: 2,
+        inkType: ["amber"],
+        inkable: true,
+        rarity: "common",
+        strength: 2,
+        willpower: 2,
+        lore: 1,
+        classifications: ["Storyborn"],
+        text: "Boost 1 {I}\nMY ABILITY Do something cool.",
+      });
+
+      const snapshots = buildCardSnapshotMap(board, staticResources);
+      expect(snapshots["card-3"].textEntries).toEqual([
+        { title: "Boost 1 {I}" },
+        { title: "MY ABILITY Do something cool." },
+      ]);
+    });
+
+    it("returns undefined textEntries for an empty plain string", () => {
+      const board = makeBoard("card-4", "def-4");
+      const staticResources = makeStaticResources("card-4", "def-4", {
+        name: "No Text Card",
+        cardNumber: 2,
+        set: "001",
+        cardType: "character",
+        cost: 2,
+        inkType: ["amber"],
+        inkable: true,
+        rarity: "common",
+        strength: 2,
+        willpower: 2,
+        lore: 1,
+        classifications: ["Storyborn"],
+        text: "",
+      });
+
+      const snapshots = buildCardSnapshotMap(board, staticResources);
+      expect(snapshots["card-4"].textEntries).toBeUndefined();
+    });
+  });
 });

@@ -55,10 +55,15 @@ describe("Lady Tremaine - Sinister Socialite", () => {
 
       expect(testEngine.asPlayerOne().quest(ladyTremaineSinisterSocialite)).toBeSuccessfulCommand();
 
-      // No triggered ability should fire
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ladyTremaineSinisterSocialite, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
-      // Action card should still be in discard
+      // Action card should still be in discard (condition failed - no boost this turn)
       expect(testEngine.asPlayerOne().getCardZone(actionInDiscard)).toBe("discard");
     });
 
@@ -85,12 +90,12 @@ describe("Lady Tremaine - Sinister Socialite", () => {
       // Should have triggered optional ability in the bag
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
 
-      // Accept the optional - play action from discard for free
-      // resolvePlayCardEffect auto-selects the only eligible card without a pending selection
+      // Accept the optional and select the action card to play from discard
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(ladyTremaineSinisterSocialite, { resolveOptional: true }),
+        testEngine.asPlayerOne().resolvePendingByCard(ladyTremaineSinisterSocialite, {
+          resolveOptional: true,
+          targets: [actionInDiscard],
+        }),
       ).toBeSuccessfulCommand();
 
       // After being played, the action card should be on the bottom of deck (not in discard)

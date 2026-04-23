@@ -83,7 +83,7 @@ Return normalized JSON:
 }
 ```
 
-Return top 8 similar cards by default.
+Return top 5 similar cards by default.
 
 ## Ambiguity Handling
 

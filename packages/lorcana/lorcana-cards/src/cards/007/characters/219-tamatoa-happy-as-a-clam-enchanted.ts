@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { tamatoaHappyAsAClam } from "..";
+import { tamatoaHappyAsAClam } from "./162-tamatoa-happy-as-a-clam";
 
 export const tamatoaHappyAsAClamEnchanted: CharacterCard = {
   ...tamatoaHappyAsAClam,

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { rapunzelHighClimber } from "..";
+import { rapunzelHighClimber } from "./101-rapunzel-high-climber";
 
 export const rapunzelHighClimberEnchanted: CharacterCard = {
   ...rapunzelHighClimber,

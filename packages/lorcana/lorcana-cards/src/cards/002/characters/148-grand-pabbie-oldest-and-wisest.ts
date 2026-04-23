@@ -41,6 +41,7 @@ export const grandPabbieOldestAndWisest: CharacterCard = {
       trigger: {
         event: "remove-damage",
         on: "YOUR_CHARACTERS",
+        restrictions: [{ type: "during-turn", whose: "your" }],
         timing: "whenever",
       },
       type: "triggered",

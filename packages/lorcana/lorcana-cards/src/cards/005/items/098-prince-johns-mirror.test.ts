@@ -128,8 +128,11 @@ describe("Prince John's Mirror", () => {
 
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
-      // No bag effects should be present since condition is not met
-      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerTwo().resolvePendingByCard(princeJohnsMirror, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
     });
 
     it("forces the opponent to discard down to 3 cards (P1 owns mirror, P2 discards)", () => {

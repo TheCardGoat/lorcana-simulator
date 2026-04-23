@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { clarabelleLightOnHerHooves } from "..";
+import { clarabelleLightOnHerHooves } from "./084-clarabelle-light-on-her-hooves";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const clarabelleLightOnHerHoovesEnchanted: CharacterCard = {
   ...clarabelleLightOnHerHooves,

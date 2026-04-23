@@ -12,6 +12,7 @@ export const SIMPLE_KEYWORDS = [
   "Alert",
   "Bodyguard",
   "Evasive",
+  "QuestWhileDrying",
   "Reckless",
   "Rush",
   "Support",

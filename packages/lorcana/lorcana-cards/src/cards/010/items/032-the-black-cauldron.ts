@@ -39,7 +39,7 @@ export const theBlackCauldron: ItemCard = {
         type: "put-under",
         under: "self",
         cardType: "character",
-        facedown: false,
+        faceup: true,
       },
       id: "4V4-1",
       name: "THE CAULDRON CALLS",

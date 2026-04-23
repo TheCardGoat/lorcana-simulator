@@ -16,6 +16,7 @@
  */
 
 import type { CardType } from "../cards/card-types";
+import type { LorcanaTargetDSL } from "../targeting/lorcana-target-dsl";
 
 // ============================================================================
 // Individual Cost Components
@@ -183,6 +184,12 @@ export interface AbilityCost {
 
   /** Restricts which of your characters can be banished to pay the cost */
   banishCharacterTarget?: "another";
+
+  /**
+   * When `banishCharacter` is true, optional DSL for which cards may be banished to pay the cost.
+   * If omitted, the engine uses default eligibility (your characters in play, respecting `banishCharacterTarget`).
+   */
+  banishCharacterTargetDsl?: LorcanaTargetDSL;
 
   /** Banish another card (generic) */
   banishOther?: boolean;

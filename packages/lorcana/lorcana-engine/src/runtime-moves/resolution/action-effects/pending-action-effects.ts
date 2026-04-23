@@ -1,5 +1,6 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type {
+  LorcanaCardMeta,
   PendingActionEffect,
   PendingActionEffectContinuation,
   PendingActionEffectKind,
@@ -33,7 +34,7 @@ type PendingActionEffectReadableContext = {
       getCardZone: PlayCardExecutionContext["framework"]["zones"]["getCardZone"];
     };
   };
-  cards: Pick<PlayCardExecutionContext["cards"], "clearMeta">;
+  cards: Pick<PlayCardExecutionContext["cards"], "clearMeta" | "getMeta" | "patchMeta">;
 };
 
 export const EFFECT_PENDING_ERROR_CODE = "EFFECT_PENDING";
@@ -49,6 +50,7 @@ type PendingActionEffectParams = {
   continuation?: PendingActionEffectContinuation;
   resolutionInput: ActionResolutionInput;
   selectionContext?: ResolutionSelectionContext;
+  allowSuspendWithZeroTargetCandidates?: boolean;
 };
 
 export function cloneActionResolutionInput(
@@ -205,6 +207,9 @@ export function createPendingActionEffect(
     continuation: clonePendingActionEffectContinuation(params.continuation),
     resolutionInput: cloneActionResolutionInput(params.resolutionInput),
     selectionContext: cloneResolutionSelectionContext(selectionContext),
+    ...(params.allowSuspendWithZeroTargetCandidates === true
+      ? { allowSuspendWithZeroTargetCandidates: true as const }
+      : {}),
   };
 }
 
@@ -317,6 +322,10 @@ export function moveSuspendedActionCardToLimbo(
     zone: "limbo",
     playerId: cardPlayed.playerId,
   });
+
+  // Action cards are played face-up and are public knowledge. Mark them visible so the limbo
+  // zone projection shows the real card name rather than "Hidden card" in the pending effects UI.
+  ctx.cards.patchMeta(cardPlayed.cardId, { publicFaceState: "faceUp" });
 }
 
 export function finalizeResolvedActionCard(
@@ -335,6 +344,18 @@ export function finalizeResolvedActionCard(
       !zoneKey.startsWith("limbo") &&
       zoneKey !== "limbo")
   ) {
+    return;
+  }
+
+  const cardMeta = ctx.cards.getMeta(cardPlayed.cardId) as LorcanaCardMeta | undefined;
+
+  if (cardMeta?.afterPlayDestination === "bottom-of-deck") {
+    ctx.framework.zones.moveCard(
+      cardPlayed.cardId,
+      { zone: "deck", playerId: cardPlayed.playerId },
+      { index: 0 },
+    );
+    ctx.cards.clearMeta(cardPlayed.cardId);
     return;
   }
 

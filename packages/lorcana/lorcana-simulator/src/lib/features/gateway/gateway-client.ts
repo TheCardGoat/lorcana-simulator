@@ -8,6 +8,8 @@
  * Svelte wrapper (gateway-client.svelte.ts).
  */
 
+const DEBUG_MESSAGE_TYPES = new Set(["ping", "pong", "heartbeat_ack", "heartbeat"]);
+
 export type ConnectionStatus =
   | "idle"
   | "connecting"
@@ -23,8 +25,14 @@ export interface GatewayClientState {
   lastPongTime: string | null;
   reconnectAttempts: number;
   error: string | null;
-  /** Number of clients currently connected to the gateway. */
-  onlineCount: number;
+  /**
+   * DEPLOYMENT CACHE STRATEGY: True when the server sent `server_shutting_down`
+   * before closing. This lets the UI distinguish a routine deploy (show
+   * "Updating server…") from a network failure (show "Connection lost").
+   * Also triggers an immediate reconnect (no backoff) since the new instance
+   * is already up during a blue-green deploy.
+   */
+  serverInitiatedClose: boolean;
 }
 
 export interface GatewayClientOptions {
@@ -32,6 +40,10 @@ export interface GatewayClientOptions {
   url: string;
   /** Optional short-lived ticket for authentication (appended as ?ticket=<id>). */
   ticket?: string;
+  /** Optional longer-lived auth token for reconnection fallback (appended as ?token=<jwt>). */
+  token?: string;
+  /** Optional callback to resolve a token at connect time (used when token is not known upfront). */
+  getToken?: () => string | undefined;
   /** Ping interval in ms. Default: 30_000 */
   pingIntervalMs?: number;
   /** Max reconnect attempts before giving up. Default: Infinity */
@@ -46,17 +58,21 @@ export interface GatewayClientOptions {
 
 const INITIAL_RECONNECT_DELAY_MS = 1_000;
 const MAX_RECONNECT_DELAY_MS = 30_000;
-const DEFAULT_PING_INTERVAL_MS = 30_000;
+/** Fast reconnect when the server announced a deploy shutdown. */
+const DEPLOY_RECONNECT_DELAY_MS = 100;
+const DEFAULT_PING_INTERVAL_MS = 29_000;
 
 export class GatewayClient {
   private ws: WebSocket | null = null;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private intentionalClose = false;
+  /** Tracks whether the fast deploy reconnect delay has already been used this cycle. */
+  private deployFastReconnectUsed = false;
   private readonly options: Required<
-    Omit<GatewayClientOptions, "ticket" | "onGameMessage" | "onOpen">
+    Omit<GatewayClientOptions, "ticket" | "token" | "getToken" | "onGameMessage" | "onOpen">
   > &
-    Pick<GatewayClientOptions, "ticket" | "onGameMessage" | "onOpen">;
+    Pick<GatewayClientOptions, "ticket" | "token" | "getToken" | "onGameMessage" | "onOpen">;
 
   private _state: GatewayClientState = {
     status: "idle",
@@ -66,12 +82,14 @@ export class GatewayClient {
     lastPongTime: null,
     reconnectAttempts: 0,
     error: null,
-    onlineCount: 0,
+    serverInitiatedClose: false,
   };
 
   constructor(options: GatewayClientOptions) {
     this.options = {
       ticket: undefined,
+      token: undefined,
+      getToken: undefined,
       pingIntervalMs: DEFAULT_PING_INTERVAL_MS,
       maxReconnectAttempts: Number.POSITIVE_INFINITY,
       onStateChange: () => {},
@@ -88,6 +106,9 @@ export class GatewayClient {
   /** Send a JSON message over the WebSocket. */
   send(message: object): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
+      if (import.meta.env.DEV && !DEBUG_MESSAGE_TYPES.has((message as { type: string }).type)) {
+        console.debug("[WS ⬆ SEND]", message);
+      }
       this.ws.send(JSON.stringify(message));
     }
   }
@@ -138,14 +159,33 @@ export class GatewayClient {
 
     // Append ticket as query parameter for authentication
     let wsUrl = this.options.url;
+    const params = new URLSearchParams();
+
     if (this.options.ticket) {
+      params.set("ticket", this.options.ticket);
+    }
+
+    const token = this.options.token ?? this.options.getToken?.();
+    if (token) {
+      params.set("token", token);
+    }
+    const qs = params.toString();
+    if (qs) {
       const separator = wsUrl.includes("?") ? "&" : "?";
-      wsUrl = `${wsUrl}${separator}ticket=${encodeURIComponent(this.options.ticket)}`;
+      wsUrl = `${wsUrl}${separator}${qs}`;
     }
     const ws = new WebSocket(wsUrl);
 
     ws.addEventListener("open", () => {
-      this.updateState({ status: "connected", reconnectAttempts: 0, error: null });
+      this.updateState({
+        status: "connected",
+        reconnectAttempts: 0,
+        error: null,
+        // Clear deploy flag once the new connection is established so
+        // the UI stops showing "Updating server…" and returns to normal.
+        serverInitiatedClose: false,
+      });
+      this.deployFastReconnectUsed = false;
       this.startPingLoop();
       this.options.onOpen?.();
     });
@@ -177,18 +217,15 @@ export class GatewayClient {
       return;
     }
 
+    if (import.meta.env.DEV && !DEBUG_MESSAGE_TYPES.has(msg.type)) {
+      console.debug("[WS ⬇ RECV]", msg);
+    }
+
     switch (msg.type) {
       case "welcome": {
         this.updateState({
           authenticated: msg.authenticated as boolean,
           connectionId: msg.connectionId as string,
-          onlineCount: 0, // We don't want to expose the actual online count to the client
-        });
-        break;
-      }
-      case "stats_update": {
-        this.updateState({
-          onlineCount: 0, // We don't want to expose the actual online count to the client
         });
         break;
       }
@@ -201,6 +238,14 @@ export class GatewayClient {
       }
       case "gateway_error": {
         this.updateState({ error: `${msg.code}: ${msg.message}` });
+        break;
+      }
+      // DEPLOYMENT CACHE STRATEGY: The server sends this just before shutting
+      // down during a blue-green deploy. We flag it so the reconnect logic
+      // can skip backoff (new instance is already running) and the UI can
+      // show a softer "Updating server…" instead of "Connection lost".
+      case "server_shutting_down": {
+        this.updateState({ serverInitiatedClose: true });
         break;
       }
       default: {
@@ -230,11 +275,19 @@ export class GatewayClient {
       return;
     }
 
-    // Cap exponent to avoid exceeding Number.MAX_SAFE_INTEGER
-    const delay = Math.min(
-      INITIAL_RECONNECT_DELAY_MS * 2 ** Math.min(attempts, 30),
-      MAX_RECONNECT_DELAY_MS,
-    );
+    // DEPLOYMENT CACHE STRATEGY: When the server announced shutdown before
+    // closing, the new instance is already running (blue-green overlap).
+    // Use a fast 100ms delay on the first attempt only — subsequent retries
+    // fall back to normal exponential backoff. The `serverInitiatedClose`
+    // flag stays true for UI purposes (showing "Updating server…" instead
+    // of "Connection lost") until the socket successfully re-opens.
+    const useDeployFastDelay = this._state.serverInitiatedClose && !this.deployFastReconnectUsed;
+    if (useDeployFastDelay) {
+      this.deployFastReconnectUsed = true;
+    }
+    const delay = useDeployFastDelay
+      ? DEPLOY_RECONNECT_DELAY_MS
+      : Math.min(INITIAL_RECONNECT_DELAY_MS * 2 ** Math.min(attempts, 30), MAX_RECONNECT_DELAY_MS);
     this.updateState({ status: "reconnecting", reconnectAttempts: attempts + 1 });
 
     this.reconnectTimer = setTimeout(() => {

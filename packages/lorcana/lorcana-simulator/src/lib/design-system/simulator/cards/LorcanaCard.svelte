@@ -2,9 +2,7 @@
   import EyeIcon from "@lucide/svelte/icons/eye";
   import XIcon from "@lucide/svelte/icons/x";
   import type { LorcanaCardSnapshot } from "$lib/lorcana-simulator";
-  import * as HoverCard from "$lib/design-system/primitives/hover-card/index.js";
   import * as Popover from "$lib/design-system/primitives/popover/index.js";
-  import * as ScrollArea from "$lib/components/ui/scroll-area/index.js";
   import CardBack from "@/design-system/simulator/cards/CardBack.svelte";
   import CardFace from "@/design-system/simulator/cards/CardFace.svelte";
   import CardHoverCardContent from "@/design-system/simulator/cards/CardHoverCardContent.svelte";
@@ -76,6 +74,13 @@
     isQuesting?: boolean;
     isDrying?: boolean;
     tagCollapseMode?: "none" | "hover-stack";
+    /** Suppress the card's internal stat pills. Use when the host
+     * renders stats externally (e.g. play-zone bands). */
+    hideStatBadges?: boolean;
+    /** Override the automatic "hide supplemental badges on mobile" rule.
+     * When set, this value wins. Use to hide the card's internal tag
+     * strip when the host renders tags externally. */
+    hideSupplementalBadges?: boolean;
 
     // Card properties (can be derived from card or overridden)
     damage?: number;
@@ -109,6 +114,8 @@
     isQuesting = false,
     isDrying = false,
     tagCollapseMode = "none",
+    hideStatBadges = false,
+    hideSupplementalBadges: hideSupplementalBadgesProp,
     damage: propDamage,
     interactionMeta,
     onSelect,
@@ -150,14 +157,17 @@
     | "getActionSessionCardReason"
     | "getCardActionViews"
     | "handleCardActionClick"
+    | "resolutionSelectionSession"
   > = {
     actionSelectionSession: null,
     cardPreviewMode: "immediate",
     getActionSessionCardReason: () => null,
     getCardActionViews: () => [],
     handleCardActionClick: () => false,
+    resolutionSelectionSession: null,
   };
   const sidebar = maybeUseLorcanaSidebarPresenter() ?? sidebarFallback;
+  const instanceKey = Symbol();
   let hoverCardOpen = $state(false);
   let mobileCardAnchor = $state<HTMLElement | null>(null);
   const resolvedInteractionMeta = $derived<CardInteractionMeta | undefined>(
@@ -167,18 +177,18 @@
           ownerSide: card.ownerSide,
           zoneId: card.zoneId,
           ...interactionMeta,
+          ...(!showHoverCard
+            ? {
+                suppressInspectOnSelect:
+                  interactionMeta?.suppressInspectOnSelect ?? true,
+              }
+            : {}),
         }
       : interactionMeta,
   );
   const shouldUseTouchInspect = $derived(layout.current === "mobile");
   const isTouchInspectCard = $derived.by(
     () =>
-      Boolean(card) &&
-      simulatorCardContext.inspectedCard?.cardId === card?.cardId,
-  );
-  const isDesktopInspectCard = $derived.by(
-    () =>
-      !shouldUseTouchInspect &&
       Boolean(card) &&
       simulatorCardContext.inspectedCard?.cardId === card?.cardId,
   );
@@ -202,10 +212,13 @@
       : [],
   );
   const shouldRenderPopover = $derived(
-    showHoverCard && isTouchInspectCard && !isChallengeTargetSelectionActive,
+    showHoverCard && hoverCardOpen && !isChallengeTargetSelectionActive,
   );
   const isPreviewOpen = $derived(isTouchInspectCard);
-  const hideSupplementalBadges = $derived(layout.current === "mobile");
+  const hideSupplementalBadges = $derived(
+    hideSupplementalBadgesProp ?? layout.current === "mobile",
+  );
+
 
   // Calculate actual display dimensions based on image format and size
   const { width, height } = $derived(CARD_IMAGE_DIMENSIONS[imageFormat]);
@@ -236,18 +249,16 @@
     if (!card) {
       return;
     }
-    event.stopPropagation();
 
     if (
       showHoverCard &&
       clickOpensHover &&
       !sidebar.actionSelectionSession &&
+      !sidebar.resolutionSelectionSession &&
       !simulatorCardContext.canSelectCard(card, resolvedInteractionMeta)
     ) {
-      simulatorCardContext.openCardInspect({
-        card,
-        meta: resolvedInteractionMeta,
-      });
+      event.stopPropagation();
+      simulatorCardContext.openCardInspect({ card, meta: resolvedInteractionMeta });
       return;
     }
 
@@ -324,14 +335,7 @@
       return;
     }
 
-    if (simulatorCardContext.inspectedCard === null) {
-      return;
-    }
-
-    if (
-      simulatorCardContext.inspectedCard.cardId !== card.cardId &&
-      hoverCardOpen
-    ) {
+    if (hoverCardOpen) {
       hoverCardOpen = false;
     }
   });
@@ -341,7 +345,7 @@
       return;
     }
 
-    cardHoverCardRegistry.open(card.cardId);
+    cardHoverCardRegistry.open(instanceKey);
   });
 
   $effect(() => {
@@ -349,7 +353,7 @@
       return;
     }
 
-    if (cardHoverCardRegistry.activeCardId !== card.cardId) {
+    if (cardHoverCardRegistry.activeKey !== instanceKey) {
       hoverCardOpen = false;
     }
   });
@@ -359,7 +363,7 @@
       return;
     }
 
-    cardHoverCardRegistry.close(card.cardId);
+    cardHoverCardRegistry.close(instanceKey);
   });
 </script>
 
@@ -376,7 +380,7 @@
     aspectRatio={CARD_IMAGE_ASPECT_RATIOS[imageFormat]}
   />
 {:else if card}
-  <Popover.Root bind:open={() => isTouchInspectCard, handlePopoverOpenChange}>
+  <Popover.Root bind:open={() => hoverCardOpen, handlePopoverOpenChange}>
     <div bind:this={mobileCardAnchor}>
       <CardFace
         {card}
@@ -396,6 +400,7 @@
         {damage}
         {tagCollapseMode}
         {hideSupplementalBadges}
+        {hideStatBadges}
         aspectRatio={CARD_IMAGE_ASPECT_RATIOS[imageFormat]}
         on:pointerenter={handleCardFacePointerEnter}
         on:pointerleave={handleCardFacePointerLeave}
@@ -412,17 +417,12 @@
         sticky="always"
         updatePositionStrategy="always"
         trapFocus={false}
-        class="z-[70] overflow-hidden border-0 bg-transparent p-0"
+        class="z-[70] overflow-visible border-0 bg-transparent p-0"
         style="--hover-card-max-height: calc(var(--bits-popover-content-available-height) - 1rem); width: min(22rem, calc(var(--bits-popover-content-available-width) - 1rem)); max-width: calc(var(--bits-popover-content-available-width) - 1rem); max-height: var(--hover-card-max-height);"
         onEscapeKeydown={() => simulatorCardContext.closeCardInspect()}
         onInteractOutside={() => simulatorCardContext.closeCardInspect()}
       >
-        <ScrollArea.Root
-          orientation="vertical"
-          class="max-h-[var(--hover-card-max-height)] overflow-hidden rounded-2xl"
-          viewportClass="max-h-[var(--hover-card-max-height)]"
-          scrollbarYClasses="w-3 pr-0.5"
-        >
+        <div class="max-h-[var(--hover-card-max-height)] overflow-visible p-[3px]">
           <CardHoverCardContent
             {card}
             actions={hoverShowActions ? hoverActions : []}
@@ -459,7 +459,7 @@
               </div>
             {/snippet}
           </CardHoverCardContent>
-        </ScrollArea.Root>
+        </div>
       </Popover.Content>
     {/if}
   </Popover.Root>

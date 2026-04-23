@@ -1,5 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
-import { theSwordOfShanyu } from "..";
+import { theSwordOfShanyu } from "./152-the-sword-of-shan-yu";
 
 export const theSwordOfShanyuEnchanted: ItemCard = {
   ...theSwordOfShanyu,

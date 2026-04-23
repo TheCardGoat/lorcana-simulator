@@ -44,9 +44,8 @@ export const reubenSandwichExpert: CharacterCard = {
         steps: [
           {
             type: "remove-damage",
-            amount: 2,
+            amount: { type: "up-to", value: 2 },
             target: "YOUR_CHOSEN_CHARACTER",
-            upTo: true,
           },
           {
             type: "cost-reduction",

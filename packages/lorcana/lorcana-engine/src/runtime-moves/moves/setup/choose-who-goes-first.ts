@@ -49,6 +49,7 @@ export const chooseWhoGoesFirst: LorcanaMoveDefinition<"chooseWhoGoesFirst"> = {
 
     framework.status.patch({
       otp: chosenPlayer,
+      turnOwnerId: chosenPlayer,
       pendingMulligan,
     });
 

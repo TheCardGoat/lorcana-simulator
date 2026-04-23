@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { webbyVanderquackJuniorProspector } from "..";
+import { webbyVanderquackJuniorProspector } from "./093-webby-vanderquack-junior-prospector";
 
 export const webbyVanderquackJuniorProspectorEnchanted: CharacterCard = {
   ...webbyVanderquackJuniorProspector,

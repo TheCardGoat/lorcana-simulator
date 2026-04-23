@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { trampEnterprisingDog } from "..";
+import { trampEnterprisingDog } from "./110-tramp-enterprising-dog";
 
 export const trampEnterprisingDogEnchanted: CharacterCard = {
   ...trampEnterprisingDog,

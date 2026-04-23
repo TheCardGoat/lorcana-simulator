@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { simbaReturnedKing } from "..";
+import { simbaReturnedKing } from "./189-simba-returned-king";
 
 export const simbaReturnedKingEnchanted: CharacterCard = {
   ...simbaReturnedKing,

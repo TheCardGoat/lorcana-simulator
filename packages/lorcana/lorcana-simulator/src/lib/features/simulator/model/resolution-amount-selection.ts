@@ -1,16 +1,11 @@
+import { getUpToRule, isUpToAmount, type UpToCapContext } from "@tcg/lorcana-types";
+import type { AmountExpr } from "@tcg/lorcana-types";
 import type {
   LorcanaCardSnapshot,
   ResolutionAmountSelectionState,
 } from "@/features/simulator/model/contracts.js";
 
 type CardSnapshotMap = Record<string, LorcanaCardSnapshot>;
-
-type SupportedAmountSelectionEffectType = "move-damage" | "remove-damage";
-
-type EffectAmountSelectionMeta = {
-  type: SupportedAmountSelectionEffectType;
-  amount: number;
-};
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -25,34 +20,32 @@ function getRecordString(record: Record<string, unknown> | null, key: string): s
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
-function getRecordNumber(record: Record<string, unknown> | null, key: string): number | undefined {
-  const value = record?.[key];
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
-}
-
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(value, max));
 }
 
-function getEffectAmountSelectionMeta(payload: unknown): EffectAmountSelectionMeta | null {
-  const payloadRecord = asRecord(payload);
-  const effectRecord = asRecord(payloadRecord?.effect);
-  const effectType = getRecordString(effectRecord, "type");
-  const amount = getRecordNumber(effectRecord, "amount");
-
-  if (
-    (effectType !== "remove-damage" && effectType !== "move-damage") ||
-    effectRecord?.upTo !== true ||
-    amount === undefined ||
-    amount < 0
-  ) {
+function unwrapOptionalEffect(
+  effectRecord: Record<string, unknown> | null,
+): Record<string, unknown> | null {
+  if (!effectRecord) {
     return null;
   }
+  // Unwrap optional wrappers so the inner effect type and amount are accessible
+  // (e.g. "move-damage" with an up-to amount inside an optional triggered ability).
+  if (getRecordString(effectRecord, "type") === "optional") {
+    return asRecord(effectRecord.effect) ?? effectRecord;
+  }
+  return effectRecord;
+}
 
-  return {
-    type: effectType,
-    amount: Math.floor(amount),
-  };
+function readUpToBaseAmount(amount: unknown): number | null {
+  if (!isUpToAmount(amount as AmountExpr)) {
+    return null;
+  }
+  const inner = (amount as { value: unknown }).value;
+  return typeof inner === "number" && Number.isFinite(inner) && inner >= 0
+    ? Math.floor(inner)
+    : null;
 }
 
 function getCardDamage(cardSnapshotsById: CardSnapshotMap, cardId: string | undefined): number {
@@ -66,61 +59,56 @@ function getCardDamage(cardSnapshotsById: CardSnapshotMap, cardId: string | unde
     : 0;
 }
 
-function getTargetAwareMaxAmount(params: {
-  meta: EffectAmountSelectionMeta;
-  selectedTargets: readonly string[];
-  cardSnapshotsById: CardSnapshotMap;
-}): number {
-  const { meta, selectedTargets, cardSnapshotsById } = params;
-  const selectedCardTargets = selectedTargets.filter((targetId) =>
-    Boolean(cardSnapshotsById[targetId]),
-  );
-
-  if (meta.type === "move-damage") {
-    const sourceCardId = selectedCardTargets[0];
-    return sourceCardId
-      ? Math.min(meta.amount, getCardDamage(cardSnapshotsById, sourceCardId))
-      : meta.amount;
-  }
-
-  if (selectedCardTargets.length !== 1) {
-    return meta.amount;
-  }
-
-  const selectedCardId = selectedCardTargets[0];
-  if (!selectedCardId) {
-    return meta.amount;
-  }
-
-  return Math.min(meta.amount, getCardDamage(cardSnapshotsById, selectedCardId));
-}
-
 export function buildResolutionAmountSelectionState(params: {
   payload: unknown;
   selectedTargets: readonly string[];
   currentAmount?: number | null;
   cardSnapshotsById: CardSnapshotMap;
 }): ResolutionAmountSelectionState | null {
-  const meta = getEffectAmountSelectionMeta(params.payload);
-  if (!meta) {
+  const payloadRecord = asRecord(params.payload);
+  const rawEffectRecord = asRecord(payloadRecord?.effect);
+  const effectRecord = unwrapOptionalEffect(rawEffectRecord);
+  const effectType = getRecordString(effectRecord, "type");
+  if (!effectType) {
     return null;
   }
 
+  const rule = getUpToRule(effectType);
+  if (!rule) {
+    return null;
+  }
+
+  const baseAmount = readUpToBaseAmount(effectRecord?.amount);
+  if (baseAmount === null) {
+    return null;
+  }
+
+  const ctx: UpToCapContext = {
+    getCardDamage: (cardId) => getCardDamage(params.cardSnapshotsById, cardId),
+  };
+
+  // Keep only targets that resolve to cards we know about — player-id selections
+  // for, say, "each opponent" shouldn't influence the card-damage cap.
+  const selectedCardTargets = params.selectedTargets.filter((targetId) =>
+    Boolean(params.cardSnapshotsById[targetId]),
+  );
+
   const max = Math.max(
     0,
-    getTargetAwareMaxAmount({
-      meta,
-      selectedTargets: params.selectedTargets,
-      cardSnapshotsById: params.cardSnapshotsById,
+    rule.getSelectionMax({
+      baseAmount,
+      selectedCardTargets,
+      ctx,
     }),
   );
+
   const value =
     typeof params.currentAmount === "number" && Number.isFinite(params.currentAmount)
       ? clamp(Math.floor(params.currentAmount), 0, max)
       : max;
 
   return {
-    label: meta.type === "remove-damage" ? "Damage to remove" : "Damage to move",
+    label: rule.label,
     min: 0,
     max,
     value,

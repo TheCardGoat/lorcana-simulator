@@ -135,8 +135,13 @@ describe("Heihei - Bumbling Rooster (Set 9)", () => {
 
       expect(testEngine.asPlayerOne().playCard(heiheiBumblingRooster)).toBeSuccessfulCommand();
 
-      // No bag effect should be present — condition not met
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(heiheiBumblingRooster, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getZonesCardCount().inkwell).toBe(inkwellBefore);
     });
 
@@ -158,7 +163,13 @@ describe("Heihei - Bumbling Rooster (Set 9)", () => {
 
       expect(testEngine.asPlayerOne().playCard(heiheiBumblingRooster)).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(heiheiBumblingRooster, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getZonesCardCount().inkwell).toBe(inkwellBefore);
     });
   });

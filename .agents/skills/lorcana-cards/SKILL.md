@@ -199,8 +199,8 @@ When a card is broken or suspicious, classify the failure before changing code:
    - keyword-smoke-only test
    - commented legacy Jest file
    - optimistic client success hiding authoritative failure
-5. Find similar cards
-   - Use [lorcana-find-card](../lorcana-find-card/SKILL.md) to find similar cards, and use them to guide test development.
+5. Find 10 similar cards
+   - Use [lorcana-find-card](../lorcana-find-card/SKILL.md) to find 10 similar cards, and use them to guide test development. If this step takes longer than 5 minutes, continue with the cards found.
 
 Debugging rules:
 

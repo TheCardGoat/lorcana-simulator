@@ -32,6 +32,7 @@ export const circleOfLife: ActionCard = {
         cardType: "character",
         cost: "free",
         from: "discard",
+        target: "CHOSEN_CHARACTER",
         type: "play-card",
       },
       id: "1bo-1",

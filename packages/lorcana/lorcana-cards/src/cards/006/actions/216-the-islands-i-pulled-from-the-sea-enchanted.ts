@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { theIslandsIPulledFromTheSea } from "..";
+import { theIslandsIPulledFromTheSea } from "./130-the-islands-i-pulled-from-the-sea";
 
 export const theIslandsIPulledFromTheSeaEnchanted: ActionCard = {
   ...theIslandsIPulledFromTheSea,

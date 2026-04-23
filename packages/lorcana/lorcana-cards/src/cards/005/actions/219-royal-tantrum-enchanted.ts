@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { royalTantrum } from "..";
+import { royalTantrum } from "./161-royal-tantrum";
 
 export const royalTantrumEnchanted: ActionCard = {
   ...royalTantrum,

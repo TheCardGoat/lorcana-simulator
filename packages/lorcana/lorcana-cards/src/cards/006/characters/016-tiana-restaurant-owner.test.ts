@@ -3,6 +3,7 @@ import {
   createMockCharacter,
   createMockLocation,
   LorcanaMultiplayerTestEngine,
+  PLAYER_TWO,
 } from "@tcg/lorcana-engine/testing";
 import { tianaRestaurantOwner } from "./016-tiana-restaurant-owner";
 
@@ -33,6 +34,65 @@ const locationTarget = createMockLocation({
 
 describe("Tiana - Restaurant Owner", () => {
   describe("SPECIAL RESERVATION - Whenever a character of yours is challenged while this character is exerted, the challenging character gets -3 {S} this turn unless their player pays 3 {I}.", () => {
+    it("lets the challenging player pay 3 ink to prevent the strength reduction", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: tianaRestaurantOwner, exerted: true },
+            { card: ally, exerted: true },
+          ],
+          deck: 2,
+        },
+        {
+          play: [{ card: attacker, exerted: false, isDrying: false }],
+          inkwell: 3,
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().challenge(attacker, ally)).toBeSuccessfulCommand();
+
+      // Player one resolves Tiana from the bag, then the challenging player chooses.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(tianaRestaurantOwner),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().respondWithChoice(0)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCard(attacker).strength).toBe(attacker.strength);
+      expect(testEngine.asServer().getAvailableInk(PLAYER_TWO)).toBe(0);
+    });
+
+    it("applies -3 strength when the challenging player cannot pay 3 ink", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: tianaRestaurantOwner, exerted: true },
+            { card: ally, exerted: true },
+          ],
+          deck: 2,
+        },
+        {
+          play: [{ card: attacker, exerted: false, isDrying: false }],
+          inkwell: 2,
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().challenge(attacker, ally)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(tianaRestaurantOwner),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().respondWithChoice(0)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCard(attacker).strength).toBe(attacker.strength - 3);
+      expect(testEngine.asServer().getAvailableInk(PLAYER_TWO)).toBe(2);
+    });
+
     it("should apply -3 strength to the challenging character when Tiana is exerted", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
@@ -59,10 +119,32 @@ describe("Tiana - Restaurant Owner", () => {
         expect(
           testEngine.asPlayerOne().resolvePendingByCard(tianaRestaurantOwner),
         ).toBeSuccessfulCommand();
+        expect(testEngine.asPlayerTwo().respondWithChoice(1)).toBeSuccessfulCommand();
       }
 
       // Attacker should have -3 strength applied (4 - 3 = 1)
       expect(testEngine.asPlayerTwo().getCard(attacker).strength).toBe(attacker.strength - 3);
+    });
+
+    it("should NOT even enter the bag when Tiana is NOT exerted (phantom-trigger regression)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: tianaRestaurantOwner, exerted: false },
+            { card: ally, exerted: true },
+          ],
+          deck: 2,
+        },
+        {
+          play: [{ card: attacker, exerted: false, isDrying: false }],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().challenge(attacker, ally)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
     it("should NOT apply -3 strength when Tiana is NOT exerted", () => {

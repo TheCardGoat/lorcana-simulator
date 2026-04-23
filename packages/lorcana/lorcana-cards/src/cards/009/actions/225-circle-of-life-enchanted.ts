@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { circleOfLife } from "..";
+import { circleOfLife } from "./026-circle-of-life";
 
 export const circleOfLifeEnchanted: ActionCard = {
   ...circleOfLife,

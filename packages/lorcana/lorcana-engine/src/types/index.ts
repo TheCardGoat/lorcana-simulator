@@ -161,7 +161,6 @@ export type {
   LorcanaProjectedPendingEffect,
   LorcanaProjectedPendingChoice,
   LorcanaProjectedPlayerBoard,
-  LorcanaProjectedTimerPlayer,
   LorcanaProjectedTimerView,
   ProjectedKeywordValues,
   ProjectedLorcanaCardDerived,
@@ -247,6 +246,8 @@ export type {
   BagResolution,
   TurnStartLog,
   GameEndLog,
+  TurnSkippedLog,
+  PlayerDroppedLog,
 } from "./move-log";
 
 export type {

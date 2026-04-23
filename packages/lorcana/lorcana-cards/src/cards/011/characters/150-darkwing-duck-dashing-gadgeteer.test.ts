@@ -36,6 +36,7 @@ describe("Darkwing Duck - Dashing Gadgeteer", () => {
     expect(testEngine.getLore(PLAYER_ONE)).toBe(darkwingDuckDashingGadgeteer.lore);
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
+    // Step 1: accept outer optional and move bottomItem to deck
     expect(
       testEngine.asPlayerOne().resolvePendingByCard(darkwingDuckDashingGadgeteer, {
         resolveOptional: true,
@@ -44,6 +45,15 @@ describe("Darkwing Duck - Dashing Gadgeteer", () => {
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().getCardZone(bottomItem)).toBe("deck");
+
+    // Step 2: "if you do" condition met — optional play item from discard (pick freeItem)
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(darkwingDuckDashingGadgeteer, {
+        resolveOptional: true,
+        targets: [freeItem],
+      }),
+    ).toBeSuccessfulCommand();
+
     expect(testEngine.asPlayerOne().getCardZone(freeItem)).toBe("play");
     expect(testEngine.asPlayerOne().getCardZone(expensiveItem)).toBe("discard");
   });

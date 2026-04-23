@@ -99,7 +99,11 @@ export const lorcanaRuntimeConfig: MatchRuntimeConfig = {
   },
 
   derivePacketAnimations: (context: PacketAnimationContext) => {
-    return deriveLorcanaPacketAnimations(context);
+    const animations = deriveLorcanaPacketAnimations(context);
+    // Temporarily disable all animations except pass-turn and challenge.
+    return animations.filter(
+      (anim) => anim.kind === "lorcana.turnChange" || anim.kind === "lorcana.challenge",
+    );
   },
 
   // deriveRuntimeCard powers runtime card query APIs (cards.get/require) and derived methods.

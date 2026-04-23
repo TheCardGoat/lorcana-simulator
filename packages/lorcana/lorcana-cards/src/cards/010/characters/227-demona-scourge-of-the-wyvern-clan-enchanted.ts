@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { demonaScourgeOfTheWyvernClan } from "..";
+import { demonaScourgeOfTheWyvernClan } from "./055-demona-scourge-of-the-wyvern-clan";
 
 export const demonaScourgeOfTheWyvernClanEnchanted: CharacterCard = {
   ...demonaScourgeOfTheWyvernClan,

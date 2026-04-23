@@ -5,6 +5,7 @@ import {
   type RoleWeightMap,
   getAutomatedActionCardTargetPreference,
 } from "./deck-profile";
+import type { EffectPolarity } from "./effect-polarity";
 import type {
   AutomatedActionCandidate,
   AutomatedActionDeckRoleTag,
@@ -65,9 +66,14 @@ export function mergeTargetPreferences(
   return {
     actorPlayerScore: (left.actorPlayerScore ?? 0) + (right.actorPlayerScore ?? 0),
     alliedRoleWeights: mergeRoleWeights(left.alliedRoleWeights, right.alliedRoleWeights),
+    beneficialAlliedScore: (left.beneficialAlliedScore ?? 0) + (right.beneficialAlliedScore ?? 0),
+    beneficialOpposingPenalty:
+      (left.beneficialOpposingPenalty ?? 0) + (right.beneficialOpposingPenalty ?? 0),
     damagedAlliedScore: (left.damagedAlliedScore ?? 0) + (right.damagedAlliedScore ?? 0),
     damagedOpposingScore: (left.damagedOpposingScore ?? 0) + (right.damagedOpposingScore ?? 0),
     exertedOpposingScore: (left.exertedOpposingScore ?? 0) + (right.exertedOpposingScore ?? 0),
+    harmfulAlliedPenalty: (left.harmfulAlliedPenalty ?? 0) + (right.harmfulAlliedPenalty ?? 0),
+    harmfulOpposingScore: (left.harmfulOpposingScore ?? 0) + (right.harmfulOpposingScore ?? 0),
     highLoreOpposingMultiplier:
       (left.highLoreOpposingMultiplier ?? 0) + (right.highLoreOpposingMultiplier ?? 0),
     lowStrengthOpposingScore:
@@ -144,15 +150,49 @@ function getGenericTargetPreference(
   };
 }
 
+function getEffectPolarityPreference(
+  polarity: EffectPolarity | undefined,
+): AutomatedActionCardTargetPreference | undefined {
+  if (!polarity || polarity === "mixed" || polarity === "neutral") {
+    return undefined;
+  }
+
+  if (polarity === "beneficial") {
+    return {
+      alliedRoleWeights: {
+        drawEngine: 2,
+        evasiveThreat: 2,
+        mustAnswerThreat: 2,
+        synergyAnchor: 2,
+        tempoThreat: 3,
+      },
+      beneficialOpposingPenalty: -10,
+    };
+  }
+
+  return {
+    harmfulAlliedPenalty: -10,
+    harmfulOpposingScore: 2,
+    opposingRoleWeights: {
+      drawEngine: 2,
+      evasiveThreat: 3,
+      mustAnswerThreat: 4,
+      synergyAnchor: 2,
+      tempoThreat: 3,
+    },
+  };
+}
+
 export function scoreAutomatedActionTarget(args: {
   context: AutomatedActionTargetPriorityContext;
+  effectPolarity?: EffectPolarity;
   preference: AutomatedActionCardTargetPreference;
   targetId: CardInstanceId | PlayerId;
 }): {
   contributors: Contribution[];
   score: number;
 } {
-  const { context, preference, targetId } = args;
+  const { context, effectPolarity, preference, targetId } = args;
   const contributors: Contribution[] = [];
 
   if (targetId === context.actorId) {
@@ -215,6 +255,20 @@ export function scoreAutomatedActionTarget(args: {
         value: preference.damagedAlliedScore ?? 0,
       });
     }
+
+    if (effectPolarity === "beneficial" && (preference.beneficialAlliedScore ?? 0) !== 0) {
+      contributors.push({
+        key: "polarity:beneficialAlly",
+        value: preference.beneficialAlliedScore ?? 0,
+      });
+    }
+
+    if (effectPolarity === "harmful" && (preference.harmfulAlliedPenalty ?? 0) !== 0) {
+      contributors.push({
+        key: "polarity:harmfulAlly",
+        value: preference.harmfulAlliedPenalty ?? 0,
+      });
+    }
   } else {
     if ((card.damage ?? 0) > 0 && (preference.damagedOpposingScore ?? 0) !== 0) {
       contributors.push({
@@ -244,6 +298,20 @@ export function scoreAutomatedActionTarget(args: {
         value: preference.lowStrengthOpposingScore ?? 0,
       });
     }
+
+    if (effectPolarity === "beneficial" && (preference.beneficialOpposingPenalty ?? 0) !== 0) {
+      contributors.push({
+        key: "polarity:beneficialOpponent",
+        value: preference.beneficialOpposingPenalty ?? 0,
+      });
+    }
+
+    if (effectPolarity === "harmful" && (preference.harmfulOpposingScore ?? 0) !== 0) {
+      contributors.push({
+        key: "polarity:harmfulOpponent",
+        value: preference.harmfulOpposingScore ?? 0,
+      });
+    }
   }
 
   return {
@@ -255,6 +323,7 @@ export function scoreAutomatedActionTarget(args: {
 export function scoreAutomatedActionTargets(args: {
   additionalPreference?: AutomatedActionCardTargetPreference;
   context: AutomatedActionTargetPriorityContext;
+  effectPolarity?: EffectPolarity;
   family: AutomatedActionFamily;
   sourceDefinitionId?: string;
   sourceRoles: readonly AutomatedActionDeckRoleTag[];
@@ -266,12 +335,16 @@ export function scoreAutomatedActionTargets(args: {
   const cardPreference = args.sourceDefinitionId
     ? getAutomatedActionCardTargetPreference(args.sourceDefinitionId)
     : undefined;
+  const polarityPreference = getEffectPolarityPreference(args.effectPolarity);
   const preference = mergeTargetPreferences(
     mergeTargetPreferences(
-      getGenericTargetPreference(args.family, args.sourceRoles),
-      cardPreference,
+      mergeTargetPreferences(
+        getGenericTargetPreference(args.family, args.sourceRoles),
+        cardPreference,
+      ),
+      args.additionalPreference,
     ),
-    args.additionalPreference,
+    polarityPreference,
   );
 
   if (!preference) {
@@ -287,6 +360,7 @@ export function scoreAutomatedActionTargets(args: {
   for (const targetId of args.targets) {
     const targetScore = scoreAutomatedActionTarget({
       context: args.context,
+      effectPolarity: args.effectPolarity,
       preference,
       targetId,
     });

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { kristoffMiningTheRuins } from "..";
+import { kristoffMiningTheRuins } from "./159-kristoff-mining-the-ruins";
 
 export const kristoffMiningTheRuinsEpic: CharacterCard = {
   ...kristoffMiningTheRuins,

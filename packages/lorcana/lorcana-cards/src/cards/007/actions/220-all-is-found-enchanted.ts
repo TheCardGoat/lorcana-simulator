@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { allIsFound } from "..";
+import { allIsFound } from "./178-all-is-found";
 
 export const allIsFoundEnchanted: ActionCard = {
   ...allIsFound,

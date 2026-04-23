@@ -157,10 +157,24 @@ export function extractCardNumberFromIdentifier(identifier: string): number | nu
  */
 export function buildLorcastFullIndex(cards: LorcastFullCard[]): LorcastFullIndex {
   const index: LorcastFullIndex = new Map();
+  let collisionCount = 0;
+  const sampleKeys: string[] = [];
 
   for (const card of cards) {
     const key = createMatchKey(card.name, card.version);
+    if (index.has(key)) {
+      collisionCount++;
+      if (sampleKeys.length < 5 && !sampleKeys.includes(key)) {
+        sampleKeys.push(key);
+      }
+    }
     index.set(key, card);
+  }
+
+  if (collisionCount > 0) {
+    console.warn(
+      `  Lorcast full index: ${collisionCount} duplicate name|version key(s); last Lorcast row wins (metadata may not match every printing). Sample keys: ${sampleKeys.join("; ")}`,
+    );
   }
 
   return index;

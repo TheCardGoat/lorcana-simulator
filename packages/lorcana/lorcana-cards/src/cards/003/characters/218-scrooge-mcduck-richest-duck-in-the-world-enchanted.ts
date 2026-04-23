@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { scroogeMcduckRichestDuckInTheWorld } from "..";
+import { scroogeMcduckRichestDuckInTheWorld } from "./154-scrooge-mcduck-richest-duck-in-the-world";
 
 export const scroogeMcduckRichestDuckInTheWorldEnchanted: CharacterCard = {
   ...scroogeMcduckRichestDuckInTheWorld,

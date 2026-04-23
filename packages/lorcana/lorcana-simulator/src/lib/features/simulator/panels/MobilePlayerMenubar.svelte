@@ -12,9 +12,9 @@
     Settings,
     Swords,
     Trash2,
-    Users,
     X,
     OctagonX,
+    LoaderCircle,
   } from "@lucide/svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Dialog from "$lib/design-system/primitives/dialog";
@@ -33,7 +33,7 @@
     LorcanaPlayerSummary,
     MoveCategorySummary,
   } from "@/features/simulator/model/contracts.js";
-  import { getLoreIconUrl } from "@/features/simulator/model/asset-urls.js";
+  import { getExertIconUrl, getLoreIconUrl } from "@/features/simulator/model/asset-urls.js";
   import {
     type RevealedBottomControlState,
     type RevealedBottomControlId,
@@ -46,7 +46,8 @@
   import type {
     ConfirmableDirectMoveCategoryId,
   } from "@/features/simulator/model/direct-action-state.js";
-  import type { LorcanaPlayerTimerSummary } from "@/features/simulator/model/contracts.js";
+  import type { ClockSnapshot } from "@tcg/lorcana-engine";
+  import type { MatchNavigationContext } from "@/features/simulator/model/contracts.js";
 
   interface CompactPlayerSummary {
     label: string;
@@ -71,7 +72,8 @@
     actionCount?: number;
     moveSummaries?: MoveCategorySummary[];
     activeMoveCategoryId?: ExecutableMovePresentationCategoryId | null;
-    timer?: LorcanaPlayerTimerSummary;
+    timer?: ClockSnapshot;
+    isOwnClock?: boolean;
     questAllCount?: number | null;
     questAllLore?: number | null;
     armedDirectCategoryId?: ConfirmableDirectMoveCategoryId | null;
@@ -90,6 +92,7 @@
     onOpenSettings?: () => void;
     onOpenSupport?: () => void;
     supportReminderText?: string | null;
+    supportReminderOpen?: boolean;
     onDismissSupportReminder?: () => void;
     onOpenFeedback?: () => void;
     onOpenBugReport?: () => void;
@@ -97,6 +100,11 @@
     onConcede?: () => void;
     onReportPlayer?: () => void;
     bugReportContext?: BugReportContext;
+    isPostGame?: boolean;
+    matchContext?: MatchNavigationContext | null;
+    ownerSide?: import("@/features/simulator/model/contracts.js").LorcanaPlayerSide | null;
+    onNextGame?: (() => void) | null;
+    onReturnToMatchmaking?: (() => void | Promise<void>) | null;
   }
 
   let {
@@ -106,6 +114,7 @@
     moveSummaries = [],
     activeMoveCategoryId = null,
     timer,
+    isOwnClock = false,
     questAllCount = null,
     questAllLore = null,
     armedDirectCategoryId = null,
@@ -124,6 +133,7 @@
     onOpenSettings,
     onOpenSupport,
     supportReminderText = null,
+    supportReminderOpen = $bindable(false),
     onDismissSupportReminder,
     onOpenFeedback,
     onOpenBugReport,
@@ -131,6 +141,11 @@
     onConcede,
     onReportPlayer,
     bugReportContext,
+    isPostGame = false,
+    matchContext = null,
+    ownerSide = null,
+    onNextGame = null,
+    onReturnToMatchmaking = null,
   }: MobilePlayerMenubarProps = $props();
 
   let detailsOpen = $state(false);
@@ -139,6 +154,7 @@
   let revealedBottomControls = $state<RevealedBottomControlState>(null);
 
   const loreIconUrl = getLoreIconUrl();
+  const exertIconUrl = getExertIconUrl();
   const loreValue = $derived(player.summary?.lore ?? 0);
   const handCount = $derived(player.summary?.handCount ?? 0);
   const deckCount = $derived(player.summary?.deckCount ?? 0);
@@ -160,6 +176,7 @@
     return badges;
   });
   const loreMaskStyle = `mask-image: url("${loreIconUrl}"); -webkit-mask-image: url("${loreIconUrl}");`;
+  const exertMaskStyle = `mask-image: url("${exertIconUrl}"); -webkit-mask-image: url("${exertIconUrl}");`;
   const confirmationMoveCategoryIds = new Set<ExecutableMovePresentationCategoryId>([
     "concede",
   ]);
@@ -187,19 +204,12 @@
   const passTurnButtonLabel = $derived(
     passTurnArmed
       ? m["sim.actions.confirmMoveLabel"]({ label: m["sim.actions.label.passTurn"]({}) })
-      : "Pass",
+      : m["sim.actions.label.passTurn"]({}),
   );
   const questAllButtonLabel = $derived(
     questAllArmed
       ? "Confirm"
-      : questAllLore !== null && questAllCount !== null
-        ? m["sim.actions.label.questWithAll"]({ count: questAllCount, lore: questAllLore })
-        : m["sim.actions.label.questAll"]({}),
-  );
-  const questAllButtonMeta = $derived(
-    questAllLore !== null && questAllCount !== null
-      ? `${questAllCount} Ready | +${questAllLore} Lore`
-      : null,
+      : m["sim.actions.label.questAll"]({}),
   );
   const questAllAriaLabel = $derived(
     questAllLore !== null && questAllCount !== null
@@ -362,7 +372,7 @@
         <Button
           variant="outline"
           size="xs"
-          class="lore-chip lore-chip--compact mobile-anchor-button"
+          class="mobile-anchor-button mobile-bottom-primary-action quick-action quick-action--revealed mobile-bottom-control mobile-bottom-lore"
           onclick={openDetails}
           aria-label={`Open ${seatLabel} details`}
           data-testid={`mobile-${seat}-lore-chip`}
@@ -374,129 +384,152 @@
         </Button>
       </div>
 
+      {#if isPostGame}
+        <div class="mobile-menubar-post-game-cta" data-testid="mobile-bottom-post-game-cta">
+          {#if matchContext?.nextGameId && onNextGame}
+            <Button
+              class="mobile-post-game-cta-button mobile-post-game-cta-button--primary"
+              onclick={() => onNextGame!()}
+              disabled={matchContext.navigating}
+            >
+              {#if matchContext.navigating}
+                <LoaderCircle class="mr-1.5 size-3.5 animate-spin" />
+                Loading…
+              {:else}
+                Next Game →
+              {/if}
+            </Button>
+          {:else}
+            <Button
+              class="mobile-post-game-cta-button mobile-post-game-cta-button--primary"
+              onclick={() => void onReturnToMatchmaking?.()}
+            >
+              Return to Matchmaking
+            </Button>
+          {/if}
+        </div>
+      {:else}
       <div
         data-slot="button-group"
         class="mobile-menubar-center"
         data-testid="mobile-bottom-center"
       >
         {#if timer}
-          <div class="mobile-turn-status" data-testid="mobile-bottom-timer">
-            <PlayerTimer
-              reserveMsRemaining={timer.reserveMsRemaining}
-              isActive={timer.isActive}
-              isRunning={timer.isRunning}
-              startedAtMs={timer.startedAtMs}
-              timeoutCount={timer.timeoutCount}
-              isInNegativeTime={timer.isInNegativeTime}
-            />
+          <div class="mobile-turn-status mobile-turn-status--pinned" data-testid="mobile-bottom-timer">
+            <PlayerTimer snapshot={timer} {isOwnClock} />
           </div>
         {/if}
 
-        <div class="mobile-move-strip" aria-label="Available moves" data-testid="mobile-bottom-move-strip">
-          {#each moveButtonSummaries as summary (summary.categoryId)}
-            {@const Icon = summary.icon}
-            <Button
-              variant="outline"
-              size="icon-sm"
-              class={`quick-action mobile-bottom-control${summary.showLabel ? " quick-action--revealed" : " quick-action--icon-only"}${summary.isActive ? " quick-action--primary" : ""}${summary.categoryId === "concede" ? " quick-action--danger" : ""}`}
-              onclick={() => handleMoveCategoryClick(summary.categoryId)}
-              aria-label={summary.categoryLabel}
-              title={summary.categoryLabel}
-              data-testid={`mobile-bottom-move-${summary.categoryId}`}
-            >
-              {#if summary.showLabel}
-                <span class="quick-action__label">{summary.categoryLabel}</span>
-              {:else}
+        <div class="mobile-menubar-scroller" data-testid="mobile-bottom-utility">
+          <div class="mobile-move-strip" aria-label="Available moves" data-testid="mobile-bottom-move-strip">
+            {#each moveButtonSummaries as summary (summary.categoryId)}
+              {@const Icon = summary.icon}
+              <Button
+                variant="outline"
+                size="icon-sm"
+                class={`quick-action quick-action--icon-only mobile-bottom-control${summary.isActive ? " quick-action--primary" : ""}${summary.categoryId === "concede" ? " quick-action--danger" : ""}`}
+                onclick={() => handleMoveCategoryClick(summary.categoryId)}
+                aria-label={summary.categoryLabel}
+                title={summary.categoryLabel}
+                data-testid={`mobile-bottom-move-${summary.categoryId}`}
+              >
                 <Icon class="size-4" />
-              {/if}
-            </Button>
-          {/each}
+              </Button>
+            {/each}
 
-          {#if moveButtonSummaries.length === 0 && safeActionCount > 0}
-            <Button
-              variant="outline"
-              size="icon-sm"
-              class="quick-action quick-action--icon-only mobile-bottom-control"
-              onclick={onOpenMoves}
-              aria-label="Open available moves"
-              title="Open available moves"
-              data-testid="mobile-bottom-move-fallback"
-            >
-              <Swords class="size-4" />
-              <span class="quick-action__badge">{actionCount}</span>
-            </Button>
-          {/if}
-        </div>
+            {#if moveButtonSummaries.length === 0 && safeActionCount > 0}
+              <Button
+                variant="outline"
+                size="icon-sm"
+                class="quick-action quick-action--icon-only mobile-bottom-control"
+                onclick={onOpenMoves}
+                aria-label="Open available moves"
+                title="Open available moves"
+                data-testid="mobile-bottom-move-fallback"
+              >
+                <Swords class="size-4" />
+                <span class="quick-action__badge">{actionCount}</span>
+              </Button>
+            {/if}
 
-        <div class="mobile-menubar-utility" data-testid="mobile-bottom-utility">
-          {#if hasPendingEffects}
-            <Button
-              variant="outline"
-              size="icon-sm"
-              class={`quick-metric quick-metric--interactive mobile-bottom-control${isBottomControlRevealed(revealedBottomControls, "pending-effects") ? " quick-action--revealed" : " quick-action--icon-only"}`}
-              onclick={handlePendingEffectsClick}
-              aria-label={`Resolve next pending effect (${pendingCount} queued)`}
-              title={`Resolve next pending effect (${pendingCount} queued)`}
-              aria-pressed={pendingEffectsOpen}
-              data-testid="mobile-bottom-pending-effects"
-            >
-              {#if isBottomControlRevealed(revealedBottomControls, "pending-effects")}
-                <span class="quick-action__label">Effects</span>
-              {:else}
+            {#if hasPendingEffects}
+              <Button
+                variant="outline"
+                size="icon-sm"
+                class="quick-action quick-action--icon-only quick-metric quick-metric--interactive mobile-bottom-control"
+                onclick={handlePendingEffectsClick}
+                aria-label={`Resolve next pending effect (${pendingCount} queued)`}
+                title={`Resolve next pending effect (${pendingCount} queued)`}
+                aria-pressed={pendingEffectsOpen}
+                data-testid="mobile-bottom-pending-effects"
+              >
                 <Activity class="size-4" />
-              {/if}
-              <span class="quick-action__badge">{pendingCount}</span>
-            </Button>
-          {/if}
+                <span class="quick-action__badge">{pendingCount}</span>
+              </Button>
+            {/if}
+          </div>
         </div>
       </div>
 
-      <div class="mobile-menubar-secondary" data-testid="mobile-bottom-secondary">
-        {#if questAllAvailable}
-          <Button
-            variant="outline"
-            size="icon-sm"
-            class={`mobile-anchor-button mobile-stack-button quick-action mobile-bottom-control${questAllArmed || isBottomControlRevealed(revealedBottomControls, "quest-all") ? " quick-action--revealed" : " quick-action--icon-only"}${questAllArmed ? " quick-action--primary" : ""}`}
-            onclick={handleQuestAllClick}
-            aria-label={questAllAriaLabel}
-            title={questAllAriaLabel}
-            data-testid="mobile-bottom-quest-all"
-          >
-            {#if questAllArmed || isBottomControlRevealed(revealedBottomControls, "quest-all")}
-              <span class="quick-action__label-group">
-                <span class="quick-action__label">{questAllButtonLabel}</span>
-                {#if questAllButtonMeta}
-                  <span class="quick-action__meta">{questAllButtonMeta}</span>
-                {/if}
+      <div class="mobile-menubar-pinned-actions" data-testid="mobile-bottom-secondary">
+        <Button
+          variant="outline"
+          size="icon-sm"
+          class={`mobile-anchor-button mobile-bottom-primary-action quick-action quick-action--revealed quick-action--quest-all mobile-bottom-control${questAllArmed ? " quick-action--primary" : ""}${questAllAvailable ? "" : " mobile-bottom-primary-action--ghost"}`}
+          onclick={handleQuestAllClick}
+          disabled={!questAllAvailable}
+          aria-label={questAllAvailable ? questAllAriaLabel : "Quest with all unavailable"}
+          title={questAllAvailable ? questAllAriaLabel : "Quest with all unavailable"}
+          data-testid="mobile-bottom-quest-all"
+        >
+          <span class="quick-action__label-group">
+            <span class="quick-action__label quick-action__label--micro">
+              {questAllButtonLabel}
+            </span>
+            {#if questAllLore !== null && questAllCount !== null}
+              <span class="quick-action__stat-row">
+                <span class="quick-action__stat" aria-label={`${questAllCount} ready characters`}>
+                  <span
+                    aria-hidden="true"
+                    class="quick-action__stat-icon quick-action__stat-icon--exert"
+                    style={exertMaskStyle}
+                  ></span>
+                  <span>{questAllCount}</span>
+                </span>
+                <span class="quick-action__stat" aria-label={`${questAllLore} lore`}>
+                  <span
+                    aria-hidden="true"
+                    class="quick-action__stat-icon quick-action__stat-icon--lore"
+                    style={loreMaskStyle}
+                  ></span>
+                  <span>+{questAllLore}</span>
+                </span>
               </span>
-            {:else}
-              <Users class="size-4" />
             {/if}
-          </Button>
-        {/if}
+          </span>
+        </Button>
 
         <Button
           variant="outline"
           size="icon-sm"
-          class={`mobile-anchor-button mobile-side-button mobile-stack-button quick-action mobile-bottom-control${passTurnArmed || isBottomControlRevealed(revealedBottomControls, "pass-turn") ? " quick-action--revealed" : " quick-action--icon-only"}${passTurnArmed ? " quick-action--primary" : ""}${passTurnAvailable ? "" : " mobile-side-button--disabled"}`}
+          class={`mobile-anchor-button mobile-bottom-primary-action quick-action quick-action--revealed quick-action--pass-turn mobile-bottom-control${passTurnArmed ? " quick-action--primary" : ""}${passTurnAvailable ? "" : " mobile-bottom-primary-action--ghost"}`}
           onclick={handlePassTurnClick}
           disabled={!passTurnAvailable}
           aria-label={passTurnAvailable ? passTurnButtonLabel : "Pass turn unavailable"}
           title={passTurnAvailable ? passTurnButtonLabel : "Pass turn unavailable"}
           data-testid="mobile-bottom-pass-turn"
         >
-          {#if passTurnArmed || isBottomControlRevealed(revealedBottomControls, "pass-turn")}
-            <span class="quick-action__label">{passTurnButtonLabel}</span>
-          {:else}
-            <Flag class="size-4" />
-          {/if}
+          <span class="quick-action__label quick-action__label--micro">
+            {passTurnButtonLabel}
+          </span>
         </Button>
       </div>
+      {/if}
     </div>
   </div>
 {:else}
   <div
-    class={`mobile-menubar-frame mobile-menubar-frame--top border border-sky-300/20 p-1 bg-slate-950/90 shadow-[0_14px_36px_rgba(2,6,23,0.36)] backdrop-blur${seat === "top" ? " rounded-b-2xl" : ""}`}
+    class={`mobile-menubar-frame mobile-menubar-frame--top border border-sky-300/20 px-0.5 py-0.5 bg-slate-950/90 shadow-[0_14px_36px_rgba(2,6,23,0.36)] backdrop-blur${seat === "top" ? " rounded-b-2xl" : ""}`}
   >
     <div class="mobile-menubar-shell">
       <Button
@@ -513,15 +546,27 @@
         </span>
       </Button>
 
-      <div data-slot="button-group" class="mobile-action-group">
-        {#if supportReminderText && onOpenSupport}
-          <SimulatorSupportReminder
-            text={supportReminderText}
-            onOpen={onOpenSupport}
-            onDismiss={onDismissSupportReminder}
-          />
-        {/if}
+      {#if timer}
+        <div class="mobile-turn-status mobile-turn-status--pinned" data-testid="mobile-top-timer">
+          <PlayerTimer snapshot={timer} isOwnClock={false} />
+        </div>
+      {/if}
 
+      {#if matchContext && matchContext.format !== "best_of_1"}
+        <span class="mobile-match-badge" aria-label="Match info">
+          {matchContext.format === "best_of_3" ? m["sim.match.bo3"]({}) : m["sim.match.bo1"]({})}
+          <span class="mobile-match-badge__sep">·</span>
+          {matchContext.gameIndex}/{matchContext.format === "best_of_3" ? 3 : 1}
+          <span class="mobile-match-badge__sep">·</span>
+          {#if ownerSide === "playerTwo"}
+            {matchContext.player2Score}-{matchContext.player1Score}
+          {:else}
+            {matchContext.player1Score}-{matchContext.player2Score}
+          {/if}
+        </span>
+      {/if}
+
+      <div data-slot="button-group" class="mobile-action-group">
         <Button
           variant="outline"
           size="icon-sm"
@@ -537,16 +582,41 @@
           {/if}
         </Button>
 
-        <Button
-          variant="outline"
-          size="icon-sm"
-          class="quick-action quick-action--icon-only"
-          onclick={onOpenSupport}
-          aria-label={m["sim.player.support.openAria"]({})}
-          title={m["sim.player.support.openAria"]({})}
-        >
-          <CircleHelp class="size-4" />
-        </Button>
+        {#if supportReminderText && onOpenSupport}
+          <SimulatorSupportReminder
+            text={supportReminderText}
+            bind:open={supportReminderOpen}
+            side="top"
+            align="end"
+            onOpen={onOpenSupport}
+            onDismiss={onDismissSupportReminder}
+          >
+            {#snippet child({ props })}
+              <Button
+                variant="outline"
+                size="icon-sm"
+                class="quick-action quick-action--icon-only"
+                onclick={onOpenSupport}
+                aria-label={m["sim.player.support.openAria"]({})}
+                title={m["sim.player.support.openAria"]({})}
+                {...props}
+              >
+                <CircleHelp class="size-4" />
+              </Button>
+            {/snippet}
+          </SimulatorSupportReminder>
+        {:else}
+          <Button
+            variant="outline"
+            size="icon-sm"
+            class="quick-action quick-action--icon-only"
+            onclick={onOpenSupport}
+            aria-label={m["sim.player.support.openAria"]({})}
+            title={m["sim.player.support.openAria"]({})}
+          >
+            <CircleHelp class="size-4" />
+          </Button>
+        {/if}
 
         <Button
           variant="outline"
@@ -729,18 +799,34 @@
 
 <style>
   .mobile-menubar-frame {
-    padding-left: max(0.35rem, env(safe-area-inset-left));
-    padding-right: max(0.35rem, env(safe-area-inset-right));
+    padding-left: max(0.12rem, env(safe-area-inset-left));
+    padding-right: max(0.12rem, env(safe-area-inset-right));
   }
 
   .mobile-menubar-shell {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.28rem;
+  }
+
+  .mobile-match-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: rgba(148, 163, 184, 0.85);
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+  }
+
+  .mobile-match-badge__sep {
+    color: rgba(100, 116, 139, 0.45);
   }
 
   .mobile-menubar-shell--bottom {
-    gap: 0.32rem;
+    gap: 0.14rem;
+    align-items: stretch;
   }
 
   .mobile-menubar-primary,
@@ -748,9 +834,35 @@
     flex: 0 0 auto;
   }
 
-  .mobile-menubar-secondary {
-    display: grid;
-    gap: 0.22rem;
+  .mobile-menubar-pinned-actions {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 0.14rem;
+    flex: 0 0 auto;
+  }
+
+  .mobile-menubar-post-game-cta {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0.08rem 0.12rem;
+  }
+
+  :global(.mobile-post-game-cta-button) {
+    flex: 1;
+    min-height: 2.2rem;
+    border-radius: 0.72rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    justify-content: center;
+  }
+
+  :global(.mobile-post-game-cta-button--primary) {
+    background:
+      linear-gradient(180deg, rgba(14, 116, 144, 0.92), rgba(8, 47, 73, 0.96));
+    border-color: rgba(125, 211, 252, 0.42);
+    color: #f8fafc;
   }
 
   .mobile-menubar-center {
@@ -759,11 +871,11 @@
     flex: 1;
     align-items: center;
     justify-content: space-between;
-    gap: 0.35rem;
-    border-radius: 0.95rem;
+    gap: 0.14rem;
+    border-radius: 0.72rem;
     border: 1px solid rgba(125, 211, 252, 0.14);
     background: rgba(15, 23, 42, 0.82);
-    padding: 0.18rem 0.22rem;
+    padding: 0.08rem 0.12rem;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
@@ -773,23 +885,24 @@
     align-items: center;
   }
 
-  .mobile-menubar-utility {
-    display: inline-flex;
-    flex: 0 0 auto;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.24rem;
-    margin-left: auto;
+  .mobile-turn-status--pinned {
+    min-width: 3.35rem;
+  }
+
+  .mobile-menubar-scroller {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
   }
 
   :global(.lore-chip) {
-    min-height: 2.2rem;
-    min-width: 4rem;
-    gap: 0.35rem;
+    min-height: 1.95rem;
+    min-width: 3rem;
+    gap: 0.18rem;
     border: 1px solid rgba(125, 211, 252, 0.24);
     background:
       linear-gradient(180deg, rgba(8, 47, 73, 0.96), rgba(15, 23, 42, 0.96));
-    padding: 0.4rem 0.7rem;
+    padding: 0.22rem 0.4rem;
     color: #f8fafc;
     transition:
       border-color 160ms ease,
@@ -808,41 +921,42 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.4rem 0.45rem;
+    padding: 0.22rem 0.28rem;
   }
 
   :global(.mobile-anchor-button) {
     width: auto;
     min-width: 0;
-    min-height: 2.2rem;
+    min-height: 1.95rem;
     border-color: rgba(125, 211, 252, 0.28);
     background:
       linear-gradient(180deg, rgba(8, 47, 73, 0.96), rgba(15, 23, 42, 0.96));
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      0 10px 22px rgba(2, 6, 23, 0.28);
+      0 8px 18px rgba(2, 6, 23, 0.24);
   }
 
   .lore-chip__content {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.24rem;
+    gap: 0.16rem;
     white-space: nowrap;
   }
 
   .mobile-action-group {
     display: flex;
     min-width: 0;
-    flex: 1;
+    flex: 0 1 auto;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.2rem;
+    gap: 0.14rem;
     overflow: hidden;
-    border-radius: 0.95rem;
+    border-radius: 0.8rem;
     border: 1px solid rgba(125, 211, 252, 0.14);
     background: rgba(15, 23, 42, 0.78);
-    padding: 0.2rem;
+    padding: 0.12rem;
+    margin-left: auto;
   }
 
   :global(.mobile-side-button) {
@@ -868,7 +982,7 @@
     flex: 1;
     align-items: center;
     justify-content: flex-start;
-    gap: 0.28rem;
+    gap: 0.12rem;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
@@ -902,7 +1016,7 @@
 
   .lore-chip__value {
     display: block;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 900;
     line-height: 1;
     color: #fcd34d;
@@ -911,8 +1025,8 @@
 
   .lore-chip__icon {
     display: block;
-    width: 1rem;
-    height: 1rem;
+    width: 0.85rem;
+    height: 0.85rem;
     flex-shrink: 0;
     background: #fcd34d;
     mask-repeat: no-repeat;
@@ -925,16 +1039,16 @@
   }
 
   :global(.quick-action) {
-    min-height: 2rem;
-    gap: 0.35rem;
+    min-height: 1.85rem;
+    gap: 0.18rem;
     position: relative;
     flex-shrink: 0;
     border-width: 1px;
     border-style: solid;
     border-color: rgba(125, 211, 252, 0.16);
     background: transparent;
-    padding: 0.35rem 0.6rem;
-    font-size: 0.75rem;
+    padding: 0.22rem 0.4rem;
+    font-size: 0.68rem;
     font-weight: 700;
     color: rgba(241, 245, 249, 0.92);
     transition:
@@ -973,19 +1087,38 @@
   }
 
   :global(.quick-action--icon-only) {
-    min-width: 2rem;
+    min-width: 1.72rem;
     padding: 0;
   }
 
   :global(.mobile-bottom-control) {
-    min-width: 2.4rem;
-    min-height: 2.4rem;
+    min-width: 1.9rem;
+    min-height: 1.9rem;
+  }
+
+  :global(.mobile-bottom-primary-action) {
+    min-width: 3.6rem;
+    min-height: 100%;
+    align-self: stretch;
+  }
+
+  :global(.mobile-bottom-lore) {
+    min-width: 3rem;
+    padding-inline: 0.34rem;
+    align-self: stretch;
+  }
+
+  :global(.mobile-bottom-primary-action--ghost) {
+    border-color: rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.34);
+    color: rgba(148, 163, 184, 0.78);
+    opacity: 1;
   }
 
   :global(.quick-action--revealed) {
     justify-content: center;
     min-width: max-content;
-    padding: 0 0.8rem;
+    padding: 0 0.58rem;
   }
 
   .quick-action__label {
@@ -996,10 +1129,58 @@
     line-height: 1;
   }
 
+  .quick-action__label--micro {
+    font-size: 0.46rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
   .quick-action__label-group {
     display: grid;
     justify-items: center;
-    gap: 0.1rem;
+    gap: 0.06rem;
+  }
+
+  .quick-action__stat-row {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.18rem;
+    white-space: nowrap;
+  }
+
+  .quick-action__stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.12rem;
+    font-size: 0.46rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(224, 242, 254, 0.82);
+  }
+
+  .quick-action__stat-icon {
+    display: inline-flex;
+    width: 0.52rem;
+    height: 0.52rem;
+    flex-shrink: 0;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-size: contain;
+    -webkit-mask-size: contain;
+  }
+
+  .quick-action__stat-icon--exert {
+    background: rgba(191, 219, 254, 0.8);
+  }
+
+  .quick-action__stat-icon--lore {
+    background: #fcd34d;
   }
 
   .quick-action__meta {
@@ -1011,19 +1192,31 @@
     color: rgba(224, 242, 254, 0.82);
   }
 
+  :global(.quick-action--pass-turn) {
+    width: auto;
+    min-width: 3.6rem;
+    padding-inline: 0.34rem;
+  }
+
+  :global(.quick-action--quest-all) {
+    width: auto;
+    min-width: 4.35rem;
+    padding-inline: 0.34rem;
+  }
+
   .quick-action__badge {
     position: absolute;
-    top: 0.18rem;
-    right: 0.18rem;
+    top: 0.08rem;
+    right: 0.08rem;
     display: inline-flex;
-    min-width: 1rem;
-    min-height: 1rem;
+    min-width: 0.88rem;
+    min-height: 0.88rem;
     align-items: center;
     justify-content: center;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.14);
     padding: 0 0.2rem;
-    font-size: 0.58rem;
+    font-size: 0.52rem;
     font-weight: 800;
     line-height: 1;
   }
@@ -1035,8 +1228,8 @@
 
 
   :global(.quick-metric) {
-    min-height: 2rem;
-    gap: 0.3rem;
+    min-height: 1.85rem;
+    gap: 0.22rem;
     background: transparent;
     padding: 0;
     font-size: 0.72rem;
@@ -1214,12 +1407,44 @@
 
   @media (max-width: 380px) {
     :global(.quick-action--icon-only) {
-      min-width: 1.8rem;
+      min-width: 1.7rem;
     }
 
     :global(.lore-chip) {
-      min-width: 3.6rem;
-      padding-inline: 0.55rem;
+      min-width: 3.1rem;
+      padding-inline: 0.44rem;
+    }
+
+    .mobile-menubar-shell--bottom {
+      gap: 0.12rem;
+    }
+
+    .mobile-menubar-center {
+      gap: 0.12rem;
+      padding-inline: 0.1rem;
+    }
+
+    .mobile-turn-status--pinned {
+      min-width: 3rem;
+    }
+
+    :global(.quick-action--pass-turn) {
+      min-width: 3.25rem;
+      padding-inline: 0.26rem;
+    }
+
+    :global(.quick-action--quest-all) {
+      min-width: 3.9rem;
+      padding-inline: 0.26rem;
+    }
+
+    .quick-action__label--micro {
+      font-size: 0.44rem;
+    }
+
+    .quick-action__stat {
+      font-size: 0.43rem;
+      gap: 0.1rem;
     }
   }
 </style>

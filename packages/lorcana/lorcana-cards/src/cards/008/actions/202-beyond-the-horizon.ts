@@ -33,6 +33,11 @@ export const beyondTheHorizon: ActionCard = {
     {
       effect: {
         type: "choice",
+        optionLabels: [
+          "All players discard their hands and draw 3 cards",
+          "You discard your hand and draw 3 cards",
+          "Chosen opponent discards their hand and draws 3 cards",
+        ],
         options: [
           {
             type: "sequence",

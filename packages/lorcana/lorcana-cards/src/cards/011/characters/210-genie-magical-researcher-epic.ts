@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { genieMagicalResearcher } from "..";
+import { genieMagicalResearcher } from "./049-genie-magical-researcher";
 
 export const genieMagicalResearcherEpic: CharacterCard = {
   ...genieMagicalResearcher,

@@ -86,6 +86,7 @@ export interface QueuedBoardMoveAnimation {
   playback: BoardMoveAnimationPlayback;
   renderFace: CardFacePresentation;
   source: AnchorReference;
+  sourceZoneId: LorcanaZoneId;
   variant: BoardMoveAnimationVariant;
   via?: AnchorReference;
 }
@@ -104,6 +105,7 @@ export interface ResolvedBoardMoveAnimation {
   playback: BoardMoveAnimationPlayback;
   renderFace: CardFacePresentation;
   sourceRect: BoardLocalRect;
+  sourceZoneId: LorcanaZoneId;
   variant: BoardMoveAnimationVariant;
   viaRect?: BoardLocalRect;
 }
@@ -115,22 +117,24 @@ type CardLocation = {
 };
 
 export const VARIANT_DURATION_MS: Record<BoardMoveAnimationVariant, number> = {
-  banish: 700,
-  draw: 650,
-  "ink-faceDown": 1000,
-  "ink-faceUp": 1000,
-  "move-to-location": 800,
-  "play-action": 2200,
-  "play-action-preview": 2000,
-  "play-action-sing": 2400,
-  "play-character": 1250,
-  "play-character-shift": 1150,
-  "play-item": 1150,
-  "play-location": 1150,
+  banish: 350,
+  draw: 325,
+  "ink-faceDown": 500,
+  "ink-faceUp": 500,
+  "move-to-location": 400,
+  "play-action": 1100,
+  "play-action-preview": 1000,
+  "play-action-sing": 1200,
+  "play-character": 625,
+  "play-character-shift": 575,
+  "play-item": 575,
+  "play-location": 575,
 };
 
-export function getAnimationSpeedMultiplier(speed: "fast" | "normal" | "slow"): number {
+export function getAnimationSpeedMultiplier(speed: "off" | "fast" | "normal" | "slow"): number {
   switch (speed) {
+    case "off":
+      return 0;
     case "fast":
       return 0.6;
     case "normal":
@@ -374,6 +378,7 @@ export function deriveQueuedBoardMoveAnimationsFromPacket(
             : "faceUp"
           : payload.renderFace,
       source: buildPacketSourceAnchor(payload.actorSide, payload.sourceZoneId, payload.cardId),
+      sourceZoneId: payload.sourceZoneId,
       variant: payload.variant,
       via: payload.viaAnchorId
         ? { primaryId: payload.viaAnchorId }
@@ -470,6 +475,7 @@ export function resolveQueuedBoardMoveAnimation(
     playback: animation.playback,
     renderFace: animation.renderFace,
     sourceRect: toLocalRect(sourceRect, boardRect),
+    sourceZoneId: animation.sourceZoneId,
     variant: animation.variant,
     viaRect: resolvedViaRect,
   };
@@ -509,6 +515,7 @@ function deriveInkAnimation(
     playback: "serial",
     renderFace,
     source: buildSourceAnchor(previousLocation, actorSide),
+    sourceZoneId: previousLocation?.zoneId ?? "hand",
     variant,
   };
 }
@@ -554,6 +561,7 @@ function derivePlayAnimation(
     playback: "serial",
     renderFace: "faceUp",
     source: buildSourceAnchor(previousLocation, actorSide),
+    sourceZoneId: previousLocation?.zoneId ?? "hand",
     variant,
     via: { primaryId: BOARD_CENTER_ANCHOR_ID },
   };
@@ -590,11 +598,11 @@ function buildSourceAnchor(
   if (!location.card.isMasked) {
     return {
       primaryId: createCardAnchorId(location.side, location.zoneId, location.card.cardId),
-      // For hand cards, fall back to the seat-hand anchor (a single-card-sized invisible anchor)
-      // rather than the zone anchor (which spans the full-width hand container and would produce
+      // For hand/play cards, fall back to the seat-hand anchor (a single-card-sized invisible
+      // anchor) rather than the zone anchor (which spans the full container and would produce
       // an oversized sprite).
       fallbackId:
-        location.zoneId === "hand"
+        location.zoneId === "hand" || location.zoneId === "play"
           ? createSeatHandAnchorId(actorSide)
           : createZoneAnchorId(location.side, location.zoneId),
     };
@@ -644,6 +652,17 @@ function buildPacketSourceAnchor(
   if (sourceZoneId === "hand") {
     return {
       primaryId: createCardAnchorId(actorSide, "hand", cardId),
+      fallbackId: createSeatHandAnchorId(actorSide),
+    };
+  }
+
+  if (sourceZoneId === "play") {
+    // The play zone anchor spans the entire play area — using it as a fallback
+    // would render the animated card at board-sized dimensions. Fall back to the
+    // seat-hand anchor (90×118px) so the card remains card-sized if the specific
+    // play slot anchor is unavailable (e.g. card was in-flight from a prior animation).
+    return {
+      primaryId: createCardAnchorId(actorSide, "play", cardId),
       fallbackId: createSeatHandAnchorId(actorSide),
     };
   }

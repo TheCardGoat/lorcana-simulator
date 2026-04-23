@@ -46,7 +46,7 @@ export const pigletCocoaMaker: CharacterCard = {
       id: "1iy-2",
       name: "SPECIAL RECIPE",
       effect: {
-        amount: 2,
+        amount: { type: "up-to", value: 2 },
         target: {
           cardTypes: ["character"],
           count: "all",
@@ -55,7 +55,6 @@ export const pigletCocoaMaker: CharacterCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       text: "SPECIAL RECIPE At the end of your turn, remove up to 2 damage from each of your characters.",
       trigger: {

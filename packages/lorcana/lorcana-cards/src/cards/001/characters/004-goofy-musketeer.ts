@@ -39,7 +39,7 @@ export const goofyMusketeer: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 2,
+          amount: { type: "up-to", value: 2 },
           target: {
             cardTypes: ["character"],
             count: "all",
@@ -54,7 +54,6 @@ export const goofyMusketeer: CharacterCard = {
             ],
           },
           type: "remove-damage",
-          upTo: true,
         },
         type: "optional",
       },

@@ -39,6 +39,7 @@ import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
 import { hasStaticCardRestriction } from "../../rules/static-ability-utils";
 import { buildStaticEffectRegistry } from "../../../rules/static-effect-registry";
 import type { StaticEffectRegistry } from "../../../rules/static-effect-registry";
+import { sweepLethalDamageInPlay } from "../../state/lethal-damage-sweep";
 
 type ChallengeExecutionContext = Parameters<LorcanaMoveDefinition<"challenge">["execute"]>[0];
 type ChallengeContinuationContext = Pick<ChallengeExecutionContext, "G" | "framework" | "cards">;
@@ -177,7 +178,6 @@ function resolveChallengeDamage(
     targetId: attackerId,
     amount: damageResult.rawDefenderToAttackerDamage,
   });
-
   const finalDefenderTargetId = defenderEvent.targetId;
   const finalAttackerTargetId = attackerEvent.targetId;
   const finalDefenderTargetDef = ctx.cards.getDefinition(finalDefenderTargetId) as
@@ -603,6 +603,19 @@ function resolveChallengeDamage(
     attackerDamage: defenderToAttackerDamage,
     defenderDamage: attackerToDefenderDamage,
   });
+
+  // A banished character may have been a source of continuous static abilities
+  // (e.g. +Willpower aura). Re-check all remaining cards for lethal damage.
+  if (defenderLethal || attackerLethal) {
+    const reasonCardId = defenderLethal ? defenderId : attackerId;
+    sweepLethalDamageInPlay(
+      {
+        ...ctx,
+        playerId: state.attackerOwnerId,
+      },
+      { reasonCardId },
+    );
+  }
 }
 
 export function continuePendingChallengeResolution(ctx: ChallengeContinuationContext): void {

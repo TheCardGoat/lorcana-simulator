@@ -40,19 +40,53 @@ function createSelectionState(
 }
 
 describe("target selection modal helpers", () => {
-  it("uses the modal only for discard-target sessions", () => {
+  it("uses the modal for discard-target sessions", () => {
     expect(shouldUseTargetSelectionModal(createSelectionState())).toBe(true);
+  });
+
+  it("uses the modal for player-target sessions", () => {
     expect(
       shouldUseTargetSelectionModal(
         createSelectionState({
-          allowedZones: ["hand"],
+          allowedZones: [],
+          candidatePlayerIds: ["player_one", "player_two"],
         }),
       ),
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it("uses the modal for deck and inkwell targets", () => {
+    expect(
+      shouldUseTargetSelectionModal(
+        createSelectionState({
+          allowedZones: ["deck"],
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      shouldUseTargetSelectionModal(
+        createSelectionState({
+          allowedZones: ["inkwell"],
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("skips the modal for play-zone-only card targets", () => {
     expect(
       shouldUseTargetSelectionModal(
         createSelectionState({
           allowedZones: ["play"],
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("skips the modal for hand-zone targets (chooser's own hand is clickable inline)", () => {
+    expect(
+      shouldUseTargetSelectionModal(
+        createSelectionState({
+          allowedZones: ["hand"],
         }),
       ),
     ).toBe(false);
@@ -64,8 +98,15 @@ describe("target selection modal helpers", () => {
     expect(shouldAutoOpenTargetSelectionModal(null, "resolution:1")).toBe(false);
   });
 
-  it("uses a zone-specific title for discard-only targets", () => {
+  it("uses a zone-specific title for single-zone non-play targets", () => {
     expect(getTargetSelectionModalTitle(createSelectionState())).toBe("Discard targets");
+    expect(
+      getTargetSelectionModalTitle(
+        createSelectionState({
+          allowedZones: ["deck"],
+        }),
+      ),
+    ).toBe("Deck targets");
   });
 
   it("keeps the generic title for play-zone targets", () => {

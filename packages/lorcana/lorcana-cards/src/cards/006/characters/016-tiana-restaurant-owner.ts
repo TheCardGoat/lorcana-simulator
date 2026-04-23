@@ -32,17 +32,31 @@ export const tianaRestaurantOwner: CharacterCard = {
   classifications: ["Storyborn", "Hero", "Princess"],
   abilities: [
     {
-      condition: {
-        type: "is-exerted",
-      },
       effect: {
-        duration: "this-turn",
-        modifier: -3,
-        stat: "strength",
-        target: {
-          ref: "attacker",
-        },
-        type: "modify-stat",
+        type: "or",
+        chooser: "OPPONENT",
+        optionLabels: ["Pay 3 {I}", "The challenging character gets -3 {S} this turn"],
+        options: [
+          {
+            type: "pay-cost",
+            cost: {
+              ink: 3,
+            },
+            effect: {
+              type: "sequence",
+              steps: [],
+            },
+          },
+          {
+            duration: "this-turn",
+            modifier: -3,
+            stat: "strength",
+            target: {
+              ref: "attacker",
+            },
+            type: "modify-stat",
+          },
+        ],
       },
       id: "6kc-1",
       name: "SPECIAL RESERVATION",
@@ -51,6 +65,18 @@ export const tianaRestaurantOwner: CharacterCard = {
         event: "challenged",
         on: "YOUR_CHARACTERS",
         timing: "whenever",
+        condition: {
+          type: "target-query",
+          query: {
+            selector: "all",
+            reference: "source",
+            filters: [{ type: "exerted" }],
+          },
+          comparison: {
+            operator: "gte",
+            value: 1,
+          },
+        },
       },
       type: "triggered",
     },

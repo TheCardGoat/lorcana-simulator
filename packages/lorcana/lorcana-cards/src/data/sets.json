@@ -97,5 +97,14 @@
     "type": "EXPANSION",
     "thumbnailUrl": "https://api.lorcana.ravensburger.com/images/en/set11/thumbnails/e0c47c3940475edcbd9807fcdab3b8642890b9a7a5edfe5ce1a2d651d09aabd2.png",
     "totalCards": 204
+  },
+  "set12": {
+    "id": "set12",
+    "name": "Wilds Unknown",
+    "code": "WUN",
+    "sortNumber": 15,
+    "type": "EXPANSION",
+    "thumbnailUrl": "https://api.lorcana.ravensburger.com/images/en/set12/thumbnails/088e1ee55915d0eaecd12e1df370d2a15f13d97dca824f5634990d88b5c26454.png",
+    "totalCards": 202
   }
 }

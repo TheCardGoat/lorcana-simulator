@@ -1,230 +1,237 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { fireTheCannons } from "@lorcanito/lorcana-engine/cards/001/actions/actions";
-// Import {
-//   MoanaOfMotunui,
-//   SeargentTibbies,
-//   StitchAbomination,
-// } from "@lorcanito/lorcana-engine/cards/001/characters/characters";
-// Import { herculesMightyLeader } from "@lorcanito/lorcana-engine/cards/010";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Hercules - Mighty Leader", () => {
-//   Describe("EVER VIGILANT", () => {
-//     It("should protect Hercules from damage outside challenges", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: fireTheCannons.cost,
-//           Hand: [fireTheCannons],
-//           Play: [stitchAbomination],
-//         },
-//         {
-//           Play: [herculesMightyLeader],
-//         },
-//       );
-//
-//       Const hercules = testEngine.getCardModel(herculesMightyLeader);
-//
-//       Await testEngine.playCard(fireTheCannons, {
-//         Targets: [hercules],
-//       });
-//
-//       // Hercules should take no damage outside challenges
-//       Expect(hercules.damage).toBe(0);
-//     });
-//
-//     It("should allow Hercules to take damage when being challenged (as defender)", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [herculesMightyLeader],
-//         },
-//         {
-//           Play: [stitchAbomination],
-//         },
-//       );
-//
-//       Const hercules = testEngine.getCardModel(herculesMightyLeader);
-//
-//       // Exert Hercules so he can be challenged
-//       Await testEngine.exertCard(hercules);
-//
-//       // Pass turn to opponent
-//       TestEngine.passTurn();
-//       TestEngine.changeActivePlayer("player_two");
-//
-//       Const stitch = testEngine.getCardModel(stitchAbomination);
-//
-//       // Stitch challenges Hercules (Hercules is defender)
-//       Await testEngine.challenge({
-//         Attacker: stitch,
-//         Defender: hercules,
-//       });
-//
-//       // Hercules should take damage when being challenged as defender and be banished
-//       Expect(hercules.isBanished).toBe(true);
-//       Expect(stitch.damage).toBe(herculesMightyLeader.strength);
-//     });
-//
-//     It("should NOT take damage when challenging (as attacker)", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [herculesMightyLeader],
-//         },
-//         {
-//           Play: [stitchAbomination],
-//         },
-//       );
-//
-//       Const hercules = testEngine.getCardModel(herculesMightyLeader);
-//
-//       // Exert Stitch so Hercules can challenge him
-//       Await testEngine.exertCard(stitchAbomination);
-//
-//       Const stitch = testEngine.getCardModel(stitchAbomination);
-//
-//       // Hercules challenges Stitch (Hercules is attacker)
-//       Await testEngine.challenge({
-//         Attacker: hercules,
-//         Defender: stitch,
-//       });
-//
-//       // Hercules should NOT take damage when challenging as attacker (protected by EVER VIGILANT)
-//       Expect(hercules.damage).toBe(0);
-//       // Stitch should take full damage from Hercules
-//       Expect(stitch.damage).toBe(herculesMightyLeader.strength);
-//     });
-//   });
-//
-//   Describe("EVER VALIANT", () => {
-//     It("should protect other Hero characters from damage when Hercules is exerted", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [herculesMightyLeader, moanaOfMotunui],
-//         },
-//         {
-//           Inkwell: fireTheCannons.cost,
-//           Hand: [fireTheCannons],
-//           Play: [stitchAbomination],
-//         },
-//       );
-//
-//       Const hercules = testEngine.getCardModel(herculesMightyLeader);
-//       Const moana = testEngine.getCardModel(moanaOfMotunui);
-//
-//       // Exert Hercules to activate EVER VALIANT
-//       Await testEngine.exertCard(hercules);
-//
-//       // Pass turn and change to opponent
-//       TestEngine.passTurn();
-//       TestEngine.changeActivePlayer("player_two");
-//
-//       // Opponent plays Fire the Cannons targeting Moana (a Hero)
-//       Await testEngine.playCard(fireTheCannons, {
-//         Targets: [moana],
-//       });
-//
-//       // Moana should take no damage due to EVER VALIANT
-//       Expect(moana.damage).toBe(0);
-//     });
-//
-//     It("should NOT protect other Hero characters when Hercules is ready", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [herculesMightyLeader, moanaOfMotunui],
-//         },
-//         {
-//           Inkwell: fireTheCannons.cost,
-//           Hand: [fireTheCannons],
-//           Play: [stitchAbomination],
-//         },
-//       );
-//
-//       Const moana = testEngine.getCardModel(moanaOfMotunui);
-//
-//       // Hercules is ready (not exerted), so EVER VALIANT is not active
-//
-//       // Pass turn and change to opponent
-//       TestEngine.passTurn();
-//       TestEngine.changeActivePlayer("player_two");
-//
-//       // Opponent plays Fire the Cannons targeting Moana
-//       Await testEngine.playCard(fireTheCannons, {
-//         Targets: [moana],
-//       });
-//
-//       // Moana should take damage because Hercules is not exerted
-//       Expect(moana.damage).toBe(2); // Fire the Cannons deals 2 damage
-//     });
-//
-//     It("should allow other Hero characters to take damage when being challenged (as defender)", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [herculesMightyLeader, moanaOfMotunui],
-//         },
-//         {
-//           Play: [stitchAbomination],
-//         },
-//       );
-//
-//       Const hercules = testEngine.getCardModel(herculesMightyLeader);
-//       Const moana = testEngine.getCardModel(moanaOfMotunui);
-//
-//       // Exert Hercules to activate EVER VALIANT
-//       Await testEngine.exertCard(hercules);
-//       // Exert Moana so she can be challenged
-//       Await testEngine.exertCard(moana);
-//
-//       // Pass turn to opponent
-//       TestEngine.passTurn();
-//       TestEngine.changeActivePlayer("player_two");
-//
-//       Const stitch = testEngine.getCardModel(stitchAbomination);
-//
-//       // Stitch challenges Moana (Moana is defender)
-//       Await testEngine.challenge({
-//         Attacker: stitch,
-//         Defender: moana,
-//       });
-//
-//       // Moana should take damage when being challenged as defender despite EVER VALIANT
-//       Expect(moana.damage).toBe(stitchAbomination.strength);
-//       Expect(stitch.damage).toBe(moanaOfMotunui.strength);
-//     });
-//
-//     It("should NOT protect non-Hero characters", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Play: [herculesMightyLeader, seargentTibbies], // Sergeant Tibbs is not a Hero
-//         },
-//         {
-//           Inkwell: fireTheCannons.cost,
-//           Hand: [fireTheCannons],
-//           Play: [stitchAbomination],
-//         },
-//       );
-//
-//       Const hercules = testEngine.getCardModel(herculesMightyLeader);
-//       Const tibbs = testEngine.getCardModel(seargentTibbies);
-//
-//       // Exert Hercules to activate EVER VALIANT
-//       Await testEngine.exertCard(hercules);
-//
-//       // Pass turn and change to opponent
-//       TestEngine.passTurn();
-//       TestEngine.changeActivePlayer("player_two");
-//
-//       // Opponent plays Fire the Cannons targeting Tibbs (not a Hero)
-//       Await testEngine.playCard(fireTheCannons, {
-//         Targets: [tibbs],
-//       });
-//
-//       // Tibbs should take damage and be banished because he's not a Hero (willpower 2, damage 2)
-//       Expect(tibbs.zone).toBe("discard");
-//     });
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+  createMockCharacter,
+  createMockAction,
+} from "@tcg/lorcana-engine/testing";
+import { herculesMightyLeader } from "./118-hercules-mighty-leader";
+
+const opponent = createMockCharacter({
+  id: "hercules-test-opponent",
+  name: "Test Opponent",
+  cost: 3,
+  strength: 3,
+  willpower: 8, // High willpower so it survives
+  lore: 1,
+});
+
+const heroAlly = createMockCharacter({
+  id: "hercules-test-hero-ally",
+  name: "Test Hero Ally",
+  cost: 2,
+  strength: 2,
+  willpower: 8,
+  lore: 1,
+  classifications: ["Storyborn", "Hero"],
+});
+
+const nonHeroAlly = createMockCharacter({
+  id: "hercules-test-non-hero",
+  name: "Test Non-Hero",
+  cost: 2,
+  strength: 2,
+  willpower: 8,
+  lore: 1,
+  classifications: ["Storyborn", "Villain"],
+});
+
+const damageAction = createMockAction({
+  id: "hercules-test-damage-action",
+  name: "Test Damage Action",
+  cost: 2,
+  abilities: [
+    {
+      type: "action",
+      text: "Deal 2 damage to chosen character.",
+      effect: {
+        type: "deal-damage",
+        amount: 2,
+        target: {
+          selector: "chosen",
+          count: 1,
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+    },
+  ],
+});
+
+describe("Hercules - Mighty Leader", () => {
+  describe("EVER VIGILANT - This character can't be dealt damage unless he's being challenged.", () => {
+    it("does NOT take damage when challenging (as attacker)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: herculesMightyLeader, isDrying: false }],
+          deck: 5,
+        },
+        {
+          play: [{ card: opponent, exerted: true, isDrying: false }],
+          deck: 5,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(herculesMightyLeader, opponent),
+      ).toBeSuccessfulCommand();
+
+      // Hercules should NOT take damage as attacker (protected by EVER VIGILANT)
+      expect(testEngine.asPlayerOne().getDamage(herculesMightyLeader)).toBe(0);
+      // Opponent SHOULD take damage from Hercules (5 strength)
+      expect(testEngine.asPlayerTwo().getDamage(opponent)).toBe(herculesMightyLeader.strength);
+    });
+
+    it("DOES take damage when being challenged (as defender)", () => {
+      const weakOpponent = createMockCharacter({
+        id: "hercules-test-weak-opponent",
+        name: "Weak Opponent",
+        cost: 1,
+        strength: 1,
+        willpower: 8,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: herculesMightyLeader, exerted: true, isDrying: false }],
+          deck: 5,
+        },
+        {
+          play: [{ card: weakOpponent, isDrying: false }],
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().challenge(weakOpponent, herculesMightyLeader),
+      ).toBeSuccessfulCommand();
+
+      // Hercules SHOULD take damage when being challenged as defender (1 damage, won't be banished)
+      expect(testEngine.asPlayerOne().getDamage(herculesMightyLeader)).toBe(weakOpponent.strength);
+      // Opponent should also take damage from Hercules
+      expect(testEngine.asPlayerTwo().getDamage(weakOpponent)).toBe(herculesMightyLeader.strength);
+    });
+
+    it("does NOT take damage from action effects", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [herculesMightyLeader],
+          deck: 5,
+        },
+        {
+          hand: [damageAction],
+          inkwell: damageAction.cost,
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().playCard(damageAction, { targets: [herculesMightyLeader] }),
+      ).toBeSuccessfulCommand();
+
+      // Hercules should NOT take damage from actions
+      expect(testEngine.asPlayerOne().getDamage(herculesMightyLeader)).toBe(0);
+    });
+  });
+
+  describe("EVER VALIANT - While this character is exerted, your other Hero characters can't be dealt damage unless they're being challenged.", () => {
+    it("protects other Hero characters from action damage when Hercules is exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: herculesMightyLeader, exerted: true, isDrying: false }, heroAlly],
+          deck: 5,
+        },
+        {
+          hand: [damageAction],
+          inkwell: damageAction.cost,
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().playCard(damageAction, { targets: [heroAlly] }),
+      ).toBeSuccessfulCommand();
+
+      // Hero ally should NOT take damage (protected by EVER VALIANT)
+      expect(testEngine.asPlayerOne().getDamage(heroAlly)).toBe(0);
+    });
+
+    it("does NOT protect non-Hero characters", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: herculesMightyLeader, exerted: true, isDrying: false }, nonHeroAlly],
+          deck: 5,
+        },
+        {
+          hand: [damageAction],
+          inkwell: damageAction.cost,
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().playCard(damageAction, { targets: [nonHeroAlly] }),
+      ).toBeSuccessfulCommand();
+
+      // Non-hero should take damage
+      expect(testEngine.asPlayerOne().getDamage(nonHeroAlly)).toBe(2);
+    });
+
+    it("does NOT protect Hero characters when Hercules is ready", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: herculesMightyLeader, isDrying: false }, heroAlly],
+          deck: 5,
+        },
+        {
+          hand: [damageAction],
+          inkwell: damageAction.cost,
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().playCard(damageAction, { targets: [heroAlly] }),
+      ).toBeSuccessfulCommand();
+
+      // Hero ally should take damage (Hercules is not exerted)
+      expect(testEngine.asPlayerOne().getDamage(heroAlly)).toBe(2);
+    });
+
+    it("allows protected Hero to take damage when being challenged", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: herculesMightyLeader, exerted: true, isDrying: false },
+            { card: heroAlly, exerted: true, isDrying: false },
+          ],
+          deck: 5,
+        },
+        {
+          play: [{ card: opponent, isDrying: false }],
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Opponent challenges hero ally (who is exerted and can be challenged)
+      expect(testEngine.asPlayerTwo().challenge(opponent, heroAlly)).toBeSuccessfulCommand();
+
+      // Hero ally SHOULD take damage when being challenged (exception to EVER VALIANT)
+      expect(testEngine.asPlayerOne().getDamage(heroAlly)).toBe(opponent.strength);
+    });
+  });
+});

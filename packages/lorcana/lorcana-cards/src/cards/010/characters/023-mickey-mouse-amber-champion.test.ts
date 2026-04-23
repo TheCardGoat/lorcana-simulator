@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   LorcanaMultiplayerTestEngine,
+  createMockAction,
   createMockCharacter,
   createMockSong,
 } from "@tcg/lorcana-engine/testing";
@@ -16,6 +17,26 @@ const rubyCharacter = createMockCharacter({
   willpower: 2,
   lore: 1,
   inkType: ["ruby"],
+});
+
+/** THE-971: moves a chosen character from play into its owner's inkwell (exerted, facedown). */
+const putChosenCharacterIntoInkwell = createMockAction({
+  id: "put-chosen-character-into-inkwell-mickey-test",
+  name: "Put Chosen Character Into Inkwell",
+  cost: 2,
+  text: "Put chosen character into their player's inkwell facedown and exerted.",
+  abilities: [
+    {
+      type: "action",
+      effect: {
+        type: "put-into-inkwell",
+        source: "chosen-character",
+        target: "CHOSEN_CHARACTER",
+        facedown: true,
+        exerted: true,
+      },
+    },
+  ],
 });
 
 describe("Mickey Mouse - Amber Champion", () => {
@@ -54,6 +75,64 @@ describe("Mickey Mouse - Amber Champion", () => {
 
       expect(shanti.willpower).toBe(shantiVillageGirl.willpower + 2);
       expect(gazelle.willpower).toBe(gazelleBalladSinger.willpower + 2);
+    });
+
+    it("THE-971: removes LEADING THE WAY after Mickey leaves play via put-into-inkwell", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [mickeyMouseAmberChampion, shantiVillageGirl],
+          deck: 1,
+        },
+        {
+          hand: [putChosenCharacterIntoInkwell],
+          inkwell: putChosenCharacterIntoInkwell.cost,
+          deck: 1,
+        },
+      );
+
+      const shantiBefore = testEngine.asPlayerOne().getCard(shantiVillageGirl);
+      expect(shantiBefore.willpower).toBe(shantiVillageGirl.willpower + 2);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().playCard(putChosenCharacterIntoInkwell, {
+          targets: [mickeyMouseAmberChampion],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(mickeyMouseAmberChampion)).toBe("inkwell");
+
+      const shantiAfter = testEngine.asPlayerOne().getCard(shantiVillageGirl);
+      expect(shantiAfter.willpower).toBe(shantiVillageGirl.willpower);
+    });
+
+    it("THE-971: banishes other Amber characters with lethal damage after Mickey enters inkwell", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [mickeyMouseAmberChampion, { card: shantiVillageGirl, damage: 6 }],
+          deck: 1,
+        },
+        {
+          hand: [putChosenCharacterIntoInkwell],
+          inkwell: putChosenCharacterIntoInkwell.cost,
+          deck: 1,
+        },
+      );
+
+      const shantiBefore = testEngine.asPlayerOne().getCard(shantiVillageGirl);
+      expect(shantiBefore.damage).toBe(6);
+      expect(shantiBefore.willpower).toBe(shantiVillageGirl.willpower + 2);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().playCard(putChosenCharacterIntoInkwell, {
+          targets: [mickeyMouseAmberChampion],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(shantiVillageGirl)).toBe("discard");
     });
   });
 

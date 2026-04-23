@@ -169,7 +169,8 @@ function evaluateSingleFilter(
       const comparison = String(filter.comparison ?? "eq");
       return compareOperator(cardCost, comparison, threshold);
     }
-    case "classification": {
+    case "classification":
+    case "has-classification": {
       if (typeof filter.classification !== "string") {
         return false;
       }
@@ -495,18 +496,11 @@ export function resolveScryEffect(
     }
   }
 
-  const opponentIds = ctx.framework.state.playerIds.filter(
-    (playerId) => playerId !== cardPlayed.playerId,
-  );
   if (lookedAtCards.length === 0) {
     return;
   }
 
-  // UX rule-bend: when revealAll is set, persist destination reveals so both
-  // players can see the scried cards until a full turn cycle passes.
-  const persistReveal = effect.revealAll === true;
   const currentStateID = ctx.framework.state.stateID ?? 0;
-  const ephemeralRevealIds: string[] = [];
 
   const destinationSelections = normalizeActionDestinationSelections(resolvedInput.destinations);
   const selectedByZone = new Map<string, CardInstanceId[][]>();
@@ -554,13 +548,14 @@ export function resolveScryEffect(
     }
 
     if (destination.reveal && cardsForDestination.length > 0) {
-      if (persistReveal) {
-        // Persistent reveal visible to all players, expires after ~1 full turn cycle
-        ctx.framework.zones.reveal(cardsForDestination, "all", {
-          stateID: currentStateID + 4,
-        });
-      } else if (opponentIds.length > 0) {
-        ephemeralRevealIds.push(ctx.framework.zones.reveal(cardsForDestination, opponentIds));
+      // Persist reveal windows (stateID-scoped) so opponents see identity after
+      // cards move zones; ephemeral reveals cleared at end of this resolver would
+      // disappear before projection. Card meta backs views that key off `revealed`.
+      ctx.framework.zones.reveal(cardsForDestination, "all", {
+        stateID: currentStateID + 4,
+      });
+      for (const cardId of cardsForDestination) {
+        ctx.cards.patchMeta(cardId, { revealed: true });
       }
     }
 
@@ -569,10 +564,6 @@ export function resolveScryEffect(
 
   // Always clear the initial scry reveal windows (private "look" windows)
   for (const revealId of initialRevealIds) {
-    ctx.framework.zones.clearReveal(revealId);
-  }
-  // Clear ephemeral destination reveals (non-persistent)
-  for (const revealId of ephemeralRevealIds) {
     ctx.framework.zones.clearReveal(revealId);
   }
 }

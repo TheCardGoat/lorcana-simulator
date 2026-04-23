@@ -63,15 +63,7 @@ export const elsaSpiritOfWinter: CharacterCard = {
             type: "restriction",
             restriction: "cant-ready",
             duration: "their-next-turn",
-            target: {
-              selector: "chosen",
-              count: {
-                upTo: 2,
-              },
-              owner: "any",
-              cardTypes: ["character"],
-              zones: ["play"],
-            },
+            target: { ref: "selected-all" },
           },
         ],
       },

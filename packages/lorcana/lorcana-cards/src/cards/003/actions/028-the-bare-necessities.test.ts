@@ -22,9 +22,7 @@ describe("The Bare Necessities", () => {
     );
     const healingGlowId = testEngine.findCardInstanceId(healingGlow, "hand", PLAYER_TWO);
 
-    expect(testEngine.asPlayerOne().playCardForPlayer(theBareNecessities, PLAYER_TWO).success).toBe(
-      true,
-    );
+    expect(testEngine.asPlayerOne().playCard(theBareNecessities).success).toBe(true);
     expect(testEngine.asPlayerOne().respondWith(healingGlowId)).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().getCardZone(healingGlowId)).toBe("discard");

@@ -113,6 +113,23 @@ describe("Donald Duck - Coin Collector", () => {
       expect(activateResult.success).toBe(false);
     });
 
+    it("granted ability text entry uses the ability id as title (enables UI button matching)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [donaldDuckCoinCollector],
+        play: [allyCharacter],
+        inkwell: donaldDuckCoinCollector.cost,
+        deck: 1,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(donaldDuckCoinCollector)).toBeSuccessfulCommand();
+
+      const allyId = testEngine.findCardInstanceId(allyCharacter, "play", PLAYER_ONE);
+      const grantedEntries = testEngine.asServer().getCard(allyId).grantedAbilityTextEntries;
+
+      expect(grantedEntries).toBeDefined();
+      expect(grantedEntries?.[0]?.title).toBe("draw-a-card-when-exerted");
+    });
+
     it("grants all other characters the ability, not just one", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [donaldDuckCoinCollector],

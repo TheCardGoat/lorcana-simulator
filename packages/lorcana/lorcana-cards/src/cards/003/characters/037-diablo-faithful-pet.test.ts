@@ -13,6 +13,11 @@ const maleficentCard = createMockCharacter({
   name: "Maleficent",
   cost: 1,
 });
+const nonMaleficentCard = createMockCharacter({
+  id: "diablo-not-maleficent",
+  name: "Aurora",
+  cost: 1,
+});
 
 describe("Diablo - Faithful Pet", () => {
   it("LOOKING FOR AURORA - looks at top card and can put it on bottom when a Maleficent character is played", () => {
@@ -26,7 +31,6 @@ describe("Diablo - Faithful Pet", () => {
     expect(testEngine.asPlayerOne().playCard(maleficentCard)).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
-    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
     expect(
       testEngine.asPlayerOne().resolvePendingByCard(diabloFaithfulPet),
     ).toBeSuccessfulCommand();
@@ -43,5 +47,17 @@ describe("Diablo - Faithful Pet", () => {
     // Verify order: topCard on top, secondCard on bottom
     const deckIds = testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE);
     expect(deckIds).toEqual([secondCard.id, topCard.id]);
+  });
+
+  it("LOOKING FOR AURORA - does not trigger when you play a non-Maleficent character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [nonMaleficentCard],
+      inkwell: nonMaleficentCard.cost,
+      deck: [topCard, secondCard],
+      play: [diabloFaithfulPet],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(nonMaleficentCard)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
   });
 });

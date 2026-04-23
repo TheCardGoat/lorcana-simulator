@@ -219,4 +219,33 @@ describe("Choice - Hades - Looking for a Deal", () => {
     );
     expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(2);
   });
+
+  it("lets the controller decline the optional when the opponent has no characters in play (THE-881)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [hadesLookingForADeal],
+        inkwell: hadesLookingForADeal.cost,
+        deck: 10,
+      },
+      {
+        play: [],
+        deck: 5,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(hadesLookingForADeal)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
+
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(hadesLookingForADeal, {
+        resolveOptional: false,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+    expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+  });
 });

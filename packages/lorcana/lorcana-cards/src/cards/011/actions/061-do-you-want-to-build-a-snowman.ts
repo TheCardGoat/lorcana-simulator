@@ -38,7 +38,11 @@ export const doYouWantToBuildASnowman: ActionCard = {
       text: "Chosen opponent chooses YES! or NO!: YES! You gain 3 lore. NO! They choose a character of theirs and put that card on the bottom of their deck.",
       effect: {
         type: "choice",
-        chooser: "CHOSEN_PLAYER",
+        chooser: "OPPONENT",
+        optionLabels: [
+          "YES! They gain 3 lore.",
+          "NO! Choose one of your characters and put it on the bottom of your deck.",
+        ],
         options: [
           {
             type: "gain-lore",

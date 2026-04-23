@@ -50,7 +50,14 @@ describe("Jiminy Cricket - Pinocchio's Conscience", () => {
     expect(
       testEngine.asPlayerOne().playCard(jiminyCricketPinocchiosConscience),
     ).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    // Per CRD 6.2.7: ability IS enqueued when trigger fires, Pinocchio condition checked at resolution
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(jiminyCricketPinocchiosConscience, {
+        resolveOptional: true,
+      }),
+    ).toBeSuccessfulCommand();
+    // No Pinocchio in play — no card drawn
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
   });
 });

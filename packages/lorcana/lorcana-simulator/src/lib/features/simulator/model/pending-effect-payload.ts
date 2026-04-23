@@ -133,9 +133,24 @@ export function getPendingEffectPayloadMeta(payload: unknown): PendingEffectPayl
   };
 }
 
+function unwrapOptionalEffect(
+  effectRecord: Record<string, unknown> | null,
+): Record<string, unknown> | null {
+  if (!effectRecord) {
+    return null;
+  }
+  // Unwrap optional wrappers so the inner effect type is surfaced (e.g. "move-damage" inside
+  // an optional triggered ability shows the two-slot prompt instead of being treated as "optional").
+  if (getRecordString(effectRecord, "type") === "optional") {
+    return asRecord(effectRecord.effect) ?? effectRecord;
+  }
+  return effectRecord;
+}
+
 export function getBagEffectPayloadMeta(payload: unknown): BagEffectPayloadMeta {
   const payloadRecord = asRecord(payload);
-  const effectRecord = asRecord(payloadRecord?.effect);
+  const rawEffectRecord = asRecord(payloadRecord?.effect);
+  const effectRecord = unwrapOptionalEffect(rawEffectRecord);
 
   return {
     kind: getRecordString(payloadRecord, "kind"),

@@ -16,14 +16,33 @@ export type UserRole = "user" | "donor" | "moderator" | "admin";
 export type SubscriptionTier = "tier1" | "tier2" | "tier3" | "tier4" | "tier5" | "tier6";
 
 /**
+ * Minimum tier required to use alternate art in matches.
+ * Players below this tier have their art selections silently ignored at match creation.
+ */
+export const ENCHANTED_TIER: SubscriptionTier = "tier4";
+
+/**
  * User type from Better Auth session
+ *
+ * SYNC NOTE: Better Auth's /api/auth/get-session only returns the fields it manages
+ * natively. Custom fields like `displayUsername` are NOT included in that response.
+ * They are merged in by `enrichUserFromApi()` in session.svelte.ts, which calls
+ * GET /v1/users/me after every session fetch. Keep this in mind when adding new
+ * custom fields — they must be added to both this type AND the enrichment function.
  */
 export interface AuthUser {
   id: string;
   email: string;
+  /** Primary identifier from the OAuth provider (e.g. Discord username). Read-only. */
   name: string;
   image?: string | null;
+  /** OAuth provider handle. Read-only. */
   username?: string | null;
+  /**
+   * User-chosen display name, editable via Account Settings.
+   * Stored in our DB (users.displayUsername), NOT in Better Auth's session.
+   * Populated by enrichUserFromApi() on session fetch, and patched optimistically on save.
+   */
   displayUsername?: string | null;
   emailVerified: boolean;
   role: UserRole;

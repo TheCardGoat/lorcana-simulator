@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { scarVengefulLion } from "..";
+import { scarVengefulLion } from "./093-scar-vengeful-lion";
 
 export const scarVengefulLionEnchanted: CharacterCard = {
   ...scarVengefulLion,

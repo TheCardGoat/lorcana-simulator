@@ -528,13 +528,14 @@ export class LorcanaMultiplayerTestEngine {
       if (Array.isArray(fixtureState.cardsUnder) && fixtureState.cardsUnder.length > 0) {
         nextMeta.cardsUnder = [...fixtureState.cardsUnder];
         for (const underCardId of fixtureState.cardsUnder) {
+          const underFixtureState = bundle.fixtureStateByInstanceId[underCardId];
           state.ctx.zones.private.cardMeta[underCardId] = {
             stackParentId: cardId,
             cardsUnder: undefined,
             state: undefined,
             damage: undefined,
             isDrying: undefined,
-            publicFaceState: undefined,
+            publicFaceState: underFixtureState?.publicFaceState,
             atLocationId: undefined,
             playedViaShift: undefined,
             playedCostType: undefined,
@@ -1024,6 +1025,10 @@ export class LorcanaMultiplayerTestEngine {
         return playerBoard.inkwell as CardInstanceId[];
       case "discard":
         return playerBoard.discard as CardInstanceId[];
+      case "limbo": {
+        const limboCards = authoritativeState.ctx.zones.private.zoneCards[`limbo:${normalized}`];
+        return Array.isArray(limboCards) ? (limboCards as CardInstanceId[]) : [];
+      }
       default:
         return [];
     }

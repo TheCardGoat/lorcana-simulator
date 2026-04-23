@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { webbyVanderquackMysteryEnthusiast } from "..";
+import { webbyVanderquackMysteryEnthusiast } from "./073-webby-vanderquack-mystery-enthusiast";
 
 export const webbyVanderquackMysteryEnthusiastEpic: CharacterCard = {
   ...webbyVanderquackMysteryEnthusiast,

@@ -39,8 +39,7 @@ export const pennyBoltsPerson: CharacterCard = {
           steps: [
             {
               type: "remove-damage",
-              amount: 2,
-              upTo: true,
+              amount: { type: "up-to", value: 2 },
               target: {
                 selector: "chosen",
                 count: 1,

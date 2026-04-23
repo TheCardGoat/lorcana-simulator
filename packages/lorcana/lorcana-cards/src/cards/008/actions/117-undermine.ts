@@ -27,7 +27,7 @@ export const undermine: ActionCard = {
             amount: 1,
             chosen: true,
             from: "hand",
-            target: "CHOSEN_PLAYER",
+            target: "OPPONENT",
             type: "discard",
           },
           {

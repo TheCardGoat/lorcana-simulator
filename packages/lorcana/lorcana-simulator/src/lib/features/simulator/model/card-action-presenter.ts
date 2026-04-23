@@ -18,6 +18,10 @@ const CARD_ACTION_ORDER: readonly CardActionCategoryId[] = [
   "activate-ability",
 ] as const;
 
+function hasKeyword(card: LorcanaCardSnapshot, keyword: string): boolean {
+  return (card.keywords ?? []).includes(keyword);
+}
+
 function getSourceCardId(move: ExecutableMoveEntry): string | null {
   switch (move.presentation.categoryId) {
     case "ink-card":
@@ -110,6 +114,14 @@ function getPlayActionDetail(
     return "Sing Together";
   }
 
+  if (params.cost === "sacrifice") {
+    return "Banish Item";
+  }
+
+  if (params.cost === "exert-items") {
+    return "Exert 4 Items";
+  }
+
   if (typeof card.playCost === "number") {
     return `${card.playCost} ink`;
   }
@@ -126,6 +138,8 @@ function buildEnabledCategoryAction(
   categoryId: CardActionCategoryId,
   moves: ExecutableMoveEntry[],
 ): CardActionView {
+  const costType = (moves[0]?.params as { cost?: string })?.cost;
+  const isAlternativeCost = costType === "sacrifice" || costType === "exert-items";
   const label =
     categoryId === "quest" && typeof card.loreValue === "number"
       ? `${m["sim.actions.label.quest"]({})} for ${card.loreValue} lore`
@@ -138,9 +152,10 @@ function buildEnabledCategoryAction(
     categoryId === "challenge" || categoryId === "move-to-location"
       ? "expand-on-click"
       : "execute-or-select";
+  const idSuffix = isAlternativeCost ? `:${costType}` : "";
 
   return {
-    id: `${categoryId}:${card.cardId}`,
+    id: `${categoryId}:${card.cardId}${idSuffix}`,
     cardId: card.cardId,
     categoryId,
     label,
@@ -224,10 +239,7 @@ function getChallengeBlockedReason(card: LorcanaCardSnapshot): string {
   return "No legal challenge targets right now.";
 }
 
-function getMoveBlockedReason(card: LorcanaCardSnapshot): string {
-  if (card.readyState === "exerted") {
-    return "This character is exerted.";
-  }
+function getMoveBlockedReason(_card: LorcanaCardSnapshot): string {
   return "No legal locations to move to right now.";
 }
 
@@ -288,7 +300,28 @@ export function buildCardActionViews(options: {
     const moves = groupedMoves.get(categoryId) ?? [];
 
     if (moves.length > 0) {
-      actions.push(buildEnabledCategoryAction(card, categoryId, moves));
+      // Split alternative cost play-card moves into separate action chips
+      if (categoryId === "play-card") {
+        const standardMoves = moves.filter((move) => {
+          const cost = (move.params as { cost?: unknown }).cost;
+          return cost !== "sacrifice" && cost !== "exert-items";
+        });
+        const alternativeCostMoves = moves.filter((move) => {
+          const cost = (move.params as { cost?: unknown }).cost;
+          return cost === "sacrifice" || cost === "exert-items";
+        });
+        if (standardMoves.length > 0) {
+          actions.push(buildEnabledCategoryAction(card, categoryId, standardMoves));
+        }
+        for (const altMove of alternativeCostMoves) {
+          actions.push(buildEnabledCategoryAction(card, categoryId, [altMove]));
+        }
+        if (standardMoves.length === 0 && alternativeCostMoves.length === 0) {
+          actions.push(buildEnabledCategoryAction(card, categoryId, moves));
+        }
+      } else {
+        actions.push(buildEnabledCategoryAction(card, categoryId, moves));
+      }
       continue;
     }
 
@@ -300,13 +333,17 @@ export function buildCardActionViews(options: {
     if (
       categoryId === "shift-card" &&
       (card.zoneId === "hand" || card.zoneId === "limbo") &&
-      typeof card.shiftInkCost === "number"
+      hasKeyword(card, "Shift")
     ) {
       actions.push(buildBlockedAction(card, categoryId, getShiftBlockedReason(card)));
       continue;
     }
 
-    if (categoryId === "ink-card" && card.zoneId === "hand" && card.inkable !== false) {
+    if (
+      categoryId === "ink-card" &&
+      (card.zoneId === "hand" || card.zoneId === "discard") &&
+      card.inkable !== false
+    ) {
       actions.push(buildBlockedAction(card, categoryId, "This card cannot be inked right now."));
       continue;
     }

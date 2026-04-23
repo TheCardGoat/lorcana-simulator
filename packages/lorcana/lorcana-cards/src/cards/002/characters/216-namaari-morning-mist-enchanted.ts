@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { namaariMorningMist } from "..";
+import { namaariMorningMist } from "./189-namaari-morning-mist";
 
 export const namaariMorningMistEnchanted: CharacterCard = {
   ...namaariMorningMist,

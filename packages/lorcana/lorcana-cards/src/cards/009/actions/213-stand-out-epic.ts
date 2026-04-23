@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { standOut } from "..";
+import { standOut } from "./094-stand-out";
 
 export const standOutEpic: ActionCard = {
   ...standOut,

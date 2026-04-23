@@ -35,10 +35,9 @@ export const rogerRadcliffeDogLover: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 1,
+          amount: { type: "up-to", value: 1 },
           target: "YOUR_PUPPY_CHARACTERS",
           type: "remove-damage",
-          upTo: true,
         },
         type: "optional",
       },

@@ -10,7 +10,7 @@
 
   const presetEntries = Object.entries(CARD_BACK_PRESETS) as [
     string,
-    { src: string; artOnlySrc: string },
+    { src: string; artOnlySrc: string } | null,
   ][];
 </script>
 
@@ -24,13 +24,19 @@
       aria-label="Select card sleeve: {id}"
       aria-pressed={selectedCardBack === id}
     >
-      <img
-        class="sleeve-picker-thumb"
-        src={preset.src}
-        alt={id}
-        loading="lazy"
-        draggable="false"
-      />
+      {#if preset}
+        <img
+          class="sleeve-picker-thumb"
+          src={preset.src}
+          alt={id}
+          loading="lazy"
+          draggable="false"
+        />
+      {:else}
+        <div class="sleeve-picker-none">
+          <span>None</span>
+        </div>
+      {/if}
     </button>
   {/each}
 </div>
@@ -71,5 +77,16 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  .sleeve-picker-none {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: #9fb2c9;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
   }
 </style>

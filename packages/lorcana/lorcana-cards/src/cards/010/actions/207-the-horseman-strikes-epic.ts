@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { theHorsemanStrikes } from "..";
+import { theHorsemanStrikes } from "./029-the-horseman-strikes";
 
 export const theHorsemanStrikesEpic: ActionCard = {
   ...theHorsemanStrikes,

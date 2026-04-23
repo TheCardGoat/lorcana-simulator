@@ -24,8 +24,9 @@ export const ursulaEricsBride: CharacterCard = {
   },
   text: [
     {
-      title:
-        "Shift: Discard a song card (You may discard a song card to play this on top of one of your characters named Ursula.)",
+      title: "Shift: Discard a song card ",
+      description:
+        "(You may discard a song card to play this on top of one of your characters named Ursula.)",
     },
     {
       title: "VANESSA'S DESIGN",

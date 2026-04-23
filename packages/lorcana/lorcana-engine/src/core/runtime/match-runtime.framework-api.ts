@@ -12,6 +12,7 @@ import type {
   RandomAPI,
   TimeOperationsAPI,
   TimeQueryAPI,
+  UndoAPI,
   ZoneOperationsAPI,
   ZoneQueryAPI,
 } from "./match-runtime.types";
@@ -93,6 +94,7 @@ export function createFrameworkWriteAPI(
   time: TimeOperationsAPI,
   random: RandomAPI,
   events: EventAPI,
+  undo: UndoAPI,
   cardsApi: CardRuntimeAPI,
   onMoveLog?: (entries: readonly ProjectedLogEntry[]) => void,
 ): FrameworkWriteAPI {
@@ -102,6 +104,7 @@ export function createFrameworkWriteAPI(
     time,
     random,
     events,
+    undo,
     cards: cardsApi,
     status: {
       snapshot: draft.ctx.status,

@@ -9,7 +9,6 @@ import type {
   MatchState,
   GameEvent,
   PublishedGameEvent,
-  GameLogEntry,
   LogMessage,
   MoveInput,
   CommandEnvelope,
@@ -102,15 +101,12 @@ export interface PacketAnimationContext {
   staticResources: MatchStaticResources;
 }
 
-export type ProjectedLogEntry = Pick<GameLogEntry, "category" | "visibility"> & {
+export type ProjectedLogEntry = {
+  category: "action" | "rules" | "system";
+  visibility: import("./types").LogVisibility;
   defaultMessage?: LogMessage;
   typedEntry?: LorcanaGameLogEntry;
 };
-
-export type LogProjector = (
-  event: PublishedGameEvent,
-  context: LogProjectionContext,
-) => ProjectedLogEntry[];
 
 export interface Player {
   id: string;
@@ -198,11 +194,26 @@ export interface FrameworkReadAPI {
   readonly cards: CardRuntimeReadAPI;
 }
 
+export type UndoBarrierReason =
+  | "draw"
+  | "mill"
+  | "mulligan"
+  | "reveal"
+  | "look-hidden-zone"
+  | "search-hidden-zone";
+
+export interface UndoAPI {
+  markBarrier: (reason: UndoBarrierReason) => void;
+  hasBarrier: () => boolean;
+  getReasons: () => readonly UndoBarrierReason[];
+}
+
 export interface FrameworkWriteAPI extends FrameworkReadAPI {
   readonly zones: ZoneOperationsAPI;
   readonly time: TimeOperationsAPI;
   readonly random: RandomAPI;
   readonly events: EventAPI;
+  readonly undo: UndoAPI;
   readonly status: {
     readonly snapshot: DeepReadonly<CtxStatus>;
     patch: (patch: Partial<CtxStatus>) => void;
@@ -222,7 +233,7 @@ export interface FrameworkWriteAPI extends FrameworkReadAPI {
   readonly cards: CardRuntimeAPI;
   readonly log: (entry: ProjectedLogEntry | readonly ProjectedLogEntry[]) => void;
   logPublicWithOverrides(entry: {
-    category: GameLogEntry["category"];
+    category: ProjectedLogEntry["category"];
     defaultMessage: LogMessage;
     overrides?: Record<string, LogMessage>;
   }): void;
@@ -294,6 +305,14 @@ export interface MatchRuntimeInit {
   matchID?: string;
   gameID?: string;
   choosingFirstPlayer?: string;
+  /**
+   * When true, skip `initializeMatchState()` and static resource building.
+   * Used by the deserialization path that will immediately call `loadState()`.
+   * Must be paired with `_prebuiltStaticResources`.
+   */
+  _skipInitialization?: boolean;
+  /** Pre-built static resources — avoids rebuilding from cardsMaps when `_skipInitialization` is set. */
+  _prebuiltStaticResources?: MatchStaticResources;
 }
 
 /** Runtime step definition for steps within phases. */
@@ -406,20 +425,17 @@ export interface CommandSuccess<T> {
   state: MatchState;
   patches: import("mutative").Patch[];
   gameEvents: PublishedGameEvent[];
-  logEntries: GameLogEntry[];
+  /** Unified move log entries produced by this command. */
+  moveLogs?: import("../../types/move-log").MoveLog[];
   processedCommand: CommandEnvelope;
   animations: PacketAnimation[];
   undoable: boolean;
-  /** Unified move log entries produced by this command. */
-  moveLogs?: import("../../types/move-log").MoveLog[];
 }
 
 export interface RuntimeSnapshot {
   publishedGameEventsLength: number;
-  gameLogLength: number;
   moveLogHistoryLength: number;
   nextGameEventSeq: number;
-  nextGameLogSeq: number;
   gameEnded: boolean;
   gameEndResult?: GameEndResult;
 }

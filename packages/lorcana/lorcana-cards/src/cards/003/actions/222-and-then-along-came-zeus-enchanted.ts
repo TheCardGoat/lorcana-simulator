@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { andThenAlongCameZeus } from "..";
+import { andThenAlongCameZeus } from "./195-and-then-along-came-zeus";
 
 export const andThenAlongCameZeusEnchanted: ActionCard = {
   ...andThenAlongCameZeus,

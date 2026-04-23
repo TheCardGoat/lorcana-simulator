@@ -119,8 +119,46 @@ describe("Shenzi - Hyena Pack Leader", () => {
         },
       );
 
+      const handBefore = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+
       expect(
         testEngine.asPlayerOne().challenge(shenziHyenaPackLeader, weakDefender),
+      ).toBeSuccessfulCommand();
+
+      // Per CRD 6.2.7: ability IS enqueued when trigger fires, location condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(shenziHyenaPackLeader, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      // Shenzi is not at a location — no card drawn
+      const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
+      expect(handAfter).toBe(handBefore);
+    });
+
+    it("does NOT draw a card when Shenzi (at a location) challenges a location", () => {
+      const opponentLocation = createMockLocation({
+        id: "shenzi-opponent-location",
+        name: "Opponent Location",
+        cost: 2,
+        moveCost: 1,
+        willpower: 8,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: shenziHyenaPackLeader, atLocation: testLocation }, testLocation],
+          deck: 5,
+        },
+        {
+          play: [opponentLocation],
+          deck: 2,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(shenziHyenaPackLeader, opponentLocation),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);

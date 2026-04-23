@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { wrongLever } from "..";
+import { wrongLever } from "./116-wrong-lever";
 
 export const wrongLeverEnchanted: ActionCard = {
   ...wrongLever,

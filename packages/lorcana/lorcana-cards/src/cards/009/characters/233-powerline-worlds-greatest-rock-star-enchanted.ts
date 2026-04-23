@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { powerlineWorldsGreatestRockStar } from "..";
+import { powerlineWorldsGreatestRockStar } from "./110-powerline-worlds-greatest-rock-star";
 
 export const powerlineWorldsGreatestRockStarEnchanted: CharacterCard = {
   ...powerlineWorldsGreatestRockStar,

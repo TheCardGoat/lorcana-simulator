@@ -1,58 +1,127 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   AnnaIceBreaker,
-//   DoloresMadrigalWithinEarshot,
-//   DonaldDuckFlusteredSorcerer,
-//   TheQueenJealousBeauty,
-// } from "@lorcanito/lorcana-engine/cards/007";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Anna - Ice Breaker", () => {
-//   It("Support (Whenever this character quests, you may add their {S} to another chosen character’s {S} this turn.)", async () => {
-//     Const testEngine = new TestEngine({
-//       Play: [annaIceBreaker],
-//     });
-//
-//     Const cardUnderTest = testEngine.getCardModel(annaIceBreaker);
-//     Expect(cardUnderTest.hasSupport).toBe(true);
-//   });
-//
-//   It("WINTER AMBUSH When you play this character, chosen opposing character can’t ready at the start of their next turn.", async () => {
-//     Const play = [
-//       DonaldDuckFlusteredSorcerer,
-//       TheQueenJealousBeauty,
-//       DoloresMadrigalWithinEarshot,
-//     ];
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: annaIceBreaker.cost,
-//         Hand: [annaIceBreaker],
-//         Deck: 5,
-//       },
-//       {
-//         Play: play,
-//         Deck: 5,
-//       },
-//     );
-//
-//     For (const card of play) {
-//       Await testEngine.tapCard(card);
-//     }
-//
-//     Await testEngine.playCard(annaIceBreaker, {
-//       Targets: [doloresMadrigalWithinEarshot],
-//     });
-//
-//     Await testEngine.passTurn();
-//
-//     Expect(testEngine.getCardModel(doloresMadrigalWithinEarshot).exerted).toBe(
-//       True,
-//     );
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { annaIceBreaker } from "./072-anna-ice-breaker";
+
+const opposingCharacter = createMockCharacter({
+  id: "anna-opposing-character",
+  name: "Opposing Character",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+});
+
+const allyCharacter = createMockCharacter({
+  id: "anna-ally-character",
+  name: "Ally Character",
+  cost: 3,
+  strength: 3,
+  willpower: 3,
+  lore: 1,
+});
+
+describe("Anna - Ice Breaker", () => {
+  describe("Support keyword", () => {
+    it("has the Support keyword", () => {
+      const abilities = annaIceBreaker.abilities ?? [];
+      const supportAbility = abilities.find(
+        (a) => a.type === "keyword" && "keyword" in a && a.keyword === "Support",
+      );
+      expect(supportAbility).toBeDefined();
+    });
+  });
+
+  describe("WINTER AMBUSH - chosen opposing character can't ready at the start of their next turn", () => {
+    it("applies cant-ready to chosen opposing character when played", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [annaIceBreaker],
+          inkwell: annaIceBreaker.cost,
+        },
+        {
+          play: [{ card: opposingCharacter, exerted: true }],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(annaIceBreaker, {
+          targets: [opposingCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().resolvePendingByCard(annaIceBreaker)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [opposingCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().isExerted(opposingCharacter)).toBe(true);
+    });
+
+    it("restriction expires after the opposing player's next turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [annaIceBreaker],
+          inkwell: annaIceBreaker.cost,
+        },
+        {
+          play: [{ card: opposingCharacter, exerted: true }],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(annaIceBreaker, {
+          targets: [opposingCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().resolvePendingByCard(annaIceBreaker)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [opposingCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().isExerted(opposingCharacter)).toBe(true);
+
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().isExerted(annaIceBreaker)).toBe(false);
+    });
+
+    it("only affects the chosen character, not other opposing characters", () => {
+      const otherOpposing = createMockCharacter({
+        id: "anna-other-opposing",
+        name: "Other Opposing Character",
+        cost: 2,
+        strength: 2,
+        willpower: 3,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [annaIceBreaker],
+          inkwell: annaIceBreaker.cost,
+        },
+        {
+          play: [
+            { card: opposingCharacter, exerted: true },
+            { card: otherOpposing, exerted: true },
+          ],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(annaIceBreaker, {
+          targets: [opposingCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().resolvePendingByCard(annaIceBreaker)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [opposingCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().isExerted(opposingCharacter)).toBe(true);
+      expect(testEngine.asPlayerTwo().isExerted(otherOpposing)).toBe(false);
+    });
+  });
+});

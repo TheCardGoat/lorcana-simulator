@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { minnieMouseMusketeerChampion } from "..";
+import { minnieMouseMusketeerChampion } from "./017-minnie-mouse-musketeer-champion";
 
 export const minnieMouseMusketeerChampionEnchanted: CharacterCard = {
   ...minnieMouseMusketeerChampion,

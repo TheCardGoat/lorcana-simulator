@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { boltSuperdog } from "..";
+import { boltSuperdog } from "./004-bolt-superdog";
 
 export const boltSuperdogEpic: CharacterCard = {
   ...boltSuperdog,

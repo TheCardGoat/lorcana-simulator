@@ -73,7 +73,7 @@ export function resolveDrawEffect(
   cardPlayed: CardPlayedPayload,
   effect: DrawEffect,
   resolvedInput: ResolvedDrawEffectInput,
-  eventSnapshot?: { lastEffectPerformed?: boolean },
+  eventSnapshot?: { lastEffectPerformed?: boolean; drawnCount?: number },
 ): void {
   const drawAmount =
     typeof resolvedInput.drawAmount === "number" &&
@@ -103,12 +103,6 @@ export function resolveDrawEffect(
     const drawnCardIds = Array.isArray(drawnCards) ? (drawnCards as CardInstanceId[]) : [];
     totalDrawn += drawnCardIds.length;
 
-    emitTriggeredLorcanaEvent(ctx, "cardsDrawn", {
-      playerId,
-      amount: drawnCardIds.length,
-      cardIds: drawnCardIds,
-    });
-
     drawnCardIds.forEach((cardId) => {
       recordCardDrawnThisTurn(ctx, playerId);
       emitTriggeredLorcanaEvent(
@@ -129,4 +123,7 @@ export function resolveDrawEffect(
     });
   }
   markLastEffectPerformed(eventSnapshot, totalDrawn > 0);
+  if (eventSnapshot && totalDrawn > 0) {
+    eventSnapshot.drawnCount = (eventSnapshot.drawnCount ?? 0) + totalDrawn;
+  }
 }

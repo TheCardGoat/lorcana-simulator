@@ -46,6 +46,9 @@ interface CardFaceProps {
 	damage?: number;
 	tagCollapseMode?: "none" | "hover-stack";
 	hideSupplementalBadges?: boolean;
+	/** Suppress the overlay stat pills. Used when stats are rendered
+	 * externally (e.g. in play-zone bands above/below the card). */
+	hideStatBadges?: boolean;
 }
 
 let {
@@ -68,6 +71,7 @@ let {
 	damage = 0,
 	tagCollapseMode = "none",
 	hideSupplementalBadges = false,
+	hideStatBadges = false,
 }: CardFaceProps = $props();
 
 // Image loading state
@@ -184,11 +188,30 @@ const tagGroups = $derived(
 const cardTags = $derived(tagGroups.tags.filter((tag) => tag.id !== "damage"));
 const statBadges = $derived(tagGroups.statBadges);
 const effectSourceGroups = $derived(groupEffectSources(card));
+// Corner stat badges scale with card size so they read at a glance on the
+// larger play-zone cards without overwhelming tiny hand/inkwell variants.
 const badgeSizeClass = $derived(
-	size === "micro" || size === "tiny" ? "h-5 w-5" : "h-6 w-6",
+	size === "micro" || size === "tiny"
+		? "h-5 w-5"
+		: size === "small" || size === "small-plus"
+			? "h-7 w-7"
+			: "h-9 w-9",
 );
 const badgeValueClass = $derived(
-	size === "micro" || size === "tiny" ? "text-[0.56rem]" : "text-[0.62rem]",
+	size === "micro" || size === "tiny"
+		? "text-[0.56rem]"
+		: size === "small" || size === "small-plus"
+			? "text-[0.72rem]"
+			: "text-[0.9rem]",
+);
+// Damage counter sits in the middle of the card. Upscale at readable sizes so
+// players can see damage state without squinting.
+const damageIndicatorClass = $derived(
+	size === "micro" || size === "tiny"
+		? "text-xs px-2 py-1"
+		: size === "small" || size === "small-plus"
+			? "text-base px-2.5 py-1"
+			: "text-2xl px-3.5 py-1.5",
 );
 </script>
 
@@ -264,26 +287,21 @@ const badgeValueClass = $derived(
         {/if}
       </div>
 
-      <!-- Damage Indicator -->
+      <!-- Damage Counter (community-standard center overlay) -->
       {#if damage > 0}
         <div
           data-testid="card-face-damage-indicator"
-          class="damage-indicator absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md bg-red-500/90 px-2 py-1 text-xs font-extrabold text-white shadow-[0_0_15px_rgba(239,68,68,0.6)] animate-damage-pulse"
+          class={`damage-indicator absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-md bg-red-500/90 font-extrabold text-white shadow-[0_0_15px_rgba(239,68,68,0.6)] ${damageIndicatorClass}`}
         >
           <span>-{damage}</span>
         </div>
       {/if}
 
-      {#if effectSourceGroups.length > 0}
-        <div class="pointer-events-none absolute right-1.5 top-1.5 z-20">
-          <CardGrantSourceBadges sources={effectSourceGroups.slice(0, 2)} />
-        </div>
-      {/if}
-
-      {#if statBadges.length > 0}
+      <!-- Stat badges (top-right corner, stacked: strength → willpower → lore) -->
+      {#if !hideStatBadges && statBadges.length > 0}
         <div
           data-testid="card-face-stat-badges"
-          class="stat-badges-overlap pointer-events-none absolute right-1.5 bottom-1.5 z-20 flex max-w-[50%] flex-row items-end justify-end"
+          class="pointer-events-none absolute top-1.5 right-1.5 z-[21] flex flex-col items-end gap-1"
         >
           {#each statBadges as badge (badge.id)}
             <Tooltip.Root>
@@ -330,6 +348,7 @@ const badgeValueClass = $derived(
           />
         </div>
       {/if}
+
     </div>
 
   <!-- Selection Indicator -->
@@ -380,9 +399,9 @@ const badgeValueClass = $derived(
       0 4px 12px rgba(0, 0, 0, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
     transition:
-      filter 150ms ease-out,
-      box-shadow 150ms ease-out,
-      border-color 150ms ease-out;
+      filter 75ms ease-out,
+      box-shadow 75ms ease-out,
+      border-color 75ms ease-out;
   }
 
   .card-image-wrapper {
@@ -469,7 +488,7 @@ const badgeValueClass = $derived(
 
   /* Playable State */
   .card-face--playable .card-frame {
-    border-color: var(--playable-highlight);
+    border: 2px solid var(--playable-highlight);
     box-shadow:
       0 4px 12px rgba(0, 0, 0, 0.3),
       0 0 15px var(--playable-glow);
@@ -482,7 +501,7 @@ const badgeValueClass = $derived(
 
   /* Questing State */
   .card-face--questing .card-frame {
-    animation: questing-pulse 2s ease-in-out infinite;
+    animation: questing-pulse 1s ease-in-out infinite;
   }
 
   @keyframes questing-pulse {
@@ -544,7 +563,4 @@ const badgeValueClass = $derived(
     }
   }
 
-  .stat-badges-overlap :global(> * + *) {
-    margin-left: -6px;
-  }
 </style>

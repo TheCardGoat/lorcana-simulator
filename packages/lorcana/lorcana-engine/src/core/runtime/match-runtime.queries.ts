@@ -2,7 +2,7 @@
  * MatchRuntime Query Operations
  */
 
-import type { GameLogEntry, MatchState, PublishedGameEvent } from "./types";
+import type { MatchState, PublishedGameEvent } from "./types";
 import type {
   ViewRoleContext,
   FilteredMatchView,
@@ -25,7 +25,6 @@ export interface QueryContext<Moves extends MoveRecord = MoveRecord> {
   staticResources: MatchStaticResources;
   gameEnded: boolean;
   gameEvents: PublishedGameEvent[];
-  gameLog: GameLogEntry[];
 }
 
 export function getState(state: MatchState): MatchState {

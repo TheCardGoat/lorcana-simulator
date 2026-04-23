@@ -33,13 +33,15 @@ const { all009Cards } = cards009Module as typeof import("@tcg/lorcana-cards/card
 const { all010Cards } = cards010Module as typeof import("@tcg/lorcana-cards/cards/010");
 const { all011Cards } = cards011Module as typeof import("@tcg/lorcana-cards/cards/011");
 
+type SerializedCardUnderEntry = string | { card: string; publicFaceState?: "faceUp" | "faceDown" };
+
 type SerializedTestFixtureCardState = Omit<
   TestFixtureCardState,
   "card" | "cardsUnder" | "atLocation"
 > & {
   atLocation?: string;
   card: string;
-  cardsUnder?: string[];
+  cardsUnder?: SerializedCardUnderEntry[];
 };
 
 type SerializedTestFixtureCardEntry = string | SerializedTestFixtureCardState;
@@ -105,7 +107,18 @@ function serializeFixtureEntry(entry: TestFixtureCardEntry): SerializedTestFixtu
   return {
     atLocation: entry.atLocation ? serializeCardInput(entry.atLocation) : undefined,
     card: serializeCardInput(entry.card),
-    cardsUnder: entry.cardsUnder?.map(serializeCardInput),
+    cardsUnder: entry.cardsUnder?.map((underEntry) => {
+      if ("card" in underEntry && !("id" in underEntry)) {
+        const typed = underEntry as {
+          card: TestCardInput;
+          publicFaceState?: "faceUp" | "faceDown";
+        };
+        return typed.publicFaceState
+          ? { card: serializeCardInput(typed.card), publicFaceState: typed.publicFaceState }
+          : serializeCardInput(typed.card);
+      }
+      return serializeCardInput(underEntry as TestCardInput);
+    }),
     damage: entry.damage,
     exerted: entry.exerted,
     isDrying: entry.isDrying,
@@ -166,7 +179,15 @@ function deserializeFixtureEntry(entry: SerializedTestFixtureCardEntry): TestFix
   return {
     atLocation: entry.atLocation ? resolveCardById(entry.atLocation) : undefined,
     card: resolveCardById(entry.card),
-    cardsUnder: entry.cardsUnder?.map(resolveCardById),
+    cardsUnder: entry.cardsUnder?.map((underEntry) => {
+      if (typeof underEntry === "object" && underEntry !== null) {
+        return {
+          card: resolveCardById(underEntry.card),
+          publicFaceState: underEntry.publicFaceState,
+        };
+      }
+      return resolveCardById(underEntry);
+    }),
     damage: entry.damage,
     exerted: entry.exerted,
     isDrying: entry.isDrying,

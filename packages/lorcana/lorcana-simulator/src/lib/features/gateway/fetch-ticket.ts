@@ -1,20 +1,20 @@
 import { getApiOrigin } from "$lib/config/public-url-config.js";
+import { requestJson } from "$lib/data/transport/http-client.js";
 
-/**
- * Fetch a short-lived WebSocket ticket from the general API.
- *
- * Requires an active session cookie (Better Auth).
- * Returns the ticket string, or null if the request fails.
- */
-export async function fetchGatewayTicket(): Promise<string | null> {
+export interface GatewayTicketResult {
+  ticket: string;
+  authToken: string;
+}
+
+export async function fetchGatewayTicket(): Promise<GatewayTicketResult | null> {
   try {
-    const res = await fetch(`${getApiOrigin()}/v1/gateway/ticket`, {
-      method: "POST",
-      credentials: "include",
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { ticket: string };
-    return data.ticket;
+    return await requestJson<GatewayTicketResult>(
+      `${getApiOrigin()}/v1/gateway/ticket`,
+      {
+        method: "POST",
+      },
+      "Failed to fetch gateway ticket",
+    );
   } catch {
     return null;
   }

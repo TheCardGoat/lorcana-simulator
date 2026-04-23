@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { grandmotherWillowAncientAdvisor } from "..";
+import { grandmotherWillowAncientAdvisor } from "./013-grandmother-willow-ancient-advisor";
 
 export const grandmotherWillowAncientAdvisorEpic: CharacterCard = {
   ...grandmotherWillowAncientAdvisor,

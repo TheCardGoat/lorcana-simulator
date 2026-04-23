@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { goofyGalumphingGumshoe } from "..";
+import { goofyGalumphingGumshoe } from "./024-goofy-galumphing-gumshoe";
 
 export const goofyGalumphingGumshoeEnchanted: CharacterCard = {
   ...goofyGalumphingGumshoe,

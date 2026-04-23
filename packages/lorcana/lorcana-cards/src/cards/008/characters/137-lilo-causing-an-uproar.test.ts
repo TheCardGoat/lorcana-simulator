@@ -30,6 +30,26 @@ const action4 = createMockAction({
   cost: 1,
 });
 
+// An action that plays another action for free from hand (simulates Robin Hood Sharpshooter's
+// MY GREATEST PERFORMANCE or similar effects that let you play actions for free).
+const actionThatPlaysFreeAction = createMockAction({
+  id: "lilo-uproar-play-free-action",
+  name: "Play Free Action",
+  cost: 1,
+  abilities: [
+    {
+      id: "lilo-uproar-play-free-action-1",
+      type: "action" as const,
+      effect: {
+        type: "play-card" as const,
+        from: "hand" as const,
+        cardType: "action" as const,
+        cost: "free" as const,
+      },
+    },
+  ],
+});
+
 const exertedCharacter = createMockCharacter({
   id: "lilo-uproar-exerted-char",
   name: "Exerted Character",
@@ -84,6 +104,24 @@ describe("Lilo - Causing an Uproar", () => {
 
       expect(testEngine.asPlayerOne().playCard(liloCausingAnUproar).success).toBe(false);
       expect(testEngine.asPlayerOne().getCardZone(liloCausingAnUproar)).toBe("hand");
+    });
+
+    it("counts actions played for free via effects toward the 3-action threshold", () => {
+      // Bug report: Player played 2 actions with ink and 1 for free via an ability,
+      // but Lilo was still not free. Free-played actions must count toward the metric.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [liloCausingAnUproar, action1, actionThatPlaysFreeAction, action3],
+        inkwell: 3,
+        deck: 2,
+      });
+
+      // Play 2 actions with ink (action1 + actionThatPlaysFreeAction which also plays action3 for free)
+      expect(testEngine.asPlayerOne().playCard(action1)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().playCard(actionThatPlaysFreeAction)).toBeSuccessfulCommand();
+
+      // At this point 3 actions have been played: action1, actionThatPlaysFreeAction, and action3 (free)
+      expect(testEngine.asPlayerOne().canPlayCard(liloCausingAnUproar)).toBe(true);
+      expect(testEngine.asPlayerOne().playCard(liloCausingAnUproar)).toBeSuccessfulCommand();
     });
 
     it("can still be played at full cost when fewer than 3 actions have been played", () => {

@@ -28,14 +28,12 @@ export const shesYourPerson: ActionCard = {
         options: [
           {
             type: "remove-damage",
-            amount: 3,
-            upTo: true,
+            amount: { type: "up-to", value: 3 },
             target: "CHOSEN_CHARACTER",
           },
           {
             type: "remove-damage",
-            amount: 3,
-            upTo: true,
+            amount: { type: "up-to", value: 3 },
             target: {
               selector: "all",
               count: "all",

@@ -62,7 +62,7 @@ export const darkwingsChairSet: ItemCard = {
         banishSelf: true,
       },
       effect: {
-        amount: 2,
+        amount: { type: "up-to", value: 2 },
         selfReplacement: {
           condition: {
             type: "selected-target-name",
@@ -78,7 +78,6 @@ export const darkwingsChairSet: ItemCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       text: "SUDDEN SPIN {E}, Banish this item — Remove up to 2 damage from chosen character. If a character named Darkwing Duck is chosen, remove up to 4 damage instead.",
     },

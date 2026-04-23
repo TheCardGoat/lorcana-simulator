@@ -5,7 +5,7 @@ import type {
   MoveInput,
   PacketAnimation,
 } from "../runtime/types";
-import type { DeepReadonly, ZoneConfig } from "../runtime/match-runtime.types";
+import type { CommandSuccess, DeepReadonly, ZoneConfig } from "../runtime/match-runtime.types";
 
 export type EngineActorContext = {
   role: "player" | "spectator" | "judge";
@@ -22,6 +22,7 @@ export type EngineMoveExecutionResult = {
   success: boolean;
   reason?: string;
   code?: string;
+  result?: CommandSuccess<unknown>;
 };
 
 export interface EnginePacketUpdate {
@@ -38,6 +39,12 @@ export interface EngineViewUpdateMetadata {
   sourceAuthority: EngineViewUpdateSourceAuthority;
   commandID?: string;
   phase: EngineViewUpdatePhase;
+}
+
+export interface ProtocolError {
+  code: string;
+  message: string;
+  resyncRequired: boolean;
 }
 
 export type EngineMoveHistoryEntry = {
@@ -136,4 +143,6 @@ export interface TransportAwareEngine extends GameEngine {
       packet: EnginePacketUpdate | null,
     ) => void,
   ): () => void;
+
+  onProtocolError?(handler: (error: ProtocolError) => void): () => void;
 }

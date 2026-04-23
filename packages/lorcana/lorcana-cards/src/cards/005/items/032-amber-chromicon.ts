@@ -30,10 +30,9 @@ export const amberChromicon: ItemCard = {
         exert: true,
       },
       effect: {
-        amount: 1,
+        amount: { type: "up-to", value: 1 },
         target: "YOUR_CHARACTERS",
         type: "remove-damage",
-        upTo: true,
       },
       id: "1yv-1",
       name: "AMBER LIGHT",

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { robinHoodSharpshooter } from "..";
+import { robinHoodSharpshooter } from "./118-robin-hood-sharpshooter";
 
 export const robinHoodSharpshooterEnchanted: CharacterCard = {
   ...robinHoodSharpshooter,

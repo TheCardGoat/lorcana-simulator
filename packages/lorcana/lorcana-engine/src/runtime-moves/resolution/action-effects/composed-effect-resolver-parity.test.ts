@@ -148,6 +148,7 @@ function createResolverContext(args?: {
         ...nextMeta,
       };
     },
+    getMeta: (cardId: CardInstanceId) => cardMeta[cardId],
     clearMeta: (cardId: CardInstanceId) => {
       delete cardMeta[cardId];
     },
@@ -467,6 +468,135 @@ describe("resolveActionEffect parity", () => {
     expect(state.zoneCards[`play:${PLAYER_ONE}`] ?? []).toEqual([]);
     expect(state.zoneCards[`discard:${PLAYER_ONE}`]).toEqual([otherSong]);
     expect(state.zoneCards[`deck:${PLAYER_ONE}`]).toEqual([exactSong]);
+  });
+
+  it("suspends play-card from discard when multiple characters qualify and no target is chosen", () => {
+    const source = "source" as CardInstanceId;
+    const charA = "char-a" as CardInstanceId;
+    const charB = "char-b" as CardInstanceId;
+    const { ctx } = createResolverContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [charA]: { id: "char-a", cardType: "character", cost: 1, strength: 1, willpower: 1 },
+        [charB]: { id: "char-b", cardType: "character", cost: 2, strength: 2, willpower: 2 },
+      },
+      zoneCards: {
+        [`discard:${PLAYER_ONE}`]: [charA, charB],
+      },
+    });
+
+    const result = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "play-card",
+        from: "discard",
+        cost: "free",
+        cardType: "character",
+      },
+      {},
+    );
+
+    expect(result.status).toBe("suspended");
+    if (result.status === "suspended") {
+      const sel = result.pendingEffect.selectionContext;
+      expect(sel?.kind === "target-selection" ? sel.allowedZones : undefined).toEqual(["discard"]);
+    }
+  });
+
+  it("resolves play-card from discard when multiple characters qualify and an explicit target is chosen", () => {
+    const source = "source" as CardInstanceId;
+    const charA = "char-a" as CardInstanceId;
+    const charB = "char-b" as CardInstanceId;
+    const { ctx, state } = createResolverContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [charA]: { id: "char-a", cardType: "character", cost: 1, strength: 1, willpower: 1 },
+        [charB]: { id: "char-b", cardType: "character", cost: 2, strength: 2, willpower: 2 },
+      },
+      zoneCards: {
+        [`discard:${PLAYER_ONE}`]: [charA, charB],
+      },
+    });
+
+    const result = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "play-card",
+        from: "discard",
+        cost: "free",
+        cardType: "character",
+      },
+      { targets: [charA] },
+    );
+
+    expect(result.status).not.toBe("suspended");
+    expect(state.zoneCards[`play:${PLAYER_ONE}`]).toContain(charA);
+    expect(state.zoneCards[`discard:${PLAYER_ONE}`]).toEqual([charB]);
+  });
+
+  it("suspends play-card from discard when exactly ONE character qualifies and no target is chosen", () => {
+    const source = "source" as CardInstanceId;
+    const charA = "char-a" as CardInstanceId;
+    const { ctx } = createResolverContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [charA]: { id: "char-a", cardType: "character", cost: 1, strength: 1, willpower: 1 },
+      },
+      zoneCards: {
+        [`discard:${PLAYER_ONE}`]: [charA],
+      },
+    });
+
+    const result = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "play-card",
+        from: "discard",
+        cost: "free",
+        cardType: "character",
+      },
+      {},
+    );
+
+    expect(result.status).toBe("suspended");
+    if (result.status === "suspended") {
+      const sel = result.pendingEffect.selectionContext;
+      expect(sel?.kind === "target-selection" ? sel.allowedZones : undefined).toEqual(["discard"]);
+      expect(sel?.kind === "target-selection" ? sel.cardCandidateIds : undefined).toEqual([charA]);
+    }
+  });
+
+  it("resolves play-card from discard when exactly ONE character qualifies and an explicit target is chosen", () => {
+    const source = "source" as CardInstanceId;
+    const charA = "char-a" as CardInstanceId;
+    const { ctx, state } = createResolverContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [charA]: { id: "char-a", cardType: "character", cost: 1, strength: 1, willpower: 1 },
+      },
+      zoneCards: {
+        [`discard:${PLAYER_ONE}`]: [charA],
+      },
+    });
+
+    const result = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "play-card",
+        from: "discard",
+        cost: "free",
+        cardType: "character",
+      },
+      { targets: [charA] },
+    );
+
+    expect(result.status).not.toBe("suspended");
+    expect(state.zoneCards[`play:${PLAYER_ONE}`]).toContain(charA);
+    expect(state.zoneCards[`discard:${PLAYER_ONE}`]).toEqual([]);
   });
 
   it("batches replayed action play events until every targeted player card is in play", () => {

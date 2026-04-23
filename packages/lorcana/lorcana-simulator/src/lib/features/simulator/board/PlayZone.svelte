@@ -10,9 +10,11 @@
   import { EmptyState, DropIndicator } from "@/design-system/simulator/display/index.js";
   import ZoneCounter from "@/design-system/simulator/display/ZoneCounter.svelte";
   import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+  import {ZONE_IMAGE_FORMATS} from "@/design-system/simulator/cards/card-image-format.js";
   import HotkeyCardBadge from "@/features/simulator/hotkeys/HotkeyCardBadge.svelte";
   import { buildOrderedPlayZoneEntries } from "@/features/simulator/hotkeys/board-order.js";
   import PlayZoneLocationEntry from "./PlayZoneLocationEntry.svelte";
+  import PlayZoneCardBands from "./PlayZoneCardBands.svelte";
   import {
     createCardAnchorId,
     createZoneAnchorId,
@@ -22,6 +24,10 @@
     useLorcanaSidebarPresenter,
   } from "@/features/simulator/context/game-context.svelte.js";
   import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
+  import {
+    handlePlayZoneLocationEntryDirectSelection,
+    isPlayZoneLocationEntryDirectSelectionMode,
+  } from "./play-zone-location-entry-interactions.js";
   import {
     createOptionalDroppable,
     useLorcanaSimulatorDndContext,
@@ -88,7 +94,25 @@
     },
   });
 
+  const isDirectSelectionMode = $derived(
+    isPlayZoneLocationEntryDirectSelectionMode(sidebar.actionSelectionSession),
+  );
+
+  function handleDirectCardSelection(selectedCard: LorcanaCardSnapshot, event: MouseEvent): void {
+    handlePlayZoneLocationEntryDirectSelection({
+      card: selectedCard,
+      event,
+      directSelectionMode: isDirectSelectionMode,
+      onSelect: (nextCard) => sidebar.handleActionSessionCardSelection(nextCard),
+    });
+  }
+
+  const showZoneCounters = $derived(board.showZoneCounters);
+  // Sparse lane (few cards, lots of empty space) triggers a width multiplier
+  // so lone cards grow to fill the zone.
+  const isSparse = $derived(cards.length > 0 && cards.length <= 4);
   const zoneLabel = $derived(label || m["sim.zone.play"]({}));
+
   const playerLabel = $derived(
     playerSide === "playerOne"
       ? m["sim.player.side.playerOne"]({})
@@ -103,6 +127,7 @@
   class:board-zone--drop-valid={dropState === "valid"}
   class:board-zone--drop-invalid={dropState === "invalid"}
   class:board-zone--challenge-mode={challengeMode && isOpponent}
+  class:board-zone--sparse={isSparse}
   data-layout-mode={layoutMode}
   data-player-seat={seat}
   data-player-side={playerSide}
@@ -112,11 +137,13 @@
   aria-label={m["sim.playZone.aria"]({ label: zoneLabel, player: playerLabel })}
   {@attach droppable.attach}
 >
-  <ZoneCounter
-    count={cards.length}
-    corner={seat === "bottom" ? "bottom-right" : "top-right"}
-    ariaLabel={`${cards.length} cards in ${zoneLabel}`}
-  />
+  {#if showZoneCounters}
+    <ZoneCounter
+      count={cards.length}
+      corner={seat === "bottom" ? "bottom-right" : "top-right"}
+      ariaLabel={`${cards.length} cards in ${zoneLabel}`}
+    />
+  {/if}
 
   <div class="cards-container">
     <div class="cards-scroll-area" data-board-scroll-sync>
@@ -149,23 +176,30 @@
                   {#if hotkeyBindings.has(entry.card.cardId)}
                     <HotkeyCardBadge hotkey={hotkeyBindings.get(entry.card.cardId)!} />
                   {/if}
-                  <LorcanaCard
-                    card={entry.card}
-                    useContainerSize
-                    imageFormat="art_and_name"
-                    hoverShowActions
-                    isSelected={
-                      sidebar.getActionSessionCardState(entry.card.cardId).isSelected ||
-                      simulatorCardContext.previewCard?.cardId === entry.card.cardId
-                    }
-                    isMasked={isMasked}
-                    isPlayable={sidebar.getActionSessionCardState(entry.card.cardId).isSelectable}
-                    isInvalidTarget={sidebar.getActionSessionCardState(entry.card.cardId).isInvalidTarget}
-                    isBanishedPreview={sidebar.getChallengePreviewCardState(entry.card.cardId).wouldBeBanished}
-                    isExerted={entry.card.readyState === "exerted"}
-                    isDrying={entry.card.isDrying ?? false}
-                    damage={entry.card.damage ?? 0}
-                  />
+                  <PlayZoneCardBands card={entry.card} section="top" />
+                  <div class="card-slot__card-wrapper">
+                    <LorcanaCard
+                      card={entry.card}
+                      useContainerSize
+                      imageFormat={ZONE_IMAGE_FORMATS.play}
+                      hoverShowActions
+                      hideStatBadges
+                      hideSupplementalBadges
+                      onSelect={(selectedCard, event) => handleDirectCardSelection(selectedCard, event)}
+                      isSelected={
+                        sidebar.getActionSessionCardState(entry.card.cardId).isSelected ||
+                        simulatorCardContext.previewCard?.cardId === entry.card.cardId
+                      }
+                      isMasked={isMasked}
+                      isPlayable={sidebar.getActionSessionCardState(entry.card.cardId).isSelectable}
+                      isInvalidTarget={sidebar.getActionSessionCardState(entry.card.cardId).isInvalidTarget}
+                      isBanishedPreview={sidebar.getChallengePreviewCardState(entry.card.cardId).wouldBeBanished}
+                      isExerted={entry.card.readyState === "exerted"}
+                      isDrying={entry.card.isDrying ?? false}
+                      damage={entry.card.damage ?? 0}
+                    />
+                  </div>
+                  <PlayZoneCardBands card={entry.card} section="bottom" />
                 </div>
               {/if}
             {/each}
@@ -191,22 +225,7 @@
     --play-scrollbar-size: 10px;
     --play-scrollbar-thumb: rgba(143, 211, 255, 0.65);
     --play-scrollbar-track: rgba(7, 18, 31, 0.36);
-    --zone-card-width:
-      min(
-        var(--sim-play-card-width, 180px),
-        calc(
-          (
-            100cqh
-            - (var(--play-zone-padding) * 2)
-            - var(--play-grid-gap)
-          ) / 2 * var(--card-aspect)
-        )
-      );
-    --zone-card-height: calc(var(--zone-card-width) / var(--card-aspect));
-
-    /* Container context for zone cards */
-    container-type: size;
-    container-name: play-zone;
+    --sparse-mult: 1;
 
     position: relative;
     width: 100%;
@@ -261,6 +280,12 @@
   }
 
   .cards-scroll-area {
+    /* The scroll-area is the card-sizing authority. Its height is dictated
+       purely by the flex parent (no feedback back into card size), so the
+       zone can never push itself taller than its allocated lane space. */
+    container-type: size;
+    container-name: play-zone;
+
     flex: 1;
     display: flex;
     align-items: stretch;
@@ -274,6 +299,50 @@
     scrollbar-gutter: stable;
     scrollbar-width: auto;
     scrollbar-color: var(--play-scrollbar-thumb) var(--play-scrollbar-track);
+
+    /* Each grid cell (.card-slot) is laid out as [top band][card][bottom band].
+       Bands have independent heights: status tags on top are small, stat
+       pills on the bottom are larger for readability. Card art keeps its
+       natural aspect; bands are fixed-height strips for external badges. */
+    /* Bands reserve a fixed vertical allowance (max pill size). Pills
+       inside scale proportionally with the resolved card-art width so
+       they don't dwarf the art on narrow viewports. */
+    --play-band-height-top: 2.5rem;
+    --play-band-height-bottom: 2.5rem;
+    /* Bands overlap into the card art by this fraction of their own height.
+       1 = fully overlap (slot = card art height), 0 = no overlap (slot =
+       card + full bands). 0.5 pulls each band halfway onto the card edge. */
+    --play-band-overlap: 0.5;
+    --play-band-visible-top: calc(var(--play-band-height-top) * (1 - var(--play-band-overlap)));
+    --play-band-visible-bottom: calc(var(--play-band-height-bottom) * (1 - var(--play-band-overlap)));
+    --card-art-height: min(
+      calc(
+        100cqh
+        - var(--play-card-effect-bleed) * 2
+        - var(--play-grid-gap)
+        - var(--play-band-visible-top)
+        - var(--play-band-visible-bottom)
+      ),
+      calc(var(--sim-play-card-width, 220px) * var(--sparse-mult) / var(--card-aspect))
+    );
+    --card-art-width: calc(var(--card-art-height) * var(--card-aspect));
+    --slot-height: calc(
+      var(--card-art-height) + var(--play-band-visible-top) + var(--play-band-visible-bottom)
+    );
+    --slot-width: var(--card-art-width);
+
+    /* Pills scale with the resolved card-art width. Declared after
+       --card-art-width so there's no dependency cycle with the band
+       heights above. */
+    --play-pill-size: clamp(1.25rem, calc(var(--card-art-width) * 0.22), 2.5rem);
+    --play-pill-text-size: calc(var(--play-pill-size) * 0.44);
+    --play-pill-icon-size: calc(var(--play-pill-size) * 0.55);
+
+    /* LorcanaCard reads these via useContainerSize. Scoped to the card
+       wrapper inside the slot so it fills only the card-art region, not
+       the whole slot (which includes the bands). */
+    --zone-card-width: var(--card-art-width);
+    --zone-card-height: var(--card-art-height);
   }
 
   .cards-scroll-area::-webkit-scrollbar {
@@ -295,13 +364,27 @@
   .cards-grid {
     display: grid;
     grid-template-columns:
-      repeat(auto-fit, minmax(min(100%, var(--zone-card-width)), var(--zone-card-width)));
+      repeat(auto-fit, minmax(min(100%, var(--slot-width)), var(--slot-width)));
     justify-content: center;
     align-content: start;
     gap: var(--play-grid-gap);
     padding: 0 0.5rem 0.5rem;
     width: 100%;
     min-height: min-content;
+  }
+
+  /* Sparse state (1–4 cards): raise the width cap so cards grow to fill
+     the lane instead of floating in empty space. The height clamp still
+     applies, so cards won't overflow vertically. */
+  .board-zone--sparse {
+    --sparse-mult: 1.5;
+  }
+
+  .card-slot__card-wrapper {
+    position: relative;
+    width: var(--card-art-width);
+    height: var(--card-art-height);
+    flex: 0 0 auto;
   }
 
   .cards-content {
@@ -322,70 +405,23 @@
   }
 
   .card-slot {
-    --zone-card-height: calc(var(--zone-card-width) / var(--card-aspect));
     position: relative;
-    width: var(--zone-card-width);
-    height: var(--zone-card-height);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: var(--slot-width);
+    height: var(--slot-height);
   }
 
-  /* Responsive via container queries */
-  @container play-zone (max-width: 400px) {
-    .board-zone {
-      --play-grid-gap: 0.5rem;
-    }
-
-    .card-slot {
-      --zone-card-width:
-        min(
-          clamp(60px, 35cqw, 130px),
-          calc(
-            (
-              100cqh
-              - (var(--play-zone-padding) * 2)
-              - var(--play-grid-gap)
-            ) / 2 * var(--card-aspect)
-          )
-        );
-    }
-  }
-
-  @container play-zone (min-width: 600px) {
-    .card-slot {
-      --zone-card-width:
-        min(
-          clamp(90px, 20cqw, 180px),
-          calc(
-            (
-              100cqh
-              - (var(--play-zone-padding) * 2)
-              - var(--play-grid-gap)
-            ) / 2 * var(--card-aspect)
-          )
-        );
-    }
-  }
-
+  /* Desktop: wider gap when there's room. */
   @media (min-width: 1240px) {
-    .board-zone {
-      --zone-card-width:
-        min(
-          var(--sim-play-card-width, 180px),
-          calc(
-            (
-              100cqh
-              - (var(--play-zone-padding) * 2)
-              - var(--play-grid-gap)
-            ) / 2 * var(--card-aspect)
-          )
-        );
-      min-height: calc(var(--zone-card-height) + 2rem);
-    }
-
     .cards-grid {
       gap: clamp(0.5rem, 1.25cqh, 0.85rem);
     }
   }
 
+  /* Mobile: card size is driven by available width (4 columns). Overrides
+     the height-driven formula inherited from .cards-scroll-area. */
   @media (max-width: 640px) {
     .board-zone {
       --play-grid-gap: 0.6rem;
@@ -398,33 +434,21 @@
       padding: 0.35rem;
     }
 
-    .board-zone[data-layout-mode="mobile"] {
-      --zone-card-width: clamp(92px, 28vw, 136px);
-      --zone-card-height: calc(var(--zone-card-width) / var(--card-aspect));
-    }
-
+    /* Mobile: same band layout as desktop, just driven by a width-based
+       card-art size (3-column lane). Bands still overlap the card 50%. */
     .board-zone[data-layout-mode="mobile"] .cards-scroll-area {
-      justify-content: flex-start;
-      overflow-x: auto;
-      overflow-y: hidden;
-      scrollbar-gutter: auto;
-    }
-
-    .board-zone[data-layout-mode="mobile"] .cards-content {
-      flex: 0 0 auto;
-      width: max-content;
-      min-width: 100%;
-      min-height: 0;
+      --card-art-width: min(
+        clamp(96px, 30vw, 150px),
+        calc(
+          (100cqw - (var(--play-zone-padding) * 2) - (var(--play-grid-gap) * 2)) / 3
+        )
+      );
+      --card-art-height: calc(var(--card-art-width) / var(--card-aspect));
     }
 
     .board-zone[data-layout-mode="mobile"] .cards-grid {
-      grid-auto-flow: column;
-      grid-auto-columns: var(--zone-card-width);
-      grid-template-columns: none;
-      justify-content: flex-start;
-      width: max-content;
-      min-width: 100%;
-      padding: 0.35rem 0.4rem;
+      gap: 0.5rem;
+      padding: 0.35rem;
     }
   }
 </style>

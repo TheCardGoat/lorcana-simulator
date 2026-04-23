@@ -18,7 +18,10 @@ import { boostKeywordFixture } from "./boost-keyword.js";
 import { multipleTriggers } from "./multiple-triggers.js";
 import { discardEffectsFixture } from "./discard-effects.js";
 import { modalAbilitiesFixture } from "./modal-abilities.js";
+import { monstroComboFixture } from "./monstro-combo.js";
+import { moveDamageFixture } from "./move-damage.js";
 import { playerSelectionFixture } from "./player-selection.js";
+import { alternativeCostsFixture } from "./alternative-costs.js";
 import { createFixtureRegistry } from "./registry.js";
 
 export const DEFAULT_LORCANA_FIXTURE_ID = "empty-board";
@@ -50,6 +53,9 @@ const fixtureRegistry = createFixtureRegistry(
     discardEffectsFixture,
     modalAbilitiesFixture,
     playerSelectionFixture,
+    monstroComboFixture,
+    moveDamageFixture,
+    alternativeCostsFixture,
   ] satisfies LorcanaSimulatorFixture[],
   "general simulator fixtures",
 );

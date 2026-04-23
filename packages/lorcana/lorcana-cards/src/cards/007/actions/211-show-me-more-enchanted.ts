@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { showMeMore } from "..";
+import { showMeMore } from "./082-show-me-more";
 
 export const showMeMoreEnchanted: ActionCard = {
   ...showMeMore,

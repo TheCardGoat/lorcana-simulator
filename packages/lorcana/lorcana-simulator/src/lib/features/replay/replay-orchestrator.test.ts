@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { arielOnHumanLegs } from "@tcg/lorcana-cards/cards/001";
-import { createAcceptedMoveRecord } from "@tcg/lorcana-engine";
 import { PLAYER_ONE, LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
-import type { PersistedReplayData, PersistedReplayMove } from "./fetch-replay.js";
+import type { Patch } from "mutative";
+import type { PersistedReplayData, PersistedReplayStep } from "./fetch-replay.js";
 import { ReplayOrchestrator } from "./replay-orchestrator.svelte.ts";
 
-function createReplayData(overrides: Partial<PersistedReplayMove> = {}): PersistedReplayData {
+function createReplayData(stepOverrides?: Partial<PersistedReplayStep>): PersistedReplayData {
   const engine = LorcanaMultiplayerTestEngine.createWithFixture(
     {
       hand: [arielOnHumanLegs],
@@ -16,43 +16,45 @@ function createReplayData(overrides: Partial<PersistedReplayMove> = {}): Persist
     },
   );
   const server = engine.getServerEngine();
+  const stateBefore = JSON.parse(JSON.stringify(server.getState()));
+  const cardsMaps = engine.getCardsMaps();
+
+  // initialState no longer contains cardsMaps — state-only
   const initialState = JSON.stringify({
-    state: server.getState(),
-    cardsMaps: engine.getCardsMaps(),
+    state: stateBefore,
     historyLength: 0,
   });
 
   const moveResult = engine.asPlayerOne().ink(arielOnHumanLegs);
   expect(moveResult.success).toBe(true);
 
-  const moveEntry = server.getMoveHistory(1).at(-1);
-  expect(moveEntry).toBeDefined();
-  if (!moveEntry) {
-    throw new Error("Expected replay test move history entry");
-  }
+  const stateAfter = server.getState();
+
+  const patches: Patch[] = [
+    { op: "replace" as const, path: ["ctx", "_stateID"], value: stateAfter.ctx._stateID },
+  ];
 
   return {
-    version: 1,
+    version: 2,
     gameId: "game-1",
     matchId: "match-1",
     gameType: "lorcana",
     seed: "replay-seed",
     playerIds: ["player_one", "player_two"],
+    cardsMaps,
     initialState,
-    moves: [
+    steps: [
       {
-        stateVersion: 1,
-        acceptedMove: createAcceptedMoveRecord({
-          gameId: "game-1",
+        patches,
+        logs: [],
+        acceptedMove: {
           stateVersion: 1,
+          turnNumber: 0,
           actorId: PLAYER_ONE,
-          moveEntry,
-          sourceAuthority: "server",
-        }),
-        patches: [],
-        state: server.getState(),
-        engineLogs: [],
-        ...overrides,
+          moveId: "inkCard",
+          timestamp: Date.now(),
+        },
+        ...stepOverrides,
       },
     ],
     metadata: {
@@ -65,11 +67,11 @@ function createReplayData(overrides: Partial<PersistedReplayMove> = {}): Persist
 }
 
 describe("ReplayOrchestrator", () => {
-  it("supports step-through replay from server-materialized snapshots", () => {
+  it("reconstructs states by applying patches", () => {
     const orchestrator = new ReplayOrchestrator(createReplayData());
 
     expect(orchestrator.hasPatchData).toBe(true);
-    expect(orchestrator.totalSteps).toBe(2);
+    expect(orchestrator.totalSteps).toBe(2); // initial + 1 step
 
     orchestrator.nextStep();
 
@@ -77,10 +79,10 @@ describe("ReplayOrchestrator", () => {
     expect(orchestrator.currentEngine.getState().ctx._stateID).toBe(1);
   });
 
-  it("disables step-through for legacy replay blobs without move snapshots", () => {
-    const orchestrator = new ReplayOrchestrator(createReplayData({ state: undefined }));
+  it("handles steps with empty patches (state unchanged)", () => {
+    const orchestrator = new ReplayOrchestrator(createReplayData({ patches: [] }));
 
-    expect(orchestrator.hasPatchData).toBe(false);
-    expect(orchestrator.totalSteps).toBe(1);
+    // Empty patches still produce a step
+    expect(orchestrator.totalSteps).toBe(2);
   });
 });

@@ -18,6 +18,7 @@ import type {
   QueryAPI,
   GameEndResult,
   ProjectedLogEntry,
+  UndoAPI,
 } from "./match-runtime.types";
 import type { MatchStaticResources } from "./static-resources";
 import type { PlayerId } from "../types";
@@ -34,6 +35,10 @@ import {
 } from "./match-runtime.framework-api";
 import type { LorcanaG } from "../../types/runtime-state";
 import type { StateScopedValueCache } from "./state-scoped-value-cache";
+import {
+  isDiscardZoneKey,
+  recordCardPutIntoDiscardThisTurn,
+} from "../../runtime-moves/state/turn-metrics";
 
 // =============================================================================
 // Context Builders
@@ -118,6 +123,7 @@ function createWriteContextBase(
   effectiveGameEnded: boolean,
   emitGameEvent: (event: GameEvent) => void,
   gameEndTracker: { ended: boolean; result?: GameEndResult },
+  undo: UndoAPI,
   moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
   runtimeCardCache?: StateScopedValueCache<unknown>,
   useSnapshotForReads?: boolean,
@@ -139,7 +145,16 @@ function createWriteContextBase(
   const random = createRandomAPIForDraft(draft);
   const zones = createZoneOperations(draft, zoneRegistry, emitGameEvent, {
     cardQuery: cardsApi,
+    onUndoBarrier: undo.markBarrier,
     random: random.random,
+    onCardEnteredZone: (_cardId, toZone, ownerId) => {
+      if (isDiscardZoneKey(toZone)) {
+        recordCardPutIntoDiscardThisTurn(
+          { G: draft.G as unknown as Pick<LorcanaG, "turnMetadata"> },
+          ownerId as PlayerId,
+        );
+      }
+    },
   });
   const time = createTimeOperationsForDraft(draft);
   const events = createEventAPI(emitGameEvent, draft, gameEndTracker);
@@ -151,6 +166,7 @@ function createWriteContextBase(
     time,
     random,
     events,
+    undo,
     cardRuntimeApi,
     moveLogSink,
   );
@@ -198,6 +214,7 @@ export function buildExecutionContext<TInput extends MoveInput = MoveInput>(
   gameEnded: boolean,
   emitGameEvent: (event: GameEvent) => void,
   gameEndTracker: { ended: boolean; result?: GameEndResult },
+  undo: UndoAPI,
   moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
   runtimeCardCache?: StateScopedValueCache<unknown>,
 ): MoveExecutionContext<TInput> {
@@ -208,6 +225,7 @@ export function buildExecutionContext<TInput extends MoveInput = MoveInput>(
     gameEnded,
     emitGameEvent,
     gameEndTracker,
+    undo,
     playerId,
     moveLogSink,
     runtimeCardCache,
@@ -227,6 +245,7 @@ export function buildLifecycleContext(
   gameEnded: boolean,
   emitGameEvent: (event: GameEvent) => void,
   gameEndTracker: { ended: boolean; result?: GameEndResult },
+  undo: UndoAPI,
   playerId: string | undefined = draft.ctx.priority.holder,
   moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
   runtimeCardCache?: StateScopedValueCache<unknown>,
@@ -243,6 +262,7 @@ export function buildLifecycleContext(
     effectiveGameEnded,
     emitGameEvent,
     gameEndTracker,
+    undo,
     moveLogSink,
     runtimeCardCache,
     useSnapshotForReads,

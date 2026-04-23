@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { daisyDuckPirateCaptain } from "..";
+import { daisyDuckPirateCaptain } from "./081-daisy-duck-pirate-captain";
 
 export const daisyDuckPirateCaptainEnchanted: CharacterCard = {
   ...daisyDuckPirateCaptain,

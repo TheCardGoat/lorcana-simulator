@@ -39,7 +39,7 @@ const RAVENSBURGER_EN_PATH = path.join(INPUT_DIR, "ravensburger-input.json");
 const AUX_KV_PATH = path.join(DATA_DIR, "cards.aux.kv.json");
 const VALIDATION_REPORT_PATH = path.join(DATA_DIR, "cards.aux.validation-report.json");
 
-const SPECIAL_RARITY_ORDER: SpecialRarity[] = ["enchanted", "epic", "iconic", "promo"];
+const SPECIAL_RARITY_ORDER: SpecialRarity[] = ["enchanted", "epic", "iconic", "promo", "challenge"];
 
 /**
  * Write JSON file with deterministic formatting (sorted keys, 2 spaces)
@@ -441,6 +441,11 @@ function validateReprints(
 
 /**
  * Validate localization section (EN culture_invariant_id coverage)
+ *
+ * `localizationShortIdByCultureInvariantId` stores one shortId per culture_invariant_id.
+ * Reprint printings have their own shortId but share canonicalId with the row that received
+ * the culture id mapping — so we validate by canonicalId coverage, not by "shortId appears
+ * as a map value".
  */
 function validateLocalization(
   auxKv: CardsAuxKv,
@@ -453,18 +458,27 @@ function validateLocalization(
   const totalCards = Object.keys(canonicalCards).length;
   const mappedCultureIds = Object.keys(auxKv.localizationShortIdByCultureInvariantId).length;
 
-  // Check for cards without culture_invariant_id mapping
-  const unmappedCards: string[] = [];
+  const canonicalIdsWithCultureMapping = new Set<string>();
+  for (const shortId of Object.values(auxKv.localizationShortIdByCultureInvariantId)) {
+    const cid = auxKv.canonicalIdByShortId[shortId];
+    if (cid) canonicalIdsWithCultureMapping.add(cid);
+  }
+
+  const uncoveredPrintingIds: string[] = [];
   for (const [printingId, card] of Object.entries(canonicalCards)) {
-    const isMapped = Object.values(auxKv.localizationShortIdByCultureInvariantId).includes(card.id);
-    if (!isMapped) {
-      unmappedCards.push(printingId);
+    if (!canonicalIdsWithCultureMapping.has(card.canonicalId)) {
+      uncoveredPrintingIds.push(printingId);
     }
   }
 
-  if (unmappedCards.length > 0) {
-    // This is a warning, not an error, as some cards may not have culture_invariant_id in source
-    warnings.push(`${unmappedCards.length} cards without culture_invariant_id mapping`);
+  const uncoveredCanonicalIds = new Set(
+    uncoveredPrintingIds.map((pid) => canonicalCards[pid]?.canonicalId).filter(Boolean),
+  );
+
+  if (uncoveredPrintingIds.length > 0) {
+    warnings.push(
+      `${uncoveredPrintingIds.length} printing(s) in ${uncoveredCanonicalIds.size} canonical group(s) have no EN culture_invariant_id → shortId mapping (locale embed may fail for these).`,
+    );
   }
 
   // Check for duplicate shortId mappings (different culture IDs mapping to same shortId)
@@ -479,8 +493,8 @@ function validateLocalization(
 
   for (const [shortId, cultureIds] of shortIdToCultureIds) {
     if (cultureIds.length > 1) {
-      // This is expected for cards with multiple printings - they share the same shortId
-      // Only warn if they have different canonicalIds
+      // Multiple culture_invariant_id values mapped to the same shortId — unusual; if their
+      // canonicalIds ever diverged it would indicate inconsistent EN matching.
       const canonicalIds = new Set(
         cultureIds.map((cid) => {
           const sid = auxKv.localizationShortIdByCultureInvariantId[cid];
@@ -489,7 +503,7 @@ function validateLocalization(
       );
       if (canonicalIds.size > 1) {
         warnings.push(
-          `ShortId ${shortId} has multiple culture_invariant_id mappings: ${cultureIds.join(", ")}`,
+          `ShortId ${shortId} has multiple culture_invariant_id mappings with different canonicalIds: ${cultureIds.join(", ")}`,
         );
       }
     }
@@ -497,7 +511,9 @@ function validateLocalization(
 
   counts.totalCards = totalCards;
   counts.mappedCultureIds = mappedCultureIds;
-  counts.unmappedCards = unmappedCards.length;
+  counts.canonicalIdsWithCultureMapping = canonicalIdsWithCultureMapping.size;
+  counts.printingsWithoutLocalizationCultureMapping = uncoveredPrintingIds.length;
+  counts.canonicalIdsWithoutLocalizationCultureMapping = uncoveredCanonicalIds.size;
 
   return {
     status: errors.length === 0 ? "pass" : "fail",

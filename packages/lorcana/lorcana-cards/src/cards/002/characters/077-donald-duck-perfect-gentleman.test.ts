@@ -21,10 +21,11 @@ describe("Donald Duck - Perfect Gentleman", () => {
   describe("ALLOW ME - At the start of your turn, each player may draw a card", () => {
     it("each player draws when both accept the optional", () => {
       // P1 has Donald in play. ALLOW ME triggers at the start of P1's next turn.
-      // The sequence: P1 (controller) optional draw → P2 (opponent) optional draw.
+      // Two separate bag items fire: one for P1 (CONTROLLER), one for P2 (OPPONENT).
       // After P1's passTurn: P2 gets mandatory draw → P2: hand=1, deck=4
-      // After P2's passTurn: P1's turn begins, ALLOW ME fires (bag pending), draw step deferred
-      // P1 resolves bag (accepts): P1 draws 1 → P1: hand=1, deck=4; opponent pending queued
+      // After P2's passTurn: P1's turn begins, both ALLOW ME bag items fire, draw step deferred
+      // P1 resolves bag item 0 (accepts): P1 draws 1 → P1: hand=1, deck=4
+      // P1 resolves bag item 1 (opponent trigger): creates pending action for P2
       // P2 resolves pending (accepts): P2 draws 1 → P2: hand=2, deck=3
       // After all bag resolution: P1 mandatory draw completes → P1: hand=2, deck=3
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
@@ -35,11 +36,16 @@ describe("Donald Duck - Perfect Gentleman", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      // P1 accepts their optional ALLOW ME draw
+      // P1 accepts their optional ALLOW ME draw (bag item 0: CONTROLLER trigger)
       expect(
         testEngine
           .asPlayerOne()
-          .resolvePendingByCard(donaldDuckPerfectGentleman, { resolveOptional: true }),
+          .resolvePendingByCard(donaldDuckPerfectGentleman, { bagIndex: 0, resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // P1 resolves the opponent's bag item (bag item 1: OPPONENT trigger) — creates P2's pending
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckPerfectGentleman),
       ).toBeSuccessfulCommand();
 
       // P2 accepts their optional ALLOW ME draw via the pending effect
@@ -67,11 +73,17 @@ describe("Donald Duck - Perfect Gentleman", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      // P1 declines their optional ALLOW ME draw
+      // P1 declines their optional ALLOW ME draw (bag item 0: CONTROLLER trigger)
       expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(donaldDuckPerfectGentleman, { resolveOptional: false }),
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckPerfectGentleman, {
+          bagIndex: 0,
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      // P1 resolves the opponent's bag item (bag item 1: OPPONENT trigger) — creates P2's pending
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckPerfectGentleman),
       ).toBeSuccessfulCommand();
 
       // P2 accepts their optional ALLOW ME draw independently
@@ -98,11 +110,16 @@ describe("Donald Duck - Perfect Gentleman", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      // P1 accepts their optional ALLOW ME draw
+      // P1 accepts their optional ALLOW ME draw (bag item 0: CONTROLLER trigger)
       expect(
         testEngine
           .asPlayerOne()
-          .resolvePendingByCard(donaldDuckPerfectGentleman, { resolveOptional: true }),
+          .resolvePendingByCard(donaldDuckPerfectGentleman, { bagIndex: 0, resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // P1 resolves the opponent's bag item (bag item 1: OPPONENT trigger) — creates P2's pending
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckPerfectGentleman),
       ).toBeSuccessfulCommand();
 
       // P2 declines their optional ALLOW ME draw independently
@@ -118,6 +135,101 @@ describe("Donald Duck - Perfect Gentleman", () => {
       expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_ONE)).toEqual(
         expect.objectContaining({ hand: 2, deck: 3 }),
       );
+    });
+
+    describe("logs", () => {
+      it("resolveBag(wjj-2 CONTROLLER accepts) shows amount:1 draw in outcomes", () => {
+        const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+          { play: [donaldDuckPerfectGentleman], deck: 5 },
+          { deck: 5 },
+        );
+        testEngine.asPlayerOne().passTurn();
+        testEngine.asPlayerTwo().passTurn();
+
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(donaldDuckPerfectGentleman, { bagIndex: 0, resolveOptional: true });
+
+        const logs = testEngine.getServerEngine().getRuntime().getMoveLogHistory();
+        const resolveBagLog = [...logs].reverse().find((log) => log.type === "resolveBag");
+        expect(resolveBagLog).toMatchObject({
+          type: "resolveBag",
+          status: "completed",
+          resolution: { kind: "noInput" },
+          outcomes: { cardsDrawn: { amount: 1 } },
+        });
+      });
+
+      it("resolveBag(wjj-3 OPPONENT trigger) shows status:pending with no draw outcomes", () => {
+        const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+          { play: [donaldDuckPerfectGentleman], deck: 5 },
+          { deck: 5 },
+        );
+        testEngine.asPlayerOne().passTurn();
+        testEngine.asPlayerTwo().passTurn();
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(donaldDuckPerfectGentleman, { bagIndex: 0, resolveOptional: true });
+
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckPerfectGentleman);
+
+        const logs = testEngine.getServerEngine().getRuntime().getMoveLogHistory();
+        const opponentBagLog = [...logs]
+          .reverse()
+          .find(
+            (log) => log.type === "resolveBag" && (log as { status?: string }).status === "pending",
+          );
+        expect(opponentBagLog).toMatchObject({ type: "resolveBag", status: "pending" });
+        expect(
+          (opponentBagLog as { outcomes?: { cardsDrawn?: unknown } }).outcomes?.cardsDrawn,
+        ).toBeUndefined();
+      });
+
+      it("resolveEffect(P2 accepts) shows amount:1 draw without mandatory draw included", () => {
+        const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+          { play: [donaldDuckPerfectGentleman], deck: 5 },
+          { deck: 5 },
+        );
+        testEngine.asPlayerOne().passTurn();
+        testEngine.asPlayerTwo().passTurn();
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(donaldDuckPerfectGentleman, { bagIndex: 0, resolveOptional: true });
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckPerfectGentleman);
+
+        testEngine.asPlayerTwo().resolveNextPending({ resolveOptional: true });
+
+        const logs = testEngine.getServerEngine().getRuntime().getMoveLogHistory();
+        const resolveEffectLog = [...logs].reverse().find((log) => log.type === "resolveEffect");
+        expect(resolveEffectLog).toMatchObject({
+          type: "resolveEffect",
+          resolution: { kind: "optionalSelection", accepted: true },
+          outcomes: { cardsDrawn: { amount: 1 } },
+        });
+      });
+
+      it("turnStart log captures P1 mandatory draw in drawn field", () => {
+        const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+          { play: [donaldDuckPerfectGentleman], deck: 5 },
+          { deck: 5 },
+        );
+        testEngine.asPlayerOne().passTurn();
+        testEngine.asPlayerTwo().passTurn();
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(donaldDuckPerfectGentleman, { bagIndex: 0, resolveOptional: true });
+        testEngine.asPlayerOne().resolvePendingByCard(donaldDuckPerfectGentleman);
+        testEngine.asPlayerTwo().resolveNextPending({ resolveOptional: true });
+
+        const logs = testEngine.getServerEngine().getRuntime().getMoveLogHistory();
+        const p1TurnStart = logs.find(
+          (log) =>
+            log.type === "turnStart" &&
+            (log as { activePlayerId?: string }).activePlayerId === PLAYER_ONE,
+        );
+        expect(p1TurnStart).toBeDefined();
+        expect((p1TurnStart as { drawn?: unknown }).drawn).toBeDefined();
+      });
     });
 
     it("does not trigger during the opponent's turn", () => {

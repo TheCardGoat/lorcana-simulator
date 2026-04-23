@@ -45,6 +45,7 @@ import * as cards007Module from "@tcg/lorcana-cards/cards/007";
 import * as cards008Module from "@tcg/lorcana-cards/cards/008";
 import * as cards010Module from "@tcg/lorcana-cards/cards/010";
 import { pawpsicle } from "@tcg/lorcana-cards/cards/002";
+import { grandmotherWillowAncientAdvisorEpic } from "@tcg/lorcana-cards/cards/011";
 
 const { coconutBasket, friendsOnTheOtherSide } =
   cards001Module as typeof import("@tcg/lorcana-cards/cards/001");
@@ -98,12 +99,13 @@ export const fullBoardAllCardTypes: LorcanaSimulatorFixture = createFixture({
       smash,
     ],
     hand: [
+      grandmotherWillowAncientAdvisorEpic,
       mickeyMouseBraveLittleTailor,
       rapunzelGiftedWithHealing,
       friendsOnTheOtherSide,
       friendLikeMe,
     ],
-    inkwell: 10,
+    inkwell: 4,
     lore: 3,
     play: [
       tianasPalaceJazzRestaurant,

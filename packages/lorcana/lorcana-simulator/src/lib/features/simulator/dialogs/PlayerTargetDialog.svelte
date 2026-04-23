@@ -11,6 +11,7 @@
     open?: boolean;
     target: LorcanaPlayerTarget;
     viewerSide?: LorcanaPlayerSide | null;
+    playerNames?: Partial<Record<LorcanaPlayerSide, string>>;
     selectable?: boolean;
     selectedPlayerSides?: LorcanaPlayerSide[];
     onPlayerToggle?: (playerSide: LorcanaPlayerSide) => void;
@@ -27,13 +28,21 @@
     ) => string;
   }
 
-  const playerLabel = (side: LorcanaPlayerSide): string =>
-    side === "playerOne" ? "Player One" : "Player Two";
+  const playerLabel = (side: LorcanaPlayerSide): string => {
+    const name = playerNames?.[side] ?? null;
+    if (viewerSide) {
+      const base = side === viewerSide ? "You" : "Opponent";
+      return name ? `${base} (${name})` : base;
+    }
+    const sideLabel = side === "playerOne" ? "Player One" : "Player Two";
+    return name ? `${sideLabel} (${name})` : sideLabel;
+  };
 
   let {
     open = $bindable(false),
     target,
     viewerSide = null,
+    playerNames = {},
     selectable = false,
     selectedPlayerSides = [],
     onPlayerToggle,

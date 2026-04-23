@@ -15,6 +15,7 @@ import {
 import { hasStaticCardRestriction } from "../../rules/static-ability-utils";
 import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
+import { runGameStateCheck } from "../../state/game-state-check";
 import {
   emitTriggeredLorcanaEvent,
   snapshotTriggeredCandidatesForCard,
@@ -147,11 +148,21 @@ function applyDamage(
       },
     );
 
-    const targetDefinition = ctx.cards.getDefinition(targetId) as
-      | ({ willpower?: number } & Record<string, unknown>)
+    // Use projected (effective) willpower from the runtime card, which accounts for
+    // static +/−{W} aura modifiers (§1.8.1.4). Fall back to the definition value
+    // in contexts (e.g. unit-test mocks) where the runtime card is not projected.
+    const runtimeCard = ctx.cards.require(targetId) as { willpower?: number; cardType?: string };
+    const def = ctx.cards.getDefinition(targetId) as
+      | { willpower?: number; cardType?: string }
       | undefined;
-    const willpower = targetDefinition?.willpower;
-    if (typeof willpower === "number" && nextDamage >= willpower) {
+    const willpower = runtimeCard.willpower ?? def?.willpower;
+    const cardType = runtimeCard.cardType ?? def?.cardType;
+    if (
+      typeof willpower === "number" &&
+      willpower > 0 &&
+      nextDamage >= willpower &&
+      (cardType === "character" || cardType === "location")
+    ) {
       const subjectAtLocationId = meta.atLocationId as CardInstanceId | undefined;
       const ownerId = ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined;
       const keywordsBeforeBanish = getKeywordsBeforeBanish(ctx, targetId, cardPlayed.playerId);
@@ -166,9 +177,7 @@ function applyDamage(
         ? [...cardTriggerCandidates, ...options.boardCandidatesSnapshot]
         : cardTriggerCandidates;
       const charsAtLocation =
-        targetDefinition?.cardType === "location"
-          ? getCharacterIdsAtLocation(ctx, targetId)
-          : undefined;
+        runtimeCard.cardType === "location" ? getCharacterIdsAtLocation(ctx, targetId) : undefined;
       moveCardOutOfPlayWithStack(ctx, targetId, {
         zone: "discard",
         playerId: ownerId,
@@ -225,6 +234,12 @@ export function resolveDealDamageEffect(
     registry,
   });
   markLastEffectPerformed(resolvedInput.eventSnapshot, dealtAnyDamage);
+
+  // Dealing lethal damage may banish a static buff source (e.g. +Willpower
+  // aura), causing other characters to become lethal. Sweep to catch cascades.
+  if (dealtAnyDamage) {
+    runGameStateCheck(ctx, { reasonCardId: cardPlayed.cardId });
+  }
 }
 
 export function resolvePutDamageLikeEffect(

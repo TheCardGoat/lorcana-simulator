@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { aladdinHeroicOutlaw } from "..";
+import { aladdinHeroicOutlaw } from "./104-aladdin-heroic-outlaw";
 
 export const aladdinHeroicOutlawEnchanted: CharacterCard = {
   ...aladdinHeroicOutlaw,

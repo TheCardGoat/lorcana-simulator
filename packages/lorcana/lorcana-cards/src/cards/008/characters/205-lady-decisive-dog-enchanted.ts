@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { ladyDecisiveDog } from "..";
+import { ladyDecisiveDog } from "./033-lady-decisive-dog";
 
 export const ladyDecisiveDogEnchanted: CharacterCard = {
   ...ladyDecisiveDog,

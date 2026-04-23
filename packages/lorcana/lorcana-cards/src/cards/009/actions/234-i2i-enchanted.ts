@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { i2i } from "..";
+import { i2i } from "./130-i2i";
 
 export const i2iEnchanted: ActionCard = {
   ...i2i,

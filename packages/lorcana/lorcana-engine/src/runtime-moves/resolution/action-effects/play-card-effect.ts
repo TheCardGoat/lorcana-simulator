@@ -31,7 +31,13 @@ import {
   hasPendingActionEffectResolution,
   moveSuspendedActionCardToLimbo,
 } from "./pending-action-effects";
-import { payBasicCost, validateBasicCost } from "../../rules/play-card-rules";
+import {
+  getShiftRules,
+  payBasicCost,
+  resolveShiftTargetCandidates,
+  validateBasicCost,
+} from "../../rules/play-card-rules";
+import { executeShiftPlay } from "../../shared/execute-shift-play";
 import {
   evaluateStaticCondition,
   hasStaticCardRestriction,
@@ -40,6 +46,10 @@ import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import { buildStaticEffectRegistry } from "../../../rules/static-effect-registry";
 import type { StaticEffectRegistry } from "../../../rules/static-effect-registry";
 import { createProjectionState } from "../../../rules/derived-state";
+import {
+  getAppliedCostReductions,
+  getStaticCostIncreaseAmount,
+} from "../../../rules/derived-state";
 import {
   clearCurrentSelectionTargets,
   getCombinedSelectionInput,
@@ -567,6 +577,32 @@ function cardEntersPlayExerted(
   });
 }
 
+function consumeAppliedCostReductions(
+  turnMetadata: PlayCardExecutionContext["G"]["turnMetadata"],
+  playerId: PlayerId,
+  consumeIndexes: number[],
+  currentTurn: number,
+): void {
+  const pendingByPlayer =
+    turnMetadata.pendingCostReductionsByPlayer ?? (turnMetadata.pendingCostReductionsByPlayer = {});
+  const currentEntries = pendingByPlayer[playerId] ?? [];
+
+  if (currentEntries.length === 0) {
+    return;
+  }
+
+  const consumeIndexSet = new Set(consumeIndexes);
+  pendingByPlayer[playerId] = currentEntries.filter((entry, index) => {
+    if (entry.expiresAtTurn < currentTurn) {
+      return false;
+    }
+    if (consumeIndexSet.size > 0 && consumeIndexSet.has(index)) {
+      return false;
+    }
+    return true;
+  });
+}
+
 export function resolvePlayCardEffect(
   ctx: PlayCardExecutionContext,
   cardPlayed: CardPlayedPayload,
@@ -626,7 +662,21 @@ export function resolvePlayCardEffect(
       continue;
     }
 
-    const chosenCardId = playableCards[playableCards.length - 1]!;
+    const from = effect.from ?? "hand";
+    let chosenCardId: CardInstanceId;
+    if (from === "discard") {
+      const explicitChoice = currentSelectedTargets.filter((id) => playableCards.includes(id));
+      if (explicitChoice.length === 1) {
+        chosenCardId = explicitChoice[0]!;
+      } else if (playableCards.length === 1) {
+        // Name/instance-restricted effects have only one legal candidate — auto-select it.
+        chosenCardId = playableCards[0]!;
+      } else {
+        continue;
+      }
+    } else {
+      chosenCardId = playableCards[playableCards.length - 1]!;
+    }
     const definition = ctx.cards.getDefinition(chosenCardId) as CardDefinitionLike | undefined;
     const cardType = definition?.cardType;
 
@@ -665,7 +715,38 @@ export function resolvePlayCardEffect(
       }
     }
 
-    const inkCost = costType === "free" ? 0 : Math.max(0, Number(definition.cost ?? 0));
+    const sourceZoneKey = ctx.framework.zones.getCardZone(chosenCardId);
+    const currentTurn = ctx.framework.state.status.turn ?? 1;
+    const sourceZoneId = typeof sourceZoneKey === "string" ? sourceZoneKey : undefined;
+
+    const costReduction =
+      costType === "free"
+        ? { reductionAmount: 0, consumeIndexes: [] }
+        : getAppliedCostReductions({
+            definition: definition as LorcanaCardDefinition,
+            state: createProjectionState(ctx.framework.state, ctx.G),
+            cardInstanceId: chosenCardId,
+            ownerID: playerId as PlayerId,
+            zoneID: sourceZoneId,
+            actorPlayerId: playerId as PlayerId,
+            getDefinitionByInstanceId: (cardInstanceId) =>
+              ctx.cards.getDefinition(cardInstanceId) as LorcanaCardDefinition | undefined,
+            playMethod: "standard",
+            registry,
+          });
+    const costIncrease =
+      costType === "free"
+        ? 0
+        : getStaticCostIncreaseAmount({
+            definition: definition as LorcanaCardDefinition,
+            state: createProjectionState(ctx.framework.state, ctx.G),
+            registry,
+          });
+    const inkCost =
+      costType === "free"
+        ? 0
+        : Math.max(0, Number(definition.cost ?? 0) - costReduction.reductionAmount + costIncrease);
+
     if (costType !== "free") {
       const costValidation = validateBasicCost(
         {
@@ -690,11 +771,19 @@ export function resolvePlayCardEffect(
       if (!payResult.success) {
         continue;
       }
+
+      consumeAppliedCostReductions(
+        ctx.G.turnMetadata,
+        playerId as PlayerId,
+        costReduction.consumeIndexes,
+        currentTurn,
+      );
     }
 
-    const sourceZoneKey = ctx.framework.zones.getCardZone(chosenCardId);
-
     if (cardType === "action") {
+      if (effect.afterPlay === "bottom-of-deck") {
+        ctx.cards.patchMeta(chosenCardId, { afterPlayDestination: "bottom-of-deck" });
+      }
       ctx.framework.zones.moveCard(chosenCardId, {
         zone: "play",
         playerId,
@@ -702,6 +791,10 @@ export function resolvePlayCardEffect(
       if (isDiscardZoneKey(sourceZoneKey)) {
         recordDiscardExitThisTurn(ctx);
       }
+
+      // Record the card so turn-metric conditions (e.g. "played-actions >= 3")
+      // count actions played via effects, not just via the main play-card move.
+      ctx.G.turnMetadata.cardsPlayedThisTurn.push(chosenCardId);
 
       const replayedActionPayload: CardPlayedPayload = {
         playerId,
@@ -715,6 +808,24 @@ export function resolvePlayCardEffect(
         playerId,
         subjectCardId: chosenCardId,
       });
+
+      // If the outer card (cardPlayed) is currently in limbo — meaning it already suspended
+      // once for player input — and has no remaining continuation effects to run, its effect
+      // chain is complete at this point. Finalise it to discard now, before running the nested
+      // card's effects, so the nested card can find the outer card in the discard zone.
+      // (e.g. We Know the Way cycling: A plays B for free; A is done; A goes to discard so
+      // B's shuffle step can choose A as its target.)
+      const outerCardZone = ctx.framework.zones.getCardZone(cardPlayed.cardId);
+      const outerCardIsInLimbo =
+        typeof outerCardZone === "string" &&
+        (outerCardZone === "limbo" || outerCardZone.startsWith("limbo:"));
+      const outerCardHasNoRemainingEffects =
+        !options?.continuation?.remainingEffects ||
+        options.continuation.remainingEffects.length === 0;
+      if (outerCardIsInLimbo && outerCardHasNoRemainingEffects) {
+        finalizeResolvedActionCard(ctx, cardPlayed);
+      }
+
       const nestedActionResolutionInput = clearCurrentSelectionTargets(resolutionInput);
       resolveActionCardEffects(
         ctx,
@@ -738,6 +849,64 @@ export function resolvePlayCardEffect(
       }
       continue;
     }
+    if (effect.playMethod === "shift") {
+      const shiftTarget = currentSelectedTargets.find((id) => {
+        const zoneKey = ctx.framework.zones.getCardZone(id);
+        return typeof zoneKey === "string" && zoneKey.startsWith("play:");
+      });
+      if (!shiftTarget) {
+        continue;
+      }
+      const chosenDef = ctx.cards.getDefinition(chosenCardId) as LorcanaCardDefinition | undefined;
+      if (!chosenDef) {
+        continue;
+      }
+      const shiftRules = getShiftRules(chosenDef);
+      const myCharsInPlay = ctx.framework.zones.getCards({
+        zone: "play",
+        playerId,
+      }) as CardInstanceId[];
+      const validTargets = resolveShiftTargetCandidates(
+        shiftRules,
+        myCharsInPlay,
+        (id) => ctx.cards.getDefinition(id) as LorcanaCardDefinition | undefined,
+      );
+      if (!validTargets.includes(shiftTarget as CardInstanceId)) {
+        continue;
+      }
+
+      ctx.framework.zones.moveCard(chosenCardId, { zone: "play", playerId });
+      if (isDiscardZoneKey(sourceZoneKey)) {
+        recordDiscardExitThisTurn(ctx);
+      }
+      ctx.G.turnMetadata.cardsPlayedThisTurn.push(chosenCardId);
+      ctx.G.turnMetadata.shiftPlayedThisTurn.push(chosenCardId);
+
+      const banishedByGSC = executeShiftPlay(
+        ctx,
+        chosenCardId as CardInstanceId,
+        shiftTarget as CardInstanceId,
+        playerId as PlayerId,
+        chosenDef,
+        { entersExerted: effect.entersExerted === true },
+      );
+
+      if (!banishedByGSC) {
+        emitTriggeredLorcanaEvent(
+          ctx,
+          "cardPlayed",
+          { playerId, cardId: chosenCardId, cardType, costType },
+          { event: "play", playerId, subjectCardId: chosenCardId },
+        );
+      }
+
+      if (resolutionInput.eventSnapshot) {
+        resolutionInput.eventSnapshot.chosenCardId = chosenCardId;
+      }
+      didPlayCard = true;
+      continue;
+    }
+
     ctx.framework.zones.moveCard(chosenCardId, {
       zone: "play",
       playerId,
@@ -745,6 +914,9 @@ export function resolvePlayCardEffect(
     if (isDiscardZoneKey(sourceZoneKey)) {
       recordDiscardExitThisTurn(ctx);
     }
+
+    // Record the card so turn-metric conditions count effect-played cards.
+    ctx.G.turnMetadata.cardsPlayedThisTurn.push(chosenCardId);
 
     initializePlayedCardMeta(
       ctx,
@@ -855,6 +1027,9 @@ export function executeScryActionCardPlay(
   if (!definition || definition.cardType !== "action") {
     return;
   }
+
+  // Record the card so turn-metric conditions count scry-played actions.
+  ctx.G.turnMetadata.cardsPlayedThisTurn.push(actionCardId);
 
   const actionPayload: CardPlayedPayload = {
     playerId: controllerId,

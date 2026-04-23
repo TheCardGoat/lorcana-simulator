@@ -88,8 +88,13 @@ describe("Bernard - Over-Prepared", () => {
 
       expect(testEngine.asPlayerOne().playCard(bernardOverprepared)).toBeSuccessfulCommand();
 
-      const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      expect(bagEffects.length).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(bernardOverprepared, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 3 });
     });
@@ -103,8 +108,13 @@ describe("Bernard - Over-Prepared", () => {
 
       expect(testEngine.asPlayerOne().playCard(bernardOverprepared)).toBeSuccessfulCommand();
 
-      const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      expect(bagEffects.length).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(bernardOverprepared, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 3 });
     });

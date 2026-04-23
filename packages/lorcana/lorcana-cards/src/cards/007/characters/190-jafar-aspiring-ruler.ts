@@ -35,7 +35,7 @@ export const jafarAspiringRuler: CharacterCard = {
       effect: {
         duration: "this-turn",
         keyword: "Challenger",
-        target: "SELF",
+        target: "CHOSEN_CHARACTER",
         type: "gain-keyword",
         value: 2,
       },

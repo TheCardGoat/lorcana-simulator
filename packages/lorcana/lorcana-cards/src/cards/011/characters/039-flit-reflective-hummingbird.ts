@@ -46,8 +46,7 @@ export const flitReflectiveHummingbird: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           type: "move-damage",
-          amount: 1,
-          upTo: true,
+          amount: { type: "up-to", value: 1 },
           from: "CHOSEN_CHARACTER",
           to: "CHOSEN_OPPOSING_CHARACTER",
         },

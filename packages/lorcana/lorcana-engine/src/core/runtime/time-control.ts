@@ -22,6 +22,7 @@ import type {
   ChessClockPlayerState,
 } from "./types";
 import { createRuntimeState } from "./mutative";
+import { resolvePriorityPlayer } from "./match-runtime.priority";
 
 export const DEFAULT_DYNAMIC_CLOCK_CONFIG: DynamicClockConfig = {
   initialReserveMs: 150_000,
@@ -100,10 +101,19 @@ function settleChessClockDraft(
   playerState.reserveMsRemaining -= elapsedMs;
   playerState.lastUpdatedAtMs = now;
 
+  // Accumulate time the current priority holder has spent in this window.
+  // Resets when activePlayerID changes (handled in match-runtime.commands.ts
+  // Step 8). Used by checkTimeout for the per-decision cap.
+  draft.ctx.time.activePlayerAccumulatedMs =
+    (draft.ctx.time.activePlayerAccumulatedMs ?? 0) + elapsedMs;
+
   // Mark negative time (but don't stop the clock - opponent decides what to do)
   if (playerState.reserveMsRemaining <= 0) {
     playerState.isInNegativeTime = true;
   }
+
+  // Advance startedAtMs so subsequent settlements only charge the delta
+  draft.ctx.time.startedAtMs = now;
 }
 
 /**
@@ -147,6 +157,9 @@ function settlePriorityClockDraft(
     draft.ctx.time.pausedReason = "GAME_ENDED";
     // Game end (loss on time) will be handled by caller
   }
+
+  // Advance startedAtMs so subsequent settlements only charge the delta
+  draft.ctx.time.startedAtMs = now;
 }
 
 /**
@@ -171,10 +184,18 @@ function settleDynamicClockDraft(
   playerState.reserveMsRemaining -= elapsedMs;
   playerState.lastUpdatedAtMs = now;
 
+  // Accumulate time the current priority holder has spent in this window.
+  // See ChessClockContext.activePlayerAccumulatedMs for details.
+  draft.ctx.time.activePlayerAccumulatedMs =
+    (draft.ctx.time.activePlayerAccumulatedMs ?? 0) + elapsedMs;
+
   // Mark negative time (opponent decides what to do)
   if (playerState.reserveMsRemaining <= 0) {
     playerState.isInNegativeTime = true;
   }
+
+  // Advance startedAtMs so subsequent settlements only charge the delta
+  draft.ctx.time.startedAtMs = now;
 }
 
 // =============================================================================
@@ -195,7 +216,10 @@ export function grantPriority(state: MatchState, playerId: string, now: number):
 
     // Update time control
     if (draft.ctx.time.mode !== "none") {
-      draft.ctx.time.activePlayerID = playerId;
+      // If a pending choice is active (e.g. opponent resolving a triggered ability),
+      // charge the clock to that player instead of the priority holder.
+      const clockTarget = resolvePriorityPlayer(draft.ctx.priority) ?? playerId;
+      draft.ctx.time.activePlayerID = clockTarget;
       draft.ctx.time.startedAtMs = now;
       draft.ctx.time.running = true;
       draft.ctx.time.pausedReason = undefined;
@@ -444,12 +468,42 @@ export function handleReserveExpiry(state: MatchState, playerId: string): MatchS
 // =============================================================================
 
 /**
+ * Compute how long `time.activePlayerID` has been holding the current priority
+ * window, including any time elapsed since the last settlement. Returns 0 if
+ * the clock is paused or has no active player.
+ */
+function computeActivePlayerWindowMs(
+  time: ChessClockContext | DynamicClockContext,
+  now: number,
+): number {
+  const accumulated = time.activePlayerAccumulatedMs ?? 0;
+  if (!time.running) return accumulated;
+  if (time.startedAtMs == null) return accumulated;
+  const unsettled = Math.max(0, now - time.startedAtMs);
+  return accumulated + unsettled;
+}
+
+/**
  * Check if a player has timed out (works for both chess and dynamic modes).
  * Returns "first" if this is the first timeout (opponent can skip),
  * "second" if this is the second timeout (opponent can drop),
  * or null if no timeout.
+ *
+ * A timeout is triggered by either:
+ * - The player's reserve going negative (`isInNegativeTime === true`), or
+ * - The player currently holding priority for longer than
+ *   `config.maxDecisionTimeMs` (if configured). This is the anti-stall cap:
+ *   whoever has priority (the decision-maker, not necessarily the turn
+ *   player) is on the clock, and a single decision window is capped.
+ *
+ * Pass `now` (defaults to `Date.now()`). For precise cap checks callers
+ * should `settleClocks(state, now)` first.
  */
-export function checkTimeout(state: MatchState, playerId: string): "first" | "second" | null {
+export function checkTimeout(
+  state: MatchState,
+  playerId: string,
+  now: number = Date.now(),
+): "first" | "second" | null {
   const time = state.ctx.time;
   if (time.mode !== "chess" && time.mode !== "dynamic") return null;
 
@@ -459,23 +513,65 @@ export function checkTimeout(state: MatchState, playerId: string): "first" | "se
     | undefined;
   if (!playerState) return null;
 
-  if (!playerState.isInNegativeTime) return null;
+  // Per-decision cap: fires only against whoever currently holds priority.
+  // The cap resets every time priority changes hands (see commands.ts Step 8),
+  // so legitimate multi-action turns are never penalised — only single
+  // decisions that stall for too long.
+  const maxDecisionTimeMs = time.config.maxDecisionTimeMs;
+  const isActivePlayer = time.activePlayerID === playerId;
+  const windowMs = isActivePlayer ? computeActivePlayerWindowMs(time, now) : 0;
+  const decisionCapExceeded =
+    maxDecisionTimeMs != null && isActivePlayer && windowMs > maxDecisionTimeMs;
+
+  if (!playerState.isInNegativeTime && !decisionCapExceeded) return null;
 
   if (playerState.timeoutCount >= 1) return "second";
   return "first";
 }
 
 /**
- * Reset a player's time after the opponent skips their turn.
- * Sets reserve to resetTimeOnSkipMs, clears negative time, increments timeout count.
- * Works for both chess and dynamic modes.
+ * Expose how long the current priority holder has been making their decision,
+ * for UI countdowns. Returns null if no per-decision cap is configured, the
+ * clock is not chess/dynamic, or there is no active player.
  */
-export function resetPlayerTimeAfterSkip(state: MatchState, playerId: string): MatchState {
+export function getActivePlayerDecisionMs(
+  state: MatchState,
+  now: number = Date.now(),
+): { playerId: string; windowMs: number; maxDecisionTimeMs: number } | null {
+  const time = state.ctx.time;
+  if (time.mode !== "chess" && time.mode !== "dynamic") return null;
+  const maxDecisionTimeMs = time.config.maxDecisionTimeMs;
+  if (maxDecisionTimeMs == null) return null;
+  if (time.activePlayerID == null) return null;
+  return {
+    playerId: time.activePlayerID,
+    windowMs: computeActivePlayerWindowMs(time, now),
+    maxDecisionTimeMs,
+  };
+}
+
+/**
+ * Reset a player's time after the opponent skips their turn.
+ * Sets reserve to resetTimeOnSkipMs (or overrideResetMs if provided), clears negative time,
+ * and by default increments timeout count. Works for both chess and dynamic modes.
+ *
+ * Pass `incrementTimeoutCount: false` when the engine command pipeline has already
+ * incremented the count (e.g. the bot-takeover turn ended with a natural priority
+ * handoff while the player was in negative time — match-runtime.commands.ts fires
+ * the same increment). Without this guard the count would be double-incremented,
+ * causing the player to hit the forfeit threshold one timeout too early.
+ */
+export function resetPlayerTimeAfterSkip(
+  state: MatchState,
+  playerId: string,
+  overrideResetMs?: number,
+  options: { incrementTimeoutCount?: boolean } = {},
+): MatchState {
+  const { incrementTimeoutCount = true } = options;
   const time = state.ctx.time;
   if (time.mode !== "chess" && time.mode !== "dynamic") return state;
 
-  const resetMs =
-    time.mode === "chess" ? time.config.resetTimeOnSkipMs : time.config.resetTimeOnSkipMs;
+  const resetMs = overrideResetMs ?? time.config.resetTimeOnSkipMs;
 
   return createRuntimeState(state, (draft) => {
     const draftTime = draft.ctx.time as ChessClockContext | DynamicClockContext;
@@ -486,7 +582,17 @@ export function resetPlayerTimeAfterSkip(state: MatchState, playerId: string): M
 
     playerState.reserveMsRemaining = resetMs;
     playerState.isInNegativeTime = false;
-    playerState.timeoutCount++;
+    if (incrementTimeoutCount) {
+      playerState.timeoutCount++;
+    }
+
+    // If we're resetting the player who currently holds priority, also reset
+    // the per-decision accumulator so a stale value doesn't immediately re-fire
+    // the cap. (The match-runtime command path would normally zero this when
+    // priority changes hands, but skip-handlers operate outside that loop.)
+    if (draftTime.activePlayerID === playerId) {
+      draftTime.activePlayerAccumulatedMs = 0;
+    }
   });
 }
 

@@ -1,49 +1,46 @@
 import { describe, expect, it } from "bun:test";
-import type { CommandFailure } from "@tcg/lorcana-engine";
 import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { meekoSkittishScrounger } from "./046-meeko-skittish-scrounger";
 
 describe("Meeko - Skittish Scrounger", () => {
-  it("forces the banish branch when Meeko is exerted and you have no card to discard", () => {
+  it("does not apply BOTTOMLESS PIT when Meeko is ready at end of turn (intervening if: not exerted)", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       play: [meekoSkittishScrounger],
+      deck: 2,
     });
-    testEngine.asServer().manualExertCard(meekoSkittishScrounger);
 
+    expect(testEngine.asPlayerOne().isExerted(meekoSkittishScrounger)).toBe(false);
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine.asPlayerOne().resolvePendingByCard(meekoSkittishScrounger),
-    ).toBeSuccessfulCommand();
+    testEngine.asPlayerOne().resolveAllBagEffects({ maxIterations: 10 });
 
-    const result = testEngine.asPlayerOne().respondWithChoice(0) as CommandFailure;
-
-    expect(result.success).toBe(false);
-    expect(testEngine.asPlayerOne().getCardZone(meekoSkittishScrounger)).toBe("discard");
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(testEngine.asPlayerOne().getCardZone(meekoSkittishScrounger)).toBe("play");
   });
 
-  it("regression: should be banished when exerted and player has no cards in hand to discard", () => {
-    // Bug: Meeko was staying on board when the player had no cards to discard.
-    // BOTTOMLESS PIT says "choose and discard a card or banish him."
-    // If you can't discard (no cards in hand), you must banish him.
+  it("does not even enter the bag when Meeko is ready at end of turn (phantom-trigger regression)", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       play: [meekoSkittishScrounger],
-      // No cards in hand
+      deck: 2,
     });
-    testEngine.asServer().manualExertCard(meekoSkittishScrounger);
 
+    expect(testEngine.asPlayerOne().isExerted(meekoSkittishScrounger)).toBe(false);
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
-    // Resolve the bag effect
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine.asPlayerOne().resolvePendingByCard(meekoSkittishScrounger),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+  });
 
-    // Try to choose discard option but it should fail (no cards)
-    const result = testEngine.asPlayerOne().respondWithChoice(0);
+  it("applies BOTTOMLESS PIT when Meeko is exerted — empty hand resolves with Meeko banished", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [meekoSkittishScrounger],
+      hand: [],
+      deck: 2,
+    });
+    testEngine.asServer().manualExertCard(meekoSkittishScrounger);
+    expect(testEngine.asPlayerOne().isExerted(meekoSkittishScrounger)).toBe(true);
 
-    // Meeko should end up banished regardless since discard is impossible
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    testEngine.asPlayerOne().resolveAllBagEffects({ maxIterations: 10 });
+
     expect(testEngine.asPlayerOne().getCardZone(meekoSkittishScrounger)).toBe("discard");
   });
 });

@@ -153,7 +153,7 @@
     border-radius: 12px;
     padding: 16px 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: challenge-result-panel-lifecycle var(--duration, 2000ms) ease both;
+    animation: challenge-result-panel-lifecycle var(--duration, 1000ms) ease both;
   }
 
   @keyframes challenge-result-panel-lifecycle {

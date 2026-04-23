@@ -35,6 +35,12 @@ export const theFatesOnlyOneEye: CharacterCard = {
         type: "scry",
         amount: 1,
         target: "EACH_OPPONENT",
+        destinations: [
+          {
+            zone: "deck-top",
+            remainder: true,
+          },
+        ],
       },
       id: "Sh7-1",
       name: "ALL WILL BE SEEN",

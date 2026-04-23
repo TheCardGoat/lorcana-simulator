@@ -19,6 +19,7 @@ import type {
   TargetZone,
 } from "../target-types";
 import type { LorcanaPlayerTarget } from "../../targeting/lorcana-target-dsl";
+import type { Condition } from "../condition-types";
 
 export type SelfReplacementCondition =
   | {
@@ -32,6 +33,17 @@ export type SelfReplacementCondition =
   | {
       type: "trigger-subject-strength-gte";
       value: number;
+    }
+  | {
+      /**
+       * Evaluates a general `Condition` against the current game state.
+       *
+       * Used for self-replacement triggers whose branching depends on game state
+       * rather than on the trigger subject/target (e.g. "If 2 or more cards were
+       * put into your discard this turn, deal 2 damage instead").
+       */
+      type: "condition";
+      condition: Condition;
     };
 
 export interface NumericSelfReplacement {
@@ -124,13 +136,15 @@ export interface PutDamageEffect {
  * Remove damage effect
  *
  * @example "Remove up to 3 damage from chosen character"
+ *
+ * Wrap `amount` as `{ type: "up-to", value: N }` to allow the chooser to pick
+ * any value in `[0, N]` (capped at the target's current damage). A bare amount
+ * removes exactly N (still capped at the target's damage).
  */
 export interface RemoveDamageEffect {
   type: "remove-damage";
   amount?: AmountExpr;
   target?: CharacterTarget | LocationTarget;
-  /** "up to" allows removing less than max */
-  upTo?: boolean;
   selfReplacement?: NumericSelfReplacement;
   /** Ready each character that had damage removed */
   thenReady?: boolean;
@@ -140,12 +154,13 @@ export interface RemoveDamageEffect {
  * Move damage counters effect
  *
  * @example "Move 2 damage from chosen character to another"
+ *
+ * Wrap `amount` as `{ type: "up-to", value: N }` to allow the chooser to move
+ * any value in `[0, N]`.
  */
 export interface MoveDamageEffect {
   type: "move-damage";
   amount?: AmountExpr;
-  /** "up to" allows moving less than max */
-  upTo?: boolean;
   distribution?: "aggregate" | "from-each-source";
   from?: CharacterTarget;
   to?: CharacterTarget;

@@ -24,7 +24,7 @@ export const healingTouch: ActionCard = {
       effect: {
         steps: [
           {
-            amount: 4,
+            amount: { type: "up-to", value: 4 },
             target: {
               selector: "chosen",
               count: 1,
@@ -33,7 +33,6 @@ export const healingTouch: ActionCard = {
               cardTypes: ["character"],
             },
             type: "remove-damage",
-            upTo: true,
           },
           {
             amount: 1,

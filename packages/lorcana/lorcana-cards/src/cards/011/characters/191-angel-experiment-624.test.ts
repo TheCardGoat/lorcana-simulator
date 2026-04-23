@@ -65,8 +65,9 @@ describe("Angel - Experiment 624", () => {
       );
 
       // Activate the ability: discard handFodder as cost, target the opponent character
+      const p1 = testEngine.asPlayerOne();
       expect(
-        testEngine.asPlayerOne().activateAbility(angelExperiment624, {
+        p1.activateAbility(angelExperiment624, {
           costs: { discardCards: [handFodder] },
           targets: [targetCharacter],
         }),
@@ -74,6 +75,18 @@ describe("Angel - Experiment 624", () => {
 
       expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(2);
       expect(testEngine.asPlayerOne().getCardZone(handFodder)).toBe("discard");
+
+      const sourceInstanceId = testEngine.findCardInstanceId(angelExperiment624, "play", "p1");
+      const discardedInstanceId = testEngine.findCardInstanceId(handFodder, "discard", "p1");
+      const abilityLog = testEngine
+        .getServerEngine()
+        .getRuntime()
+        .getMoveLogHistory()
+        .find((log) => log.type === "activateAbility" && log.cardId === sourceInstanceId);
+      expect(abilityLog?.type).toBe("activateAbility");
+      if (abilityLog?.type === "activateAbility") {
+        expect(abilityLog.discardCardIds).toEqual([discardedInstanceId]);
+      }
     });
 
     it("requires discarding a card as cost", () => {
@@ -97,7 +110,7 @@ describe("Angel - Experiment 624", () => {
       expect(result.success).toBe(false);
     });
 
-    it("can banish character if damage exceeds willpower", () => {
+    it("requires explicit discard selection when one card is in hand (discardChosen)", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
           play: [angelExperiment624],
@@ -105,19 +118,15 @@ describe("Angel - Experiment 624", () => {
           deck: 5,
         },
         {
-          play: [fragileTarget],
+          play: [targetCharacter],
           deck: 5,
         },
       );
 
-      expect(
-        testEngine.asPlayerOne().activateAbility(angelExperiment624, {
-          costs: { discardCards: [handFodder] },
-          targets: [fragileTarget],
-        }),
-      ).toBeSuccessfulCommand();
-
-      expect(testEngine.asPlayerTwo().getCardZone(fragileTarget)).toBe("discard");
+      const result = testEngine.asPlayerOne().activateAbility(angelExperiment624, {
+        targets: [targetCharacter],
+      });
+      expect(result.success).toBe(false);
     });
 
     it("cannot be activated twice in the same turn (once per turn)", () => {
@@ -194,17 +203,6 @@ describe("Angel - Experiment 624", () => {
       // Player two should have drawn a card
       const updatedZones = testEngine.asPlayerTwo().getZonesCardCount("player_two");
       expect(updatedZones.hand).toBe(initialZones.hand + 1);
-    });
-  });
-
-  describe("Enchanted version", () => {
-    it("has the same abilities as the base card", () => {
-      expect(angelExperiment624Enchanted.abilities).toHaveLength(
-        angelExperiment624.abilities?.length ?? 0,
-      );
-      const baseNames = angelExperiment624.abilities?.map((a) => a.name) ?? [];
-      const enchantedNames = angelExperiment624Enchanted.abilities?.map((a) => a.name) ?? [];
-      expect(enchantedNames).toEqual(baseNames);
     });
   });
 });

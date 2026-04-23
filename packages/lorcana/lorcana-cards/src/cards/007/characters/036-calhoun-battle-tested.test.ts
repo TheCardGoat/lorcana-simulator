@@ -92,6 +92,37 @@ describe("Calhoun - Battle-Tested", () => {
       );
     });
 
+    it("does nothing when hand is empty — discard step impossible so sequence is skipped entirely", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [calhounBattletested],
+          inkwell: calhounBattletested.cost,
+          deck: 2,
+        },
+        {
+          play: [opponentCharacter],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(calhounBattletested)).toBeSuccessfulCommand();
+
+      // Accept the optional, but hand is empty so discard is impossible
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(calhounBattletested, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // No pending target-selection for opponent character should remain
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+
+      // Opponent character strength should be unchanged
+      expect(testEngine.asPlayerTwo().getCardStrength(opponentCharacter)).toBe(
+        opponentCharacter.strength,
+      );
+    });
+
     it("the -3 strength expires at the start of the controller's next turn", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

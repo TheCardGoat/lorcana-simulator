@@ -37,6 +37,7 @@ export type {
 export {
   // Constants
   CARD_TYPES,
+  LANGUAGES,
   // Utilities
   getCanonicalId,
   getFullName,

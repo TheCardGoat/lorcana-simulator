@@ -19,6 +19,7 @@
     challengeMode?: boolean;
     dropState?: DropState;
     label?: string;
+    showZoneCounters?: boolean;
     onCardDragStart?: (cardId: string, event: DragEvent) => void;
     onDropZoneEnter?: () => void;
     onDropZoneLeave?: () => void;
@@ -37,6 +38,7 @@
     challengeMode = false,
     dropState = "none",
     label = "",
+    showZoneCounters = false,
     onCardDragStart,
     onDropZoneEnter,
     onDropZoneLeave,
@@ -56,7 +58,7 @@
   onmouseleave={onDropZoneLeave}
 >
   {#if label}
-    <ZoneLabel {label} count={cards.length} />
+    <ZoneLabel {label} count={showZoneCounters ? cards.length : undefined} />
   {/if}
 
   {#if challengeMode && isOpponent}

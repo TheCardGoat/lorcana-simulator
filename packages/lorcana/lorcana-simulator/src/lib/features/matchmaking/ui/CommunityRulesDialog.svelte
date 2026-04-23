@@ -6,10 +6,12 @@
 	let {
 		open = $bindable(false),
 		loading = false,
+		error = null,
 		onAccept,
 	}: {
 		open: boolean;
 		loading: boolean;
+		error: string | null;
 		onAccept: () => void;
 	} = $props();
 
@@ -19,7 +21,12 @@
 <Dialog.Root bind:open>
 	<Dialog.Portal>
 		<Dialog.Overlay />
-		<Dialog.Content class="sm:max-w-lg">
+		<Dialog.Content
+			class="sm:max-w-lg"
+			showCloseButton={false}
+			interactOutsideBehavior="ignore"
+			escapeKeydownBehavior="ignore"
+		>
 			<Dialog.Header>
 				<Dialog.Title class="text-2xl">
 					Community Rules
@@ -73,6 +80,15 @@
 			</div>
 
 			<div class="space-y-4 px-1 pt-2">
+				{#if error}
+					<div
+						class="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200"
+						role="alert"
+					>
+						{error}
+					</div>
+				{/if}
+
 				<label
 					class="border-border/70 bg-muted/20 flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 text-left"
 					for="community-rules-agree"
@@ -88,14 +104,14 @@
 						<span class="text-sm font-medium">
 							I have read and agree to the Community Rules,
 							<a
-								href="/terms-of-service"
+								href="https://lorcanito.com/terms-of-service"
 								class="cursor-pointer text-sky-300 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 							>
 								Terms of Service
 							</a>
 							and
 							<a
-								href="/privacy-policy"
+								href="https://lorcanito.com/privacy"
 								class="cursor-pointer text-sky-300 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 							>
 								Privacy Policy

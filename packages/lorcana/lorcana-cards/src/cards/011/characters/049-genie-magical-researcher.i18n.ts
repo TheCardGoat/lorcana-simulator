@@ -6,10 +6,11 @@ export const genieMagicalResearcherI18n: Record<Languages, I18nProperties> = {
     version: "Magical Researcher",
     text: [
       {
-        title: "Boost 1",
+        title: "Boost 1 {I}",
       },
       {
-        title: "{I} INCREASING WISDOM This character gets +1 {L} for each card under him.",
+        title: "INCREASING WISDOM",
+        description: "This character gets +1 {L} for each card under him.",
       },
     ],
   },

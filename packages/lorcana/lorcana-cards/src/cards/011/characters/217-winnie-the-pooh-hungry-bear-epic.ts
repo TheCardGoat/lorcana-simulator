@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { winnieThePoohHungryBear } from "..";
+import { winnieThePoohHungryBear } from "./151-winnie-the-pooh-hungry-bear";
 
 export const winnieThePoohHungryBearEpic: CharacterCard = {
   ...winnieThePoohHungryBear,

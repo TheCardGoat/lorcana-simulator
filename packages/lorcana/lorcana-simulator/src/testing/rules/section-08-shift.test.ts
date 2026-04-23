@@ -21,13 +21,21 @@ import { resolveOnlyBagEffect } from "./section-08-test-utils";
 describe("#### 8. KEYWORDS", () => {
   describe("# 8.10. Shift", () => {
     it("8.10.2 / 8.10.4 / 8.10.6 / 8.10.7. Shift inherits exerted state, dry state, and damage, and a two-card stack leaves play together.", () => {
+      // MickeyMouseBraveLittlePrince has base willpower 2 and gains +3 from CROWNING ACHIEVEMENT
+      // while a card is under it (effective willpower = 5). We need total damage >= 5 to banish it.
+      // Use mickeyMousePlayfulSorcerer (WP 4) as shift target with 3 damage — it survives (3 < 4).
+      // After shifting, BraveLittlePrince inherits 3 damage; Fire the Cannons adds 2 more → total 5 >= 5.
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [mickeyMouseBraveLittlePrince, fireTheCannons],
         inkwell: 6,
-        play: [{ card: mickeyMouseTrueFriend, exerted: true, damage: 1 }],
+        play: [{ card: mickeyMousePlayfulSorcerer, exerted: true, damage: 3 }],
       });
 
-      const shiftTarget = testEngine.findCardInstanceId(mickeyMouseTrueFriend, "play", PLAYER_ONE);
+      const shiftTarget = testEngine.findCardInstanceId(
+        mickeyMousePlayfulSorcerer,
+        "play",
+        PLAYER_ONE,
+      );
 
       expect(
         testEngine.asPlayerOne().playCard(mickeyMouseBraveLittlePrince, {
@@ -37,7 +45,7 @@ describe("#### 8. KEYWORDS", () => {
 
       expect(testEngine.asPlayerOne().isExerted(mickeyMouseBraveLittlePrince)).toBe(true);
       expect(testEngine.asPlayerOne().getCard(mickeyMouseBraveLittlePrince).drying).toBe(false);
-      expect(testEngine.asPlayerOne().getDamage(mickeyMouseBraveLittlePrince)).toBe(1);
+      expect(testEngine.asPlayerOne().getDamage(mickeyMouseBraveLittlePrince)).toBe(3);
       expect(testEngine.getCardsUnder(mickeyMouseBraveLittlePrince)).toEqual([shiftTarget]);
 
       expect(

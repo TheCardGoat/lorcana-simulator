@@ -21,10 +21,11 @@ import {
   createCardsMapsFromStaticResources,
 } from "../runtime";
 import type {
-  InMemoryTransport,
+  Transport,
   ServerMessage,
   UpdateFullMessage,
   SyncFullMessage,
+  ErrorMessage,
 } from "../runtime/protocol-types";
 import {
   PROTOCOL_VERSION,
@@ -42,6 +43,7 @@ import type {
   EngineMoveValidationResult,
   EngineMoveExecutionResult,
   EngineMoveHistoryEntry,
+  ProtocolError,
 } from "./contracts";
 import { buildEngineProjectionSnapshot } from "./projection";
 import { buildZoneRegistry } from "../runtime/zone-registry";
@@ -76,7 +78,7 @@ import type { MoveRecord, RuntimeMoveInputMap } from "../runtime/match-runtime.t
 
 export interface ClientEngineConfig {
   playerId: string;
-  transport?: InMemoryTransport;
+  transport?: Transport;
   role: "player" | "spectator";
   runtimeConfig: MatchRuntimeConfig;
   staticResources: MatchStaticResources;
@@ -90,22 +92,29 @@ export interface ClientEngineConfig {
    * would be built and immediately overwritten by the confirmed state, wasting ~29% CPU.
    */
   skipOptimisticState?: boolean;
+  /**
+   * Optional callback invoked inside buildOptimisticState after the sandbox
+   * runtime processes the initial command. Allows game-specific post-processing
+   * (e.g. draining deterministic bag effects) so the optimistic state matches
+   * what the server will produce.
+   */
+  sandboxPostProcess?: (sandboxRuntime: MatchRuntime, playerId: string, stateID: number) => void;
 }
 
 type InferMoveInputMap<TMoves extends MoveRecord> = RuntimeMoveInputMap<TMoves>;
 type ProjectionMode = "eager" | "lazy";
 
 export class ClientEngine implements GameEngine {
-  private transport?: InMemoryTransport;
+  private transport?: Transport;
   // Cached client-facing visible view. This is always a projected/filtered snapshot and is
   // never treated as authoritative state.
   private localView: FilteredMatchView | null = null;
   private confirmedState: MatchState | null = null;
-  private undoCheckpointState: MatchState | null = null;
   private stateID: number = 0;
   private stateUpdateHandlers: Array<
     (state: FilteredMatchView, stateID: number, packet: EnginePacketUpdate | null) => void
   > = [];
+  private protocolErrorHandlers: Array<(error: ProtocolError) => void> = [];
   private moveHistory: EngineMoveHistoryEntry[] = [];
   private config: ClientEngineConfig;
   // Consolidated runtime config with proper typing (single cast point)
@@ -117,6 +126,7 @@ export class ClientEngine implements GameEngine {
   private identifier?: string;
   private runtime: MatchRuntime;
   private canUndoState: boolean = false;
+  private pendingUndo: boolean = false;
   private projectionMode: ProjectionMode = "eager";
   private projectionDirty: boolean = false;
   private viewRevision: number = 0;
@@ -148,7 +158,7 @@ export class ClientEngine implements GameEngine {
     }
   }
 
-  setTransport(transport: InMemoryTransport): void {
+  setTransport(transport: Transport): void {
     if (this.transport) {
       logger.warning("Transport already set on ClientEngine; ignoring new transport");
       return;
@@ -178,16 +188,12 @@ export class ClientEngine implements GameEngine {
       } else if (isSyncFullMessage(typedMessage)) {
         this.applyFullState(typedMessage);
       } else if (isErrorMessage(typedMessage)) {
-        this.handleFatalSyncError(`Authoritative command rejected (${typedMessage.code})`, {
-          code: typedMessage.code,
-          message: typedMessage.message,
-        });
+        this.handleProtocolErrorMessage(typedMessage);
       }
     });
   }
 
   private applyFullState(message: UpdateFullMessage | SyncFullMessage): void {
-    const previousConfirmedState = this.confirmedState ?? null;
     const pendingOptimisticCommandID = this.optimisticState?.command.commandID;
     const authoritativeState = message.state as MatchState;
 
@@ -205,10 +211,7 @@ export class ClientEngine implements GameEngine {
     }
     this.stateID = message.stateID;
     this.canUndoState = message.canUndo;
-    this.undoCheckpointState =
-      this.config.role === "player" && message.canUndo && previousConfirmedState
-        ? previousConfirmedState
-        : null;
+    this.pendingUndo = false;
     this.lastPacketUpdate =
       "processedCommand" in message
         ? {
@@ -245,22 +248,62 @@ export class ClientEngine implements GameEngine {
     });
   }
 
+  /**
+   * Clears optimistic state and restores the runtime from last confirmed snapshot.
+   * Used after the server rejects a command or when forcing a resync.
+   */
+  private rollbackOptimisticToConfirmed(): void {
+    this.pendingUndo = false;
+    if (!this.optimisticState) {
+      return;
+    }
+    const rejectedCommandID = this.optimisticState.command.commandID;
+    this.optimisticState = null;
+    // Restore the main runtime to the confirmed state since we loaded
+    // the optimistic state into it during executeMove/undo.
+    if (this.confirmedState) {
+      this.runtime.loadState(this.confirmedState as MatchState);
+    }
+    this.emitVisibleStateUpdate(this.lastPacketUpdate, {
+      sourceAuthority: "server",
+      commandID: rejectedCommandID,
+      phase: "rejected",
+    });
+  }
+
+  /**
+   * Handles server ERROR frames. When {@link ErrorMessage.resyncRequired} is `false`,
+   * only rolls back optimistic UI — no SYNC_REQUEST (avoids reconnect storms on
+   * permission / validation errors that do not indicate stale state).
+   */
+  private handleProtocolErrorMessage(msg: ErrorMessage): void {
+    this.rollbackOptimisticToConfirmed();
+
+    const resyncRequired = msg.resyncRequired !== false;
+
+    if (!resyncRequired) {
+      logger.warning(`Authoritative command rejected (${msg.code}): ${msg.message}`, {
+        code: msg.code,
+        message: msg.message,
+      });
+    } else {
+      logger.fatal(`Authoritative command rejected (${msg.code}); forcing resync`, {
+        code: msg.code,
+        message: msg.message,
+      });
+      this.requestSync();
+    }
+
+    this.emitProtocolError({
+      code: msg.code,
+      message: msg.message,
+      resyncRequired,
+    });
+  }
+
   private handleFatalSyncError(message: string, details?: Record<string, unknown>): void {
     logger.fatal(`${message}; forcing resync`, details);
-    if (this.optimisticState) {
-      const rejectedCommandID = this.optimisticState.command.commandID;
-      this.optimisticState = null;
-      // Restore the main runtime to the confirmed state since we loaded
-      // the optimistic state into it during executeMove/undo.
-      if (this.confirmedState) {
-        this.runtime.loadState(this.confirmedState as MatchState);
-      }
-      this.emitVisibleStateUpdate(this.lastPacketUpdate, {
-        sourceAuthority: "server",
-        commandID: rejectedCommandID,
-        phase: "rejected",
-      });
-    }
+    this.rollbackOptimisticToConfirmed();
     this.requestSync();
   }
 
@@ -311,7 +354,8 @@ export class ClientEngine implements GameEngine {
       return;
     }
     this.connected = false;
-    await this.transport.disconnect(skipLogs);
+    this.pendingUndo = false;
+    await this.transport.disconnect();
   }
 
   onStateUpdate(
@@ -321,6 +365,14 @@ export class ClientEngine implements GameEngine {
     return () => {
       const index = this.stateUpdateHandlers.indexOf(handler);
       if (index !== -1) this.stateUpdateHandlers.splice(index, 1);
+    };
+  }
+
+  onProtocolError(handler: (error: ProtocolError) => void): () => void {
+    this.protocolErrorHandlers.push(handler);
+    return () => {
+      const index = this.protocolErrorHandlers.indexOf(handler);
+      if (index !== -1) this.protocolErrorHandlers.splice(index, 1);
     };
   }
 
@@ -342,7 +394,6 @@ export class ClientEngine implements GameEngine {
       this.projectionDirty = true;
     }
     this.stateID = state.ctx._stateID;
-    this.undoCheckpointState = null;
   }
 
   getBoard(): DeepReadonly<FilteredMatchView> {
@@ -427,7 +478,7 @@ export class ClientEngine implements GameEngine {
     if (this.optimisticState) {
       return {
         success: false,
-        reason: "A previous optimistic command is still awaiting authoritative reconciliation",
+        reason: "Please wait a moment before making another move",
         code: "OPTIMISTIC_MOVE_PENDING",
       };
     }
@@ -526,7 +577,8 @@ export class ClientEngine implements GameEngine {
       !this.optimisticState &&
       this.config.role === "player" &&
       playerId === this.config.playerId &&
-      this.canUndoState
+      this.canUndoState &&
+      !this.pendingUndo
     );
   }
 
@@ -537,8 +589,8 @@ export class ClientEngine implements GameEngine {
       this.config.role !== "player" ||
       playerId !== this.config.playerId ||
       !this.canUndoState ||
-      this.optimisticState ||
-      !this.undoCheckpointState
+      this.pendingUndo ||
+      this.optimisticState
     ) {
       return false;
     }
@@ -548,29 +600,8 @@ export class ClientEngine implements GameEngine {
       commandID: `undo-${this.config.playerId}-${Date.now()}-${this.commandCounter}`,
       move: "undo",
     };
-    if (!this.config.skipOptimisticState) {
-      const optimisticUndoState = this.undoCheckpointState as MatchState;
-      const undoRuntime = new MatchRuntime(this.runtimeConfig, {
-        players: this.config.players,
-        seed: this.config.seed,
-        capturePatches: false,
-        cardsMaps: createCardsMapsFromStaticResources(this.config.staticResources),
-        cardCatalog: this.config.staticResources.cards,
-      });
-      undoRuntime.loadState(optimisticUndoState);
-      this.optimisticState = {
-        command,
-        state: optimisticUndoState,
-        view: this.buildVisibleViewFromRuntime(undoRuntime, optimisticUndoState, Date.now()),
-      };
-      this.runtime.loadState(optimisticUndoState);
-      this.emitVisibleStateUpdate(this.lastPacketUpdate, {
-        sourceAuthority: "client",
-        commandID: command.commandID,
-        phase: "optimistic",
-      });
-    }
 
+    this.pendingUndo = true;
     this.transport.send({
       type: "UNDO_REQUEST",
       prevStateID: prevStateID ?? this.stateID,
@@ -593,7 +624,7 @@ export class ClientEngine implements GameEngine {
     this.localView = null;
     this.confirmedState = null;
     this.canUndoState = false;
-    this.undoCheckpointState = null;
+    this.pendingUndo = false;
     this.optimisticState = null;
   }
 
@@ -621,6 +652,10 @@ export class ClientEngine implements GameEngine {
 
   private getMatchID(): string {
     return this.runtime.getState().ctx.matchID;
+  }
+
+  private emitProtocolError(error: ProtocolError): void {
+    this.protocolErrorHandlers.forEach((handler) => handler(error));
   }
 
   private emitVisibleStateUpdate(
@@ -678,10 +713,27 @@ export class ClientEngine implements GameEngine {
         };
       }
 
+      // Allow game-specific sandbox post-processing (e.g. auto-drain deterministic bag effects)
+      if (this.config.sandboxPostProcess) {
+        try {
+          this.config.sandboxPostProcess(sandboxRuntime, this.config.playerId, this.stateID);
+        } catch (postProcessError) {
+          logger.warning("sandboxPostProcess failed, continuing with base optimistic state", {
+            error:
+              postProcessError instanceof Error
+                ? postProcessError.message
+                : String(postProcessError),
+            move: command.move,
+          });
+        }
+      }
+
+      // Use sandbox runtime's current state which includes any post-processing mutations
+      const finalState = sandboxRuntime.getState() as MatchState;
       return {
         kind: "success",
-        state: result.state as MatchState,
-        view: this.buildVisibleViewFromRuntime(sandboxRuntime, result.state, Date.now()),
+        state: finalState,
+        view: this.buildVisibleViewFromRuntime(sandboxRuntime, finalState, Date.now()),
       };
     } catch (error) {
       logger.warning("Failed to build optimistic state", {

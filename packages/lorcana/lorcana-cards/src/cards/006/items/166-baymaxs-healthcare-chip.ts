@@ -69,22 +69,19 @@ export const baymaxsHealthcareChip: ItemCard = {
           options: [
             {
               type: "remove-damage",
-              amount: 1,
-              upTo: true,
+              amount: { type: "up-to", value: 1 },
               target: "CHOSEN_CHARACTER",
             },
             {
               type: "remove-damage",
-              amount: 3,
-              upTo: true,
+              amount: { type: "up-to", value: 3 },
               target: "CHOSEN_CHARACTER",
             },
           ],
         },
         else: {
           type: "remove-damage",
-          amount: 1,
-          upTo: true,
+          amount: { type: "up-to", value: 1 },
           target: "CHOSEN_CHARACTER",
         },
       },

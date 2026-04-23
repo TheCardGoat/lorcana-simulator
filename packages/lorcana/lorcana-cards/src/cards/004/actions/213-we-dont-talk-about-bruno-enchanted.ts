@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { weDontTalkAboutBruno } from "..";
+import { weDontTalkAboutBruno } from "./097-we-dont-talk-about-bruno";
 
 export const weDontTalkAboutBrunoEnchanted: ActionCard = {
   ...weDontTalkAboutBruno,

@@ -48,7 +48,7 @@ export const plutoDeterminedDefender: CharacterCard = {
     bodyguard,
     {
       effect: {
-        amount: 3,
+        amount: { type: "up-to", value: 3 },
         target: {
           cardTypes: ["character"],
           count: 1,
@@ -57,7 +57,6 @@ export const plutoDeterminedDefender: CharacterCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       id: "zh2-3",
       name: "GUARD DOG",

@@ -55,6 +55,7 @@ export const shenziHyenaPackLeader: CharacterCard = {
       name: "WHAT'S THE HURRY?",
       type: "triggered",
       trigger: {
+        defender: {},
         event: "challenge",
         on: "SELF",
         timing: "whenever",

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { rafikiEtherealGuide } from "..";
+import { rafikiEtherealGuide } from "./052-rafiki-ethereal-guide";
 
 export const rafikiEtherealGuideEnchanted: CharacterCard = {
   ...rafikiEtherealGuide,

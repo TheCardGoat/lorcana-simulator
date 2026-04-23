@@ -1,5 +1,9 @@
 import type { CardInstanceId, PlayerId } from "#core";
-import type { CardSelectionFilter, ReturnFromDiscardEffect } from "@tcg/lorcana-types";
+import type {
+  CardSelectionFilter,
+  ComparisonOperator,
+  ReturnFromDiscardEffect,
+} from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types/index";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { recordDiscardExitThisTurn } from "../../state/turn-metrics";
@@ -17,6 +21,9 @@ type DiscardCardDefinition = {
   classifications?: string[];
   cost?: number;
   name?: string;
+  strength?: number;
+  willpower?: number;
+  lore?: number;
 };
 
 function getKeywordFilter(
@@ -116,6 +123,122 @@ function resolveReturnCount(effect: ReturnFromDiscardEffect): number {
   return Math.max(0, Math.floor(effect.count));
 }
 
+type NumericAttributeFilter = {
+  type: "willpower-comparison" | "strength-comparison" | "lore-comparison" | "cost-comparison";
+  comparison: ComparisonOperator;
+  value: number;
+};
+
+function isNumericAttributeFilter(
+  candidate: unknown,
+  expectedType: NumericAttributeFilter["type"],
+): candidate is NumericAttributeFilter {
+  if (!candidate || typeof candidate !== "object") {
+    return false;
+  }
+  const record = candidate as {
+    type?: unknown;
+    comparison?: unknown;
+    value?: unknown;
+  };
+  return (
+    record.type === expectedType &&
+    typeof record.comparison === "string" &&
+    typeof record.value === "number"
+  );
+}
+
+function comparatorMatches(
+  actual: number,
+  operator: ComparisonOperator,
+  threshold: number,
+): boolean {
+  switch (operator) {
+    case "equal":
+      return actual === threshold;
+    case "not-equal":
+      return actual !== threshold;
+    case "less":
+    case "less-than":
+      return actual < threshold;
+    case "greater":
+    case "greater-than":
+    case "more-than":
+      return actual > threshold;
+    case "less-or-equal":
+    case "or-less":
+      return actual <= threshold;
+    case "greater-or-equal":
+    case "or-more":
+      return actual >= threshold;
+    default:
+      return false;
+  }
+}
+
+function getEffectFilterCandidates(effect: ReturnFromDiscardEffect): readonly unknown[] {
+  const candidates: unknown[] = [];
+  if (Array.isArray(effect.filter)) {
+    candidates.push(...effect.filter);
+  } else if (effect.filter !== undefined) {
+    candidates.push(effect.filter);
+  }
+  if (effect.filters) {
+    candidates.push(...effect.filters);
+  }
+  return candidates;
+}
+
+function findNumericFilter(
+  effect: ReturnFromDiscardEffect,
+  filterType: NumericAttributeFilter["type"],
+): NumericAttributeFilter | undefined {
+  for (const candidate of getEffectFilterCandidates(effect)) {
+    if (isNumericAttributeFilter(candidate, filterType)) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
+
+function matchesNumericFilter(
+  effect: ReturnFromDiscardEffect,
+  filterType: NumericAttributeFilter["type"],
+  actual: number | undefined,
+): boolean {
+  const numericFilter = findNumericFilter(effect, filterType);
+  if (!numericFilter) {
+    return true;
+  }
+  if (actual === undefined || !Number.isFinite(actual)) {
+    return false;
+  }
+  return comparatorMatches(actual, numericFilter.comparison, numericFilter.value);
+}
+
+function resolveCostComparisonMax(effect: ReturnFromDiscardEffect): number | undefined {
+  const f = effect.filter;
+  if (
+    f &&
+    typeof f === "object" &&
+    !Array.isArray(f) &&
+    "type" in f &&
+    f.type === "cost-comparison" &&
+    "comparison" in f &&
+    "value" in f &&
+    typeof f.value === "number"
+  ) {
+    const comparison = f.comparison as string;
+    if (comparison === "less-or-equal" || comparison === "or-less") {
+      return f.value as number;
+    }
+    if (comparison === "less-than") {
+      return (f.value as number) - 1;
+    }
+  }
+  return undefined;
+}
+
 function matchesReturnFilter(
   ctx: PlayCardExecutionContext,
   cardId: CardInstanceId,
@@ -168,6 +291,14 @@ function matchesReturnFilter(
     return false;
   }
 
+  const costComparisonMax = resolveCostComparisonMax(effect);
+  if (
+    costComparisonMax !== undefined &&
+    (!Number.isFinite(cardDefinition.cost) || Number(cardDefinition.cost) > costComparisonMax)
+  ) {
+    return false;
+  }
+
   if (filter?.classification && !Array.isArray(cardDefinition.classifications)) {
     return false;
   }
@@ -178,6 +309,16 @@ function matchesReturnFilter(
 
   const keywordFilter = getKeywordFilter(filter, effect);
   if (keywordFilter && !cardHasPrintedKeyword(cardDefinition, keywordFilter)) {
+    return false;
+  }
+
+  if (!matchesNumericFilter(effect, "willpower-comparison", cardDefinition.willpower)) {
+    return false;
+  }
+  if (!matchesNumericFilter(effect, "strength-comparison", cardDefinition.strength)) {
+    return false;
+  }
+  if (!matchesNumericFilter(effect, "lore-comparison", cardDefinition.lore)) {
     return false;
   }
 
@@ -266,20 +407,6 @@ export function resolveReturnFromDiscardEffect(
       resolutionInput.eventSnapshot.lastReturnedFromDiscardCardId = cardId;
     } else {
       resolutionInput.eventSnapshot = { lastReturnedFromDiscardCardId: cardId };
-    }
-
-    if (destination === "hand" || destination === undefined) {
-      emitTriggeredLorcanaEvent(
-        ctx,
-        "cardReturnedToHand",
-        { cardId, ownerId: resolvedOwnerId, fromZone: "discard" },
-        {
-          event: "return-to-hand",
-          playerId: resolvedOwnerId,
-          subjectCardId: cardId,
-          fromZone: "discard",
-        },
-      );
     }
 
     emitTriggeredLorcanaEvent(

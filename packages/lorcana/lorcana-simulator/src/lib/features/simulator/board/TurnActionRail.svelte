@@ -1,81 +1,44 @@
 <script lang="ts">
   import Flag from "@lucide/svelte/icons/flag";
-  import Undo2 from "@lucide/svelte/icons/undo-2";
-  import Users from "@lucide/svelte/icons/users";
   import { m } from "$lib/i18n/messages.js";
   import PlayerTimer from "@/features/simulator/panels/PlayerTimer.svelte";
-  import type { LorcanaPlayerTimerSummary } from "@/features/simulator/model/contracts.js";
+  import type { ClockSnapshot } from "@tcg/lorcana-engine";
   import type { ConfirmableDirectMoveCategoryId } from "@/features/simulator/model/direct-action-state.js";
 
   interface TurnActionRailProps {
-    timer?: LorcanaPlayerTimerSummary;
+    timer?: ClockSnapshot;
     timerLabel?: string;
-    questAllCount?: number | null;
-    questAllLore?: number | null;
+    /** Whether the timer is showing the local player's own clock */
+    isOwnClock?: boolean;
     canPassTurn?: boolean;
-    canUndo?: boolean;
-    canQuestAll?: boolean;
     armedCategoryId?: ConfirmableDirectMoveCategoryId | null;
-    onUndo?: () => void;
     onPassTurn?: () => void;
-    onQuestAll?: () => void;
   }
 
   let {
     timer,
     timerLabel = "Clock",
-    questAllCount = null,
-    questAllLore = null,
+    isOwnClock = false,
     canPassTurn = false,
-    canUndo = false,
-    canQuestAll = false,
     armedCategoryId = null,
-    onUndo,
     onPassTurn,
-    onQuestAll,
   }: TurnActionRailProps = $props();
 
   const passTurnArmed = $derived(armedCategoryId === "pass-turn");
-  const undoArmed = $derived(armedCategoryId === "undo");
-  const questAllArmed = $derived(armedCategoryId === "quest-all");
-  const undoLabel = $derived(
-    undoArmed
-      ? m["sim.actions.confirmMoveLabel"]({ label: m["sim.actions.label.undo"]({}) })
-      : m["sim.actions.label.undo"]({}),
-  );
   const passTurnLabel = $derived(
     passTurnArmed
       ? m["sim.actions.confirmMoveLabel"]({ label: m["sim.actions.label.passTurn"]({}) })
       : m["sim.actions.label.passTurn"]({}),
   );
-  const questAllBaseLabel = $derived(
-    questAllLore !== null && questAllCount !== null
-      ? m["sim.actions.label.questWithAll"]({ count: questAllCount, lore: questAllLore })
-      : m["sim.actions.label.questAll"]({}),
-  );
-  const questAllLabel = $derived(
-    questAllArmed
-      ? m["sim.actions.confirmMoveLabel"]({ label: questAllBaseLabel })
-      : questAllBaseLabel,
-  );
-  const questAllAriaLabel = $derived(
-    questAllLore !== null && questAllCount !== null
-      ? `Quest with all using ${questAllCount} character${questAllCount === 1 ? "" : "s"} for ${questAllLore} lore`
-      : "Quest with all",
-  );
 </script>
 
-{#if timer || canQuestAll || canUndo || canPassTurn}
+{#if timer || canPassTurn}
   <aside class="turn-action-rail" aria-label="Turn actions">
     {#if timer}
       <div class="turn-action-rail__timer">
         <PlayerTimer
-          reserveMsRemaining={timer.reserveMsRemaining}
-          isActive={timer.isActive}
-          isRunning={timer.isRunning}
-          startedAtMs={timer.startedAtMs}
-          timeoutCount={timer.timeoutCount}
-          isInNegativeTime={timer.isInNegativeTime}
+          snapshot={timer}
+          {isOwnClock}
           variant="rail"
           label={timerLabel}
         />
@@ -83,39 +46,6 @@
     {/if}
 
     <div class="turn-action-rail__actions">
-      {#if canQuestAll}
-        <button
-          type="button"
-          class="turn-action-button turn-action-button--secondary"
-          class:turn-action-button--armed={questAllArmed}
-          onclick={onQuestAll}
-          aria-label={questAllAriaLabel}
-        >
-          <span class="turn-action-button__header">
-            <Users class="size-4" />
-            <span>{questAllLabel}</span>
-          </span>
-          {#if questAllLore !== null && questAllCount !== null}
-            <span class="turn-action-button__meta">{questAllCount} Ready | +{questAllLore} Lore</span>
-          {/if}
-        </button>
-      {/if}
-
-      {#if canUndo}
-        <button
-          type="button"
-          class="turn-action-button turn-action-button--secondary"
-          class:turn-action-button--armed={undoArmed}
-          onclick={onUndo}
-          aria-label={undoLabel}
-        >
-          <span class="turn-action-button__header">
-            <Undo2 class="size-4" />
-            <span>{undoLabel}</span>
-          </span>
-        </button>
-      {/if}
-
       {#if canPassTurn}
         <button
           type="button"
@@ -164,6 +94,7 @@
     width: min(13.5rem, calc(100vw - 2rem));
     min-width: 0;
     pointer-events: auto;
+    margin-left: auto;
     margin-right: 0;
   }
 
@@ -200,12 +131,6 @@
     color: #fff7db;
   }
 
-  .turn-action-button--secondary {
-    border-color: rgba(125, 211, 252, 0.24);
-    background:
-      linear-gradient(180deg, rgba(8, 47, 73, 0.9), rgba(15, 23, 42, 0.98));
-  }
-
   .turn-action-button--armed {
     border-color: rgba(251, 191, 36, 0.58);
     box-shadow:
@@ -222,14 +147,6 @@
     font-weight: 800;
     line-height: 1.1;
     letter-spacing: 0.03em;
-  }
-
-  .turn-action-button__meta {
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(191, 219, 254, 0.84);
   }
 
   @media (max-width: 1439px) {

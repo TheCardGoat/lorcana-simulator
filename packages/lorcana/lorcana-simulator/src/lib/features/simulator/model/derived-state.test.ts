@@ -9,11 +9,24 @@ import {
 import {
   buildExecutableMoves,
   buildMoveCategorySummaries,
+  buildPendingResolutionMoves,
+  buildPlayableHandCardIds,
   expandCardActionCategoryMoves,
   expandCardMoves,
   expandCategoryMoves,
 } from "./derived-state.js";
 import type { CardSnapshotMap } from "./board-utils.js";
+
+type ProjectedBoardForPendingMoves = Parameters<typeof buildPendingResolutionMoves>[1];
+
+function createBoard(
+  overrides: Partial<ProjectedBoardForPendingMoves> = {},
+): ProjectedBoardForPendingMoves {
+  return {
+    bagEffects: [],
+    ...overrides,
+  } as ProjectedBoardForPendingMoves;
+}
 
 function createStubEngine(options: {
   moveOptions?: Record<string, MoveOption[]>;
@@ -154,8 +167,8 @@ describe("buildExecutableMoves", () => {
 
     expect(entries).toHaveLength(2);
     expect(entries.map((entry) => entry.params)).toEqual([
-      { cardId: "smash", targets: ["targetA"] },
-      { cardId: "smash", targets: ["targetB"] },
+      { cardId: "smash", cost: "standard", targets: ["targetA"] },
+      { cardId: "smash", cost: "standard", targets: ["targetB"] },
     ]);
     expect(entries.map((entry) => entry.label)).toEqual(["Smash -> Target A", "Smash -> Target B"]);
   });
@@ -239,8 +252,8 @@ describe("buildExecutableMoves", () => {
 
     expect(entries).toHaveLength(2);
     expect(entries.map((entry) => entry.params)).toEqual([
-      { cardId: "bodyguard" },
-      { cardId: "bodyguard", resolveOptional: true },
+      { cardId: "bodyguard", cost: "standard" },
+      { cardId: "bodyguard", cost: "standard", resolveOptional: true },
     ]);
     expect(entries.map((entry) => entry.presentation)).toEqual([
       expect.objectContaining({
@@ -376,5 +389,101 @@ describe("buildMoveCategorySummaries", () => {
         }),
       ]),
     );
+  });
+
+  it("includes undo category when engine.canUndo returns true", () => {
+    const engine = {
+      ...createStubEngine({}),
+      canUndo: () => true,
+    } as unknown as LorcanaEngineBase;
+
+    const summaries = buildMoveCategorySummaries(engine, [], ["passTurn"]);
+
+    expect(summaries).toEqual(
+      expect.arrayContaining([expect.objectContaining({ categoryId: "undo", isDirect: true })]),
+    );
+  });
+
+  it("omits undo category when engine.canUndo returns false", () => {
+    const engine = createStubEngine({});
+
+    const summaries = buildMoveCategorySummaries(engine, [], ["passTurn"]);
+
+    expect(summaries.some((s) => s.categoryId === "undo")).toBe(false);
+  });
+});
+
+describe("buildPlayableHandCardIds", () => {
+  it("merges hand and discard ink sources from putCardIntoInkwell", () => {
+    const available: AvailableMove[] = [
+      createAvailableMove("putCardIntoInkwell", ["handInk", "discardInk"]),
+      createAvailableMove("playCard", ["playMe"]),
+    ];
+
+    expect(buildPlayableHandCardIds(available).sort()).toEqual(
+      ["discardInk", "handInk", "playMe"].sort(),
+    );
+  });
+});
+
+describe("buildPendingResolutionMoves", () => {
+  it("returns an empty list when no legal pending moves are available", () => {
+    const board = createBoard();
+    expect(buildPendingResolutionMoves([], board)).toEqual([]);
+  });
+
+  it("surfaces a resolveEffect entry only when both the move is legal and pendingChoice has a requestID", () => {
+    const boardWithChoice = createBoard({
+      pendingChoice: {
+        type: "target-selection",
+        playerID: "p1",
+        requestID: "req-123",
+      } as ProjectedBoardForPendingMoves["pendingChoice"],
+    });
+
+    expect(buildPendingResolutionMoves(["resolveEffect"], boardWithChoice)).toEqual([
+      {
+        id: "resolveEffect:req-123",
+        moveId: "resolveEffect",
+        params: { effectId: "req-123", params: {} },
+      },
+    ]);
+
+    // Legal but no pending choice → no entry.
+    expect(buildPendingResolutionMoves(["resolveEffect"], createBoard())).toEqual([]);
+
+    // Pending choice but move not legal → no entry.
+    expect(buildPendingResolutionMoves([], boardWithChoice)).toEqual([]);
+  });
+
+  it("produces one resolveBag entry per bag effect when resolveBag is legal", () => {
+    const board = createBoard({
+      bagEffects: [{ id: "bag-1" }, { id: "bag-2" }] as ProjectedBoardForPendingMoves["bagEffects"],
+    });
+
+    const entries = buildPendingResolutionMoves(["resolveBag"], board);
+
+    expect(entries.map((entry) => entry.id)).toEqual(["resolveBag:bag-1", "resolveBag:bag-2"]);
+    expect(entries.every((entry) => entry.moveId === "resolveBag")).toBe(true);
+    expect(entries.map((entry) => entry.params)).toEqual([{ bagId: "bag-1" }, { bagId: "bag-2" }]);
+  });
+
+  it("sorts mixed resolveBag and resolveEffect entries deterministically by id", () => {
+    const board = createBoard({
+      bagEffects: [{ id: "bag-z" }, { id: "bag-a" }] as ProjectedBoardForPendingMoves["bagEffects"],
+      pendingChoice: {
+        type: "target-selection",
+        playerID: "p1",
+        requestID: "req-m",
+      } as ProjectedBoardForPendingMoves["pendingChoice"],
+    });
+
+    const entries = buildPendingResolutionMoves(["resolveBag", "resolveEffect"], board);
+
+    expect(entries.map((entry) => entry.id)).toEqual([
+      "resolveBag:bag-a",
+      "resolveBag:bag-z",
+      "resolveEffect:req-m",
+    ]);
   });
 });

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mufasaRulerOfPrideRock } from "..";
+import { mufasaRulerOfPrideRock } from "./150-mufasa-ruler-of-pride-rock";
 
 export const mufasaRulerOfPrideRockEnchanted: CharacterCard = {
   ...mufasaRulerOfPrideRock,

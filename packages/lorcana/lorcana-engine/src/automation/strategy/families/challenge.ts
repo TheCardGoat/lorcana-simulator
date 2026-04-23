@@ -11,6 +11,7 @@ import {
   getPrintedLore,
   getProjectedCard,
   getQuestPotentialForPlayer,
+  getQuestPotentialForPlayerExcluding,
   resolveOpponentId,
 } from "../common";
 
@@ -107,6 +108,22 @@ function shouldPrioritizeChallenge(
             (aggressiveSignals.challengeRemovesBlocker ?? false))) ||
         opponentLore >= actorLore)
     );
+  }
+
+  // When the attacker will be banished, check if the actor would lose all quest
+  // potential. Trading away your last quest-capable character leaves you unable
+  // to gain lore, so prefer questing over challenging unless the opponent is
+  // about to win (15+ lore).
+  if (!attackerSurvives) {
+    const remainingQuestPotential = getQuestPotentialForPlayerExcluding(
+      context,
+      context.actorId,
+      candidate.attackerId,
+    );
+
+    if (remainingQuestPotential <= 0 && opponentLore < 15) {
+      return false;
+    }
   }
 
   return (

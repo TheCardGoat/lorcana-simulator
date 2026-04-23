@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mulanStandingHerGround } from "..";
+import { mulanStandingHerGround } from "./126-mulan-standing-her-ground";
 
 export const mulanStandingHerGroundEpic: CharacterCard = {
   ...mulanStandingHerGround,

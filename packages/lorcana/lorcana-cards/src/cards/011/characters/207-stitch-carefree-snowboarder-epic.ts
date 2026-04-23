@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { stitchCarefreeSnowboarder } from "..";
+import { stitchCarefreeSnowboarder } from "./007-stitch-carefree-snowboarder";
 
 export const stitchCarefreeSnowboarderEpic: CharacterCard = {
   ...stitchCarefreeSnowboarder,

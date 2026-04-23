@@ -51,6 +51,33 @@ describe("deck-list-resolver", () => {
     expect(result.cards).toHaveLength(0);
   });
 
+  it("resolves German localized card names", async () => {
+    const result = await resolveLorcanaDeckListText("1 Sonnenschein - Gute Fee");
+
+    expect(result.diagnostics.unresolvedNames).toHaveLength(0);
+    expect(result.cards).toHaveLength(1);
+    expect(getLorcanaDisplayName(result.cards[0]!)).toBe("Merryweather - Good Fairy");
+  });
+
+  it("resolves mixed English and German deck list", async () => {
+    const result = await resolveLorcanaDeckListText("1 Sonnenschein - Gute Fee\n1 Grab your Bow");
+
+    expect(result.diagnostics.unresolvedNames).toHaveLength(0);
+    expect(result.cards).toHaveLength(2);
+    expect(result.cards.map((card) => getLorcanaDisplayName(card))).toEqual([
+      "Merryweather - Good Fairy",
+      "Grab Your Bow",
+    ]);
+  });
+
+  it("resolves French localized card names with accents", async () => {
+    const result = await resolveLorcanaDeckListText("1 Pimprenelle - Bonne fée");
+
+    expect(result.diagnostics.unresolvedNames).toHaveLength(0);
+    expect(result.cards).toHaveLength(1);
+    expect(getLorcanaDisplayName(result.cards[0]!)).toBe("Merryweather - Good Fairy");
+  });
+
   it("expands deck list quantities", async () => {
     const result = await resolveLorcanaDeckListText("2 Sail The Azurite Sea\n1 Grab your Bow");
 

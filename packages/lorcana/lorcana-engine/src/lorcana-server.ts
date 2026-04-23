@@ -29,7 +29,7 @@ import type {
 import { LorcanaEngineBase } from "./lorcana-engine-base";
 import type {
   LorcanaServerAuthoritativeSnapshot,
-  LorcanaUndoCheckpointSnapshot,
+  LorcanaUndoStackEntrySnapshot,
 } from "./serialization";
 import { resolveServerCurrentActor } from "./automation/actor-resolution";
 import { createAutomatedActionRepeatedStateTracker } from "./automation/deadlock";
@@ -72,6 +72,8 @@ export type LorcanaEngineInit = {
   players: Player[];
   cardsMaps: LorcanaCardsMaps;
   timeControl?: import("#core").TimeControlConfig;
+  /** Skip game initialization — used for deserialization fast path. */
+  _skipInitialization?: boolean;
 };
 
 export class LorcanaServer extends LorcanaEngineBase {
@@ -91,6 +93,8 @@ export class LorcanaServer extends LorcanaEngineBase {
       seed: init.seed,
       staticResources: staticResources,
       debugMode: false,
+      choosingFirstPlayer: init.goingFirst,
+      _skipInitialization: init._skipInitialization,
     };
 
     this.engine = new ServerEngine(serverEngineConfig);
@@ -116,10 +120,6 @@ export class LorcanaServer extends LorcanaEngineBase {
     return this.engine.getRuntime();
   }
 
-  getGameLog() {
-    return this.engine.getRuntime().getGameLog();
-  }
-
   getMoveLogHistory() {
     return this.engine.getRuntime().getMoveLogHistory();
   }
@@ -128,27 +128,27 @@ export class LorcanaServer extends LorcanaEngineBase {
     return this.engine.canUndo(playerId);
   }
 
-  getUndoCheckpointSnapshot(): LorcanaUndoCheckpointSnapshot | undefined {
-    const checkpoint = this.engine.getUndoCheckpointSnapshot();
-    return checkpoint
-      ? ({
-          ...checkpoint,
-          state: checkpoint.state,
-          runtimeSnapshot: checkpoint.runtimeSnapshot,
-        } satisfies LorcanaUndoCheckpointSnapshot)
-      : undefined;
+  getUndoStackSnapshot(): LorcanaUndoStackEntrySnapshot[] {
+    return this.engine.getUndoStackSnapshot().map(
+      (entry) =>
+        ({
+          ...entry,
+          state: entry.state,
+          runtimeSnapshot: entry.runtimeSnapshot,
+        }) satisfies LorcanaUndoStackEntrySnapshot,
+    );
   }
 
   restoreAuthoritativeSnapshot(snapshot: LorcanaServerAuthoritativeSnapshot): void {
     this.engine.restoreAuthoritativeSnapshot({
       state: snapshot.state as LorcanaMatchState,
-      ...(snapshot.undoCheckpoint
+      ...(snapshot.undoStack
         ? {
-            undoCheckpoint: {
-              ...snapshot.undoCheckpoint,
-              state: snapshot.undoCheckpoint.state,
-              runtimeSnapshot: snapshot.undoCheckpoint.runtimeSnapshot,
-            },
+            undoStack: snapshot.undoStack.map((entry) => ({
+              ...entry,
+              state: entry.state,
+              runtimeSnapshot: entry.runtimeSnapshot,
+            })),
           }
         : {}),
     });
@@ -158,7 +158,7 @@ export class LorcanaServer extends LorcanaEngineBase {
   override undo(playerId: string, prevStateID?: number): CommandResult {
     const runtime = this.engine.getRuntime();
     const previousGameEventCount = runtime.getPublishedGameEvents().length;
-    const previousLogCount = runtime.getGameLog().length;
+    const previousLogCount = runtime.getMoveLogHistory().length;
     const wasAccepted = this.engine.undo(playerId, prevStateID);
 
     if (!wasAccepted) {
@@ -176,7 +176,6 @@ export class LorcanaServer extends LorcanaEngineBase {
       state: this.engine.getState() as LorcanaMatchState,
       patches: [],
       gameEvents: runtime.getPublishedGameEvents().slice(previousGameEventCount),
-      logEntries: [],
       processedCommand: {
         commandID: `undo-${playerId}-${Date.now()}`,
         move: "undo",
@@ -187,6 +186,49 @@ export class LorcanaServer extends LorcanaEngineBase {
     };
   }
 
+  /**
+   * End the game in favour of `winnerId` with a server-issued reason.
+   *
+   * Uses `actorRole = "judge"` so the serverOnly forfeitGame move is accepted.
+   * Callers must persist the resulting state via the normal commitMoveState path.
+   */
+  forfeitGame(winnerId: PlayerId, reason: string): import("#core").CommandResult {
+    const input: LorcanaRuntimeMoveInputs["forfeitGame"] = { args: { winnerId, reason } };
+    const runtime = this.engine.getRuntime();
+    const previousGameEventCount = runtime.getPublishedGameEvents().length;
+    const previousLogCount = runtime.getMoveLogHistory().length;
+    const result = this.engine.executeMoveForPlayer(
+      winnerId as string,
+      "forfeitGame",
+      input as never,
+      "judge",
+    );
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.reason ?? "forfeitGame failed",
+        errorCode: result.code ?? "EXECUTE_FAILED",
+        currentStateID: this.getStateID(),
+      };
+    }
+    return {
+      success: true,
+      stateID: result.result?.stateID ?? this.getStateID(),
+      state: result.result?.state ?? (this.engine.getState() as LorcanaMatchState),
+      patches: result.result?.patches ?? [],
+      gameEvents:
+        result.result?.gameEvents ?? runtime.getPublishedGameEvents().slice(previousGameEventCount),
+      animations: result.result?.animations ?? [],
+      undoable: false,
+      moveLogs: result.result?.moveLogs ?? runtime.getMoveLogHistory().slice(previousLogCount),
+      processedCommand: {
+        commandID: `forfeit-${winnerId}-${Date.now()}`,
+        move: "forfeitGame",
+        input,
+      },
+    };
+  }
+
   protected executeMoveViaEngine<K extends keyof LorcanaRuntimeMoveInputs & string>(
     moveId: K,
     input: LorcanaRuntimeMoveInputs[K],
@@ -194,7 +236,7 @@ export class LorcanaServer extends LorcanaEngineBase {
   ): CommandResult {
     const runtime = this.engine.getRuntime();
     const previousGameEventCount = runtime.getPublishedGameEvents().length;
-    const previousLogCount = runtime.getGameLog().length;
+    const previousLogCount = runtime.getMoveLogHistory().length;
     const result = this.engine.executeMoveForPlayer(ctx.playerId, moveId as string, input as never);
     if (!result.success) {
       return {
@@ -210,20 +252,20 @@ export class LorcanaServer extends LorcanaEngineBase {
     };
     const commandResult: CommandResult = {
       success: true,
-      stateID: this.getStateID(),
-      state: this.engine.getState() as LorcanaMatchState,
-      patches: [],
-      gameEvents: runtime.getPublishedGameEvents().slice(previousGameEventCount),
-      logEntries: [],
+      stateID: result.result?.stateID ?? this.getStateID(),
+      state: result.result?.state ?? (this.engine.getState() as LorcanaMatchState),
+      patches: result.result?.patches ?? [],
+      gameEvents:
+        result.result?.gameEvents ?? runtime.getPublishedGameEvents().slice(previousGameEventCount),
+      animations: result.result?.animations ?? [],
+      undoable: result.result?.undoable ?? false,
+      moveLogs: result.result?.moveLogs || runtime.getMoveLogHistory().slice(previousLogCount),
       processedCommand: {
         ...commandEnvelope,
         commandID: `server-${ctx.playerId}-${moveId}-${Date.now()}`,
         input,
         move: moveId,
       },
-      animations: [],
-      undoable: false,
-      moveLogs: runtime.getMoveLogHistory().slice(previousLogCount),
     };
 
     return commandResult;

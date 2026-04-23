@@ -283,7 +283,7 @@ export function projectLorcanaCardDerived(args: {
     );
     if (externalGrants.length > 0) {
       derived.grantedAbilityTextEntries = externalGrants.map(({ ability, sourceId }) => {
-        const title = ability.name ?? "Ability";
+        const title = ability.name ?? ability.id ?? "Ability";
         const description = ability.text?.trim();
         const sourceDef = getDefinitionByInstanceId(sourceId);
         return {

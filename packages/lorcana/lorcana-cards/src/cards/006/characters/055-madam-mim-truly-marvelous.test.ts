@@ -43,6 +43,19 @@ describe("Madam Mim - Truly Marvelous", () => {
       expect(result.success).toBe(false);
     });
 
+    it("cannot activate without explicitly choosing a discard when exactly one card is in hand (discardChosen)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [madamMimTrulyMarvelous],
+        hand: [handCard],
+        inkwell: 2,
+        deck: 1,
+      });
+
+      const result = testEngine.asPlayerOne().activateAbility(madamMimTrulyMarvelous);
+
+      expect(result.success).toBe(false);
+    });
+
     it("cannot activate without enough ink", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [madamMimTrulyMarvelous],

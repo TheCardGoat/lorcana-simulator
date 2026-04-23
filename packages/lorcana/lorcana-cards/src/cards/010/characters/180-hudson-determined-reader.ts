@@ -40,10 +40,20 @@ export const hudsonDeterminedReader: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 1,
-          chosen: true,
-          target: "CONTROLLER",
-          type: "discard",
+          type: "sequence",
+          steps: [
+            {
+              type: "draw",
+              amount: 1,
+              target: "CONTROLLER",
+            },
+            {
+              type: "discard",
+              amount: 1,
+              chosen: true,
+              target: "CONTROLLER",
+            },
+          ],
         },
         type: "optional",
       },

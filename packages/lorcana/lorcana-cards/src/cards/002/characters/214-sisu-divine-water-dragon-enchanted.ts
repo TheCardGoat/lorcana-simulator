@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { sisuDivineWaterDragon } from "..";
+import { sisuDivineWaterDragon } from "./159-sisu-divine-water-dragon";
 
 export const sisuDivineWaterDragonEnchanted: CharacterCard = {
   ...sisuDivineWaterDragon,

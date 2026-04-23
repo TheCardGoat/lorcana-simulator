@@ -34,7 +34,7 @@ export const munchingsAndCrunchings: ItemCard = {
         exert: true,
       },
       effect: {
-        amount: 2,
+        amount: { type: "up-to", value: 2 },
         target: {
           cardTypes: ["character"],
           count: 1,
@@ -43,7 +43,6 @@ export const munchingsAndCrunchings: ItemCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       id: "16w-1",
       name: "WHAT A JUICY APPLE",

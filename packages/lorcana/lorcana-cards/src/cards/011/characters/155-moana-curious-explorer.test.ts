@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { moanaCuriousExplorer } from "./155-moana-curious-explorer";
+import { belleStrangeButSpecial } from "../../001";
 
 const inkableCard = createMockCharacter({
   id: "moana-test-inkable",
@@ -85,6 +86,22 @@ describe("Moana - Curious Explorer", () => {
       // Second ink from discard should fail (already inked this turn)
       expect(testEngine.asPlayerOne().ink(secondInkableCard)).not.toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getCardZone(secondInkableCard)).toBe("discard");
+    });
+
+    it("does allow inking twice in the same turn, when inking limit has been increased", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [moanaCuriousExplorer, belleStrangeButSpecial],
+        hand: [inkableCard],
+        discard: [secondInkableCard],
+      });
+
+      // First ink from hand should succeed
+      expect(testEngine.asPlayerOne().ink(inkableCard)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(inkableCard)).toBe("inkwell");
+
+      // Second ink from discard should succeed because Belle increases the inking limit
+      expect(testEngine.asPlayerOne().ink(secondInkableCard)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(secondInkableCard)).toBe("inkwell");
     });
   });
 });

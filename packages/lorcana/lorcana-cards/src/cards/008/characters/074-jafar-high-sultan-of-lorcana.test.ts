@@ -59,10 +59,13 @@ describe("Jafar - High Sultan of Lorcana", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
 
-      // Accept playing for free
+      // Accept playing for free and select the Illusion card from discard
       const playForFreeEffect = testEngine.asPlayerOne().getPendingEffects()[0]!;
       expect(
-        testEngine.asPlayerOne().resolveEffect(playForFreeEffect.id, { resolveOptional: true }),
+        testEngine.asPlayerOne().resolveEffect(playForFreeEffect.id, {
+          resolveOptional: true,
+          targets: [palaceGuardInstanceId],
+        }),
       ).toBeSuccessfulCommand();
 
       // Palace Guard should now be in play

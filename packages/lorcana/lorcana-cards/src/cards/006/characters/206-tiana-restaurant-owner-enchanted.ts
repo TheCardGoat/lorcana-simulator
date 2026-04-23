@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { tianaRestaurantOwner } from "..";
+import { tianaRestaurantOwner } from "./016-tiana-restaurant-owner";
 
 export const tianaRestaurantOwnerEnchanted: CharacterCard = {
   ...tianaRestaurantOwner,

@@ -1,9 +1,10 @@
 import type { CardInstanceId, MoveExecutionContext, MoveInput, PlayerId } from "#core";
 import type { LorcanaCard, LorcanaCardMeta, LorcanaG } from "../../types";
+import { recomputeLoreToWin } from "../effects/win-condition-effects";
 
 type ZoneRefLike = { zone: string; playerId?: PlayerId | string };
 
-type ShiftStackRuntimeContext = Pick<MoveExecutionContext<MoveInput>, "cards" | "framework">;
+type ShiftStackRuntimeContext = Pick<MoveExecutionContext<MoveInput>, "cards" | "framework" | "G">;
 
 function getCardsUnder(meta: LorcanaCardMeta | undefined): CardInstanceId[] {
   return Array.isArray(meta?.cardsUnder) ? [...meta.cardsUnder] : [];
@@ -160,6 +161,9 @@ export function moveCardOutOfPlayWithStack(
   for (const movedCardId of movedCardIds) {
     ctx.cards.clearMeta(String(movedCardId));
   }
+
+  // A card leaving play may remove a win-condition-modification effect.
+  recomputeLoreToWin(ctx);
 
   return movedCardIds;
 }

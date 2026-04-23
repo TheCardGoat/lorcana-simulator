@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { olafHappyPassenger } from "..";
+import { olafHappyPassenger } from "./050-olaf-happy-passenger";
 
 export const olafHappyPassengerEnchanted: CharacterCard = {
   ...olafHappyPassenger,

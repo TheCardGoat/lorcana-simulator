@@ -14,6 +14,7 @@ type CreateTriggeredAbilityEffectLike = {
     sourceZones?: ("play" | "hand" | "discard" | "inkwell")[];
     condition?: Condition;
     effect: Effect;
+    autoResolve?: boolean;
   };
   lifecycle:
     | {
@@ -127,6 +128,7 @@ export function resolveCreateTriggeredAbilityEffect(
       sourceZones: effect.ability.sourceZones,
       condition: effect.ability.condition,
       effect: effect.ability.effect,
+      ...(effect.ability.autoResolve === true ? { autoResolve: true } : {}),
     },
     lifecycle: resolveLifecycle(ctx, effect),
     resolutionInput,

@@ -87,6 +87,34 @@ export function getQuestPotentialForPlayer(
   }, 0);
 }
 
+export function getQuestPotentialForPlayerExcluding(
+  context: AutomatedActionPlanningContext,
+  playerId: string,
+  excludeCardId: string,
+): number {
+  const inPlay = context.board.players[playerId]?.play ?? [];
+
+  return inPlay.reduce((total, cardId) => {
+    if (String(cardId) === excludeCardId) {
+      return total;
+    }
+
+    const card = getProjectedCard(context, String(cardId));
+    if (!card) {
+      return total;
+    }
+
+    const lore = card.lore ?? 0;
+    const canQuest =
+      lore > 0 &&
+      card.exerted !== true &&
+      card.drying !== true &&
+      card.hasQuestRestriction !== true;
+
+    return canQuest ? total + lore : total;
+  }, 0);
+}
+
 export function canActorReachLoreGoalByQuesting(context: AutomatedActionPlanningContext): boolean {
   const actorLore = getPlayerLore(context, context.actorId);
   const questPotential = getQuestPotentialForPlayer(context, context.actorId);
@@ -140,8 +168,8 @@ export function getFamilyOrder(
     resolveEffect: 2,
     resolveBag: 3,
     quest: 4,
-    putCardIntoInkwell: 4.5,
-    playCard: 5,
+    playCard: 4.5,
+    putCardIntoInkwell: 5,
     activateAbility: 6,
     moveCharacterToLocation: 8,
     challenge: 9,

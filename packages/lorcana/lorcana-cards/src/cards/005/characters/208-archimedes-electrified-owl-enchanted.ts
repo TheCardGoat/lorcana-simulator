@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { archimedesElectrifiedOwl } from "..";
+import { archimedesElectrifiedOwl } from "./047-archimedes-electrified-owl";
 
 export const archimedesElectrifiedOwlEnchanted: CharacterCard = {
   ...archimedesElectrifiedOwl,

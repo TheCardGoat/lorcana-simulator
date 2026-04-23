@@ -148,10 +148,10 @@ describe("Lyle Tiberius Rourke - Cunning Mercenary", () => {
       expect(testEngine.asPlayerOne().getCardZone(liloGalacticHero)).toBe("discard");
       expect(testEngine.asPlayerOne().getCardZone(liloJuniorCakeDecorator)).toBe("discard");
 
-      // Lyle triggered for 3 non-Lyle banishes → 3 bag effects
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(3);
+      // Lyle triggered for 3 non-Lyle banishes → 3 bag effects (same ability auto-resolve)
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
-      // Resolve all triggered bag effects (each causes opponent to lose 1 lore)
+      // Bag already drained; resolveAllBagEffects is a no-op when empty
       testEngine.asPlayerOne().resolveAllBagEffects();
 
       // Player two loses 3 lore

@@ -6,3 +6,10 @@ mock.module("svelte-sonner", () => ({
   Toaster,
   toast,
 }));
+
+mock.module("$app/environment", () => ({
+  dev: false,
+  browser: false,
+  building: false,
+  version: "",
+}));

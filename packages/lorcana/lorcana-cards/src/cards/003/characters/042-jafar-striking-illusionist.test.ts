@@ -16,12 +16,7 @@ describe("Jafar - Striking Illusionist", () => {
       // Friends on the Other Side draws 2 cards, so Jafar should trigger twice (1 lore per draw)
       expect(testEngine.asPlayerOne().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
 
-      // Two bag effects are queued (one per draw); manually resolve the first
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(testEngine.asPlayerOne().resolveBag(bagEffect!.id)).toBeSuccessfulCommand();
-
-      // After resolving the first, the second auto-resolves (1 remaining = auto-resolved)
+      // Duplicate triggers from the same printed ability auto-resolve in sequence
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.getLore(PLAYER_ONE)).toBe(2);
     });
@@ -36,7 +31,10 @@ describe("Jafar - Striking Illusionist", () => {
 
       expect(testEngine.asPlayerOne().playCard(friendsOnTheOtherSide)).toBeSuccessfulCommand();
 
+      // Per CRD 6.2.7: ability IS enqueued when trigger fires, exerted condition checked at resolution
+      // Two draws = two trigger instances; both resolve without manual bag clicks
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Jafar is not exerted — no lore gained
       expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
     });
 

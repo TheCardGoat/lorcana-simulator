@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { perditaDeterminedMother } from "..";
+import { perditaDeterminedMother } from "./027-perdita-determined-mother";
 
 export const perditaDeterminedMotherEnchanted: CharacterCard = {
   ...perditaDeterminedMother,

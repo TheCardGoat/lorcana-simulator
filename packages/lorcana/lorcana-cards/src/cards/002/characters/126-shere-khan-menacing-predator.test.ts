@@ -4,8 +4,17 @@ import {
   PLAYER_ONE,
   PLAYER_TWO,
   createMockCharacter,
+  createMockLocation,
 } from "@tcg/lorcana-engine/testing";
 import { shereKhanMenacingPredator } from "./126-shere-khan-menacing-predator";
+
+const defenderLocation = createMockLocation({
+  id: "test-defender-location",
+  name: "Test Defender Location",
+  cost: 2,
+  moveCost: 1,
+  willpower: 8,
+});
 
 const attacker = createMockCharacter({
   id: "test-attacker",
@@ -76,6 +85,34 @@ describe("Shere Khan - Menacing Predator (Set 2)", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
+    });
+
+    it("does not gain lore when a character challenges a location", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: shereKhanMenacingPredator, isDrying: false },
+            { card: attacker, isDrying: false },
+          ],
+          deck: 5,
+        },
+        {
+          play: [defenderLocation],
+          deck: 5,
+        },
+        {
+          startingLore: {
+            [PLAYER_ONE]: 0,
+            [PLAYER_TWO]: 0,
+          },
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(attacker, defenderLocation),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
     });
   });
 });

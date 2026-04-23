@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { ratiganNefariousCriminal } from "..";
+import { ratiganNefariousCriminal } from "./143-ratigan-nefarious-criminal";
 
 export const ratiganNefariousCriminalEnchanted: CharacterCard = {
   ...ratiganNefariousCriminal,

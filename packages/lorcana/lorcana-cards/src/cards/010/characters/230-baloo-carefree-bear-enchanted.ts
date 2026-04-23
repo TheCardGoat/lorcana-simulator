@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { balooCarefreeBear } from "..";
+import { balooCarefreeBear } from "./085-baloo-carefree-bear";
 
 export const balooCarefreeBearEnchanted: CharacterCard = {
   ...balooCarefreeBear,

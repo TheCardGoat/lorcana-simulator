@@ -7,6 +7,7 @@
   } from "@/features/simulator/model/contracts.js";
   import { createCardAnchorId } from "@/features/simulator/animations/board-move-animations.js";
   import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+  import {ZONE_IMAGE_FORMATS} from "@/design-system/simulator/cards/card-image-format.js";
   import HotkeyCardBadge from "@/features/simulator/hotkeys/HotkeyCardBadge.svelte";
   import { useLorcanaSidebarPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
@@ -14,6 +15,7 @@
     handlePlayZoneLocationEntryDirectSelection,
     isPlayZoneLocationEntryDirectSelectionMode,
   } from "./play-zone-location-entry-interactions.js";
+  import PlayZoneCardBands from "./PlayZoneCardBands.svelte";
 
   interface PlayZoneLocationAssociation {
     clusterId: string;
@@ -76,14 +78,17 @@
     {#if hotkey}
       <HotkeyCardBadge {hotkey} />
     {/if}
+    <PlayZoneCardBands {card} section="top" />
     <div class="location-card-shell">
       <div class="location-card-rotate">
         <LorcanaCard
           {card}
           onSelect={(selectedCard, event) => handleDirectCardSelection(selectedCard, event)}
           useContainerSize
-          imageFormat="art_and_name"
+          imageFormat={ZONE_IMAGE_FORMATS.play}
           hoverShowActions
+          hideStatBadges
+          hideSupplementalBadges
           isSelected={
             sidebar.getActionSessionCardState(card.cardId).isSelected ||
             simulatorCardContext.previewCard?.cardId === card.cardId
@@ -97,6 +102,7 @@
         />
       </div>
     </div>
+    <PlayZoneCardBands {card} section="bottom" />
   </div>
 {:else}
   <div
@@ -115,24 +121,30 @@
     {#if hotkey}
       <HotkeyCardBadge {hotkey} />
     {/if}
-    <LorcanaCard
-      {card}
-      onSelect={(selectedCard, event) => handleDirectCardSelection(selectedCard, event)}
-      useContainerSize
-      imageFormat="art_and_name"
-      hoverShowActions
-      isSelected={
-        sidebar.getActionSessionCardState(card.cardId).isSelected ||
-        simulatorCardContext.previewCard?.cardId === card.cardId
-      }
-      {isMasked}
-      isPlayable={sidebar.getActionSessionCardState(card.cardId).isSelectable}
-      isInvalidTarget={sidebar.getActionSessionCardState(card.cardId).isInvalidTarget}
-      isBanishedPreview={sidebar.getChallengePreviewCardState(card.cardId).wouldBeBanished}
-      isExerted={card.readyState === "exerted"}
-      isDrying={card.isDrying ?? false}
-      damage={card.damage ?? 0}
-    />
+    <PlayZoneCardBands {card} section="top" />
+    <div class="card-slot__card-wrapper">
+      <LorcanaCard
+        {card}
+        onSelect={(selectedCard, event) => handleDirectCardSelection(selectedCard, event)}
+        useContainerSize
+        imageFormat={ZONE_IMAGE_FORMATS.play}
+        hoverShowActions
+        hideStatBadges
+        hideSupplementalBadges
+        isSelected={
+          sidebar.getActionSessionCardState(card.cardId).isSelected ||
+          simulatorCardContext.previewCard?.cardId === card.cardId
+        }
+        {isMasked}
+        isPlayable={sidebar.getActionSessionCardState(card.cardId).isSelectable}
+        isInvalidTarget={sidebar.getActionSessionCardState(card.cardId).isInvalidTarget}
+        isBanishedPreview={sidebar.getChallengePreviewCardState(card.cardId).wouldBeBanished}
+        isExerted={card.readyState === "exerted"}
+        isDrying={card.isDrying ?? false}
+        damage={card.damage ?? 0}
+      />
+    </div>
+    <PlayZoneCardBands {card} section="bottom" />
   </div>
 {/if}
 
@@ -141,6 +153,26 @@
     position: relative;
     overflow: visible;
     isolation: isolate;
+    /* Same flex-column layout as the main play-zone card-slot so that
+       PlayZoneCardBands stacks above/below the card correctly. */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: var(--slot-width);
+    height: var(--slot-height);
+  }
+
+  .card-slot--location-anchor {
+    /* Location cards are landscape via the rotated shell, so override
+       slot width to fit the shell's wider footprint. */
+    width: var(--location-card-height, var(--slot-width));
+  }
+
+  .card-slot--location-occupant .card-slot__card-wrapper {
+    position: relative;
+    width: var(--card-art-width);
+    height: var(--card-art-height);
+    flex: 0 0 auto;
   }
 
   .card-slot--location-related::before {

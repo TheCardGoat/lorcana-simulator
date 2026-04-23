@@ -32,8 +32,14 @@ import {
 } from "./strategy-data";
 import { summarizeLoreRaceCandidates } from "./strategy";
 import type { LoreRaceHeuristicPreferences } from "./strategy/internal-types";
-import { countCopiesInHand, createHeuristic, getProjectedCard } from "./strategy/common";
+import {
+  countCopiesInHand,
+  createHeuristic,
+  getAvailableInkForPlayer,
+  getProjectedCard,
+} from "./strategy/common";
 import { scoreAutomatedActionTargets } from "./target-priority";
+import { classifyEffectPolarity } from "./effect-polarity";
 
 type Contribution = {
   axis?: StrategyAxis;
@@ -626,9 +632,14 @@ function scoreTargets(
     context,
     definitionId: sourceDefinitionId,
   });
+  const candidateEffect = context.resolveCandidateEffect(candidate);
+  const effectPolarity = candidateEffect
+    ? classifyEffectPolarity(candidateEffect).polarity
+    : undefined;
   const targetScore = scoreAutomatedActionTargets({
     additionalPreference: bestAiTargetAdjustment.targetPreference,
     context,
+    effectPolarity,
     family: candidate.family,
     sourceDefinitionId,
     sourceRoles,
@@ -987,6 +998,25 @@ function scorePutInkCandidate(
     });
   }
 
+  const hand = context.board.players[context.actorId]?.hand ?? [];
+  const availableInk = getAvailableInkForPlayer(context, context.actorId);
+  const handSize = hand.length;
+  const smallHandAllPlayable =
+    handSize > 0 &&
+    handSize <= 3 &&
+    hand.every((cardId) => {
+      const card = getProjectedCard(context, String(cardId));
+      return (card?.playCost ?? 0) <= availableInk;
+    });
+  const smallHandAllPlayablePenalty = smallHandAllPlayable ? -30 : 0;
+  if (smallHandAllPlayablePenalty !== 0) {
+    contributors.push({
+      key: "smallHandAllPlayable",
+      source: "generic",
+      value: smallHandAllPlayablePenalty,
+    });
+  }
+
   return {
     contributors: [...contributors, ...openingStructure.contributors],
     matchedRuleIds: [...bestAiAdjustment.matchedRuleIds].sort(),
@@ -999,7 +1029,8 @@ function scorePutInkCandidate(
       bestAiAdjustment.score +
       duplicateContribution +
       printedCostContribution +
-      lowLoreContribution,
+      lowLoreContribution +
+      smallHandAllPlayablePenalty,
   };
 }
 

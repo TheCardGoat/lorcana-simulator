@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { dumboNinthWonderOfTheUniverse } from "..";
+import { dumboNinthWonderOfTheUniverse } from "./045-dumbo-ninth-wonder-of-the-universe";
 
 export const dumboNinthWonderOfTheUniverseEnchanted: CharacterCard = {
   ...dumboNinthWonderOfTheUniverse,

@@ -1,5 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { badanonVillainSupportCenter } from "..";
+import { badanonVillainSupportCenter } from "./203-bad-anon-villain-support-center";
 
 export const badanonVillainSupportCenterEnchanted: LocationCard = {
   ...badanonVillainSupportCenter,

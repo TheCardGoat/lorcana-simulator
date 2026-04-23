@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { belleMechanicExtraordinaire } from "..";
+import { belleMechanicExtraordinaire } from "./126-belle-mechanic-extraordinaire";
 
 export const belleMechanicExtraordinaireEnchanted: CharacterCard = {
   ...belleMechanicExtraordinaire,

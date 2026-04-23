@@ -47,3 +47,33 @@
 - preventive_guardrail: For deck-fixture migration tasks, compare the resolved fixture pool against both inventory rows and `missingImplementation`/`missingTests` scans before assuming the tracked batch is exhaustive.
 - verification: `rg -n '001/characters/018|003/characters/016|003/characters/184|005/characters/157|005/characters/193|005/characters/195|006/characters/053|006/characters/144|006/characters/191|007/characters/010|007/characters/193' packages/lorcana/lorcana-cards/src/cards/AUDIT_INVENTORY.md`; `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/001/characters/018-rapunzel-gifted-with-healing.test.ts ./src/cards/007/characters/010-tramp-street-smart-dog.test.ts ./src/cards/007/characters/193-mulan-disguised-soldier.test.ts`
 - handoff_notes: If a fixture card lacks an inventory row, add or update the inventory during the same batch so future audits stay aligned.
+
+## 2026-03-18 - set-006-apostrophe-slug-drift
+
+- task: Resolve chunk-10 inventory entries that claimed `MISSING` for set-006 cards while validating the first 10 unchecked items.
+- failure: Inventory rows used apostrophe-split slugs like `king-s-sensor-core`, `pooh-s-home`, and `mama-odie-s-home` even though the current repo already had executable cards/tests under normalized slugs.
+- root_cause: Legacy and current slug normalization differ for possessives, and the inventory preserved the legacy spelling.
+- corrective_action: Verified the existing current-repo files, updated the inventory rows to the normalized slugs, and completed the batch against the real paths.
+- preventive_guardrail: When a chunk says `MISSING` for a possessive-name card, check the normalized no-apostrophe slug variant in the current repo before treating it as missing work.
+- verification: `rg --files packages/lorcana/lorcana-cards/src/cards/006 | rg '200-kings-sensor-core|034-hundred-acre-island-poohs-home|069-mystical-tree-mama-odies-home'`; targeted 10-file Bun test batch in chunk 10.
+- handoff_notes: Downstream migration batches should normalize inventory file paths to current repo slugs as soon as the executable target is confirmed.
+
+## 2026-03-22 - sebastian-loyal-crab-implementation
+
+- task: Implement test for Sebastian - Loyal Crab (010-016), a vanilla character card.
+- failure: No failure; CLI similarity lookup returned correct card and similar vanilla cards for reference.
+- root_cause: N/A - straightforward implementation.
+- corrective_action: Created test file following vanilla card pattern (play, quest for lore, verify non-inkable constraint). Card definition already existed and matched legacy exactly.
+- preventive_guardrail: For vanilla cards, always check `inkable` property to decide whether to test ink action.
+- verification: `bun test packages/lorcana/lorcana-cards/src/cards/010/characters/016-sebastian-loyal-crab.test.ts` - 2 pass.
+- handoff_notes: No legacy test existed for this card; implementation follows established vanilla card test pattern.
+
+## 2026-04-11 - the-958 merlin lookup validation
+
+- task: Resolve `Merlin - Intellectual Visionary` deterministically while triaging THE-958 (shift-trigger report).
+- failure: No lookup failure occurred, but regression triage risk was false ambiguity between similarly named Merlin cards.
+- root_cause: Multiple Merlin printings can exist across sets and reports often omit set/number identifiers.
+- corrective_action: Used similarity CLI fast path and captured canonical id plus definition/test paths (`005-159-merlin-intellectual-visionary`) before writing simulator-level regression coverage.
+- preventive_guardrail: For bug triage on named characters with many printings, always lock to canonical id and file paths first, then build or run regressions against that resolved card.
+- verification: `bun packages/lorcana/lorcana-cards/src/cards/similarity.ts --query "Merlin - Intellectual Visionary" --limit 8`.
+- handoff_notes: Downstream test-generation/fix work should reference the resolved set-005 Merlin files to avoid cross-print confusion.

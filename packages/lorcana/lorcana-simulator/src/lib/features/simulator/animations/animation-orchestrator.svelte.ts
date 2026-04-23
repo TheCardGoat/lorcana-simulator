@@ -29,7 +29,7 @@ import type {
   LorcanaCardSnapshot,
 } from "@/features/simulator/model/contracts.js";
 
-const CAUSE_PHASE_BUFFER_MS = 150;
+const CAUSE_PHASE_BUFFER_MS = 75;
 const PARALLEL_DISCARD_FAN_OUT_STEP_PX = 18;
 const PARALLEL_DISCARD_FAN_OUT_RISE_PX = 10;
 
@@ -155,37 +155,6 @@ export class AnimationOrchestrator {
   ingest(batch: QueuedAnimationBatch): void {
     this.cancel();
     this.#pendingBatch = batch;
-    console.info("[simulator][animations][orchestrator][ingest]", {
-      boardMoves: batch.boardMoves.map((animation) => ({
-        id: animation.id,
-        cardId: animation.card.cardId,
-        variant: animation.variant,
-      })),
-      quests: batch.quests.map((animation) => ({
-        id: animation.id,
-        cardId: animation.cardId,
-      })),
-      challenges: batch.challenges.map((animation) => ({
-        id: animation.id,
-        attackerId: animation.attackerId,
-        defenderId: animation.defenderId,
-      })),
-      cardEffects: batch.cardEffects.map((animation) => ({
-        id: animation.id,
-        cardId: animation.cardId,
-        effectKind: animation.effectKind,
-      })),
-      overlays: batch.overlays.map((animation) => ({
-        id: animation.id,
-        kind: animation.kind,
-      })),
-      playerEffects: batch.playerEffects.map((animation) => ({
-        id: animation.id,
-        actorSide: animation.actorSide,
-        targetSides: [...animation.targetSides],
-      })),
-      hasSourceAnchors: batch.sourceAnchors !== null,
-    });
 
     // Animations that don't need anchor resolution fire immediately
     if (batch.overlays.length > 0) {
@@ -210,10 +179,6 @@ export class AnimationOrchestrator {
   resolveAnchors(nextAnchors: BoardAnchorSnapshot): void {
     const batch = this.#pendingBatch;
     if (!batch) {
-      console.info("[simulator][animations][orchestrator][resolveAnchors]", {
-        status: "skipped",
-        reason: "no-pending-batch",
-      });
       return;
     }
     this.#pendingBatch = null;
@@ -239,37 +204,6 @@ export class AnimationOrchestrator {
     const resolvedCardEffects = batch.cardEffects
       .map((a) => resolveQueuedCardEffectAnimation(a, sourceAnchors, nextAnchors))
       .filter((a): a is ResolvedCardEffectAnimation => a !== null);
-
-    console.info("[simulator][animations][orchestrator][resolveAnchors]", {
-      status: "resolved",
-      queued: {
-        boardMoves: batch.boardMoves.length,
-        quests: batch.quests.length,
-        challenges: batch.challenges.length,
-        cardEffects: batch.cardEffects.length,
-      },
-      resolved: {
-        boardMoves: resolvedBoardMoves.map((animation) => ({
-          id: animation.id,
-          cardId: animation.card.cardId,
-          variant: animation.variant,
-        })),
-        quests: resolvedQuests.map((animation) => ({
-          id: animation.id,
-          cardId: animation.cardId,
-        })),
-        challenges: resolvedChallenges.map((animation) => ({
-          id: animation.id,
-          attackerId: animation.attackerId,
-          defenderId: animation.defenderId,
-        })),
-        cardEffects: resolvedCardEffects.map((animation) => ({
-          id: animation.id,
-          cardId: animation.cardId,
-          effectKind: animation.effectKind,
-        })),
-      },
-    });
 
     const hasCauseAnimations =
       resolvedQuests.length > 0 || resolvedChallenges.length > 0 || resolvedCardEffects.length > 0;

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { sisuEmpoweredSibling } from "..";
+import { sisuEmpoweredSibling } from "./125-sisu-empowered-sibling";
 
 export const sisuEmpoweredSiblingEnchanted: CharacterCard = {
   ...sisuEmpoweredSibling,

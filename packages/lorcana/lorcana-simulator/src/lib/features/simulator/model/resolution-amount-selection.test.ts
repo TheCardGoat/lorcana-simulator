@@ -7,8 +7,7 @@ describe("resolution amount selection", () => {
       payload: {
         effect: {
           type: "remove-damage",
-          amount: 3,
-          upTo: true,
+          amount: { type: "up-to", value: 3 },
         },
       },
       selectedTargets: ["card-1"],
@@ -40,8 +39,7 @@ describe("resolution amount selection", () => {
       payload: {
         effect: {
           type: "move-damage",
-          amount: 3,
-          upTo: true,
+          amount: { type: "up-to", value: 3 },
         },
       },
       selectedTargets: ["card-1", "card-2"],

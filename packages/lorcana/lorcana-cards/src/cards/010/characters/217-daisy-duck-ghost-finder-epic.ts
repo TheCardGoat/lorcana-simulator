@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { daisyDuckGhostFinder } from "..";
+import { daisyDuckGhostFinder } from "./141-daisy-duck-ghost-finder";
 
 export const daisyDuckGhostFinderEpic: CharacterCard = {
   ...daisyDuckGhostFinder,

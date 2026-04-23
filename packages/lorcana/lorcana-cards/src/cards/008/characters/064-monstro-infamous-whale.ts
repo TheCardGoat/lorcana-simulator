@@ -32,6 +32,10 @@ export const monstroInfamousWhale: CharacterCard = {
       description:
         "Choose and discard a card — Ready this character. He can't quest for the rest of this turn.",
     },
+    {
+      title: "FULL BREACH + COMBO",
+      description: "Draw your entire deck, then discard that many cards from hand.",
+    },
   ],
   classifications: ["Storyborn"],
   abilities: [
@@ -58,6 +62,41 @@ export const monstroInfamousWhale: CharacterCard = {
             restriction: "cant-quest",
             target: "SELF",
             type: "restriction",
+          },
+        ],
+      },
+    },
+    {
+      id: "kcf-combo-full-breach",
+      name: "FULL BREACH + COMBO",
+      text: "SHORTCUT: Draw your entire deck, then discard that many cards from hand.",
+      type: "activated",
+      condition: {
+        type: "or",
+        conditions: [
+          { type: "has-granted-ability", abilityId: "draw-a-card-when-exerted" },
+          { type: "has-granted-ability", abilityId: "9qd-1a" },
+        ],
+      },
+      cost: {},
+      effect: {
+        type: "sequence",
+        steps: [
+          {
+            type: "draw",
+            amount: {
+              type: "filtered-count",
+              filters: [],
+              owner: "you",
+              zones: ["deck"],
+            },
+            target: "CONTROLLER",
+          },
+          {
+            type: "discard",
+            amount: "DRAWN_COUNT",
+            target: "CONTROLLER",
+            chosen: true,
           },
         ],
       },

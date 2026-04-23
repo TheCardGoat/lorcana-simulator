@@ -1,5 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
-import { theGlassSlipper } from "..";
+import { theGlassSlipper } from "./044-the-glass-slipper";
 
 export const theGlassSlipperEnchanted: ItemCard = {
   ...theGlassSlipper,

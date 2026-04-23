@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { megaraSecretKeeper } from "..";
+import { megaraSecretKeeper } from "./086-megara-secret-keeper";
 
 export const megaraSecretKeeperEpic: CharacterCard = {
   ...megaraSecretKeeper,

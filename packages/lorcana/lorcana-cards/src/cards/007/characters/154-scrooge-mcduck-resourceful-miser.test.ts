@@ -168,5 +168,51 @@ describe("Scrooge McDuck - Resourceful Miser", () => {
         }),
       ).not.toBeSuccessfulCommand();
     });
+
+    it("appears in available moves when 4+ ready items are in play and ink is 0", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [scroogeMcduckResourcefulMiser],
+        play: [item1, item2, item3, item4],
+        inkwell: 0,
+      });
+      const scroogeId = testEngine.findCardInstanceId(scroogeMcduckResourcefulMiser, "hand");
+
+      const availableMoves = testEngine.asPlayerOne().getAvailableMoves();
+      const playCardMove = availableMoves.find((m) => m.moveId === "playCard");
+      expect(playCardMove).toBeDefined();
+      expect(playCardMove!.selectableCardIds).toContain(scroogeId);
+    });
+
+    it("does not appear in available moves when fewer than 4 ready items are in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [scroogeMcduckResourcefulMiser],
+        play: [item1, item2, item3],
+        inkwell: 0,
+      });
+
+      const availableMoves = testEngine.asPlayerOne().getAvailableMoves();
+      const playCardMove = availableMoves.find((m) => m.moveId === "playCard");
+      if (playCardMove) {
+        const scroogeId = testEngine.findCardInstanceId(scroogeMcduckResourcefulMiser, "hand");
+        expect(playCardMove.selectableCardIds).not.toContain(scroogeId);
+      }
+    });
+
+    it("does not appear in available moves when items are exerted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [scroogeMcduckResourcefulMiser],
+        play: [item1, item2, item3, item4],
+        inkwell: 0,
+      });
+
+      testEngine.asServer().manualExertCard(item1);
+
+      const availableMoves = testEngine.asPlayerOne().getAvailableMoves();
+      const playCardMove = availableMoves.find((m) => m.moveId === "playCard");
+      if (playCardMove) {
+        const scroogeId = testEngine.findCardInstanceId(scroogeMcduckResourcefulMiser, "hand");
+        expect(playCardMove.selectableCardIds).not.toContain(scroogeId);
+      }
+    });
   });
 });

@@ -1,5 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
-import { theSwordOfHercules } from "..";
+import { theSwordOfHercules } from "./200-the-sword-of-hercules";
 
 export const theSwordOfHerculesEnchanted: ItemCard = {
   ...theSwordOfHercules,

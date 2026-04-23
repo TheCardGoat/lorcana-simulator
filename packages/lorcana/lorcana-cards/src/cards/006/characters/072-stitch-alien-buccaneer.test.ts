@@ -139,10 +139,15 @@ describe("Stitch - Alien Buccaneer", () => {
 
       expect(testEngine.asPlayerOne().playCard(stitchAlienBuccaneer)).toBeSuccessfulCommand();
 
-      // No triggered abilities should fire
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(stitchAlienBuccaneer, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
-      // Action card should remain in discard
+      // Action card should remain in discard (condition was not met - no Shift used)
       expect(testEngine.asPlayerOne().getCardZone(actionInDiscard)).toBe("discard");
     });
   });

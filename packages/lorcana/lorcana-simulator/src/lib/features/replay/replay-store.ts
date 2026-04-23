@@ -14,6 +14,12 @@ const TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 // Types
 // ---------------------------------------------------------------------------
 
+export interface ReplayPlayerMeta {
+  id: string;
+  displayName: string | null;
+  username: string | null;
+}
+
 export interface SavedReplay {
   gameId: string;
   matchId: string;
@@ -26,6 +32,18 @@ export interface SavedReplay {
   createdAt: string;
   completedAt: string;
   sizeBytes: number;
+  /** Match duration in milliseconds */
+  durationMs?: number;
+  /** Match type: "ranked", "casual", "practice_vs_bot", "private" */
+  matchType?: string;
+  /** End reason: "lore_victory", "concede", etc. */
+  endReason?: string;
+  /** Player display info (display names, usernames) */
+  players?: [ReplayPlayerMeta, ReplayPlayerMeta];
+  /** Deck ink colors per player */
+  deckColors?: { player1: string[]; player2: string[] };
+  /** Player ID of whoever went first (on the play) */
+  firstPlayerId?: string;
   /** Gzipped PersistedReplayData blob */
   data: ArrayBuffer;
 }
@@ -168,6 +186,61 @@ export async function purgeExpiredReplays(existingDb?: IDBDatabase): Promise<num
 }
 
 // ---------------------------------------------------------------------------
+// Migration: backfill rich metadata from blob for old IndexedDB entries
+// ---------------------------------------------------------------------------
+
+/**
+ * For replays saved before the metadata enrichment, decompress the stored blob
+ * and backfill player names, deck colors, duration, and firstPlayerId.
+ * Returns the updated meta (persisted to IndexedDB) or the original if not needed.
+ */
+export async function migrateReplayMetadata(
+  meta: SavedReplayMeta,
+  decompressBlob: (compressed: ArrayBuffer) => Promise<{
+    steps?: Array<{ acceptedMove: { turnNumber: number; actorId: string } }>;
+    metadata: {
+      durationMs?: number;
+      endReason?: string;
+      matchType?: string;
+      players?: [ReplayPlayerMeta, ReplayPlayerMeta];
+      deckColors?: { player1: string[]; player2: string[] };
+    };
+  }>,
+): Promise<SavedReplayMeta> {
+  // Already has player info — nothing to migrate
+  if (meta.players !== undefined) return meta;
+
+  const blob = await loadReplayData(meta.gameId);
+  if (!blob) return meta;
+
+  let data: Awaited<ReturnType<typeof decompressBlob>>;
+  try {
+    data = await decompressBlob(blob);
+  } catch {
+    return meta;
+  }
+
+  const firstPlayerId =
+    meta.firstPlayerId ??
+    data.steps?.find((s) => s.acceptedMove.turnNumber === 1)?.acceptedMove.actorId;
+
+  const enriched: SavedReplay = {
+    ...meta,
+    durationMs: data.metadata.durationMs ?? meta.durationMs,
+    matchType: data.metadata.matchType ?? meta.matchType,
+    endReason: data.metadata.endReason ?? meta.endReason,
+    players: data.metadata.players,
+    deckColors: data.metadata.deckColors ?? meta.deckColors,
+    firstPlayerId,
+    data: blob,
+  };
+
+  await saveReplay(enriched);
+  const { data: _data, ...enrichedMeta } = enriched;
+  return enrichedMeta;
+}
+
+// ---------------------------------------------------------------------------
 // High-level: fetch from API and save
 // ---------------------------------------------------------------------------
 
@@ -181,17 +254,26 @@ export async function saveReplayFromApi(
     gameId: string;
     matchId: string;
     playerIds: [string, string];
+    steps?: Array<{ acceptedMove: { turnNumber: number; actorId: string } }>;
     metadata: {
       totalMoves: number;
       totalTurns: number;
+      durationMs?: number;
       createdAt: string;
       completedAt: string;
       winnerId?: string;
+      endReason?: string;
+      matchType?: string;
+      players?: [ReplayPlayerMeta, ReplayPlayerMeta];
+      deckColors?: { player1: string[]; player2: string[] };
     };
   }>,
 ): Promise<void> {
   const compressed = await fetchBlob(gameId);
   const data = await decompressBlob(compressed);
+
+  const firstPlayerId = data.steps?.find((s) => s.acceptedMove.turnNumber === 1)?.acceptedMove
+    .actorId;
 
   await saveReplay({
     gameId: data.gameId,
@@ -205,6 +287,12 @@ export async function saveReplayFromApi(
     createdAt: data.metadata.createdAt,
     completedAt: data.metadata.completedAt,
     sizeBytes: compressed.byteLength,
+    durationMs: data.metadata.durationMs,
+    matchType: data.metadata.matchType,
+    endReason: data.metadata.endReason,
+    players: data.metadata.players,
+    deckColors: data.metadata.deckColors,
+    firstPlayerId,
     data: compressed,
   });
 }

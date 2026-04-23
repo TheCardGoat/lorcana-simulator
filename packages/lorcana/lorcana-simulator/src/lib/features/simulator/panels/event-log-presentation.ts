@@ -1,3 +1,4 @@
+import type { ChatMessage } from "@tcg/shared";
 import type {
   LorcanaPlayerSide,
   MoveLogEntrySnapshot,
@@ -146,6 +147,107 @@ function buildEventRow(
     segments: body.segments,
     source: body.source,
   };
+}
+
+export type ChatFeedItem = {
+  kind: "chat-message";
+  id: string;
+  epochMs: number;
+  senderSeat: 0 | 1 | 2;
+  presetKey?: string;
+  text?: string;
+  systemEvent?: string;
+};
+
+export type ActivityFeedGroup = EventLogGroup | ChatFeedItem;
+
+export function buildActivityFeed(
+  entries: MoveLogEntrySnapshot[],
+  chatMessages: readonly ChatMessage[],
+  viewerSide?: LorcanaPlayerSide | null,
+): ActivityFeedGroup[] {
+  const rows = buildEventLogRows(entries, viewerSide);
+  const groups = groupEventLogRows(rows);
+
+  // Oldest visible game event timestamp — used to filter out stale chat messages
+  const oldestGameEpochMs =
+    rows.find((r): r is Extract<EventLogRow, { kind: "event-row" }> => r.kind === "event-row")
+      ?.timestamp ?? null;
+
+  // Build id → epochMs for turn-separator rows (look ahead to next event-row)
+  const separatorEpochMap = new Map<string, number>();
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (row.kind === "turn-separator") {
+      const nextEvent = rows
+        .slice(i + 1)
+        .find((r): r is Extract<EventLogRow, { kind: "event-row" }> => r.kind === "event-row");
+      separatorEpochMap.set(row.id, nextEvent?.timestamp ?? 0);
+    }
+  }
+
+  type Sortable = { epochMs: number; isSeparator: boolean; group: ActivityFeedGroup };
+
+  const sortable: Sortable[] = groups.map((group) => {
+    if (group.kind === "turn-separator") {
+      return {
+        epochMs: separatorEpochMap.get(group.id) ?? 0,
+        isSeparator: true,
+        group,
+      };
+    }
+    return {
+      epochMs: group.rows[0].timestamp,
+      isSeparator: false,
+      group,
+    };
+  });
+
+  const chatItems: ChatFeedItem[] = chatMessages
+    .map((msg): ChatFeedItem => {
+      const parsed = Date.parse(msg.createdAt);
+      const epochMs = Number.isNaN(parsed) ? Number.MAX_SAFE_INTEGER : parsed;
+      if (msg.kind === "preset") {
+        return {
+          kind: "chat-message",
+          id: msg.id,
+          epochMs,
+          senderSeat: msg.senderSeat,
+          presetKey: msg.presetKey,
+        };
+      }
+      if (msg.kind === "system") {
+        return {
+          kind: "chat-message",
+          id: msg.id,
+          epochMs,
+          senderSeat: msg.senderSeat,
+          systemEvent: msg.systemEvent,
+        };
+      }
+      return {
+        kind: "chat-message",
+        id: msg.id,
+        epochMs,
+        senderSeat: msg.senderSeat,
+        text: msg.text,
+      };
+    })
+    .filter((item) => oldestGameEpochMs === null || item.epochMs >= oldestGameEpochMs);
+
+  for (const item of chatItems) {
+    sortable.push({ epochMs: item.epochMs, isSeparator: false, group: item });
+  }
+
+  // Stable sort: by epoch ascending; separators sort before same-epoch non-separators
+  sortable.sort((a, b) => {
+    if (a.epochMs !== b.epochMs) return a.epochMs - b.epochMs;
+    if (a.isSeparator && !b.isSeparator) return -1;
+    if (!a.isSeparator && b.isSeparator) return 1;
+    return 0;
+  });
+
+  return sortable.map((s) => s.group);
 }
 
 function buildActor(

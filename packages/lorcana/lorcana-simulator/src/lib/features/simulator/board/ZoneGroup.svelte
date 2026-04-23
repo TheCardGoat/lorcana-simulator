@@ -14,6 +14,7 @@
     ownerId?: string | null;
     isOpponent?: boolean;
     isMasked?: boolean;
+    showZoneCounters?: boolean;
     onDeckClick?: () => void;
     onDiscardClick?: () => void;
   }
@@ -25,6 +26,7 @@
     inkwellCount,
     ownerId = null,
     isOpponent = false,
+    showZoneCounters = false,
     isMasked = false,
     onDeckClick,
     onDiscardClick,
@@ -49,7 +51,7 @@
     onclick={onDiscardClick}
     aria-label="Discard pile ({discardCards.length} cards)"
   >
-    <ZoneLabel label="Discard" count={discardCards.length} />
+    <ZoneLabel label="Discard" count={showZoneCounters ? discardCards.length : undefined} />
     <div class="flex-1 flex items-center justify-center w-full min-h-[60px]">
       {#if discardCards.length === 0}
         <EmptyState icon="🗑" label="Empty" />
@@ -58,7 +60,7 @@
       {:else}
         <div class="relative">
           <LorcanaCard isMasked size="small" {ownerId} />
-          {#if topDiscard}
+          {#if topDiscard && showZoneCounters}
             <div class="absolute -bottom-1 -right-1 bg-slate-900/90 border border-sky-500/30 rounded-full px-1.5 py-[0.1rem]">
               <span class="text-[0.65rem] font-bold text-slate-200">{discardCards.length}</span>
             </div>
@@ -69,7 +71,7 @@
   </button>
 
   <div class="zone zone--inkwell flex flex-col items-center gap-1 bg-zone-bg border border-zone-border rounded-lg p-1 flex-[2] min-w-[100px]">
-    <ZoneLabel label="Inkwell" count={effectiveInkwellCount} />
+    <ZoneLabel label="Inkwell" count={showZoneCounters ? effectiveInkwellCount : undefined} />
     <div class="flex-1 flex items-center justify-center w-full min-h-[60px]">
       {#if effectiveInkwellCount === 0}
         <EmptyState icon="💧" label="No Ink" />
@@ -96,12 +98,12 @@
     onclick={onDeckClick}
     aria-label="Deck ({deckCount} cards)"
   >
-    <ZoneLabel label="Deck" count={deckCount} />
+    <ZoneLabel label="Deck" count={showZoneCounters ? deckCount : undefined} />
     <div class="flex-1 flex items-center justify-center w-full min-h-[60px]">
       {#if deckCount === 0}
         <EmptyState icon="📚" label="Empty" />
       {:else}
-        <DeckStack count={deckCount} {ownerId} />
+        <DeckStack count={deckCount} {ownerId} showCount={showZoneCounters} />
       {/if}
     </div>
   </button>

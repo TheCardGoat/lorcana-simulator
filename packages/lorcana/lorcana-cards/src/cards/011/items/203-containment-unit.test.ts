@@ -283,5 +283,30 @@ describe("Containment Unit", () => {
 
       expect(testEngine.asPlayerOne().getCardZone(containmentUnit)).toBe("discard");
     });
+
+    it("when you have no cards in hand, banishes automatically without prompting for a choice", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          deck: 2,
+          play: [containmentUnit],
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      // With empty hand, only banish is legal — engine should auto-force without suspension
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(containmentUnit),
+      ).toBeSuccessfulCommand();
+
+      // No pending choice-selection prompt should remain
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+      // Item is banished immediately
+      expect(testEngine.asPlayerOne().getCardZone(containmentUnit)).toBe("discard");
+    });
   });
 });

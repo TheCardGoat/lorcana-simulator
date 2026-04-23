@@ -4,7 +4,7 @@ import type {
   ExecutableMovePresentationCategoryId,
 } from "@/features/simulator/model/contracts.js";
 
-const ORDERED_MOVE_CATEGORIES: readonly ExecutableMovePresentationCategoryId[] = [
+export const ORDERED_MOVE_CATEGORIES: readonly ExecutableMovePresentationCategoryId[] = [
   "choose-first-player",
   "ink-card",
   "play-card",
@@ -94,6 +94,41 @@ export function getMoveCategoryLabel(moveId: string): string {
       return m["sim.actions.label.questAll"]({});
     default:
       return moveId;
+  }
+}
+
+export function getCategoryLabel(categoryId: ExecutableMovePresentationCategoryId): string {
+  switch (categoryId) {
+    case "activate-ability":
+      return m["sim.actions.label.activateAbility"]({});
+    case "challenge":
+      return m["sim.actions.label.challenge"]({});
+    case "choose-first-player":
+      return m["sim.actions.label.chooseFirstPlayer"]({});
+    case "alter-hand":
+      return m["sim.actions.label.alterHand"]({});
+    case "concede":
+      return m["sim.actions.label.concede"]({});
+    case "ink-card":
+      return m["sim.actions.label.inkCard"]({});
+    case "move-to-location":
+      return m["sim.actions.label.moveToLocation"]({});
+    case "undo":
+      return m["sim.actions.label.undo"]({});
+    case "pass-turn":
+      return m["sim.actions.label.passTurn"]({});
+    case "play-card":
+      return m["sim.actions.label.playCard"]({});
+    case "shift-card":
+      return m["sim.actions.label.shiftCard"]({});
+    case "sing-card":
+      return m["sim.actions.label.singCard"]({});
+    case "quest":
+      return m["sim.actions.label.quest"]({});
+    case "quest-all":
+      return m["sim.actions.label.questAll"]({});
+    default:
+      return categoryId;
   }
 }
 

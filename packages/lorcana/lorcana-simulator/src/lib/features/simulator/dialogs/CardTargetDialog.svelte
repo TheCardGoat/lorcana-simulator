@@ -22,7 +22,16 @@
     cards: LorcanaCardSnapshot[];
     playerSide: LorcanaPlayerSide;
     viewerSide?: LorcanaPlayerSide | null;
+    /** Turn-action sources (e.g. ink); used for playable highlight in zone browsers. */
+    playableCardIds?: string[];
     target?: LorcanaCardTarget | null;
+    /**
+     * Set to `true` when `cards` is already scoped to the engine-published
+     * candidate set (target-selection prompts). Skips the dialog's parallel
+     * filter evaluator, which can disagree with the engine on filters that
+     * depend on runtime context (event snapshots, granted keywords).
+     */
+    trustCandidates?: boolean;
     selectable?: boolean;
     players?: TargetSelectionPlayerEntry[];
     selectedCardIds?: string[];
@@ -53,7 +62,9 @@
     cards,
     playerSide,
     viewerSide = null,
+    playableCardIds = [],
     target = null,
+    trustCandidates = false,
     selectable = false,
     players = [],
     selectedCardIds = [],
@@ -88,6 +99,7 @@
       viewerSide,
       selectedCardIds,
       selectedPlayerCount: players.filter((player) => player.selected).length,
+      trustCandidates,
     }),
   );
   const badgeModels = $derived(dialogState.badgeModels);
@@ -101,6 +113,9 @@
     selectionSummaryText ??
       m["sim.target.selectedCount"]({ selectedCount: dialogState.selectedCount }),
   );
+
+  /** No card grid: shrink shell so player-only / empty steps are not stretched to full scry size. */
+  const isCompactLayout = $derived(cards.length === 0);
 
   function handleSelectCard(cardId: string): void {
     onSelectCard?.(cardId);
@@ -133,6 +148,9 @@
   }
 
   function handleCardClick(event: MouseEvent, cardId: string): void {
+    if (!selectable) {
+      return;
+    }
     event.preventDefault();
     event.stopPropagation();
     handleSelectCard(cardId);
@@ -163,7 +181,12 @@
       class="fixed inset-0 z-50 bg-black/70 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in"
     />
     <Dialog.Content
-      class="fixed left-1/2 top-1/2 z-50 flex h-[min(88vh,760px)] w-[min(94vw,1120px)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-hidden rounded-3xl border border-sky-300/20 bg-slate-950/96 p-4 shadow-2xl sm:p-5"
+      class={[
+        "card-target-dialog fixed left-1/2 top-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border border-sky-300/20 bg-slate-950/96 shadow-2xl",
+        isCompactLayout
+          ? "card-target-dialog--compact max-h-[min(92vh,520px)] w-[min(92vw,22rem)] gap-3 p-3 sm:w-[min(92vw,26rem)] sm:p-4"
+          : "h-[min(88vh,760px)] w-[min(94vw,1120px)] gap-4 p-4 sm:p-5",
+      ].join(" ")}
       showCloseButton={false}
     >
       <Dialog.Title class="sr-only">
@@ -230,9 +253,15 @@
         </section>
       {/if}
 
-      <section class="dialog-content" aria-live="polite">
+      <section
+        class="dialog-content"
+        class:dialog-content--compact={isCompactLayout}
+        aria-live="polite"
+      >
         {#if cards.length === 0}
-          <p class="empty-state">{emptyAllText}</p>
+          <p class="empty-state">
+            {players.length > 0 ? m["sim.target.emptyPlayerStep"]({}) : emptyAllText}
+          </p>
         {:else if orderedCards.length === 0}
           <p class="empty-state">{emptyNoMatchText}</p>
         {:else}
@@ -261,7 +290,9 @@
                   {card}
                   isSelected={isSelected}
                   isMasked={card.isMasked}
+                  isPlayable={playableCardIds.includes(card.cardId)}
                   size="small"
+                  hoverShowActions={!selectable}
                   interactionMeta={{
                     cardId: card.cardId,
                     ownerSide: card.ownerSide,
@@ -482,12 +513,25 @@
     padding: 0.75rem;
   }
 
+  .dialog-content--compact {
+    flex: 0 1 auto;
+    min-height: unset;
+    padding: 0.55rem 0.65rem;
+  }
+
   .empty-state {
     color: #cbd5e1;
     margin: 0;
     text-align: center;
     padding: 1rem 0.5rem;
     font-size: 0.9rem;
+  }
+
+  .dialog-content--compact .empty-state {
+    padding: 0.35rem 0.25rem;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    text-align: left;
   }
 
   .card-grid {

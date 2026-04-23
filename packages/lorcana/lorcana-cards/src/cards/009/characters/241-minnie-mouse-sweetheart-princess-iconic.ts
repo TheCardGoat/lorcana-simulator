@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { minnieMouseSweetheartPrincess } from "..";
+import { minnieMouseSweetheartPrincess } from "./005-minnie-mouse-sweetheart-princess";
 
 export const minnieMouseSweetheartPrincessIconic: CharacterCard = {
   ...minnieMouseSweetheartPrincess,

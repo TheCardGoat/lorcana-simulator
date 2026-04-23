@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { cinderellaDreamComeTrue } from "..";
+import { cinderellaDreamComeTrue } from "./155-cinderella-dream-come-true";
 
 export const cinderellaDreamComeTrueEnchanted: CharacterCard = {
   ...cinderellaDreamComeTrue,

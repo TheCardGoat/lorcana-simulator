@@ -46,8 +46,7 @@ export const panicHighstrungImp: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           type: "move-damage",
-          amount: 2,
-          upTo: true,
+          amount: { type: "up-to", value: 2 },
           from: "CHOSEN_CHARACTER",
           to: "CHOSEN_OPPOSING_CHARACTER",
         },

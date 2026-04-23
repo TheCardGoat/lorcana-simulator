@@ -41,7 +41,6 @@ export const belleBookworm: CharacterCard = {
           selector: "all",
           owner: "opponent",
           zones: ["hand"],
-          cardType: "character",
         },
         comparison: {
           operator: "eq",

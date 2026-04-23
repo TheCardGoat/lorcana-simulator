@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { lookAtThisFamily } from "..";
+import { lookAtThisFamily } from "./028-look-at-this-family";
 
 export const lookAtThisFamilyEnchanted: ActionCard = {
   ...lookAtThisFamily,

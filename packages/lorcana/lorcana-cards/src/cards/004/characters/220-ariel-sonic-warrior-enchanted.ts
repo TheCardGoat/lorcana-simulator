@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { arielSonicWarrior } from "..";
+import { arielSonicWarrior } from "./175-ariel-sonic-warrior";
 
 export const arielSonicWarriorEnchanted: CharacterCard = {
   ...arielSonicWarrior,

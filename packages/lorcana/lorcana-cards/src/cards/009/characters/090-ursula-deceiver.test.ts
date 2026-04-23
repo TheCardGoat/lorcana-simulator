@@ -3,6 +3,7 @@ import { LorcanaMultiplayerTestEngine, PLAYER_TWO } from "@tcg/lorcana-engine/te
 import { mickeyMouseTrueFriend } from "../../001";
 import { andThenAlongCameZeus } from "../../003/actions";
 import { ursulaDeceiver } from "./090-ursula-deceiver";
+import { daisyDuckDonaldsDate } from "../../005";
 
 describe("Ursula - Deceiver (set 009)", () => {
   describe("YOU'LL NEVER EVEN MISS IT - When you play this character, chosen opponent reveals their hand and discards a song card of your choice.", () => {
@@ -76,5 +77,23 @@ describe("Ursula - Deceiver (set 009)", () => {
     expect(testEngine.asPlayerOne().respondWith(songCardId)).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().getCardZone(andThenAlongCameZeus)).toBe("discard");
+  });
+
+  it("regression: opponent doesn't have valid discard targets. The game must continue.", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [ursulaDeceiver],
+        inkwell: ursulaDeceiver.cost,
+        play: [daisyDuckDonaldsDate],
+      },
+      {
+        hand: [mickeyMouseTrueFriend],
+      },
+    );
+
+    // The command should successfully resolve, given the opponent doesn't have a valid target. Trigger resolution will be canceled with no-valid-targets
+    expect(testEngine.asPlayerOne().playCard(ursulaDeceiver)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().quest(daisyDuckDonaldsDate)).toBeSuccessfulCommand();
   });
 });

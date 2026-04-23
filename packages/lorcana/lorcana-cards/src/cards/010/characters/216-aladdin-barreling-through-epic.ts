@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { aladdinBarrelingThrough } from "..";
+import { aladdinBarrelingThrough } from "./123-aladdin-barreling-through";
 
 export const aladdinBarrelingThroughEpic: CharacterCard = {
   ...aladdinBarrelingThrough,

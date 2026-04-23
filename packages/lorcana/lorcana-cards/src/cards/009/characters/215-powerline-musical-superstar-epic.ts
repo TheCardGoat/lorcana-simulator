@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { powerlineMusicalSuperstar } from "..";
+import { powerlineMusicalSuperstar } from "./117-powerline-musical-superstar";
 
 export const powerlineMusicalSuperstarEpic: CharacterCard = {
   ...powerlineMusicalSuperstar,

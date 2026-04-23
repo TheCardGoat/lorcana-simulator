@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { ursulaSeaWitchQueen } from "..";
+import { ursulaSeaWitchQueen } from "./058-ursula-sea-witch-queen";
 
 export const ursulaSeaWitchQueenEnchanted: CharacterCard = {
   ...ursulaSeaWitchQueen,

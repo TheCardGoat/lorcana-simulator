@@ -25,6 +25,8 @@ import {
 } from "../../rules/derived-state";
 import { getOrBuildMoveRegistry } from "../../runtime-moves/rules/move-registry-cache";
 import { hasTemporaryKeyword } from "../../runtime-moves/effects/temporary-effects";
+import { getEffectsForCard } from "../../rules/static-effect-registry";
+import { resolveTurnOwnerId } from "../../core/runtime/turn-owner";
 
 type FilterRecord = Record<string, unknown>;
 
@@ -293,9 +295,7 @@ export function isPlayerTargetDescriptor(target: unknown): target is PlayerTarge
 }
 
 export function resolveCurrentTurnPlayerId(ctx: EffectTargetRuntimeContext): PlayerId | undefined {
-  return (ctx.framework.state.currentPlayer ?? ctx.framework.state.priority.holder) as
-    | PlayerId
-    | undefined;
+  return resolveTurnOwnerId(ctx.framework.state, ctx.G);
 }
 
 export function normalizeSelectedTargets(
@@ -664,7 +664,19 @@ export function passesFilter(
         currentTurn,
         keyword,
       );
-      return hasStaticKeyword || hasTemporary;
+      if (hasStaticKeyword || hasTemporary) {
+        return true;
+      }
+      const filterReg = getFilterRegistry();
+      if (filterReg) {
+        const hasGrantedKeyword = getEffectsForCard(filterReg, cardId, "gain-keyword").some(
+          (e) => e.payload.keyword === keyword,
+        );
+        if (hasGrantedKeyword) {
+          return true;
+        }
+      }
+      return false;
     }
 
     case "name": {
@@ -1243,8 +1255,17 @@ function resolveCandidateTargetsInternal(
         currentTurn,
         "Ward",
       );
+      let hasGrantedWard = false;
+      if (!hasStaticWard && !hasTemporaryWard) {
+        const registry = getOrBuildMoveRegistry(
+          ctx as import("../../runtime-moves/rules/move-registry-cache").MoveRegistryCtx,
+        );
+        hasGrantedWard = getEffectsForCard(registry, cardId, "gain-keyword").some(
+          (e) => e.payload.keyword === "Ward",
+        );
+      }
 
-      return !(hasStaticWard || hasTemporaryWard);
+      return !(hasStaticWard || hasTemporaryWard || hasGrantedWard);
     });
   }
 
@@ -1326,6 +1347,9 @@ export function resolvePlayerTargets(
       break;
     case "opponent":
       candidates = opponents.length > 0 ? [opponents[0]!] : [];
+      break;
+    case "each-opponent":
+      candidates = [...opponents];
       break;
     case "each-player":
       candidates = [...ctx.framework.state.playerIds];
@@ -1501,6 +1525,7 @@ export function resolveTargetPlayerIds(
     controllerId?: PlayerId;
     selectedPlayerIds?: readonly PlayerId[];
     sourceCardId?: CardInstanceId;
+    eventSnapshot?: DynamicAmountEventSnapshot;
   },
 ): PlayerId[] {
   const normalized = normalizeLorcanaTarget(target);
@@ -1523,6 +1548,7 @@ export function resolveTargetPlayerIds(
     controllerId,
     sourceCardId: options?.sourceCardId,
     selectedTargets: selectedPlayerIds as CardInstanceId[] | undefined,
+    eventSnapshot: options?.eventSnapshot,
   };
 
   const pseudoCardPlayed: CardPlayedPayload = {

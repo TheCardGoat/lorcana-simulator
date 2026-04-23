@@ -87,10 +87,12 @@ describe("Merlin - Intellectual Visionary", () => {
       expect(
         testEngine.asPlayerOne().resolvePendingByCard(merlinIntellectualVisionary, {
           resolveOptional: true,
+          targets: [arielOnHumanLegs],
         }),
       ).toBeSuccessfulCommand();
 
-      // One card should have moved from deck to hand
+      // The selected card should move from deck to hand
+      expect(testEngine.asPlayerOne().getCardZone(arielOnHumanLegs)).toBe("hand");
       expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_ONE).hand).toBe(1);
       expect(testEngine.asPlayerOne().getZonesCardCount(PLAYER_ONE).deck).toBe(1);
     });
@@ -137,7 +139,13 @@ describe("Merlin - Intellectual Visionary", () => {
         testEngine.asPlayerOne().playCard(merlinIntellectualVisionary),
       ).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(merlinIntellectualVisionary, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
     });
   });
 });

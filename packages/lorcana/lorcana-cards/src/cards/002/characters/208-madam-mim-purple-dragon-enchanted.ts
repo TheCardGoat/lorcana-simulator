@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { madamMimPurpleDragon } from "..";
+import { madamMimPurpleDragon } from "./047-madam-mim-purple-dragon";
 
 export const madamMimPurpleDragonEnchanted: CharacterCard = {
   ...madamMimPurpleDragon,

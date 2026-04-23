@@ -39,13 +39,44 @@ export const hiroHamadaArmorDesigner: CharacterCard = {
     {
       effect: {
         keyword: "Evasive",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filters: [
+            { type: "has-classification", classification: "Floodborn" },
+            { type: "cards-under", comparison: "greater-or-equal", value: 1 },
+          ],
+        },
         type: "gain-keyword",
       },
       id: "zri-2",
       name: "YOU CAN BE WAY MORE",
       text: "YOU CAN BE WAY MORE Your Floodborn characters that have a card under them gain Evasive and Ward.",
-      type: "action",
+      type: "static",
+    },
+    {
+      effect: {
+        keyword: "Ward",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filters: [
+            { type: "has-classification", classification: "Floodborn" },
+            { type: "cards-under", comparison: "greater-or-equal", value: 1 },
+          ],
+        },
+        type: "gain-keyword",
+      },
+      id: "zri-3",
+      name: "YOU CAN BE WAY MORE",
+      text: "YOU CAN BE WAY MORE Your Floodborn characters that have a card under them gain Evasive and Ward.",
+      type: "static",
     },
   ],
   i18n: hiroHamadaArmorDesignerI18n,

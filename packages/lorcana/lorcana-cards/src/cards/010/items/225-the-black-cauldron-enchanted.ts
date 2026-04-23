@@ -1,5 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
-import { theBlackCauldron } from "..";
+import { theBlackCauldron } from "./032-the-black-cauldron.js";
 
 export const theBlackCauldronEnchanted: ItemCard = {
   ...theBlackCauldron,

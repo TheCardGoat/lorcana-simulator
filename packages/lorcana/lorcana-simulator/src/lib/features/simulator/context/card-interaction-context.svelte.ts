@@ -16,6 +16,8 @@ export interface CardInteractionMeta {
   selectionGroup?: string;
   selectionMode?: CardInteractionSelectionMode;
   selectable?: boolean;
+  /** When true, a click that would otherwise open card inspect is ignored (e.g. embedded cards in modals). */
+  suppressInspectOnSelect?: boolean;
 }
 
 export interface CardHoverPayload {

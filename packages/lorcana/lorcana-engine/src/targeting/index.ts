@@ -31,3 +31,4 @@ export {
 } from "@tcg/lorcana-types/targeting";
 
 export * from "./runtime";
+export * from "./slotted-targets";

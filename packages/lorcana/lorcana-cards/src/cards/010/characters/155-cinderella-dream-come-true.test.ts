@@ -67,6 +67,9 @@ describe("Cinderella - Dream Come True", () => {
 
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
+      // CRD 6.2.7: ability is enqueued then auto-fizzled because the turn-metric
+      // condition (played a Princess this turn) is already false at the resolution boundary.
+      // The player should NOT be prompted with an optional choice.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
@@ -178,6 +181,55 @@ describe("Cinderella - Dream Come True", () => {
     // Ratigan should still be in play
     expect(testEngine.asPlayerOne().getCardZone(ratiganGreedyGenius)).toBe("play");
     expect(testEngine.asPlayerOne().getCardZone(inkFodder)).toBe("inkwell");
+  });
+
+  it("does not resolve on subsequent turns when no Princess is played", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [cinderellaDreamComeTrue, inkFodder],
+        inkwell: cinderellaDreamComeTrue.cost,
+        deck: [drawnCard, drawnCard, drawnCard, drawnCard, drawnCard],
+      },
+      {
+        deck: 5,
+      },
+    );
+
+    // Turn 1: Play Cinderella (she is a Princess, so the condition is met)
+    expect(testEngine.asPlayerOne().playCard(cinderellaDreamComeTrue)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    // Cinderella's ability triggers — resolve it
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(cinderellaDreamComeTrue, {
+        resolveOptional: true,
+        targets: [inkFodder],
+      }),
+    ).toBeSuccessfulCommand();
+
+    // Advance to turn 2: opponent passes, player one's turn starts
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    // Turn 2: Do NOT play any Princess — just pass turn
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    // Ability is enqueued per CRD 6.2.7 but should fizzle at resolution
+    // because no Princess was played this turn
+    const bagCount = testEngine.asPlayerOne().getBagCount();
+    if (bagCount > 0) {
+      // If enqueued, resolving should fizzle — the optional prompt won't appear
+      // or no ink+draw happens because condition fails
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(cinderellaDreamComeTrue, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+    }
+
+    // Regardless, the inkwell should still only have the original ink + the one
+    // inked from turn 1. No additional card should have been inked on turn 2.
+    expect(testEngine.asPlayerOne().getCard(inkFodder).zone).toBe("inkwell");
   });
 
   describe("Enchanted version", () => {

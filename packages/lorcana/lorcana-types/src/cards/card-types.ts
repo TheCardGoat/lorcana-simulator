@@ -129,8 +129,9 @@ export interface ActionAbilityDefinition
    * When set, this action ability represents an alternative cost for playing the card.
    * - "sacrifice-item" = banish an item you control to play this card for free.
    * - "exert-4-items" = exert 4 ready items you control to play this card for free.
+   * - "put-toy-character-on-deck-bottom" = put a Toy character card from your discard on the bottom of your deck to play this card for free.
    */
-  alternativeCost?: "sacrifice-item" | "exert-4-items";
+  alternativeCost?: "sacrifice-item" | "exert-4-items" | "put-toy-character-on-deck-bottom";
 }
 
 /**

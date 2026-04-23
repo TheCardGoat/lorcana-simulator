@@ -1,5 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { prideLandsPrideRock } from "..";
+import { prideLandsPrideRock } from "./033-pride-lands-pride-rock";
 
 export const prideLandsPrideRockEnchanted: LocationCard = {
   ...prideLandsPrideRock,

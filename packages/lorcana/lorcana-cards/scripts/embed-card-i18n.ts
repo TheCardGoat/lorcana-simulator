@@ -313,17 +313,20 @@ export function resolveLocalizedEntry(
   localizationData: LocalizationData,
   locale: NonEnglishLanguage,
 ): LocalizedCardData {
-  const directEntry = localizationData[card.id];
-  if (directEntry) {
-    return directEntry;
-  }
-
+  // Always prefer the representative shortId's entry so all printings of the
+  // same canonical card get identical localized text (name/version/rulesText).
   const representativeShortId = auxKv.representativeShortIdByCanonicalId[card.canonicalId];
   if (representativeShortId) {
     const representativeEntry = localizationData[representativeShortId];
     if (representativeEntry) {
       return representativeEntry;
     }
+  }
+
+  // Fall back to a direct lookup (e.g. when no representative is mapped yet).
+  const directEntry = localizationData[card.id];
+  if (directEntry) {
+    return directEntry;
   }
 
   const cardLabel = card.version ? `${card.name} - ${card.version}` : card.name;

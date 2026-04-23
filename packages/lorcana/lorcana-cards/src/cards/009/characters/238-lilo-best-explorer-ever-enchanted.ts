@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { liloBestExplorerEver } from "..";
+import { liloBestExplorerEver } from "./174-lilo-best-explorer-ever";
 
 export const liloBestExplorerEverEnchanted: CharacterCard = {
   ...liloBestExplorerEver,

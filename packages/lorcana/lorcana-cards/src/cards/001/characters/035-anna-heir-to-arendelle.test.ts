@@ -29,8 +29,19 @@ describe("Anna - Heir to Arendelle", () => {
 
       expect(testEngine.asPlayerOne().playCard(annaHeirToArendelle)).toBeSuccessfulCommand();
 
-      // No triggered ability should fire — bag should be empty
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued when trigger fires, Elsa condition is checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(annaHeirToArendelle, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      // Elsa is not in play — no restriction applied to opponent's character
+      expect(testEngine.asPlayerTwo()).not.toHaveRestriction({
+        card: opponentCharacter,
+        restriction: "cant-ready",
+      });
     });
 
     it("applies cant-ready restriction to chosen opposing character when Elsa is in play", () => {

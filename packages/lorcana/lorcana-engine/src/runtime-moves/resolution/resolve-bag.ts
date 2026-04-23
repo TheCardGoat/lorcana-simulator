@@ -1,5 +1,5 @@
 import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
-import type { PendingActionResolutionInput } from "../../types";
+import type { BagEffectEntry, PendingActionResolutionInput } from "../../types";
 import { createLorcanaLogProjection, type LorcanaMoveDefinition } from "../../types";
 import type { LogTargetId, ResolveBagCancelledCause } from "../../types/log-messages";
 import { continuePendingChallengeResolution } from "../moves/core/challenge";
@@ -38,6 +38,8 @@ import {
   resolveTargetPlayerIds,
   validateAndNormalizeTargetSelection,
 } from "../../targeting/runtime";
+import { resolveTurnOwnerId } from "../../core/runtime/turn-owner";
+import { flattenSlottedTargets, isSlottedTargetInput } from "../../targeting/slotted-targets";
 
 type ResolveBagValidationContext = Parameters<
   NonNullable<LorcanaMoveDefinition<"resolveBag">["validate"]>
@@ -132,6 +134,18 @@ function logResolveBagMessage(
           category,
         );
       case "pending":
+        if (abilityName && targets && targets.length > 0) {
+          return createLorcanaLogProjection(
+            "lorcana.bag.resolve.pending.named.targets",
+            {
+              ...common,
+              abilityName,
+              targets,
+            },
+            visibility,
+            category,
+          );
+        }
         if (abilityName) {
           return createLorcanaLogProjection(
             "lorcana.bag.resolve.pending.named",
@@ -276,6 +290,7 @@ function getDirectBagChooserId(
   const targetedPlayerIds = resolveTargetPlayerIds(ctx, effectRecord.target, {
     controllerId: bagEffect.controllerId as PlayerId,
     sourceCardId: bagEffect.sourceId as CardInstanceId,
+    eventSnapshot: (bagEffect.resolutionInput as ActionResolutionInput).eventSnapshot,
   });
 
   return targetedPlayerIds.length === 1 ? targetedPlayerIds[0] : undefined;
@@ -455,14 +470,50 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
             stepSelectionAnalysis,
           ).shouldAutoRejectForNoValidTargets;
         })());
+    // Optional effects with zero valid candidates can never be meaningfully
+    // accepted — the only coherent outcome is decline. Treat an empty-targets
+    // submission as an implicit decline so the bag can drain instead of the
+    // player being stuck clicking "Resolve triggered ability". The execute()
+    // path forces resolveOptional=false in the same condition below.
+    // Also short-circuit when the ability's intervening-if condition will
+    // fail at resolution (CRD 6.2.7): execute() drains such effects at
+    // line 800+, but the targets-required error would otherwise fire first.
+    const abilityConditionWillFail =
+      bagEffect.condition !== undefined &&
+      bagEffect.condition !== null &&
+      !evaluateActionCondition(
+        bagEffect.condition as Parameters<typeof evaluateActionCondition>[0],
+        ctx as unknown as Parameters<typeof evaluateActionCondition>[1],
+        bagEffect.cardPlayed,
+        validationResolutionInput,
+      );
+    const optionalWithNoCandidates =
+      requirements.isOptional &&
+      requirements.requiresExplicitTargetSelection &&
+      targetAvailability.candidateCount === 0;
     if (
       requirements.requiresExplicitTargetSelection &&
       !requirements.allowsExplicitEmptyTargetSelection &&
       hasExplicitTargets &&
       explicitTargetCount === 0 &&
       !isDecliningOptional &&
-      !shouldAutoRejectForNoValidTargets
+      !shouldAutoRejectForNoValidTargets &&
+      !optionalWithNoCandidates &&
+      !abilityConditionWillFail
     ) {
+      console.warn("[resolveBag] RESOLVE_BAG_TARGETS_REQUIRED", {
+        bagId,
+        playerId: ctx.playerId,
+        sourceCardId: bagEffect.sourceId,
+        effectType: (bagEffect.effect as { type?: unknown } | null)?.type,
+        params,
+        explicitTargets,
+        explicitTargetCount,
+        hasExplicitTargets,
+        requirements,
+        isDecliningOptional,
+        shouldAutoRejectForNoValidTargets,
+      });
       traceLorcanaRuntimeStep({
         kind: "move.validation.failed",
         moveId: "resolveBag",
@@ -472,6 +523,7 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
         payload: {
           error: "resolveBag requires at least 1 explicit target for this effect",
           errorCode: "RESOLVE_BAG_TARGETS_REQUIRED",
+          explicitTargetCount,
         },
       });
       return {
@@ -503,7 +555,7 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
       const normalizedSelection =
         !selectionValidation.valid &&
         selectionValidation.errorCode === "TOO_FEW_TARGETS" &&
-        shouldAutoRejectForNoValidTargets
+        (shouldAutoRejectForNoValidTargets || optionalWithNoCandidates || abilityConditionWillFail)
           ? validateAndNormalizeTargetSelection(
               explicitTargets,
               {
@@ -517,6 +569,22 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
             )
           : selectionValidation;
       if (!normalizedSelection.valid) {
+        console.warn("[resolveBag] target validation failed", {
+          bagId,
+          playerId: ctx.playerId,
+          sourceCardId: bagEffect.sourceId,
+          effectType: (bagEffect.effect as { type?: unknown } | null)?.type,
+          errorCode: normalizedSelection.errorCode,
+          error: normalizedSelection.error,
+          explicitTargets,
+          analysis: {
+            cardCandidates: selectionAnalysisForValidation.cardCandidates,
+            playerCandidates: selectionAnalysisForValidation.playerCandidates,
+            minSelections: selectionAnalysisForValidation.minSelections,
+            maxSelections: selectionAnalysisForValidation.maxSelections,
+            allowDuplicateTargets: selectionAnalysisForValidation.allowDuplicateTargets,
+          },
+        });
         traceLorcanaRuntimeStep({
           kind: "move.validation.failed",
           moveId: "resolveBag",
@@ -637,11 +705,17 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
           ),
           message: "Bag effect selection advanced to next step",
         });
+        logResolveBagMessage(
+          ctx,
+          bagEntry,
+          mergedResolutionInput as ActionResolutionInput,
+          "pending",
+        );
         return;
       }
     }
 
-    const bagEffect = removeBagEffect(ctx, bagId);
+    const bagEffect = getBagEffect(ctx, bagId) as BagEffectEntry | undefined;
     if (!bagEffect) {
       throw new Error(`Bag effect '${bagId}' was not found during execution`);
     }
@@ -673,23 +747,55 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
     // non-explicit-decline as acceptance. The player chose to call resolveBag
     // (rather than decline), so absence of resolveOptional = implicit accept.
     // Only explicit resolveOptional: false declines the optional.
+    // Exception: if the optional has zero valid candidates AND no targets were
+    // submitted, force decline — the player cannot meaningfully accept, and
+    // validate() lets this through specifically so we can drain here.
     const effectRequirements = analyzeResolutionRequirements(bagEffect.effect);
     if (effectRequirements.isOptional && resolutionInput.resolveOptional !== false) {
-      (resolutionInput as Record<string, unknown>).resolveOptional = true;
+      const executeRawTargets = ctx.args.params?.targets;
+      const executeTargetCount = countExplicitTargetSelections(executeRawTargets);
+      const executeTargetAnalysis = analyzeEffectTargets(
+        bagEffect.effect,
+        bagEffect.controllerId as PlayerId,
+        ctx,
+        bagEffect.sourceId as CardInstanceId,
+      );
+      const executeCandidateCount =
+        executeTargetAnalysis.cardCandidates.length + executeTargetAnalysis.playerCandidates.length;
+      // Only auto-decline when the player EXPLICITLY submitted empty targets
+      // (targets: []). Undefined targets means the player is accepting without
+      // a target picker (e.g. sequence where the first step synthesizes input),
+      // and we must preserve the existing auto-accept behavior.
+      if (
+        effectRequirements.requiresExplicitTargetSelection &&
+        executeRawTargets !== undefined &&
+        executeTargetCount === 0 &&
+        executeCandidateCount === 0
+      ) {
+        (resolutionInput as Record<string, unknown>).resolveOptional = false;
+      } else {
+        (resolutionInput as Record<string, unknown>).resolveOptional = true;
+      }
     }
 
     const paramsWithPlayerTargets = ctx.args.params as typeof ctx.args.params & {
       playerTargets?: SelectionTarget | SelectionTarget[];
     };
+    const rawTargets = ctx.args.params?.targets;
+    if (isSlottedTargetInput(rawTargets)) {
+      resolutionInput.slottedTargets = rawTargets;
+    }
     const cardTargets: SelectionTarget[] =
-      ctx.args.params?.targets !== undefined
-        ? Array.isArray(ctx.args.params.targets)
-          ? ctx.args.params.targets.filter(
+      rawTargets !== undefined
+        ? isSlottedTargetInput(rawTargets)
+          ? flattenSlottedTargets(rawTargets).filter(
               (target): target is SelectionTarget => typeof target === "string",
             )
-          : typeof ctx.args.params.targets === "string"
-            ? [ctx.args.params.targets]
-            : []
+          : Array.isArray(rawTargets)
+            ? rawTargets.filter((target): target is SelectionTarget => typeof target === "string")
+            : typeof rawTargets === "string"
+              ? [rawTargets]
+              : []
         : [];
     const playerTargets: SelectionTarget[] = Array.isArray(paramsWithPlayerTargets?.playerTargets)
       ? paramsWithPlayerTargets.playerTargets.filter(
@@ -702,15 +808,22 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
     if (allTargets.length > 0) {
       const nextResolutionInput = withCurrentSelectionTargets(resolutionInput, allTargets);
       Object.assign(resolutionInput, nextResolutionInput);
+    } else if (rawTargets !== undefined && effectRequirements.allowsExplicitEmptyTargetSelection) {
+      // The player explicitly submitted `targets: []` for an "up to N" effect.
+      // Mark the resolution so downstream target-selection steps (including
+      // staged sequence steps that reference the same selection) treat the
+      // empty selection as committed and do not re-suspend into an identical
+      // picker. Mirrors the equivalent logic in resolveEffect.
+      resolutionInput.targetSelectionResolved = true;
     }
     const shouldAttemptResolution = canResolveBagEffectByRestrictions(ctx, bagEffect);
 
     if (shouldAttemptResolution) {
-      recordBagEffectResolution(ctx, bagEffect);
       const shouldResolve =
         !bagEffect.condition ||
         evaluateActionCondition(bagEffect.condition, ctx, bagEffect.cardPlayed, resolutionInput);
       if (!shouldResolve) {
+        removeBagEffect(ctx, bagId);
         traceLorcanaRuntimeStep({
           kind: "bag.effect.skipped",
           moveId: "resolveBag",
@@ -753,8 +866,12 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
             message: "Bag effect resolution is waiting for further input",
           });
           logResolveBagMessage(ctx, bagEffect, resolutionInput, "pending");
+          // Work continues via pendingEffects — do not keep a duplicate bag row.
+          removeBagEffect(ctx, bagId);
           return;
         }
+        recordBagEffectResolution(ctx, bagEffect);
+        removeBagEffect(ctx, bagId);
         traceLorcanaRuntimeStep({
           kind: "bag.effect.resolution.completed",
           moveId: "resolveBag",
@@ -803,6 +920,7 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
         );
       }
     } else {
+      removeBagEffect(ctx, bagId);
       logResolveBagMessage(ctx, bagEffect, resolutionInput, "cancelled", "restriction");
     }
 
@@ -827,7 +945,7 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
             !ctx.framework.state.priority.pendingChoice &&
             (ctx.G.pendingEffects?.length ?? 0) === 0
           ) {
-            const turnPlayer = resolveTurnPlayerFromCtx(ctx);
+            const turnPlayer = resolveTurnOwnerId(ctx.framework.state, ctx.G);
             if (turnPlayer && ctx.framework.state.currentPlayer !== turnPlayer) {
               if (typeof ctx.framework.priority?.setHolder === "function") {
                 ctx.framework.priority.setHolder(turnPlayer);
@@ -842,7 +960,7 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
           // for resolution.  Restore it to the actual turn player so that
           // subsequent triggered-ability restriction checks (e.g. "during an
           // opponent's turn") evaluate against the correct active player.
-          const turnPlayer = resolveTurnPlayerFromCtx(ctx);
+          const turnPlayer = resolveTurnOwnerId(ctx.framework.state, ctx.G);
           if (turnPlayer && ctx.framework.state.currentPlayer !== turnPlayer) {
             if (typeof ctx.framework.priority?.setHolder === "function") {
               ctx.framework.priority.setHolder(turnPlayer);
@@ -885,41 +1003,6 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
     return getBagItemsForCurrentResolver(ctx).length > 0;
   },
 };
-
-/**
- * Derive the active turn player from engine state.
- *
- * The turn player is determined by the OTP (on-the-play) designation and the
- * total number of completed turns across all players.  This mirrors the logic
- * used in the projection layer (`resolveTurnPlayer` in project-board.ts) so
- * that priority can be restored to the correct player after bag resolution
- * without requiring an extra field in `G`.
- */
-function resolveTurnPlayerFromCtx(ctx: ResolveBagExecutionContext): PlayerId | undefined {
-  const otp = ctx.framework.state.status.otp as PlayerId | undefined;
-  if (!otp) {
-    return ctx.framework.state.currentPlayer as PlayerId | undefined;
-  }
-
-  const playerIds = ctx.framework.state.playerIds;
-  const turnsCompleted = (ctx.G.turnsCompletedByPlayer ?? {}) as Record<string, number>;
-  const totalCompletedTurns = Object.values(turnsCompleted).reduce(
-    (sum, count) => sum + (count ?? 0),
-    0,
-  );
-
-  if (totalCompletedTurns === 0) {
-    return otp;
-  }
-
-  const otpIndex = playerIds.findIndex((p) => p === otp);
-  if (otpIndex < 0 || playerIds.length === 0) {
-    return otp;
-  }
-
-  const offset = totalCompletedTurns % playerIds.length;
-  return playerIds[(otpIndex + offset) % playerIds.length] as PlayerId;
-}
 
 function assertNever(value: never): never {
   throw new Error(`Unhandled resolve bag status: ${String(value)}`);

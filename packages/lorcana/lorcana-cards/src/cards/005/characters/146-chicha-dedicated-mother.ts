@@ -40,20 +40,34 @@ export const chichaDedicatedMother: CharacterCard = {
       id: "q5f-2",
       effect: {
         condition: {
-          expression: "it's the second card you've put into your inkwell this turn",
-          type: "if",
+          type: "turn-metric",
+          metric: "cards-inked",
+          comparison: {
+            operator: "eq",
+            value: 2,
+          },
         },
         then: {
-          amount: 1,
-          target: "CONTROLLER",
-          type: "draw",
+          chooser: "CONTROLLER",
+          effect: {
+            amount: 1,
+            target: "CONTROLLER",
+            type: "draw",
+          },
+          type: "optional",
         },
         type: "conditional",
       },
       name: "ONE ON THE WAY",
       trigger: {
-        event: "play",
-        on: "SELF",
+        event: "ink",
+        on: "CONTROLLER",
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
         timing: "when",
       },
       type: "triggered",

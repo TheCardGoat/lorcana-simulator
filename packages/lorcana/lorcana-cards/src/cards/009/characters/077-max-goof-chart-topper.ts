@@ -47,33 +47,15 @@ export const maxGoofChartTopper: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          steps: [
-            {
-              duration: "this-turn",
-              replacement: {
-                consumeOnApply: true,
-                eventKinds: ["zone-change"],
-                fromZones: ["play", "limbo"],
-                replacementPosition: "bottom",
-                replacementZone: "deck",
-                targetRef: "selected-target",
-                toZone: "discard",
-                type: "zone-destination",
-              },
-              type: "create-replacement-effect",
-            },
-            {
-              cardType: "song",
-              cost: "free",
-              filter: {
-                cardType: "song",
-                maxCost: 4,
-              },
-              from: "discard",
-              type: "play-card",
-            },
-          ],
-          type: "sequence",
+          afterPlay: "bottom-of-deck",
+          cardType: "song",
+          cost: "free",
+          filter: {
+            cardType: "song",
+            maxCost: 4,
+          },
+          from: "discard",
+          type: "play-card",
         },
         type: "optional",
       },

@@ -21,6 +21,39 @@ const queenCharacter = createMockCharacter({
 });
 
 describe("Queen's Sensor Core", () => {
+  it("does not let you put a non-Princess/non-Queen character card into your hand", () => {
+    const commoner = createMockCharacter({
+      id: "queens-sensor-core-commoner",
+      name: "Commoner",
+      cost: 2,
+      classifications: ["Storyborn", "Ally"],
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: [commoner],
+      inkwell: 2,
+      play: [queensSensorCore],
+    });
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(queensSensorCore, {
+        ability: "ROYAL SEARCH",
+      }),
+    ).toBeSuccessfulCommand();
+
+    const result = testEngine.asPlayerOne().resolvePendingEffect(queensSensorCore, {
+      destinations: [
+        {
+          zone: "hand",
+          cards: [commoner],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    expect(testEngine.asPlayerOne().getCardZone(commoner)).not.toBe("hand");
+  });
+
   it("reveals the top card and lets you put a Princess or Queen character card into your hand", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       deck: [royalHeir],
@@ -122,8 +155,8 @@ describe("Queen's Sensor Core", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
+      // Trigger-level condition prevents phantom prompts when no Princess or Queen is present.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
     });
   });

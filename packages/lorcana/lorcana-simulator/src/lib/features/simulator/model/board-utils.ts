@@ -1,7 +1,7 @@
 import { type MatchStaticResources } from "@tcg/lorcana-engine";
 import type { LorcanaCard, LorcanaCardDefinition } from "@tcg/lorcana-engine";
 import type { Languages } from "@tcg/lorcana-types";
-import type { LorcanaProjectedBoardView } from "@tcg/lorcana-engine";
+import type { LorcanaProjectedBoardView, LorcanaProjectedCard } from "@tcg/lorcana-engine";
 import { m } from "$lib/i18n/messages.js";
 import { getLocale } from "$lib/paraglide/runtime.js";
 import type {
@@ -14,6 +14,31 @@ import type {
 import { getSideForOwnerId, getZoneCardIds } from "@/features/simulator/model/contracts.js";
 
 export type CardSnapshotMap = Record<string, LorcanaCardSnapshot>;
+
+/**
+ * Merge keyword names from derived boolean flags into the keyword list used for UI targeting.
+ * Engine candidates use full derived state; snapshots must not drop simple keywords when the
+ * projected list and flags could drift (e.g. optional banish "has-keyword" vs CardTargetDialog).
+ */
+function mergeDerivedKeywordSignals(
+  baseKeywords: readonly string[] | undefined,
+  projected: Pick<LorcanaProjectedCard, "hasEvasive" | "hasRush" | "hasReckless" | "hasSupport">,
+): string[] {
+  const set = new Set<string>(baseKeywords ?? []);
+  if (projected.hasEvasive) {
+    set.add("Evasive");
+  }
+  if (projected.hasRush) {
+    set.add("Rush");
+  }
+  if (projected.hasReckless) {
+    set.add("Reckless");
+  }
+  if (projected.hasSupport) {
+    set.add("Support");
+  }
+  return [...set].sort((left, right) => left.localeCompare(right));
+}
 
 interface AuthoritativeCardStateView {
   ctx: {
@@ -69,8 +94,23 @@ function flattenCardText(text?: LocalizedCardTextSource): string | undefined {
 function projectCardTextEntries(
   text?: LocalizedCardTextSource,
 ): LorcanaCardTextEntrySnapshot[] | undefined {
-  if (!text || typeof text === "string") {
+  if (!text) {
     return undefined;
+  }
+
+  if (typeof text === "string") {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+    const lines = trimmed
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    const entries = lines.map<LorcanaCardTextEntrySnapshot>((line) => ({
+      title: line,
+    }));
+    return entries.length > 0 ? entries : undefined;
   }
 
   const entries = text
@@ -837,7 +877,9 @@ export function buildCardSnapshotMap(
       actionSubtype:
         definition?.cardType === "action" ? (definition.actionSubtype ?? undefined) : undefined,
       cardsUnderCount: projectedCard.cardsUnder?.length ?? 0,
-      cardsUnderIds: projectedCard.cardsUnder ? [...projectedCard.cardsUnder] : undefined,
+      faceUpCardsUnder: projectedCard.cardsUnder?.filter(
+        (underCardId) => board.cards[underCardId]?.publicFaceState === "faceUp",
+      ),
       playedViaShift: projectedCard.playedViaShift === true ? true : undefined,
       classifications:
         definition?.cardType === "character" ? definition.classifications : undefined,
@@ -858,7 +900,7 @@ export function buildCardSnapshotMap(
       isMasked,
       hasQuestRestriction: projectedCard.hasQuestRestriction ?? false,
       keywordValues: projectedCard.keywordValues,
-      keywords: projectedCard.keywords ?? [],
+      keywords: mergeDerivedKeywordSignals(projectedCard.keywords, projectedCard),
       label: isMasked ? getHiddenCardLabel(zoneId) : (cardName ?? m["sim.card.unknown"]({})),
       loreValue:
         definition?.cardType === "character" || definition?.cardType === "location"

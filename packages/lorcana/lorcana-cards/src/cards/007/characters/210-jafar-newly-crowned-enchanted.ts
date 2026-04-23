@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { jafarNewlyCrowned } from "..";
+import { jafarNewlyCrowned } from "./051-jafar-newly-crowned";
 
 export const jafarNewlyCrownedEnchanted: CharacterCard = {
   ...jafarNewlyCrowned,

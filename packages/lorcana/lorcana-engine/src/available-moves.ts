@@ -49,6 +49,7 @@ export type AvailableMove = {
 export type MoveOptionTarget = {
   kind: "card";
   cardId: CardInstanceId;
+  selectableCosts?: MoveOptionSelectableCost[];
 };
 
 export type MoveOptionSingTogetherSinger = {
@@ -66,6 +67,24 @@ export type MoveOptionAbility = {
   kind: "ability";
   abilityIndex: number;
   abilityLabel: string;
+  selectableCosts?: MoveOptionSelectableCost[];
+};
+
+export type MoveOptionSelectableCostKind =
+  | "discardCards"
+  | "exertCharacters"
+  | "exertItems"
+  | "banishCharacters"
+  | "banishItems";
+
+export type MoveOptionSelectableCost = {
+  kind: MoveOptionSelectableCostKind;
+  count: number;
+  candidateCardIds: CardInstanceId[];
+  zone: "hand" | "play";
+  cardType?: string;
+  cardName?: string;
+  classification?: string;
 };
 
 export type MoveOption = MoveOptionTarget | MoveOptionAbility | MoveOptionSingTogether;

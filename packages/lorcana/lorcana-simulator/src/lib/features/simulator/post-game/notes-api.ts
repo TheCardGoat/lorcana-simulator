@@ -1,4 +1,5 @@
 import { getApiOrigin } from "$lib/config/public-url-config.js";
+import { requestJson } from "$lib/data/transport/http-client.js";
 import type {
   AcceptedMoveRecord,
   EngineLogRecord,
@@ -14,7 +15,7 @@ export interface PostGamePlayerIdentity {
 }
 
 export interface PostGameCanonicalData {
-  source: "redis" | "persisted_replay";
+  source: "redis" | "analytics";
   gameId: string;
   matchId: string;
   status: "completed" | "abandoned";
@@ -24,11 +25,91 @@ export interface PostGameCanonicalData {
   completedAt: string;
   durationMs: number;
   authority: "server" | "client" | null;
-  matchType: "ranked" | "casual" | "practice_vs_bot" | null;
+  matchType: "ranked" | "casual" | "practice_vs_bot" | "private" | null;
   players: [PostGamePlayerIdentity, PostGamePlayerIdentity];
   board: LorcanaProjectedBoardView;
-  acceptedMoves: AcceptedMoveRecord[];
-  engineLogs: EngineLogRecord[];
+  /** Raw move history — only present when source: "redis" (expires after ~1hr) */
+  acceptedMoves?: AcceptedMoveRecord[];
+  /** Raw engine logs — only present when source: "redis" (expires after ~1hr) */
+  engineLogs?: EngineLogRecord[];
+  /** Structured game analytics — present when source: "analytics" */
+  analytics?: GameAnalyticsSummary;
+}
+
+/**
+ * Per-card aggregate from the analytics record.
+ * Mirrors the backend GameAnalyticsRecord CardEventAggregate (subset used by the frontend).
+ */
+export interface GameAnalyticsCardEvent {
+  cardPublicId: string;
+  fullName: string;
+  loreGenerated: number;
+  timesPlayed: number;
+  timesAttacked: number;
+  timesDefended: number;
+  timesAbilityActivated: number;
+}
+
+/** Per-turn stats from the analytics record. */
+export interface GameAnalyticsTurnStats {
+  turn: number;
+  loreGainedThisTurn: number;
+  loreFromQuests: number;
+  loreFromLocations: number;
+  runningLore: number;
+  cardsPlayedThisTurn: number;
+  cardsInkedThisTurn: number;
+  challengesMadeThisTurn: number;
+  questsMadeThisTurn: number;
+  durationMs: number;
+}
+
+export interface PlayerAnalyticsSummary {
+  playerId: string;
+  displayName: string | null;
+  username: string | null;
+  seat: 1 | 2;
+  onThePlay: boolean;
+  deckColors: string[];
+  counters: {
+    cardsPlayed: number;
+    cardsInked: number;
+    quests: number;
+    challenges: number;
+    songsSung: number;
+    movesToLocations: number;
+    abilitiesActivated: number;
+    effectsResolved: number;
+    turnsPassed: number;
+    conceded: boolean;
+  };
+  metrics: {
+    avgLorePerTurn: number;
+    avgCardsPlayedPerTurn: number;
+    avgTurnDurationMs: number;
+    totalLoreFromQuests: number;
+    totalLoreFromLocations: number;
+    firstPlayTurn: number | null;
+    firstQuestTurn: number | null;
+    firstChallengeTurn: number | null;
+  };
+  /** Per-card aggregates — used for spotlight cards (top lore, most played, challenges) */
+  cardEvents: Record<string, GameAnalyticsCardEvent>;
+  /** Per-turn breakdown — used for turn summaries */
+  perTurn: GameAnalyticsTurnStats[];
+}
+
+/** Full analytics summary — mirrors the backend GameAnalyticsRecord shape */
+export interface GameAnalyticsSummary {
+  version: number;
+  summary: {
+    totalTurns: number;
+    totalMoves: number;
+    durationMs: number;
+    onThePlay: string;
+    finalLore: { player1: number; player2: number };
+  };
+  players: [PlayerAnalyticsSummary, PlayerAnalyticsSummary];
 }
 
 export interface PostGameRecordEnvelope {
@@ -47,22 +128,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function parseErrorMessage(payload: unknown): string | null {
-  if (!isRecord(payload)) {
-    return null;
-  }
-
-  if ("error" in payload && isRecord(payload.error) && typeof payload.error.message === "string") {
-    return payload.error.message;
-  }
-
-  if (typeof payload.message === "string") {
-    return payload.message;
-  }
-
-  return null;
-}
-
 function isPostGamePlayerIdentity(value: unknown): value is PostGamePlayerIdentity {
   return (
     isRecord(value) &&
@@ -77,7 +142,7 @@ function isPostGamePlayerIdentity(value: unknown): value is PostGamePlayerIdenti
 function isPostGameCanonicalData(value: unknown): value is PostGameCanonicalData {
   return (
     isRecord(value) &&
-    (value.source === "redis" || value.source === "persisted_replay") &&
+    (value.source === "redis" || value.source === "analytics") &&
     typeof value.gameId === "string" &&
     typeof value.matchId === "string" &&
     (value.status === "completed" || value.status === "abandoned") &&
@@ -90,13 +155,14 @@ function isPostGameCanonicalData(value: unknown): value is PostGameCanonicalData
     (value.matchType === "ranked" ||
       value.matchType === "casual" ||
       value.matchType === "practice_vs_bot" ||
+      value.matchType === "private" ||
       value.matchType === null) &&
     Array.isArray(value.players) &&
     value.players.length === 2 &&
     value.players.every(isPostGamePlayerIdentity) &&
     isRecord(value.board) &&
-    Array.isArray(value.acceptedMoves) &&
-    Array.isArray(value.engineLogs)
+    (value.acceptedMoves === undefined || Array.isArray(value.acceptedMoves)) &&
+    (value.engineLogs === undefined || Array.isArray(value.engineLogs))
   );
 }
 
@@ -120,36 +186,28 @@ function parsePostGameRecordEnvelope(payload: unknown): PostGameRecordEnvelope {
 }
 
 export async function fetchPostGameRecord(gameId: string): Promise<PostGameRecordEnvelope> {
-  const response = await fetch(`${getApiOrigin()}/v1/match-history/games/${gameId}/post-game`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    throw new Error(
-      parseErrorMessage(payload) ?? `Failed to load post-game record (${response.status}).`,
-    );
-  }
-
-  return parsePostGameRecordEnvelope(await response.json());
+  const payload = await requestJson<unknown>(
+    `${getApiOrigin()}/v1/match-history/games/${gameId}/post-game`,
+    undefined,
+    "Failed to load post-game record",
+  );
+  return parsePostGameRecordEnvelope(payload);
 }
 
 export async function savePostGameNote(
   params: SavePostGameNoteParams,
 ): Promise<PostGameRecordEnvelope> {
-  const response = await fetch(`${getApiOrigin()}/v1/match-history/games/${params.gameId}/notes`, {
-    method: "PUT",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
+  const payload = await requestJson<unknown>(
+    `${getApiOrigin()}/v1/match-history/games/${params.gameId}/notes`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ note: params.note }),
     },
-    body: JSON.stringify({ note: params.note }),
-  });
+    "Failed to save notes",
+  );
 
-  if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    throw new Error(parseErrorMessage(payload) ?? `Failed to save notes (${response.status}).`);
-  }
-
-  return parsePostGameRecordEnvelope(await response.json());
+  return parsePostGameRecordEnvelope(payload);
 }

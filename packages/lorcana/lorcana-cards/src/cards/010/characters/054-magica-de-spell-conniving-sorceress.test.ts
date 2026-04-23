@@ -98,7 +98,13 @@ describe("Magica De Spell - Conniving Sorceress", () => {
         testEngine.asPlayerOne().playCard(magicaDeSpellConnivingSorceress),
       ).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(magicaDeSpellConnivingSorceress, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({
         hand: 0,

@@ -18,7 +18,7 @@
  *   - Short IDs are 3 chars (0-9, a-z, A-Z); IDs live only on cards; lookups derived from canonical-cards in code.
  *
  * Scope: only EXPANSION sets are included (QUEST and gateway sets are excluded). All rarities within
- * expansion sets are included (common, uncommon, rare, super rare, legendary, plus specialRarity: enchanted, epic, iconic, promo).
+ * expansion sets are included (common, uncommon, rare, super rare, legendary, plus specialRarity: enchanted, epic, iconic, promo, challenge).
  *
  * Usage:
  *   bun packages/lorcana-cards/scripts/generate-cards.ts
@@ -272,6 +272,9 @@ function toPrintingMetadata(printing: CardPrinting): CardPrintingMetadata {
 
   if (printing.specialRarity) {
     meta.specialRarity = printing.specialRarity;
+  }
+  if (printing.promoSheetCode) {
+    meta.promoSheetCode = printing.promoSheetCode;
   }
   if (printing.author) {
     meta.author = printing.author;

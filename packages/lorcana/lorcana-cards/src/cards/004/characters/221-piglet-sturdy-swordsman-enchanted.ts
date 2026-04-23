@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { pigletSturdySwordsman } from "..";
+import { pigletSturdySwordsman } from "./191-piglet-sturdy-swordsman";
 
 export const pigletSturdySwordsmanEnchanted: CharacterCard = {
   ...pigletSturdySwordsman,

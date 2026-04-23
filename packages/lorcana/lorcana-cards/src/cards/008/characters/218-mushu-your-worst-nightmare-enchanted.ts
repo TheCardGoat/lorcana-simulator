@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mushuYourWorstNightmare } from "..";
+import { mushuYourWorstNightmare } from "./142-mushu-your-worst-nightmare";
 
 export const mushuYourWorstNightmareEnchanted: CharacterCard = {
   ...mushuYourWorstNightmare,

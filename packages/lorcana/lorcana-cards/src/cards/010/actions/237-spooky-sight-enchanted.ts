@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { spookySight } from "..";
+import { spookySight } from "./165-spooky-sight";
 
 export const spookySightEnchanted: ActionCard = {
   ...spookySight,

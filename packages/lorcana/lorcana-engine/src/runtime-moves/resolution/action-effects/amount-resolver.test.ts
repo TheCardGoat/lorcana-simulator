@@ -224,4 +224,38 @@ describe("amount-resolver", () => {
       [targetTwo]: 3,
     });
   });
+
+  it("accepts an up-to amount on a registered effect type", () => {
+    const ctx = createTestContext();
+
+    const resolvedDynamic = resolveEffectDynamicFields(
+      {
+        type: "remove-damage",
+        amount: { type: "up-to", value: 3 },
+      },
+      {
+        cardPlayed: createCardPlayedPayload("source" as CardInstanceId, PLAYER_ONE),
+        ctx,
+      },
+    );
+
+    expect(resolveAggregateFieldAmount(resolvedDynamic.amount)).toBe(3);
+  });
+
+  it("throws when an unregistered effect type carries an up-to amount", () => {
+    const ctx = createTestContext();
+
+    expect(() =>
+      resolveEffectDynamicFields(
+        {
+          type: "deal-damage",
+          amount: { type: "up-to", value: 3 },
+        },
+        {
+          cardPlayed: createCardPlayedPayload("source" as CardInstanceId, PLAYER_ONE),
+          ctx,
+        },
+      ),
+    ).toThrow(/not registered for up-to amount semantics/);
+  });
 });

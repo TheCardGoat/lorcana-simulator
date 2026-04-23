@@ -36,17 +36,6 @@ export const mickeyMouseGiantMouse: CharacterCard = {
     bodyguard,
     {
       effect: {
-        restriction: "enters-play-exerted",
-        target: "SELF",
-        type: "restriction",
-      },
-      id: "eAJ-bodyguard-exerted",
-      name: "Bodyguard",
-      text: "Bodyguard (This character enters play exerted and can challenge ready characters.)",
-      type: "static",
-    },
-    {
-      effect: {
         amount: 5,
         target: {
           cardTypes: ["character"],

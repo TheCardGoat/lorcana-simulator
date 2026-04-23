@@ -7,10 +7,13 @@ import type {
 } from "../../../types";
 import { createLorcanaLogProjection } from "../../../types";
 import {
+  analyzeActivateAbilityEffectResolutionSlots,
   analyzeEffectTargets,
   flattenNormalizedTargetSelection,
+  mergeActivateAbilityEffectSelectionsToTargets,
   validateAndNormalizeTargetSelection,
 } from "../../../targeting/runtime";
+import { getBanishCharacterCostCandidateIds } from "./banish-character-cost-candidates";
 import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
 import {
   EFFECT_PENDING_ERROR_CODE,
@@ -35,6 +38,36 @@ import {
   evaluateCondition,
   type ConditionEvaluationContext,
 } from "../../../rules/condition-evaluator";
+import { createProjectionState, getEffectiveStrength } from "../../../rules/derived-state";
+import {
+  flattenSlottedTargets,
+  isSlottedTargetInput,
+  type SlottedTargetInput,
+} from "../../../targeting/slotted-targets";
+
+/**
+ * Activated-ability target input may arrive as a flat array (legacy / client),
+ * a slotted discriminated object (new multi-slot API), or undefined. This
+ * helper flattens any shape into the `CardInstanceId[]` the downstream validator
+ * and resolver expect, without allocating when the input is already flat.
+ */
+function normalizeActivateAbilityTargets(targets: unknown): CardInstanceId[] | undefined {
+  if (targets === undefined) {
+    return undefined;
+  }
+  if (isSlottedTargetInput(targets)) {
+    return flattenSlottedTargets(targets).filter(
+      (id): id is CardInstanceId => typeof id === "string",
+    );
+  }
+  if (Array.isArray(targets)) {
+    return targets.filter((id): id is CardInstanceId => typeof id === "string");
+  }
+  if (typeof targets === "string") {
+    return [targets as CardInstanceId];
+  }
+  return undefined;
+}
 
 type ActivatedAbilityValidationContext = Parameters<
   NonNullable<LorcanaMoveDefinition<"activateAbility">["validate"]>
@@ -311,17 +344,7 @@ function getEligibleBanishCharacterCostCards(
   ability: ActivatedAbilityDefinition,
   sourceCardId?: CardInstanceId,
 ): CardInstanceId[] {
-  return getControlledCardsInPlay(ctx, currentPlayer).filter((cardId) => {
-    if (
-      ability.cost?.banishCharacterTarget === "another" &&
-      sourceCardId &&
-      cardId === sourceCardId
-    ) {
-      return false;
-    }
-    const definition = getCardDefinitionFromContext(ctx, cardId);
-    return definition?.cardType === "character";
-  }) as CardInstanceId[];
+  return getBanishCharacterCostCandidateIds(ctx, currentPlayer, ability, sourceCardId);
 }
 
 function resolveBanishItemCostCards(
@@ -460,6 +483,10 @@ function resolveDiscardCostCards(
 
   const requiredCount = getRequiredDiscardCardCostCount(ability);
   if (requiredCount === 0) {
+    return [];
+  }
+
+  if (ability.cost?.discardChosen === true) {
     return [];
   }
 
@@ -700,6 +727,12 @@ function validateDiscardCardCostSelections(
   }
 
   if (requestedCosts.length === 0) {
+    if (ability.cost?.discardChosen === true) {
+      return createFailure(
+        `Ability requires ${requiredCount} discard cost selection${requiredCount === 1 ? "" : "s"}`,
+        "ABILITY_COST_SELECTION_MISSING",
+      );
+    }
     if (eligibleCosts.length > requiredCount) {
       return createFailure(
         `Ability requires ${requiredCount} discard cost selection${requiredCount === 1 ? "" : "s"}`,
@@ -782,6 +815,7 @@ function validateAbilityTargeting(
   ctx: ActivatedAbilityValidationContext,
   cardId: CardInstanceId,
   ability: ActivatedAbilityDefinition,
+  targetsOverride?: readonly CardInstanceId[] | undefined,
 ): RuntimeValidationResult {
   const currentPlayer = ctx.framework.state.currentPlayer as PlayerId | undefined;
   if (!currentPlayer) {
@@ -789,7 +823,8 @@ function validateAbilityTargeting(
   }
 
   const analysis = analyzeEffectTargets(ability.effect, currentPlayer, ctx, cardId);
-  const selectionValidation = validateAndNormalizeTargetSelection(ctx.args.targets, analysis, {
+  const targets = targetsOverride ?? normalizeActivateAbilityTargets(ctx.args.targets);
+  const selectionValidation = validateAndNormalizeTargetSelection(targets, analysis, {
     currentPlayer,
     ctx,
   });
@@ -799,7 +834,7 @@ function validateAbilityTargeting(
       analysis.allowsDeferredResolutionWithoutInitialSelection
     ) {
       return validateAndNormalizeTargetSelection(
-        ctx.args.targets,
+        targets,
         {
           ...analysis,
           minSelections: 0,
@@ -869,6 +904,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
           state: {
             priority: ctx.framework.state.priority,
             status: ctx.framework.state.status,
+            _zonesPrivate: ctx.framework.state._zonesPrivate,
             playerIds: ctx.framework.state.playerIds,
             currentPlayer: currentPlayer,
           },
@@ -884,6 +920,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
         G: ctx.G,
         playerId: currentPlayer,
         sourceCardId: cardId as CardInstanceId,
+        registry: getOrBuildMoveRegistry(ctx),
       };
       const conditionMet = evaluateCondition(ability.condition, conditionCtx);
       if (!conditionMet) {
@@ -963,11 +1000,36 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       }
     }
 
-    return validateAbilityTargeting(ctx, cardId as CardInstanceId, ability);
+    const slots = analyzeActivateAbilityEffectResolutionSlots(
+      ability.effect,
+      currentPlayer,
+      ctx,
+      cardId as CardInstanceId,
+    );
+    let effectiveTargets: CardInstanceId[] | undefined = ctx.args.targets
+      ? normalizeActivateAbilityTargets(ctx.args.targets)
+      : undefined;
+    if (ctx.args.effectSelections) {
+      const merged = mergeActivateAbilityEffectSelectionsToTargets(
+        slots.map((s) => s.kind),
+        ctx.args.effectSelections,
+      );
+      if (merged === undefined && slots.length > 0) {
+        return createFailure(
+          "Invalid effectSelections for this activated ability",
+          "EFFECT_SELECTIONS_INVALID",
+        );
+      }
+      if (merged !== undefined) {
+        effectiveTargets = merged;
+      }
+    }
+
+    return validateAbilityTargeting(ctx, cardId as CardInstanceId, ability, effectiveTargets);
   },
 
   execute: (ctx) => {
-    const { cardId, abilityIndex, targets } = ctx.args;
+    const { cardId, abilityIndex } = ctx.args;
     const currentPlayer = (ctx.framework.state.currentPlayer ??
       ctx.playerId ??
       ctx.framework.state.priority.holder) as PlayerId | undefined;
@@ -991,8 +1053,27 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       throw new Error(`Activated ability not found for '${cardId}'`);
     }
 
+    const effectResolutionSlots = analyzeActivateAbilityEffectResolutionSlots(
+      ability.effect,
+      currentPlayer,
+      ctx,
+      cardId as CardInstanceId,
+    );
+    let targets: CardInstanceId[] | undefined = normalizeActivateAbilityTargets(ctx.args.targets);
+    if (ctx.args.effectSelections) {
+      const merged = mergeActivateAbilityEffectSelectionsToTargets(
+        effectResolutionSlots.map((s) => s.kind),
+        ctx.args.effectSelections,
+      );
+      if (merged !== undefined) {
+        targets = merged;
+      }
+    }
+
     const cost = ability.cost ?? {};
     const currentMeta = (ctx.cards.require(cardId).meta ?? {}) as LorcanaCardMeta;
+    const projectionState = createProjectionState(ctx.framework.state, ctx.G);
+    const registry = getOrBuildMoveRegistry(ctx);
     const banishItemCostCards = resolveBanishItemCostCards(ctx, currentPlayer, ability);
     const banishCharacterCostCards = resolveBanishCharacterCostCards(
       ctx,
@@ -1026,6 +1107,24 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
     );
     if (!payResult.success) {
       throw new Error(`Failed to pay ability cost: ${payResult.error} (${payResult.errorCode})`);
+    }
+
+    const exertedCostCardIds = [...new Set(allExertCards.map((entry) => entry.cardId))];
+    for (const exertedCardId of exertedCostCardIds) {
+      emitTriggeredLorcanaEvent(
+        ctx,
+        "cardExerted",
+        {
+          cardId: exertedCardId,
+          source: ability.name ?? ability.text ?? "activated ability",
+        },
+        {
+          event: "exert",
+          subjectCardId: exertedCardId,
+          triggerSourceCardId: cardId as CardInstanceId,
+          playerId: ctx.framework.zones.getCardOwner(exertedCardId) as PlayerId | undefined,
+        },
+      );
     }
 
     if (discardCostCards.length > 0) {
@@ -1091,6 +1190,19 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
         banishCharacterCardId,
         currentPlayer,
       );
+      const banishedCharacterDefinition = ctx.cards.getDefinition(banishCharacterCardId) as
+        | LorcanaCard
+        | undefined;
+      const strengthBeforeBanish =
+        banishedCharacterDefinition?.cardType === "character"
+          ? getEffectiveStrength(
+              banishedCharacterDefinition as any,
+              projectionState,
+              banishCharacterCardId,
+              (id) => ctx.cards.getDefinition(id) as any,
+              registry,
+            )
+          : undefined;
       const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, banishCharacterCardId);
       moveCardOutOfPlayWithStack(ctx, banishCharacterCardId, {
         zone: "discard",
@@ -1105,6 +1217,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
           snapshot: {
             keywordsBeforeBanish,
             subjectAtLocationId,
+            strengthBeforeBanish,
           },
           reason: "activated ability cost",
         },
@@ -1117,6 +1230,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
           eventSnapshot: {
             keywordsBeforeBanish,
             subjectAtLocationId,
+            strengthBeforeBanish,
           },
         },
       );
@@ -1136,6 +1250,16 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
         cardId as CardInstanceId,
         currentPlayer,
       );
+      const selfStrengthBeforeBanish =
+        cardDef.cardType === "character"
+          ? getEffectiveStrength(
+              cardDef as any,
+              projectionState,
+              cardId as CardInstanceId,
+              (id) => ctx.cards.getDefinition(id) as any,
+              registry,
+            )
+          : undefined;
       const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId as CardInstanceId);
       moveCardOutOfPlayWithStack(ctx, cardId as CardInstanceId, {
         zone: "discard",
@@ -1150,6 +1274,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
           snapshot: {
             keywordsBeforeBanish,
             subjectAtLocationId,
+            strengthBeforeBanish: selfStrengthBeforeBanish,
           },
           reason: "activated ability cost",
         },
@@ -1162,6 +1287,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
           eventSnapshot: {
             keywordsBeforeBanish,
             subjectAtLocationId,
+            strengthBeforeBanish: selfStrengthBeforeBanish,
           },
         },
       );
@@ -1195,28 +1321,56 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       abilityIndex: abilityIndex ?? 0,
       inkPaid: payResult.inkPaid > 0 ? payResult.inkPaid : undefined,
     });
-    ctx.framework.log(
-      ability.name
-        ? createLorcanaLogProjection(
-            "lorcana.ability.activated.named",
-            {
-              playerId: currentPlayer,
-              cardId: cardId as CardInstanceId,
-              abilityName: ability.name,
-            },
-            { mode: "PUBLIC" },
-            "action",
-          )
-        : createLorcanaLogProjection(
-            "lorcana.ability.activated",
-            {
-              playerId: currentPlayer,
-              cardId: cardId as CardInstanceId,
-            },
-            { mode: "PUBLIC" },
-            "action",
-          ),
-    );
+    const paidDiscardIds = discardCostCards as CardInstanceId[];
+    if (paidDiscardIds.length > 0) {
+      ctx.framework.log(
+        ability.name
+          ? createLorcanaLogProjection(
+              "lorcana.ability.activated.named.discardCost",
+              {
+                playerId: currentPlayer,
+                cardId: cardId as CardInstanceId,
+                abilityName: ability.name,
+                discardCardIds: paidDiscardIds,
+              },
+              { mode: "PUBLIC" },
+              "action",
+            )
+          : createLorcanaLogProjection(
+              "lorcana.ability.activated.discardCost",
+              {
+                playerId: currentPlayer,
+                cardId: cardId as CardInstanceId,
+                discardCardIds: paidDiscardIds,
+              },
+              { mode: "PUBLIC" },
+              "action",
+            ),
+      );
+    } else {
+      ctx.framework.log(
+        ability.name
+          ? createLorcanaLogProjection(
+              "lorcana.ability.activated.named",
+              {
+                playerId: currentPlayer,
+                cardId: cardId as CardInstanceId,
+                abilityName: ability.name,
+              },
+              { mode: "PUBLIC" },
+              "action",
+            )
+          : createLorcanaLogProjection(
+              "lorcana.ability.activated",
+              {
+                playerId: currentPlayer,
+                cardId: cardId as CardInstanceId,
+              },
+              { mode: "PUBLIC" },
+              "action",
+            ),
+      );
+    }
 
     const analysis = analyzeEffectTargets(
       ability.effect,
@@ -1261,6 +1415,11 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
     if (flattenedTargets) {
       resolutionInput.targets = flattenedTargets;
     }
+    // Forward the original slotted input so slot-aware resolvers (move-damage,
+    // move-to-location, etc.) can read targets by slot key instead of position.
+    if (isSlottedTargetInput(ctx.args.targets)) {
+      resolutionInput.slottedTargets = ctx.args.targets as SlottedTargetInput;
+    }
     if (banishCharacterCostCards.length > 0) {
       resolutionInput.eventSnapshot = {
         ...resolutionInput.eventSnapshot,
@@ -1282,6 +1441,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
 
     const result = resolveActionEffect(ctx, source, ability.effect, resolutionInput, {
       allowPromptForExistingChosenTargets: true,
+      allowSuspendWithZeroTargetCandidates: true,
     });
     if (result.status === "suspended") {
       return;
@@ -1297,12 +1457,5 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
     }
 
     flushTriggeredEventsToBag(ctx);
-
-    if (cost.exert) {
-      emitTriggeredLorcanaEvent(ctx, "cardExerted", {
-        cardId: cardId as CardInstanceId,
-        source: ability.name ?? ability.text ?? "activated ability",
-      });
-    }
   },
 };

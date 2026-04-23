@@ -24,7 +24,7 @@ export const firstAid: ActionCard = {
       text: "Remove up to 1 damage from each of your characters.",
       name: "First Aid",
       effect: {
-        amount: 1,
+        amount: { type: "up-to", value: 1 },
         target: {
           cardTypes: ["character"],
           count: "all",
@@ -33,7 +33,6 @@ export const firstAid: ActionCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       type: "action",
     },

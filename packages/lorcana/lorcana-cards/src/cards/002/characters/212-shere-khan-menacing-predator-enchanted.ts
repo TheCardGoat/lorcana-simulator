@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { shereKhanMenacingPredator } from "..";
+import { shereKhanMenacingPredator } from "./126-shere-khan-menacing-predator";
 
 export const shereKhanMenacingPredatorEnchanted: CharacterCard = {
   ...shereKhanMenacingPredator,

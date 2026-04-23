@@ -32,7 +32,7 @@ export const transformedChefCastleStove: CharacterCard = {
   abilities: [
     {
       effect: {
-        amount: 2,
+        amount: { type: "up-to", value: 2 },
         target: {
           cardTypes: ["character"],
           count: 1,
@@ -41,7 +41,6 @@ export const transformedChefCastleStove: CharacterCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       id: "1t8-1",
       name: "A CULINARY MASTERPIECE",

@@ -1,5 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { theWallBorderFortress } from "..";
+import { theWallBorderFortress } from "./203-the-wall-border-fortress";
 
 export const theWallBorderFortressEnchanted: LocationCard = {
   ...theWallBorderFortress,

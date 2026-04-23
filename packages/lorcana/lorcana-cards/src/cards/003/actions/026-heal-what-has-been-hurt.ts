@@ -28,8 +28,7 @@ export const healWhatHasBeenHurt: ActionCard = {
         steps: [
           {
             type: "remove-damage",
-            amount: 3,
-            upTo: true,
+            amount: { type: "up-to", value: 3 },
             target: "CHOSEN_CHARACTER",
           },
           {

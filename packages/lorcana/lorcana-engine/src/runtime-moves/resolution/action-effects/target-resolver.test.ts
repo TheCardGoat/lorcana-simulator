@@ -4,6 +4,7 @@ import type { CardPlayedPayload } from "../../../types";
 import type { PlayCardExecutionContext } from "./types";
 import {
   analyzeEffectTargets,
+  isPlayerTargetDescriptor,
   normalizeTargetDescriptor,
   resolveEffectTargets,
   resolveTargetBounds,
@@ -698,6 +699,29 @@ describe("target-resolver", () => {
       { strictUnknownFilters: true },
     );
     expect(currentTurnResult).toEqual({ kind: "player", playerIds: [PLAYER_ONE] });
+  });
+
+  it("keeps each-opponent player selectors resolving to opponents", () => {
+    const source = "source" as CardInstanceId;
+    const ctx = createTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [source],
+      },
+    });
+    const legacyDescriptor: unknown = { selector: "each-opponent" };
+    expect(isPlayerTargetDescriptor(legacyDescriptor)).toBe(true);
+
+    const result = resolveTargetQuery(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      legacyDescriptor as never,
+      { strictUnknownFilters: true },
+    );
+
+    expect(result).toEqual({ kind: "player", playerIds: [PLAYER_TWO] });
   });
 
   it("enforces target bounds for optional and exact selections", () => {

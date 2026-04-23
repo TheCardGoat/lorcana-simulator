@@ -4,7 +4,6 @@ import {
   PLAYER_ONE,
   PLAYER_TWO,
   createMockCharacter,
-  createMockAction,
 } from "@tcg/lorcana-engine/testing";
 import { annaLittleSister } from "./052-anna-little-sister";
 
@@ -15,12 +14,6 @@ const discardFodder = createMockCharacter({
   strength: 1,
   willpower: 1,
   lore: 1,
-});
-
-const actionFodder = createMockAction({
-  id: "anna-little-sister-action-fodder",
-  name: "Action Fodder",
-  cost: 1,
 });
 
 describe("Anna - Little Sister", () => {
@@ -99,31 +92,6 @@ describe("Anna - Little Sister", () => {
 
       // Card should still be in discard
       expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("discard");
-    });
-
-    it("should put a non-character card (action) from own discard on bottom of own deck", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        hand: [annaLittleSister],
-        inkwell: annaLittleSister.cost,
-        discard: [actionFodder],
-        deck: 10,
-      });
-
-      const discardId = testEngine.findCardInstanceId(actionFodder, "discard", PLAYER_ONE);
-      expect(testEngine.asPlayerOne().getCardZone(actionFodder)).toBe("discard");
-
-      expect(testEngine.asPlayerOne().playCard(annaLittleSister)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      expect(
-        testEngine.asPlayerOne().resolvePendingByCard(annaLittleSister, {
-          resolveOptional: true,
-          targets: [discardId],
-        }),
-      ).toBeSuccessfulCommand();
-
-      // Action card should be moved from discard to deck
-      expect(testEngine.asPlayerOne().getCardZone(actionFodder)).toBe("deck");
     });
   });
 

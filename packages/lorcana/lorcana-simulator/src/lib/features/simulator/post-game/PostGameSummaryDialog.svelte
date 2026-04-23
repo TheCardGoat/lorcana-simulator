@@ -1,9 +1,11 @@
 <script lang="ts">
   import {
+    Bug,
     ChevronDown,
     Download,
     LoaderCircle,
     Lock,
+    MessageSquarePlus,
     NotebookPen,
     Save,
     ScrollText,
@@ -40,6 +42,7 @@
     isReplaySaved,
   } from "@/features/replay/replay-store.js";
   import { fetchReplayBlob, decompressReplayBlob } from "@/features/replay/fetch-replay.js";
+  import type { MatchNavigationContext, LorcanaPlayerSide } from "@/features/simulator/model/contracts.js";
 
   interface PostGameSummaryDialogProps {
     open?: boolean;
@@ -52,6 +55,11 @@
     initialSection?: PostGameSectionId;
     defaultExpandedTurnNumbers?: number[];
     defaultTechnicalTurnNumbers?: number[];
+    matchContext?: MatchNavigationContext | null;
+    ownerSide?: LorcanaPlayerSide | null;
+    onNextGame?: (() => void) | null;
+    onOpenBugReport?: () => void;
+    onOpenFeedback?: () => void;
   }
 
   let {
@@ -65,6 +73,11 @@
     initialSection = "overview",
     defaultExpandedTurnNumbers = [],
     defaultTechnicalTurnNumbers = [],
+    matchContext = null,
+    ownerSide = null,
+    onNextGame = null,
+    onOpenBugReport,
+    onOpenFeedback,
   }: PostGameSummaryDialogProps = $props();
 
   let activeSection = $state<PostGameSectionId>("overview");
@@ -79,6 +92,7 @@
   });
   let record = $state<PostGameRecordEnvelope | null>(null);
   let leavingMatch = $state(false);
+  let pendingCloseAction = $state<"close" | "return" | null>(null);
   let replayDownloading = $state(false);
   let replaySaving = $state(false);
   let replaySaved = $state(false);
@@ -289,7 +303,7 @@
     replayDownloading = true;
 
     try {
-      await downloadReplayZip(gameId);
+      await downloadReplayZip(gameId, record?.postGame?.analytics ?? undefined);
     } catch (error) {
       console.error("[PostGame] Failed to download replay:", error);
     } finally {
@@ -353,12 +367,52 @@
       return;
     }
 
+    if (noteDirty) {
+      pendingCloseAction = "return";
+      return;
+    }
+
     leavingMatch = true;
     try {
       await onReturnToMatchmaking();
     } finally {
       leavingMatch = false;
     }
+  }
+
+  function handleClose(): void {
+    if (noteDirty) {
+      pendingCloseAction = "close";
+      return;
+    }
+    open = false;
+  }
+
+  async function handleConfirmLeave(): Promise<void> {
+    const action = pendingCloseAction;
+    pendingCloseAction = null;
+    if (action === "close") {
+      open = false;
+    } else if (action === "return") {
+      leavingMatch = true;
+      try {
+        await onReturnToMatchmaking();
+      } finally {
+        leavingMatch = false;
+      }
+    }
+  }
+
+  async function handleSaveAndContinue(): Promise<void> {
+    await handleSaveNotes();
+    if (!noteState.error) {
+      await handleConfirmLeave();
+    }
+  }
+
+  function handleCancelLeave(): void {
+    pendingCloseAction = null;
+    activeSection = "notes";
   }
 
   function getSideLabel(side: typeof summary.outcome.winnerSide): string {
@@ -661,7 +715,20 @@
                 <h3>{m["sim.postGame.notes.title"]({})}</h3>
                 <p>{m["sim.postGame.notes.description"]({})}</p>
               </div>
-              {#if noteState.isLoading || noteState.isSaving}
+              {#if isAuthenticated}
+                <div class="post-game-notes__header-actions">
+                  {#if noteState.isLoading || noteState.isSaving}
+                    <LoaderCircle class="size-4 animate-spin text-slate-300" />
+                  {/if}
+                  <Button
+                    size="sm"
+                    onclick={handleSaveNotes}
+                    disabled={noteState.isSaving || noteState.isLoading || !noteDirty}
+                  >
+                    {m["sim.postGame.notes.save"]({})}
+                  </Button>
+                </div>
+              {:else if noteState.isLoading || noteState.isSaving}
                 <LoaderCircle class="size-4 animate-spin text-slate-300" />
               {/if}
             </header>
@@ -685,6 +752,9 @@
             {:else}
               <label class="post-game-notes__label" for="post-game-notes">
                 {m["sim.postGame.notes.fieldLabel"]({})}
+                {#if noteDirty}
+                  <span class="post-game-notes__unsaved-dot"></span>
+                {/if}
               </label>
               <textarea
                 id="post-game-notes"
@@ -705,9 +775,6 @@
                 >
                   {m["sim.postGame.notes.backToOverview"]({})}
                 </Button>
-                <Button onclick={handleSaveNotes} disabled={noteState.isSaving || noteState.isLoading}>
-                  {m["sim.postGame.notes.save"]({})}
-                </Button>
               </div>
             {/if}
           </section>
@@ -715,33 +782,109 @@
       </div>
 
       <Dialog.Footer class="post-game-footer">
-        <Button variant="outline" onclick={() => (open = false)}>
-          {m["sim.postGame.close"]({})}
-        </Button>
-        <Button variant="outline" onclick={handleDownloadReplay} disabled={replayDownloading}>
-          <Download class="mr-1.5 size-3.5" />
-          {replayDownloading
-            ? m["sim.postGame.replay.downloading"]({})
-            : m["sim.postGame.replay.download"]({})}
-        </Button>
-        {#if canSaveReplay}
-          <Button variant="outline" onclick={handleSaveReplay} disabled={replaySaving || replaySaved}>
-            <Save class="mr-1.5 size-3.5" />
-            {#if replaySaved}
-              {m["sim.postGame.replay.saved"]({})}
-            {:else if replaySaving}
-              {m["sim.postGame.replay.saving"]({})}
-            {:else}
-              {m["sim.postGame.replay.save"]({})}
-            {/if}
-          </Button>
+        {#if onOpenBugReport || onOpenFeedback}
+          <div class="post-game-feedback-prompt">
+            <span class="post-game-feedback-prompt__label">{m["sim.postGame.feedbackPrompt.label"]({})}</span>
+            <div class="post-game-feedback-prompt__actions">
+              {#if onOpenBugReport}
+                <button
+                  type="button"
+                  class="post-game-feedback-btn post-game-feedback-btn--bug"
+                  onclick={onOpenBugReport}
+                >
+                  <Bug class="size-3.5 shrink-0" />
+                  {m["sim.support.reportBugLabel"]({})}
+                </button>
+              {/if}
+              {#if onOpenFeedback}
+                <button
+                  type="button"
+                  class="post-game-feedback-btn post-game-feedback-btn--feedback"
+                  onclick={onOpenFeedback}
+                >
+                  <MessageSquarePlus class="size-3.5 shrink-0" />
+                  {m["sim.support.shareFeedbackLabel"]({})}
+                </button>
+              {/if}
+            </div>
+          </div>
         {/if}
-        <Button variant="secondary" onclick={() => (activeSection = "notes")}>
-          {m["sim.postGame.notes.open"]({})}
-        </Button>
-        <Button onclick={handleReturn} disabled={leavingMatch}>
-          {m["sim.postGame.returnToMatchmaking"]({})}
-        </Button>
+        {#if matchContext && matchContext.format !== "best_of_1"}
+          <div class="post-game-series-info">
+            {#if matchContext.nextGameId}
+              <span>Game {matchContext.gameIndex} of 3</span>
+              <span class="post-game-series-info__sep">·</span>
+              {#if ownerSide === "playerTwo"}
+                <span>{matchContext.player2Score} – {matchContext.player1Score}</span>
+              {:else}
+                <span>{matchContext.player1Score} – {matchContext.player2Score}</span>
+              {/if}
+            {:else}
+              <span>Match complete</span>
+              <span class="post-game-series-info__sep">·</span>
+              {#if ownerSide === "playerTwo"}
+                <span>{matchContext.player2Score} – {matchContext.player1Score}</span>
+              {:else}
+                <span>{matchContext.player1Score} – {matchContext.player2Score}</span>
+              {/if}
+            {/if}
+          </div>
+        {/if}
+        {#if pendingCloseAction}
+          <div class="post-game-unsaved-confirm">
+            <div class="post-game-unsaved-confirm__text">
+              <strong>{m["sim.postGame.notes.unsavedConfirmTitle"]({})}</strong>
+              <span>{m["sim.postGame.notes.unsavedConfirmDetail"]({})}</span>
+            </div>
+            <div class="post-game-unsaved-confirm__actions">
+              <Button variant="outline" onclick={handleCancelLeave}>
+                {m["sim.postGame.notes.unsavedConfirmCancel"]({})}
+              </Button>
+              <Button variant="outline" onclick={handleConfirmLeave}>
+                {m["sim.postGame.notes.unsavedConfirmDiscard"]({})}
+              </Button>
+              <Button onclick={handleSaveAndContinue} disabled={noteState.isSaving}>
+                {m["sim.postGame.notes.unsavedConfirmSave"]({})}
+              </Button>
+            </div>
+          </div>
+        {:else}
+          <Button variant="outline" onclick={handleClose}>
+            {m["sim.postGame.close"]({})}
+          </Button>
+          <Button variant="outline" onclick={handleDownloadReplay} disabled={replayDownloading}>
+            <Download class="mr-1.5 size-3.5" />
+            {replayDownloading
+              ? m["sim.postGame.replay.downloading"]({})
+              : m["sim.postGame.replay.download"]({})}
+          </Button>
+          {#if canSaveReplay}
+            <Button variant="outline" onclick={handleSaveReplay} disabled={replaySaving || replaySaved}>
+              <Save class="mr-1.5 size-3.5" />
+              {#if replaySaved}
+                {m["sim.postGame.replay.saved"]({})}
+              {:else if replaySaving}
+                {m["sim.postGame.replay.saving"]({})}
+              {:else}
+                {m["sim.postGame.replay.save"]({})}
+              {/if}
+            </Button>
+          {/if}
+          {#if matchContext?.nextGameId && onNextGame}
+            <Button onclick={() => onNextGame!()} disabled={leavingMatch || matchContext.navigating}>
+              {#if matchContext.navigating}
+                <LoaderCircle class="mr-1.5 size-3.5 animate-spin" />
+                Loading…
+              {:else}
+                Go to Next Game →
+              {/if}
+            </Button>
+          {:else}
+            <Button onclick={handleReturn} disabled={leavingMatch}>
+              {m["sim.postGame.returnToMatchmaking"]({})}
+            </Button>
+          {/if}
+        {/if}
       </Dialog.Footer>
     </Dialog.Content>
   </Dialog.Portal>
@@ -900,6 +1043,13 @@
     padding-top: 1rem;
   }
 
+  .post-game-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
   .post-game-panel__header h3 {
     margin: 0;
     font-size: 1.02rem;
@@ -920,7 +1070,6 @@
   .post-game-scorecard,
   .post-game-card,
   .post-game-turn,
-  .post-game-server-placeholder,
   .post-game-empty-card {
     border: 1px solid rgba(51, 65, 85, 0.85);
     background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.94));
@@ -1048,8 +1197,7 @@
   }
 
   .post-game-highlight p,
-  .post-game-spotlight p,
-  .post-game-server-placeholder p {
+  .post-game-spotlight p {
     margin: 0.28rem 0 0;
     line-height: 1.5;
     color: rgba(226, 232, 240, 0.88);
@@ -1073,8 +1221,7 @@
     border: 1px solid rgba(51, 65, 85, 0.42);
   }
 
-  .post-game-spotlight h4,
-  .post-game-server-placeholder h4 {
+  .post-game-spotlight h4 {
     margin: 0;
     font-size: 0.92rem;
     font-weight: 700;
@@ -1128,14 +1275,29 @@
     color: rgba(148, 163, 184, 0.92);
   }
 
-  .post-game-server-placeholder {
-    padding: 0.95rem 1rem;
+  .post-game-notes__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
   }
 
   .post-game-notes__label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     font-size: 0.84rem;
     font-weight: 700;
     color: rgba(226, 232, 240, 0.92);
+  }
+
+  .post-game-notes__unsaved-dot {
+    display: inline-block;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: #38bdf8;
+    flex-shrink: 0;
   }
 
   .post-game-notes__textarea {
@@ -1179,6 +1341,127 @@
     padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom));
     border-top: 1px solid rgba(148, 163, 184, 0.12);
     background: rgba(2, 6, 23, 0.96);
+  }
+
+  .post-game-unsaved-confirm {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .post-game-unsaved-confirm__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .post-game-unsaved-confirm__text strong {
+    font-size: 0.85rem;
+    color: rgba(248, 250, 252, 0.95);
+  }
+
+  .post-game-unsaved-confirm__text span {
+    font-size: 0.78rem;
+    color: rgba(148, 163, 184, 0.8);
+  }
+
+  .post-game-unsaved-confirm__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .post-game-feedback-prompt {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-right: auto;
+    min-width: 0;
+  }
+
+  .post-game-feedback-prompt__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.75);
+  }
+
+  .post-game-feedback-prompt__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .post-game-feedback-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.42rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: 1px solid;
+    cursor: pointer;
+    transition:
+      background 150ms ease,
+      border-color 150ms ease,
+      transform 150ms ease,
+      box-shadow 150ms ease;
+    white-space: nowrap;
+  }
+
+  .post-game-feedback-btn:hover,
+  .post-game-feedback-btn:focus-visible {
+    outline: none;
+    transform: translateY(-1px);
+  }
+
+  .post-game-feedback-btn--bug {
+    background: rgba(120, 53, 15, 0.45);
+    border-color: rgba(251, 146, 60, 0.5);
+    color: #fed7aa;
+    box-shadow: 0 0 0 0 rgba(251, 146, 60, 0);
+  }
+
+  .post-game-feedback-btn--bug:hover,
+  .post-game-feedback-btn--bug:focus-visible {
+    background: rgba(120, 53, 15, 0.7);
+    border-color: rgba(251, 146, 60, 0.8);
+    box-shadow: 0 0 8px rgba(251, 146, 60, 0.2);
+  }
+
+  .post-game-feedback-btn--feedback {
+    background: rgba(12, 74, 110, 0.45);
+    border-color: rgba(56, 189, 248, 0.45);
+    color: #bae6fd;
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+  }
+
+  .post-game-feedback-btn--feedback:hover,
+  .post-game-feedback-btn--feedback:focus-visible {
+    background: rgba(12, 74, 110, 0.7);
+    border-color: rgba(56, 189, 248, 0.8);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
+  }
+
+  .post-game-series-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: auto;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(148, 163, 184, 0.9);
+    letter-spacing: 0.02em;
+  }
+
+  .post-game-series-info__sep {
+    color: rgba(100, 116, 139, 0.6);
   }
 
   .post-game-actor--self {

@@ -135,8 +135,14 @@ describe("HeiHei - Bumbling Rooster", () => {
 
       expect(testEngine.asPlayerOne().playCard(heiheiBumblingRooster)).toBeSuccessfulCommand();
 
-      // No bag effect should be present — condition not met
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued when trigger fires, inkwell condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(heiheiBumblingRooster, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      // Opponent has fewer inkwell cards — no card added to inkwell
       expect(testEngine.asPlayerOne().getZonesCardCount().inkwell).toBe(inkwellBefore);
     });
 
@@ -158,7 +164,14 @@ describe("HeiHei - Bumbling Rooster", () => {
 
       expect(testEngine.asPlayerOne().playCard(heiheiBumblingRooster)).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued when trigger fires, inkwell condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(heiheiBumblingRooster, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      // Inkwell counts are equal — no card added to inkwell
       expect(testEngine.asPlayerOne().getZonesCardCount().inkwell).toBe(inkwellBefore);
     });
   });

@@ -40,14 +40,23 @@ export const aliceSavvySailor: CharacterCard = {
       effect: {
         steps: [
           {
+            duration: "until-start-of-next-turn",
             modifier: 1,
             stat: "lore",
-            target: "SELF",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["character"],
+              excludeSelf: true,
+            },
             type: "modify-stat",
           },
           {
+            duration: "until-start-of-next-turn",
             keyword: "Ward",
-            target: "SELF",
+            target: { ref: "previous-target" },
             type: "gain-keyword",
           },
         ],

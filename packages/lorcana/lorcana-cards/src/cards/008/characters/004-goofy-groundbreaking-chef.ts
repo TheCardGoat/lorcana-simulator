@@ -42,7 +42,7 @@ export const goofyGroundbreakingChef: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 1,
+          amount: { type: "up-to", value: 1 },
           target: {
             selector: "all",
             count: "all",
@@ -52,7 +52,6 @@ export const goofyGroundbreakingChef: CharacterCard = {
             excludeSelf: true,
           },
           type: "remove-damage",
-          upTo: true,
           thenReady: true,
         },
         type: "optional",

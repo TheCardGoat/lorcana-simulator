@@ -38,7 +38,7 @@ export const baymaxArmoredCompanion: CharacterCard = {
           type: "sequence",
           steps: [
             {
-              amount: 2,
+              amount: { type: "up-to", value: 2 },
               target: {
                 selector: "chosen",
                 count: 1,
@@ -48,7 +48,6 @@ export const baymaxArmoredCompanion: CharacterCard = {
                 excludeSelf: true,
               },
               type: "remove-damage",
-              upTo: true,
             },
             {
               type: "gain-lore",
@@ -80,7 +79,7 @@ export const baymaxArmoredCompanion: CharacterCard = {
           type: "sequence",
           steps: [
             {
-              amount: 2,
+              amount: { type: "up-to", value: 2 },
               target: {
                 selector: "chosen",
                 count: 1,
@@ -90,7 +89,6 @@ export const baymaxArmoredCompanion: CharacterCard = {
                 excludeSelf: true,
               },
               type: "remove-damage",
-              upTo: true,
             },
             {
               type: "gain-lore",

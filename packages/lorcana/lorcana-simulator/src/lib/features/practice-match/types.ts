@@ -16,7 +16,10 @@ export interface PracticeMatchCreationResponse {
 export interface PracticeMatchSession {
   matchId: string;
   gameId: string;
-  playerId: string;
+  /** Roster seat / `game_profiles.game_profile_id` (legacy persisted key: `playerId`). */
+  gameProfileId: string;
+  /** Auth account id (`users.id`) when known at save time. */
+  userId?: string;
   botPlayerId: string;
   deckConfig: HumanVsAiMatchConfig;
   /** Pre-issued WebSocket ticket (e.g. from quick-match API for guest users). */

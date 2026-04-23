@@ -389,6 +389,10 @@ export type TriggerRestriction =
   // True only when the subject card moved from the discard zone.
   | { type: "from-discard" }
 
+  // Destination zone
+  // True only when the subject card moved to the hand zone.
+  | { type: "to-hand" }
+
   // Card type of the damage target (for deal-damage events in challenge).
   // True only when the defending card in the challenge is a character.
   | { type: "defender-is-character" };

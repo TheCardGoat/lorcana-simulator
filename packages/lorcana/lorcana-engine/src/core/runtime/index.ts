@@ -61,7 +61,6 @@ export type {
   PublishedGameEvent,
   LogMessage,
   LogVisibility,
-  GameLogEntry,
   FilteredMatchView,
   FilteredTCGCtx,
   FilteredZoneRuntimeState,
@@ -100,7 +99,6 @@ export type {
   LogProjectionContext,
   PacketAnimationContext,
   ProjectedLogEntry,
-  LogProjector,
   RuntimeActorRole,
   FrameworkStateSnapshot,
   CardRuntimeReadAPI,
@@ -241,7 +239,7 @@ export {
 // Persistence (Phase 6)
 export type {
   MatchConfig,
-  CommandLogEntry,
+  ReplayStepEntry,
   MatchSnapshot,
   MatchMetadata,
   MatchReplayData,

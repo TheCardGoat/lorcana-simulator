@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { cantHoldItBackAnymore } from "..";
+import { cantHoldItBackAnymore } from "./062-cant-hold-it-back-anymore";
 
 export const cantHoldItBackAnymoreEnchanted: ActionCard = {
   ...cantHoldItBackAnymore,

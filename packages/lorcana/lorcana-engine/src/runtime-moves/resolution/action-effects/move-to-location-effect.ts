@@ -7,6 +7,7 @@ import { handleUnsupportedActionEffect } from "./unsupported-action-effect";
 import { getEffectTargetSelectionInput } from "./selection-state";
 import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
 import { isGainLoreEffect, resolveGainLoreEffect } from "./gain-lore-effect";
+import { isSlotted } from "../../../targeting/slotted-targets";
 
 export function isMoveToLocationEffect(effect: unknown): effect is MoveToLocationEffect {
   return (
@@ -31,17 +32,26 @@ function resolveLocationAndCharacters(
   effect: MoveToLocationEffect,
   resolutionInput: ActionResolutionInput,
 ): { locationId?: CardInstanceId; characterIds: CardInstanceId[] } {
-  const characterSelection =
-    normalizeSelectedTargets(getEffectTargetSelectionInput(effect.character, resolutionInput)) ??
-    [];
-  const locationSelection =
-    normalizeSelectedTargets(getEffectTargetSelectionInput(effect.location, resolutionInput)) ?? [];
+  // Slot-aware path: `move-to-location` slotted input has `subject` (character)
+  // and `location` keys. Resolve each independently against its descriptor.
+  const slottedInput = isSlotted(resolutionInput.slottedTargets, "move-to-location")
+    ? resolutionInput.slottedTargets
+    : undefined;
+  const characterInput = slottedInput
+    ? [...slottedInput.subject]
+    : getEffectTargetSelectionInput(effect.character, resolutionInput);
+  const locationInput = slottedInput
+    ? [...slottedInput.location]
+    : getEffectTargetSelectionInput(effect.location, resolutionInput);
+
+  const characterSelection = normalizeSelectedTargets(characterInput) ?? [];
+  const locationSelection = normalizeSelectedTargets(locationInput) ?? [];
   const characterTargetCards =
     resolveEffectTargets(
       ctx,
       cardPlayed,
       effect.character,
-      getEffectTargetSelectionInput(effect.character, resolutionInput),
+      characterInput,
       resolutionInput.eventSnapshot,
     ) ?? [];
   const locationTargetCards =
@@ -49,7 +59,7 @@ function resolveLocationAndCharacters(
       ctx,
       cardPlayed,
       effect.location,
-      getEffectTargetSelectionInput(effect.location, resolutionInput),
+      locationInput,
       resolutionInput.eventSnapshot,
     ) ?? [];
   const candidateCards = [

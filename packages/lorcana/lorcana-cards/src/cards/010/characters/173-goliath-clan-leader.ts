@@ -36,6 +36,7 @@ export const goliathClanLeader: CharacterCard = {
   ],
   classifications: ["Dreamborn", "Hero", "Gargoyle"],
   abilities: [
+    // DUSK TO DAWN — fires at the end of Goliath controller's own turn
     {
       id: "KcO-1",
       name: "DUSK TO DAWN",
@@ -43,7 +44,7 @@ export const goliathClanLeader: CharacterCard = {
       type: "triggered",
       trigger: {
         event: "end-turn",
-        on: "ANY_PLAYER",
+        on: "CONTROLLER",
         timing: "at",
       },
       effect: {
@@ -81,6 +82,56 @@ export const goliathClanLeader: CharacterCard = {
             type: "draw-until-hand-size",
             size: 2,
             target: "CONTROLLER",
+          },
+        },
+      },
+    },
+    // DUSK TO DAWN — fires at the end of the opponent's turn
+    {
+      id: "KcO-2",
+      name: "DUSK TO DAWN",
+      text: "DUSK TO DAWN At the end of each player's turn, if they have more than 2 cards in their hand, they choose and discard cards until they have 2. If they have fewer than 2 cards in their hand, they draw until they have 2.",
+      type: "triggered",
+      trigger: {
+        event: "end-turn",
+        on: "OPPONENT",
+        timing: "at",
+      },
+      effect: {
+        type: "conditional",
+        condition: {
+          type: "resource-count",
+          what: "cards-in-hand",
+          controller: "opponent",
+          comparison: "greater-than",
+          value: 2,
+        },
+        then: {
+          type: "discard",
+          chosen: true,
+          amount: {
+            type: "difference",
+            left: {
+              type: "cards-in-hand",
+              controller: "opponent",
+            },
+            right: 2,
+          },
+          target: "OPPONENT",
+        },
+        else: {
+          type: "conditional",
+          condition: {
+            type: "resource-count",
+            what: "cards-in-hand",
+            controller: "opponent",
+            comparison: "less-than",
+            value: 2,
+          },
+          then: {
+            type: "draw-until-hand-size",
+            size: 2,
+            target: "OPPONENT",
           },
         },
       },

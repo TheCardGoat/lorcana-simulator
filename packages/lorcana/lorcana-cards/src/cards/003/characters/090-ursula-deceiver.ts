@@ -37,12 +37,12 @@ export const ursulaDeceiver: CharacterCard = {
         steps: [
           {
             type: "reveal-hand",
-            target: "EACH_OPPONENT",
+            target: "OPPONENT",
           },
           {
             type: "discard",
             amount: 1,
-            target: "EACH_OPPONENT",
+            target: "OPPONENT",
             from: "hand",
             chosen: true,
             chosenBy: "you",

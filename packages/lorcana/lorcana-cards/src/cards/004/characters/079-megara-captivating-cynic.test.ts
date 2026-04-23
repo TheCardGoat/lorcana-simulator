@@ -38,4 +38,19 @@ describe("Megara - Captivating Cynic", () => {
 
     expect(testEngine.asPlayerOne().getCardZone(megaraCaptivatingCynic)).toBe("discard");
   });
+
+  it("banishes Megara automatically when hand is empty — no choice prompt shown", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [megaraCaptivatingCynic],
+      inkwell: megaraCaptivatingCynic.cost,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(megaraCaptivatingCynic)).toBeSuccessfulCommand();
+
+    // After playing Megara her hand is empty, so only banish is legal — should auto-force without suspension
+    // No pending choice-selection prompt should remain
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+    // Megara is banished automatically
+    expect(testEngine.asPlayerOne().getCardZone(megaraCaptivatingCynic)).toBe("discard");
+  });
 });

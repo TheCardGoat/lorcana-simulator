@@ -4,6 +4,7 @@ import type {
   EnginePendingEffectProjection,
   PlayerId,
 } from "#core";
+import type { ClockSnapshot } from "../core/runtime/clock-view";
 import type { ResolutionSelectionContext } from "./resolution-selection";
 
 // Not present here means not having that keyword modified, and should use the value present in the CardDefinition
@@ -75,6 +76,8 @@ export type LorcanaProjectedCard = {
   cardsUnder?: CardInstanceId[];
   stackParentId?: CardInstanceId;
   playedViaShift?: boolean;
+  /** Face state of this card (relevant for limbo/inkwell cards visible to all players) */
+  publicFaceState?: "faceUp" | "faceDown";
 } & ProjectedLorcanaCardDerived;
 
 export type LorcanaProjectedCardId = CardInstanceId | string;
@@ -85,27 +88,18 @@ export type LorcanaProjectedPlayerBoard = {
   handCount: number;
   deckCount: number;
   deckTop?: LorcanaProjectedCardId;
+  deckBottom?: LorcanaProjectedCardId;
   hand: LorcanaProjectedCardId[];
   play: LorcanaProjectedCardId[];
   inkwell: LorcanaProjectedCardId[];
   discard: LorcanaProjectedCardId[];
-};
-
-export type LorcanaProjectedTimerPlayer = {
-  timeRemaining: number;
-  timerTicking: boolean;
-  canDeclareVictory: boolean;
-  canClaimAfkVictory: boolean;
-  canClaimPreGameVictory: boolean;
-  lastGameActionAt: number;
-  startedAtMs?: number;
-  isInNegativeTime?: boolean;
-  timeoutCount?: number;
+  /** Limbo card IDs that have active play-from-under permissions this turn */
+  playableFromUnderCardIds?: LorcanaProjectedCardId[];
 };
 
 export type LorcanaProjectedTimerView = {
   serverTimestamp: number;
-  players?: Record<string, LorcanaProjectedTimerPlayer>;
+  players?: Record<string, ClockSnapshot>;
 };
 
 export type LorcanaProjectedPendingEffect = EnginePendingEffectProjection & {

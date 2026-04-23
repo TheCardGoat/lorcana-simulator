@@ -117,16 +117,23 @@ export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
     const discardCards = ctx.framework.zones.getCards({ zone: "discard", playerId: ownerId });
     const sourceZone = discardCards.includes(cardId) ? "discard" : "hand";
 
+    const cardDef = ctx.cards.require(cardId).definition;
+    const cardName = cardDef.version ? `${cardDef.name} - ${cardDef.version}` : cardDef.name;
+
     const inkwellZoneRef = { zone: "inkwell", playerId: ownerId };
     ctx.framework.zones.moveCard(cardId, inkwellZoneRef);
     ctx.cards.patchMeta(cardId, { state: "ready", publicFaceState: "faceDown" });
-    ctx.framework.zones.reveal([cardId], "all", { stateID: revealUntilStateID });
+    ctx.framework.zones.reveal([cardId], "all", {
+      stateID: revealUntilStateID,
+      affectsUndo: false,
+    });
     ctx.framework.log(
       createLorcanaLogProjection(
         "lorcana.card.inked",
         {
           playerId: ownerId,
           cardId: cardId as CardInstanceId,
+          cardName,
         },
         { mode: "PUBLIC" },
         "action",

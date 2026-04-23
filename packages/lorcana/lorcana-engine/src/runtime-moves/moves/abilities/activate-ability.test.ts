@@ -95,6 +95,38 @@ const nonBoostTarget = createMockCharacter({
   lore: 1,
 });
 
+const discardChosenDealDamageCharacter = createMockCharacter({
+  id: "discard-chosen-deal-damage",
+  name: "Discard Chosen Deal Damage",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+  abilities: [
+    {
+      id: "discard-chosen-deal-damage-1",
+      name: "GOOD AIM",
+      type: "activated",
+      cost: { discardCards: 1, discardChosen: true },
+      effect: {
+        type: "deal-damage",
+        amount: 2,
+        target: "CHOSEN_CHARACTER",
+      },
+      text: "GOOD AIM",
+    } satisfies ActivatedAbilityDefinition,
+  ],
+});
+
+const discardChosenOpposingTarget = createMockCharacter({
+  id: "discard-chosen-opposing-target",
+  name: "Opposing Target",
+  cost: 2,
+  strength: 2,
+  willpower: 5,
+  lore: 1,
+});
+
 const upToTargetAbilitySource = createMockCharacter({
   id: "up-to-target-ability-source",
   name: "Up To Target Ability Source",
@@ -153,6 +185,77 @@ function createMockActionCard(params: {
 }
 
 describe("activateAbility", () => {
+  describe("discardChosen discard cost", () => {
+    it("requires explicit discard card ids when discardChosen is true even if only one card is eligible", () => {
+      const handOnly = createMockCharacter({
+        id: "dc-hand-only",
+        name: "Only Hand Card",
+        cost: 1,
+      });
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [discardChosenDealDamageCharacter],
+          hand: [handOnly],
+          deck: [fillerCard],
+        },
+        {
+          play: [discardChosenOpposingTarget],
+          deck: [fillerCard],
+        },
+      );
+
+      const result = engine.asPlayerOne().activateAbility(discardChosenDealDamageCharacter, {
+        targets: [discardChosenOpposingTarget],
+      }) as CommandFailure;
+
+      expect(result.success).toBe(false);
+      expect(result.errorCode).toBe("ABILITY_COST_SELECTION_MISSING");
+    });
+
+    it("succeeds with explicit discard and records discardCardIds on the move log", () => {
+      const handOnly = createMockCharacter({
+        id: "dc-hand-explicit",
+        name: "Hand Explicit",
+        cost: 1,
+      });
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [discardChosenDealDamageCharacter],
+          hand: [handOnly],
+          deck: [fillerCard],
+        },
+        {
+          play: [discardChosenOpposingTarget],
+          deck: [fillerCard],
+        },
+      );
+
+      const playerOne = engine.asPlayerOne();
+      const sourceInstanceId = engine.findCardInstanceId(
+        discardChosenDealDamageCharacter,
+        "play",
+        "p1",
+      );
+      const discardInstanceId = engine.findCardInstanceId(handOnly, "hand", "p1");
+
+      expect(
+        playerOne.activateAbility(discardChosenDealDamageCharacter, {
+          costs: { discardCards: [handOnly] },
+          targets: [discardChosenOpposingTarget],
+        }).success,
+      ).toBe(true);
+
+      const logs = engine.getServerEngine().getRuntime().getMoveLogHistory();
+      const abilityLog = logs.find(
+        (log) => log.type === "activateAbility" && log.cardId === sourceInstanceId,
+      );
+      expect(abilityLog?.type).toBe("activateAbility");
+      if (abilityLog?.type === "activateAbility") {
+        expect(abilityLog.discardCardIds).toEqual([discardInstanceId]);
+      }
+    });
+  });
+
   it("returns CARD_DRYING for exert abilities on drying characters", () => {
     const engine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [namedActivatedAbilityCharacter],
@@ -526,6 +629,48 @@ describe("activateAbility", () => {
         cardId: sourceId,
         abilityIndex: 0,
         targets: [targetId],
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(playerOne.isExerted(target)).toBe(false);
+  });
+
+  it("accepts effectSelections.effectSlotCardIds as an alternative to targets for chosen-target abilities", () => {
+    const source = createMockCharacter({
+      id: "ability-source-slot",
+      name: "Ability Source Slot",
+      cost: 2,
+      abilities: [
+        {
+          id: "ready-target-slot",
+          name: "READY TARGET SLOT",
+          type: "activated",
+          cost: {},
+          effect: { type: "ready", target: "CHOSEN_CHARACTER" },
+          text: "READY TARGET SLOT - Ready chosen character.",
+        } satisfies ActivatedAbilityDefinition,
+      ],
+    });
+    const target = createMockCharacter({
+      id: "ability-target-slot",
+      name: "Ability Target Slot",
+      cost: 2,
+    });
+
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [source, { card: target, exerted: true }],
+    });
+
+    const playerOne = engine.asPlayerOne();
+    const sourceId = playerOne.getCard(source).id;
+    const targetId = playerOne.getCard(target).id;
+
+    const result = engine.executeMoveForView("playerOne", "activateAbility", {
+      args: {
+        cardId: sourceId,
+        abilityIndex: 0,
+        effectSelections: { effectSlotCardIds: [targetId] },
       },
     });
 

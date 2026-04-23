@@ -47,8 +47,13 @@ describe("Pete - Ghost of Christmas Future", () => {
       const handBefore = testEngine.asPlayerOne().getZonesCardCount().hand;
       expect(testEngine.asPlayerOne().quest(peteGhostOfChristmasFuture)).toBeSuccessfulCommand();
 
-      // With 0 cards under, the condition is not met so no trigger fires
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(peteGhostOfChristmasFuture, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
       // Hand should be unchanged
       expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(handBefore);
@@ -80,8 +85,13 @@ describe("Pete - Ghost of Christmas Future", () => {
 
       expect(testEngine.asPlayerOne().quest(peteGhostOfChristmasFuture)).toBeSuccessfulCommand();
 
-      // Pete has no cards under him, so condition not met
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(peteGhostOfChristmasFuture, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
     });
 
     it("with 1 card under him, looks at 1 card and player can put it in hand", () => {

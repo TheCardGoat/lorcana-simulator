@@ -52,13 +52,14 @@ describe("Be Our Guest", () => {
 
     expect(testEngine.asPlayerOne().getCardZone(jetsamUrsulasSpy)).toEqual("hand");
     expect(testEngine.asPlayerOne().getCardsInZone("deck", PLAYER_ONE).count).toBe(4);
-    // Once the effect finishes, the opponent no longer sees card identity in hand.
+    // The revealed card is visible to the opponent immediately after the effect
+    // (reveal: true on the hand destination creates a persistent reveal window).
     expect(
       testEngine
         .asPlayerTwo()
         .getCardsInZone("hand", PLAYER_ONE)
         .cards.map((card) => card.definitionId),
-    ).toEqual([undefined]);
+    ).toEqual([jetsamUrsulasSpy.id]);
     expect(getDeckDefinitionIdsAuthoritative().toSorted()).toEqual(
       [
         aladdinPrinceAli.id,

@@ -1,4 +1,10 @@
-import { type LogLevel, configureSync, getConsoleSink, getLogger } from "@logtape/logtape";
+import {
+  type LogLevel,
+  configureSync,
+  getConsoleSink,
+  getLogger,
+  getTextFormatter,
+} from "@logtape/logtape";
 import { prettyFormatter } from "@logtape/pretty";
 
 let isConfigured = false;
@@ -31,7 +37,7 @@ function getSimulatorLogLevel(): LogLevel {
     return configuredLogLevel;
   }
 
-  return import.meta.env.DEV ? "debug" : "info";
+  return import.meta.env.DEV ? "trace" : "info";
 }
 
 export function configureCoreSimulatorLogging(): void {
@@ -39,16 +45,28 @@ export function configureCoreSimulatorLogging(): void {
     return;
   }
 
+  const level = getSimulatorLogLevel();
+
   configureSync({
     sinks: {
-      console: import.meta.env.PROD
-        ? getConsoleSink()
-        : getConsoleSink({ formatter: prettyFormatter }),
+      console: getConsoleSink({
+        formatter: !import.meta.env.PROD ? prettyFormatter : getTextFormatter(),
+      }),
     },
     loggers: [
       {
         category: ["tcg"],
-        lowestLevel: getSimulatorLogLevel(),
+        lowestLevel: level,
+        sinks: ["console"],
+      },
+      {
+        category: ["lorcana-engine"],
+        lowestLevel: level,
+        sinks: ["console"],
+      },
+      {
+        category: ["core-engine"],
+        lowestLevel: level,
         sinks: ["console"],
       },
       {

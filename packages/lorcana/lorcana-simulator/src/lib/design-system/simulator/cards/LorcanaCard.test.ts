@@ -5,6 +5,7 @@ import type { CardActionView, LorcanaCardSnapshot } from "@/features/simulator/m
 let mockLayoutMode: "desktop" | "mobile" = "mobile";
 let mockInspectedCard: LorcanaCardSnapshot | null = null;
 let mockActions: CardActionView[] = [];
+let mockResolutionSelectionSession: object | null = null;
 
 const handleCardActionClick = mock(() => true);
 const closeCardInspect = mock(() => {});
@@ -38,6 +39,11 @@ mock.module("@/features/simulator/context/simulator-card-context.svelte.js", () 
     openGlobalPreview,
   }),
   maybeUseSimulatorCardContext: () => ({
+    inspectedCard: mockInspectedCard,
+    canSelectCard: () => false,
+    openCardInspect: () => {},
+    closeCardInspect,
+    openGlobalPreview,
     previewCard: null,
     setExternalPreviewCard: () => {},
   }),
@@ -53,10 +59,20 @@ mock.module("@/features/simulator/context/game-context.svelte.js", () => ({
   }),
   useLorcanaSidebarPresenter: () => ({
     actionSelectionSession: null,
+    resolutionSelectionSession: mockResolutionSelectionSession,
     cardPreviewMode: "immediate",
     getActionSessionCardReason: () => null,
     getCardActionViews: () => mockActions,
     handleCardActionClick,
+  }),
+  maybeUseLorcanaSidebarPresenter: () => ({
+    actionSelectionSession: null,
+    resolutionSelectionSession: mockResolutionSelectionSession,
+    cardPreviewMode: "immediate",
+    getActionSessionCardReason: () => null,
+    getCardActionViews: () => mockActions,
+    handleCardActionClick,
+    resolveCardSnapshot: () => null,
   }),
   maybeUseLorcanaBoardPresenter: () => null,
 }));
@@ -98,6 +114,7 @@ describe("LorcanaCard", () => {
     mockLayoutMode = "mobile";
     mockInspectedCard = null;
     mockActions = [];
+    mockResolutionSelectionSession = null;
     handleCardActionClick.mockClear();
     closeCardInspect.mockClear();
     openGlobalPreview.mockClear();
@@ -118,7 +135,7 @@ describe("LorcanaCard", () => {
     expect(body).toContain('data-card-id="card-1"');
   });
 
-  it("renders desktop hover-card wrappers without requiring simulator provider state", async () => {
+  it("renders desktop cards without the legacy hover-card trigger wrapper", async () => {
     mockLayoutMode = "desktop";
     mockInspectedCard = createCardSnapshot();
 
@@ -129,7 +146,7 @@ describe("LorcanaCard", () => {
       },
     });
 
-    expect(body).toContain('data-slot="hover-card-trigger"');
-    expect(body).not.toContain('data-slot="popover-content"');
+    expect(body).toContain('data-card-id="card-1"');
+    expect(body).not.toContain('data-slot="hover-card-trigger"');
   });
 });

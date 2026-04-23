@@ -302,6 +302,7 @@ export type CreateTriggeredAbilityLifecycle =
 export type ReplacementEventKind =
   | "modify-stat"
   | "deal-damage"
+  | "put-damage"
   | "challenge-damage"
   | "gain-lore"
   | "zone-change";
@@ -369,24 +370,7 @@ export interface CreateTriggeredAbilityEffect {
     sourceZones?: ("play" | "hand" | "discard" | "inkwell")[];
     condition?: Condition;
     effect: Effect;
-  };
-  lifecycle: CreateTriggeredAbilityLifecycle;
-}
-
-/**
- * Create a triggered ability that exists outside the bag for a duration.
- *
- * @example "Whenever one of your characters quests this turn, each opponent loses 1 lore."
- */
-export interface CreateTriggeredAbilityEffect {
-  type: "create-triggered-ability";
-  ability: {
-    id?: string;
-    name?: string;
-    trigger: Trigger;
-    sourceZones?: ("play" | "hand" | "discard" | "inkwell")[];
-    condition?: Condition;
-    effect: Effect;
+    autoResolve?: boolean;
   };
   lifecycle: CreateTriggeredAbilityLifecycle;
 }

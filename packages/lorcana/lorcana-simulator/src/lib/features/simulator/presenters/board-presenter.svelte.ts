@@ -6,6 +6,7 @@ import type {
 
 import {
   getActiveSide,
+  getPlayableFromUnderCardIds,
   getTurnSide,
   getZoneCardCount,
   isZoneMasked as isBoardZoneMasked,
@@ -126,6 +127,10 @@ export class LorcanaBoardPresenter {
     return this.#game.animationSpeed();
   }
 
+  get showZoneCounters(): boolean {
+    return this.#game.showZoneCounters();
+  }
+
   get questRotationDurationMs(): number {
     return QUEST_ROTATION_DURATION_MS[this.animationSpeed];
   }
@@ -233,6 +238,20 @@ export class LorcanaBoardPresenter {
     return getCardsForZone(this.cardSnapshotsById, this.boardSnapshot, playerSide, zoneId);
   }
 
+  getPlayableFromUnderCards(playerSide: LorcanaPlayerSide): LorcanaCardSnapshot[] {
+    if (!this.boardSnapshot) {
+      return [];
+    }
+    const cardIds = getPlayableFromUnderCardIds(this.boardSnapshot, playerSide);
+    return cardIds
+      .map((cardId) => {
+        const snapshot = this.cardSnapshotsById[cardId];
+        if (!snapshot) return null;
+        return { ...snapshot, isFromUnder: true } as LorcanaCardSnapshot;
+      })
+      .filter((card): card is LorcanaCardSnapshot => card !== null);
+  }
+
   getPlayerSummary(playerSide: LorcanaPlayerSide): LorcanaPlayerSummary | null {
     return this.#game.getPlayerSummary(playerSide);
   }
@@ -264,6 +283,18 @@ export class LorcanaBoardPresenter {
       return null;
     }
     return this.cardSnapshotsById[deckTopId] ?? null;
+  }
+
+  getRevealedDeckBottomCard(playerSide: LorcanaPlayerSide): LorcanaCardSnapshot | null {
+    const ownerId = this.getOwnerIdForSide(playerSide);
+    if (!ownerId || !this.boardSnapshot) {
+      return null;
+    }
+    const deckBottomId = this.boardSnapshot.players[ownerId]?.deckBottom;
+    if (!deckBottomId) {
+      return null;
+    }
+    return this.cardSnapshotsById[deckBottomId] ?? null;
   }
 
   getOwnerIdForSide(playerSide: LorcanaPlayerSide): string | null {

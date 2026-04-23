@@ -25,8 +25,9 @@ export const diabloDevotedHerald: CharacterCard = {
   },
   text: [
     {
-      title:
-        "Shift: Discard an action card (You may discard an action card to play this on top of one of your characters named Diablo.)",
+      title: "Shift: Discard an action card ",
+      description:
+        "(You may discard an action card to play this on top of one of your characters named Diablo.)",
     },
     {
       title: "Evasive",

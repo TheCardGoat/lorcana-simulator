@@ -12,6 +12,10 @@ import {
   ursulaEricsBride,
   ursulaVanessa,
 } from "@tcg/lorcana-cards/cards/004";
+import {
+  clarabelleClumsyGuest,
+  clarabelleLightOnHerHoovesEnchanted,
+} from "@tcg/lorcana-cards/cards/005";
 import { baymaxGiantRobot, thunderboltWonderDog } from "@tcg/lorcana-cards/cards/007";
 import { dalmatianPuppyTailWagger } from "@tcg/lorcana-cards/cards/008";
 
@@ -28,6 +32,7 @@ export const shiftFixture = createFixture({
       thunderboltWonderDog,
       diabloDevotedHerald,
       ursulaEricsBride,
+      clarabelleLightOnHerHoovesEnchanted,
       aladdinBraveRescuer,
       flotsamJetsamEntanglingEels,
       reflection,
@@ -39,6 +44,7 @@ export const shiftFixture = createFixture({
       dalmatianPuppyTailWagger,
       diabloFaithfulPet,
       ursulaVanessa,
+      clarabelleClumsyGuest,
       aladdinResoluteSwordsman,
       flotsamUrsulasBaby,
       jetsamUrsulasBaby,

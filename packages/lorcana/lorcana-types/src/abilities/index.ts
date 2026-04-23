@@ -316,7 +316,18 @@ export {
 } from "./effect-types";
 export type { MillEffect } from "./effect-types";
 // Helpers
-export { Abilities, Conditions, Costs, Effects, Targets, Triggers } from "./helpers";
+export {
+  Abilities,
+  Conditions,
+  Costs,
+  Effects,
+  Targets,
+  Triggers,
+  getUpToRule,
+  listUpToRuleEffectTypes,
+  supportsUpTo,
+} from "./helpers";
+export type { UpToCapContext, UpToRule, UpToRuleParams } from "./helpers";
 // Target Types
 export type {
   AllMatchingCharacterQuery,

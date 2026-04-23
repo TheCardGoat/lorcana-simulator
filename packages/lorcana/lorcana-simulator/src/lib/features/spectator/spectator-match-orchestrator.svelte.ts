@@ -2,6 +2,7 @@ import { getLorcanaCardCatalogSync } from "@tcg/lorcana-cards/cards/sync";
 import {
   createPlayerId,
   createLorcanaClient,
+  stripPrivateFields,
   type CardsMaps,
   type LorcanaClient,
   type LorcanaMatchState,
@@ -39,7 +40,7 @@ export interface SpectatorRecentHistory {
 type SpectatorAcceptedMove = SpectatorRecentHistory["acceptedMoves"][number];
 type SpectatorEngineLog = SpectatorRecentHistory["engineLogs"][number];
 
-class SpectatorReadModel {
+export class SpectatorReadModel {
   #listeners = new Set<(stateID: number) => void>();
   #stateId = 0;
   #moveLog: MoveLogEntrySnapshot[] = [];
@@ -60,7 +61,13 @@ class SpectatorReadModel {
       return;
     }
 
-    this.#moveLog = [...this.#moveLog, ...entries];
+    const existingIds = new Set(this.#moveLog.map((e) => e.id));
+    const newEntries = entries.filter((e) => !existingIds.has(e.id));
+    if (newEntries.length === 0) {
+      return;
+    }
+
+    this.#moveLog = [...this.#moveLog, ...newEntries];
     this.bump();
   }
 
@@ -113,7 +120,11 @@ export function createSpectatorHistoryEntries(args: {
   engine?: LorcanaClient;
   cardsMaps?: CardsMaps;
   resolveActorSide: (actorId: string) => LorcanaPlayerSide | undefined;
+  /** Viewer identity for defense-in-depth privacy stripping. Defaults to null (spectator). */
+  viewerId?: string | null;
 }): MoveLogEntrySnapshot[] {
+  const viewerId = args.viewerId ?? null;
+
   return args.acceptedMoves.flatMap((move, index) => {
     if (!isLorcanaSimulatorMoveId(move.moveId)) {
       return [];
@@ -121,6 +132,9 @@ export function createSpectatorHistoryEntries(args: {
 
     const params = normalizePersistedMoveParams(move.input);
     const matchingLog = args.engineLogs.find((entry) => entry.stateVersion === move.stateVersion);
+    const strippedLog = matchingLog?.log
+      ? stripPrivateFields(matchingLog.log, viewerId)
+      : undefined;
 
     const entry: MoveLogEntrySnapshot = {
       id: `spectator-history-${move.stateVersion}-${index}-${move.moveId}`,
@@ -131,7 +145,7 @@ export function createSpectatorHistoryEntries(args: {
       title: "",
       playerId: move.actorId,
       params,
-      typedLogEntry: matchingLog?.log as MoveLogEntrySnapshot["typedLogEntry"],
+      typedLogEntry: strippedLog as MoveLogEntrySnapshot["typedLogEntry"],
     };
 
     const resolveCard = buildCardReferenceResolver(args.engine, args.cardsMaps);
@@ -139,18 +153,23 @@ export function createSpectatorHistoryEntries(args: {
   });
 }
 
-function createLiveEntry(args: {
+export function createLiveEntry(args: {
   acceptedMove: SpectatorAcceptedMove;
   engineLogs: SpectatorEngineLog[];
   engine: LorcanaClient;
   cardsMaps: CardsMaps;
   resolveActorSide: (actorId: string) => LorcanaPlayerSide | undefined;
+  /** Viewer identity for defense-in-depth privacy stripping. Defaults to null (spectator). */
+  viewerId?: string | null;
 }): MoveLogEntrySnapshot {
+  const viewerId = args.viewerId ?? null;
   const moveId = assertLorcanaSimulatorMoveId(args.acceptedMove.moveId);
   const params = normalizePersistedMoveParams(args.acceptedMove.input);
   const matchingLog = args.engineLogs.find(
     (entry) => entry.stateVersion === args.acceptedMove.stateVersion,
   );
+  const strippedLog = matchingLog?.log ? stripPrivateFields(matchingLog.log, viewerId) : undefined;
+
   const entry: MoveLogEntrySnapshot = {
     id: `spectator-live-${args.acceptedMove.turnNumber}-${args.acceptedMove.timestamp}-${moveId}`,
     timestamp: args.acceptedMove.timestamp,
@@ -160,7 +179,7 @@ function createLiveEntry(args: {
     title: "",
     playerId: args.acceptedMove.actorId,
     params,
-    typedLogEntry: matchingLog?.log as MoveLogEntrySnapshot["typedLogEntry"],
+    typedLogEntry: strippedLog as MoveLogEntrySnapshot["typedLogEntry"],
   };
 
   const resolveCard = buildCardReferenceResolver(args.engine, args.cardsMaps);
@@ -248,7 +267,10 @@ function resolveOwnerSide(
 
 /**
  * Extract LorcanaMatchState and CardsMaps from either a direct LorcanaMatchState
- * or a PracticeMatchSnapshot (client-authority games wrap state in engineSnapshot).
+ * or a legacy snapshot with state nested inside engineSnapshot.
+ *
+ * Used by the replay orchestrator for parsing historical data. Live flows
+ * now always use the flat format (state + cardsMaps as separate fields).
  */
 export function extractMatchState(
   raw: unknown,
@@ -257,7 +279,7 @@ export function extractMatchState(
 
   const obj = raw as Record<string, unknown>;
 
-  // Client-authority: PracticeMatchSnapshot = { engineSnapshot: { state, cardsMaps, ... } }
+  // Legacy format: state nested inside engineSnapshot (historical replays)
   if ("engineSnapshot" in obj && obj.engineSnapshot && typeof obj.engineSnapshot === "object") {
     const snap = obj.engineSnapshot as Record<string, unknown>;
     if (snap.state && snap.cardsMaps) {
@@ -325,6 +347,18 @@ export class SpectatorMatchOrchestrator {
     this.#gateway.send({ type: "leave_game", gameId: this.#engine.getState().ctx.gameID });
   }
 
+  applyRecentHistory(history: SpectatorRecentHistory): void {
+    this.readModel.pushEntries(
+      createSpectatorHistoryEntries({
+        acceptedMoves: history.acceptedMoves,
+        engineLogs: history.engineLogs,
+        engine: this.#engine,
+        cardsMaps: this.#cardsMaps,
+        resolveActorSide: (actorId) => this.resolveActorSide(actorId),
+      }),
+    );
+  }
+
   applyStateUpdate(msg: {
     actorId: string;
     moveType: string;
@@ -332,16 +366,13 @@ export class SpectatorMatchOrchestrator {
     patches: unknown[];
     acceptedMove?: SpectatorAcceptedMove;
     engineLogs?: SpectatorEngineLog[];
-    /** Full state snapshot, provided for client-authority games. */
+    /** Full state snapshot (raw LorcanaMatchState), provided for client-authority games. */
     state?: unknown;
+    /** Card instance mapping, included alongside state for client-authority updates. */
+    cardsMaps?: CardsMaps;
   }): void {
     if (msg.state) {
-      const extracted = extractMatchState(msg.state);
-      if (extracted) {
-        this.#engine.loadState(extracted.state);
-      } else {
-        console.warn("[spectator] failed to extract state from state_update");
-      }
+      this.#engine.loadState(msg.state as LorcanaMatchState);
     } else if (msg.patches.length > 0) {
       console.warn(
         "[spectator] received patch-only state update while browser patches are disabled",

@@ -87,6 +87,41 @@ describe("Belle - Accomplished Mystic", () => {
     expect(testEngine.asPlayerTwo().getCard(opposingTarget)?.damage).toBe(2);
   });
 
+  it("moves 1 damage when multiple own characters could be the source and multiple opponents are valid destinations", () => {
+    const extraAlly = createMockCharacter({
+      id: "belle-mystic-ally-2",
+      name: "Extra Ally",
+      cost: 2,
+      strength: 2,
+      willpower: 5,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [belleAccomplishedMystic],
+        play: [{ card: damagedAlly, damage: 1 }, extraAlly],
+        inkwell: belleAccomplishedMystic.cost,
+      },
+      {
+        play: [opposingTarget, anotherOpponent],
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(belleAccomplishedMystic)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(belleAccomplishedMystic),
+    ).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [damagedAlly, opposingTarget] })
+        .success,
+    ).toBe(true);
+
+    expect(testEngine.asPlayerOne().getCard(damagedAlly)?.damage).toBe(0);
+    expect(testEngine.asPlayerTwo().getCard(opposingTarget)?.damage).toBe(1);
+    expect(testEngine.asPlayerOne().getCard(extraAlly)?.damage).toBe(0);
+    expect(testEngine.asPlayerTwo().getCard(anotherOpponent)?.damage).toBe(0);
+  });
+
   it("can choose to move fewer than 3 damage using amount parameter", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {

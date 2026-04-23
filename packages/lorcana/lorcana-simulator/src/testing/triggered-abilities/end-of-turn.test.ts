@@ -34,7 +34,7 @@ describe("BOTTOMLESS PIT - Meeko, Skittish Scrounger - At the end of your turn, 
     expect(bagCount).toBeGreaterThanOrEqual(1);
   });
 
-  it("should not require a choice when this character is NOT exerted (condition fails)", () => {
+  it("should not require a choice when this character is NOT exerted (ability.condition fails)", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       play: [{ card: meekoSkittishScrounger, isDrying: false }],
       hand: [handCard],
@@ -44,19 +44,29 @@ describe("BOTTOMLESS PIT - Meeko, Skittish Scrounger - At the end of your turn, 
     // Don't quest, Meeko stays ready
     expect(testEngine.asPlayerOne().isExerted(meekoSkittishScrounger)).toBe(false);
 
-    // Pass turn - trigger always fires but the conditional check evaluates "if exerted"
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
-    // The trigger fires but the conditional should evaluate to false (not exerted),
-    // so the choice (discard or banish) should be skipped.
-    // If a bag was created, auto-resolve it (the conditional should skip the effect).
     testEngine.asPlayerOne().resolveAllBagEffects({ maxIterations: 10 });
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
-    // Meeko should still be in play
     expect(testEngine.asPlayerOne().getCardZone(meekoSkittishScrounger)).toBe("play");
-    // Hand card should still be in hand
     expect(testEngine.asPlayerOne().getCardZone(handCard)).toBe("hand");
+  });
+
+  it("with exerted Meeko and no cards in hand, resolves to banish (discard branch not legal)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: meekoSkittishScrounger, isDrying: false }],
+      hand: [],
+      deck: 2,
+    });
+
+    expect(testEngine.asPlayerOne().quest(meekoSkittishScrounger)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().isExerted(meekoSkittishScrounger)).toBe(true);
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    testEngine.asPlayerOne().resolveAllBagEffects({ maxIterations: 10 });
+
+    expect(testEngine.asPlayerOne().getCardZone(meekoSkittishScrounger)).toBe("discard");
   });
 
   it("should allow choosing to discard a card (option 1)", () => {

@@ -27,9 +27,6 @@ describe("Lucifer - Cunning Cat", () => {
     );
 
     expect(testEngine.asPlayerOne().playCard(luciferCunningCat)).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolvePendingByCard(luciferCunningCat),
-    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().resolveNextPending({ choiceIndex: 0 })).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerTwo().resolveNextPending({ targets: [characterId, secondCharacterId] }),
@@ -56,9 +53,6 @@ describe("Lucifer - Cunning Cat", () => {
     const actionId = testEngine.findCardInstanceId(holdStill, "hand", "player_two");
 
     expect(testEngine.asPlayerOne().playCard(luciferCunningCat)).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolvePendingByCard(luciferCunningCat),
-    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().resolveNextPending({ choiceIndex: 1 })).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerTwo().resolveNextPending({ targets: [actionId] }),

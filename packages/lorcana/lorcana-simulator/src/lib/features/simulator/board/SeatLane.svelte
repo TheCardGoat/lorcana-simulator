@@ -2,6 +2,7 @@
 import type {
 	LorcanaPlayerSide,
 	LorcanaTableSeat,
+	ExecutableMovePresentationCategoryId,
 } from "@/features/simulator/model/contracts.js";
 import type { SimulatorLayoutMode } from "@/features/simulator/model/layout-mode.svelte.js";
 import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
@@ -10,8 +11,19 @@ import InkwellZone from "@/features/simulator/board/InkwellZone.svelte";
 import ItemZone from "./ItemZone.svelte";
 import DeckZone from "@/features/simulator/board/DeckZone.svelte";
 import DiscardZone from "./DiscardZone.svelte";
-import { useLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
+import {
+	useLorcanaBoardPresenter,
+	useLorcanaSidebarPresenter,
+} from "@/features/simulator/context/game-context.svelte.js";
 import { createLoreBadgeAnchorId } from "@/features/simulator/animations/quest-animations.js";
+import {
+	ORDERED_MOVE_CATEGORIES,
+	getCategoryLabel,
+} from "@/features/simulator/model/move-presentation.js";
+import * as ContextMenu from "$lib/design-system/primitives/context-menu";
+import * as Dialog from "$lib/design-system/primitives/dialog";
+import { Button } from "$lib/design-system/primitives/button";
+import { m } from "$lib/i18n/messages.js";
 
 interface SeatLaneProps {
 	layoutMode?: SimulatorLayoutMode;
@@ -24,8 +36,13 @@ interface SeatLaneProps {
 	seatPosition: "top" | "bottom";
 	playHotkeyBindings?: Map<string, string>;
 	isPlayerEffectTarget?: boolean;
+	isDisconnected?: boolean;
+	isTimedOut?: boolean;
+	disconnectOverlay?: import("svelte").Snippet;
+	timeoutOverlay?: import("svelte").Snippet;
 	onDiscardClick?: () => void;
 	onInkwellClick?: () => void;
+	onProposeCancel?: () => void;
 }
 
 let {
@@ -39,11 +56,18 @@ let {
 	seatPosition,
 	playHotkeyBindings = new Map(),
 	isPlayerEffectTarget = false,
+	isDisconnected = false,
+	isTimedOut = false,
+	disconnectOverlay,
+	timeoutOverlay,
 	onDiscardClick,
 	onInkwellClick,
+	onProposeCancel,
 }: SeatLaneProps = $props();
 
 const board = useLorcanaBoardPresenter();
+const sidebar = useLorcanaSidebarPresenter();
+
 const ownerId = $derived(board.getOwnerIdForSide(playerSide));
 const boardSummary = $derived(board.getPlayerSummary(playerSide));
 const visualSettings = $derived(board.getPlayerVisualSettings(playerSide));
@@ -51,6 +75,10 @@ const hasItemsInPlay = $derived.by(() =>
 	board
 		.getZoneCards(playerSide, "play")
 		.some((card) => card.cardType === "item"),
+);
+const showSeparateItemZone = $derived(layoutMode !== "mobile" && hasItemsInPlay);
+const playZoneExcludedCardTypes = $derived.by(
+	(): Array<"item"> => (layoutMode === "mobile" ? [] : ["item"]),
 );
 const effectSourceCards = $derived.by(() => {
 	const sourceIds = boardSummary?.effectSourceCardIds ?? [];
@@ -74,190 +102,381 @@ const visibleEffectSourceCards = $derived(effectSourceCards.slice(0, 3));
 const hiddenEffectSourceCount = $derived(
 	Math.max(0, effectSourceCards.length - visibleEffectSourceCards.length),
 );
+
+// Context menu move availability (reflects current player's moves regardless of lane)
+const canPassTurn = $derived(
+	sidebar.moveCategorySummaries.some((s) => s.categoryId === "pass-turn"),
+);
+const canUndo = $derived(
+	sidebar.moveCategorySummaries.some((s) => s.categoryId === "undo"),
+);
+const canQuestAll = $derived(
+	sidebar.moveCategorySummaries.some((s) => s.categoryId === "quest-all"),
+);
+const canConcede = $derived(sidebar.canConcede);
+const availableCategoryIds = $derived(
+	new Set(sidebar.moveCategorySummaries.map((s) => s.categoryId)),
+);
+
+// Card-based moves require selecting a specific card — always disabled in context menu
+const CARD_BASED = new Set<ExecutableMovePresentationCategoryId>([
+	"ink-card",
+	"play-card",
+	"shift-card",
+	"sing-card",
+	"quest",
+	"challenge",
+	"activate-ability",
+	"move-to-location",
+]);
+
+type ConfirmableAction = "pass-turn" | "undo" | "concede";
+let pendingAction = $state<ConfirmableAction | null>(null);
+
+const confirmDialogConfig = $derived.by(() => {
+	switch (pendingAction) {
+		case "pass-turn":
+			return {
+				title: m["sim.sidebar.passTurnDialog.title"]({}),
+				description: m["sim.sidebar.passTurnDialog.description"]({}),
+				confirmLabel: m["sim.actions.label.passTurn"]({}),
+				destructive: false,
+			};
+		case "undo":
+			return {
+				title: m["sim.sidebar.undoDialog.title"]({}),
+				description: m["sim.sidebar.undoDialog.description"]({}),
+				confirmLabel: m["sim.actions.label.undo"]({}),
+				destructive: false,
+			};
+		case "concede":
+			return {
+				title: m["sim.sidebar.concedeDialog.title"]({}),
+				description: m["sim.sidebar.concedeDialog.description"]({}),
+				confirmLabel: m["sim.actions.label.concede"]({}),
+				destructive: true,
+			};
+		default:
+			return null;
+	}
+});
+
+const CONFIRMABLE_CATEGORIES = new Set<string>(["pass-turn", "undo", "concede"]);
+
+function executeDirectCategory(categoryId: ExecutableMovePresentationCategoryId): void {
+	if (CONFIRMABLE_CATEGORIES.has(categoryId)) {
+		pendingAction = categoryId as ConfirmableAction;
+		return;
+	}
+	const moves = sidebar.expandCategoryMoves(categoryId);
+	if (moves.length > 0) {
+		sidebar.handleAvailableMoveClick(moves[0]);
+	}
+}
+
+function confirmPendingAction(): void {
+	if (!pendingAction) return;
+	if (pendingAction === "concede") {
+		sidebar.handleMobileConcede();
+	} else {
+		const moves = sidebar.expandCategoryMoves(pendingAction);
+		if (moves.length > 0) {
+			sidebar.handleAvailableMoveClick(moves[0]);
+		}
+	}
+	pendingAction = null;
+}
 </script>
 
-<div
-  class="seat-lane"
-  class:seat-lane--top={seatPosition === "top"}
-  class:seat-lane--bottom={seatPosition === "bottom"}
-  class:seat-lane--turn={isTurnPlayer}
-  class:seat-lane--priority={hasPriority}
-  class:seat-lane--player-effect-target={isPlayerEffectTarget}
-  data-layout-mode={layoutMode}
->
-  <div
-    class="seat-corner-stack"
-    class:seat-corner-stack--top={seatPosition === "top"}
-    class:seat-corner-stack--bottom={seatPosition === "bottom"}
-  >
-    {#if seatPosition === "top" && (visibleEffectSourceCards.length > 0 || hasFallbackEffectLabel)}
+<ContextMenu.Root>
+  <ContextMenu.Trigger>
+    {#snippet child({ props })}
       <div
-        class="seat-effect-strip"
-        aria-label={playerEffectAriaLabel}
+        class="seat-lane"
+        class:seat-lane--top={seatPosition === "top"}
+        class:seat-lane--bottom={seatPosition === "bottom"}
+        class:seat-lane--turn={isTurnPlayer}
+        class:seat-lane--priority={hasPriority}
+        class:seat-lane--player-effect-target={isPlayerEffectTarget}
+        class:seat-lane--disconnected={isDisconnected}
+        class:seat-lane--timed-out={isTimedOut}
+        data-layout-mode={layoutMode}
+        {...props}
       >
-        {#each visibleEffectSourceCards as effectCard, index (effectCard.cardId)}
-          <div
-            class="seat-effect-card"
-            style={`--effect-card-offset:${index}`}
-            title={playerActiveEffects
-              .filter((effect) => effect.sourceCardId === effectCard.cardId)
-              .map((effect) => effect.description)
-              .join("; ") || effectCard.label}
-          >
-            <LorcanaCard
-              card={effectCard}
-              size="micro"
-              imageFormat="art_only"
-              isExerted={effectCard.readyState === "exerted"}
-              isMasked={effectCard.isMasked}
-            />
-          </div>
-        {/each}
-        {#if hiddenEffectSourceCount > 0}
-          <div
-            class="seat-effect-overflow"
-            title={`${hiddenEffectSourceCount} additional active player effect source${hiddenEffectSourceCount === 1 ? "" : "s"}`}
-          >
-            +{hiddenEffectSourceCount}
-          </div>
-        {/if}
-        {#if hasFallbackEffectLabel}
-          <div class="seat-effect-pill" title={playerActiveEffects.map((effect) => effect.description).join("; ")}>
-            <span>{fallbackEffectLabel}</span>
-            {#if hiddenFallbackEffectCount > 0}
-              <span class="seat-effect-pill__count">+{hiddenFallbackEffectCount}</span>
+        <div class="seat-lane__content" class:seat-lane__content--dimmed={isDisconnected || isTimedOut}>
+        <div
+          class="seat-corner-stack"
+          class:seat-corner-stack--top={seatPosition === "top"}
+          class:seat-corner-stack--bottom={seatPosition === "bottom"}
+        >
+          {#if seatPosition === "top" && (visibleEffectSourceCards.length > 0 || hasFallbackEffectLabel)}
+            <div
+              class="seat-effect-strip"
+              aria-label={playerEffectAriaLabel}
+            >
+              {#each visibleEffectSourceCards as effectCard, index (effectCard.cardId)}
+                <div
+                  class="seat-effect-card"
+                  style={`--effect-card-offset:${index}`}
+                  title={playerActiveEffects
+                    .filter((effect) => effect.sourceCardId === effectCard.cardId)
+                    .map((effect) => effect.description)
+                    .join("; ") || effectCard.label}
+                >
+                  <LorcanaCard
+                    card={effectCard}
+                    size="micro"
+                    imageFormat="art_only"
+                    isExerted={effectCard.readyState === "exerted"}
+                    isMasked={effectCard.isMasked}
+                  />
+                </div>
+              {/each}
+              {#if hiddenEffectSourceCount > 0}
+                <div
+                  class="seat-effect-overflow"
+                  title={`${hiddenEffectSourceCount} additional active player effect source${hiddenEffectSourceCount === 1 ? "" : "s"}`}
+                >
+                  +{hiddenEffectSourceCount}
+                </div>
+              {/if}
+              {#if hasFallbackEffectLabel}
+                <div class="seat-effect-pill" title={playerActiveEffects.map((effect) => effect.description).join("; ")}>
+                  <span>{fallbackEffectLabel}</span>
+                  {#if hiddenFallbackEffectCount > 0}
+                    <span class="seat-effect-pill__count">+{hiddenFallbackEffectCount}</span>
+                  {/if}
+                </div>
+              {/if}
+            </div>
+          {/if}
+
+          <div class="seat-badges">
+            {#if seatPosition === "top" || seatPosition === "bottom"}
+              <span
+                class="seat-chip seat-chip--lore"
+                data-board-anchor-id={createLoreBadgeAnchorId(playerSide)}
+                aria-label={`Lore: ${lore}`}
+              >Lore: {lore}</span>
+            {/if}
+            {#if isTurnPlayer}
+              <span class="seat-chip seat-chip--turn">Turn</span>
+            {/if}
+            {#if hasPriority && !isTurnPlayer}
+              <span class="seat-chip seat-chip--priority">Priority</span>
             {/if}
           </div>
-        {/if}
-      </div>
-    {/if}
 
-    <div class="seat-badges">
-      {#if seatPosition === "top" || seatPosition === "bottom"}
-        <span
-          class="seat-chip seat-chip--lore"
-          data-board-anchor-id={createLoreBadgeAnchorId(playerSide)}
-          aria-label={`Lore: ${lore}`}
-        >Lore: {lore}</span>
-      {/if}
-      {#if isTurnPlayer}
-        <span class="seat-chip seat-chip--turn">Turn</span>
-      {/if}
-      {#if hasPriority && !isTurnPlayer}
-        <span class="seat-chip seat-chip--priority">Priority</span>
-      {/if}
-    </div>
+          {#if seatPosition === "bottom" && (visibleEffectSourceCards.length > 0 || hasFallbackEffectLabel)}
+            <div
+              class="seat-effect-strip"
+              aria-label={playerEffectAriaLabel}
+            >
+              {#each visibleEffectSourceCards as effectCard, index (effectCard.cardId)}
+                <div
+                  class="seat-effect-card"
+                  style={`--effect-card-offset:${index}`}
+                  title={playerActiveEffects
+                    .filter((effect) => effect.sourceCardId === effectCard.cardId)
+                    .map((effect) => effect.description)
+                    .join("; ") || effectCard.label}
+                >
+                  <LorcanaCard
+                    card={effectCard}
+                    size="micro"
+                    imageFormat="art_only"
+                    isExerted={effectCard.readyState === "exerted"}
+                    isMasked={effectCard.isMasked}
+                  />
+                </div>
+              {/each}
+              {#if hiddenEffectSourceCount > 0}
+                <div
+                  class="seat-effect-overflow"
+                  title={`${hiddenEffectSourceCount} additional active player effect source${hiddenEffectSourceCount === 1 ? "" : "s"}`}
+                >
+                  +{hiddenEffectSourceCount}
+                </div>
+              {/if}
+              {#if hasFallbackEffectLabel}
+                <div class="seat-effect-pill" title={playerActiveEffects.map((effect) => effect.description).join("; ")}>
+                  <span>{fallbackEffectLabel}</span>
+                  {#if hiddenFallbackEffectCount > 0}
+                    <span class="seat-effect-pill__count">+{hiddenFallbackEffectCount}</span>
+                  {/if}
+                </div>
+              {/if}
+            </div>
+          {/if}
+        </div>
 
-    {#if seatPosition === "bottom" && (visibleEffectSourceCards.length > 0 || hasFallbackEffectLabel)}
-      <div
-        class="seat-effect-strip"
-        aria-label={playerEffectAriaLabel}
-      >
-        {#each visibleEffectSourceCards as effectCard, index (effectCard.cardId)}
-          <div
-            class="seat-effect-card"
-            style={`--effect-card-offset:${index}`}
-            title={playerActiveEffects
-              .filter((effect) => effect.sourceCardId === effectCard.cardId)
-              .map((effect) => effect.description)
-              .join("; ") || effectCard.label}
-          >
-            <LorcanaCard
-              card={effectCard}
-              size="micro"
-              imageFormat="art_only"
-              isExerted={effectCard.readyState === "exerted"}
-              isMasked={effectCard.isMasked}
-            />
-          </div>
-        {/each}
-        {#if hiddenEffectSourceCount > 0}
-          <div
-            class="seat-effect-overflow"
-            title={`${hiddenEffectSourceCount} additional active player effect source${hiddenEffectSourceCount === 1 ? "" : "s"}`}
-          >
-            +{hiddenEffectSourceCount}
-          </div>
-        {/if}
-        {#if hasFallbackEffectLabel}
-          <div class="seat-effect-pill" title={playerActiveEffects.map((effect) => effect.description).join("; ")}>
-            <span>{fallbackEffectLabel}</span>
-            {#if hiddenFallbackEffectCount > 0}
-              <span class="seat-effect-pill__count">+{hiddenFallbackEffectCount}</span>
-            {/if}
-          </div>
-        {/if}
-      </div>
-    {/if}
-  </div>
+        <div class="seat-playmat"
+          data-owner-id={ownerId}
+          data-playmat-id={visualSettings.playmat.id}
+          data-playmat-src={visualSettings.playmat.src ?? ""}
+          style:background-image={visualSettings.playmat.src ? `url(${visualSettings.playmat.src})` : undefined}
+        ></div>
 
-  <div
-    class="seat-playmat"
-    data-owner-id={ownerId}
-    data-playmat-id={visualSettings.playmat.id}
-    data-playmat-src={visualSettings.playmat.src ?? ""}
-    style:background-image={visualSettings.playmat.src ? `url(${visualSettings.playmat.src})` : undefined}
-  ></div>
+        <div class="seat-lane__section seat-lane__section--bar">
+          <div class="bar-zones">
+            <div class="bar-zones__center-viewport" data-board-scroll-sync>
+              <div class="bar-zones__center-content" class:bar-zones__center-content--with-items={showSeparateItemZone}>
+                <div class="bar-zone-shell bar-zone-shell--inkwell">
+                  <InkwellZone
+                    {isOpponent}
+                    {playerSide}
+                    {seat}
+                    onCounterClick={onInkwellClick}
+                    hasItemsInPlay={showSeparateItemZone}
+                  />
+                </div>
 
-  <div class="seat-lane__section seat-lane__section--bar">
-    <div class="bar-zones">
-      <div class="bar-zone-shell bar-zone-shell--side bar-zone-shell--discard">
-        <DiscardZone
-          {isOpponent}
-          {playerSide}
-          {seat}
-          onClick={onDiscardClick}
-        />
-      </div>
+                {#if showSeparateItemZone}
+                  <div class="bar-zone-shell bar-zone-shell--items">
+                    <ItemZone
+                      {layoutMode}
+                      {isOpponent}
+                      {playerSide}
+                      {seat}
+                    />
+                  </div>
+                {/if}
+              </div>
+            </div>
 
-      <div class="bar-zones__center-viewport" data-board-scroll-sync>
-        <div class="bar-zones__center-content" class:bar-zones__center-content--with-items={hasItemsInPlay}>
-          <div class="bar-zone-shell bar-zone-shell--inkwell">
-            <InkwellZone
-              {isOpponent}
-              {playerSide}
-              {seat}
-              onCounterClick={onInkwellClick}
-              hasItemsInPlay={hasItemsInPlay}
-            />
-          </div>
-
-          {#if hasItemsInPlay}
-            <div class="bar-zone-shell bar-zone-shell--items">
-              <ItemZone
-                {layoutMode}
+            <div class="bar-zone-shell bar-zone-shell--side bar-zone-shell--deck">
+              <DeckZone
                 {isOpponent}
                 {playerSide}
                 {seat}
               />
             </div>
-          {/if}
+
+            <div class="bar-zone-shell bar-zone-shell--side bar-zone-shell--discard">
+              <DiscardZone
+                {isOpponent}
+                {playerSide}
+                {seat}
+                onClick={onDiscardClick}
+              />
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="bar-zone-shell bar-zone-shell--side bar-zone-shell--deck">
-        <DeckZone
-          {isOpponent}
-          {playerSide}
-          {seat}
-        />
-      </div>
-    </div>
-  </div>
+        <div class="seat-lane__section seat-lane__section--play">
+          <PlayZone
+            {layoutMode}
+            zoneId="play"
+            {playerSide}
+            {seat}
+            {isOpponent}
+            label=""
+            excludeCardTypes={playZoneExcludedCardTypes}
+            hotkeyBindings={playHotkeyBindings}
+          />
+        </div>
+        </div><!-- /.seat-lane__content -->
 
-  <div class="seat-lane__section seat-lane__section--play">
-    <PlayZone
-      {layoutMode}
-      zoneId="play"
-      {playerSide}
-      {seat}
-      {isOpponent}
-      label=""
-      excludeCardTypes={["item"]}
-      hotkeyBindings={playHotkeyBindings}
-    />
-  </div>
-</div>
+        {#if isTimedOut && timeoutOverlay}
+          {@render timeoutOverlay()}
+        {:else if isDisconnected && disconnectOverlay}
+          {@render disconnectOverlay()}
+        {/if}
+      </div>
+    {/snippet}
+  </ContextMenu.Trigger>
+
+  <ContextMenu.Content>
+    <ContextMenu.Item
+      disabled={!canPassTurn}
+      onSelect={() => { pendingAction = "pass-turn"; }}
+    >
+      {m["sim.actions.label.passTurn"]({})}
+      <ContextMenu.Shortcut>Space</ContextMenu.Shortcut>
+    </ContextMenu.Item>
+    <ContextMenu.Item
+      disabled={!canUndo}
+      onSelect={() => { pendingAction = "undo"; }}
+    >
+      {m["sim.actions.label.undo"]({})}
+    </ContextMenu.Item>
+    <ContextMenu.Item
+      disabled={!canQuestAll}
+      onSelect={() => executeDirectCategory("quest-all")}
+    >
+      {m["sim.actions.label.questAll"]({})}
+    </ContextMenu.Item>
+
+    <ContextMenu.Separator />
+
+    <ContextMenu.Item
+      disabled={!canConcede}
+      variant="destructive"
+      onSelect={() => { pendingAction = "concede"; }}
+    >
+      {m["sim.actions.label.concede"]({})}
+    </ContextMenu.Item>
+    <ContextMenu.Item
+      disabled={!onProposeCancel}
+      onSelect={() => onProposeCancel?.()}
+    >
+      {m["sim.actions.label.proposeCancel"]({})}
+    </ContextMenu.Item>
+
+    <ContextMenu.Separator />
+
+    <ContextMenu.Sub>
+      <ContextMenu.SubTrigger>{m["sim.contextMenu.allMoves"]({})}</ContextMenu.SubTrigger>
+      <ContextMenu.SubContent>
+        {#each ORDERED_MOVE_CATEGORIES as categoryId}
+          {@const isCardBased = CARD_BASED.has(categoryId)}
+          {@const disabled = isCardBased || !availableCategoryIds.has(categoryId)}
+          <ContextMenu.Item
+            {disabled}
+            onSelect={() => { if (!disabled && !isCardBased) executeDirectCategory(categoryId); }}
+          >
+            {getCategoryLabel(categoryId)}
+          </ContextMenu.Item>
+        {/each}
+      </ContextMenu.SubContent>
+    </ContextMenu.Sub>
+  </ContextMenu.Content>
+</ContextMenu.Root>
+
+<!-- Confirmation dialog — outside ContextMenu.Root so bits-ui dismiss cycle doesn't interfere -->
+<Dialog.Root open={pendingAction !== null} onOpenChange={(open) => { if (!open) pendingAction = null; }}>
+  <Dialog.Portal>
+    <Dialog.Overlay />
+    <Dialog.Content class="seat-lane-concede-dialog" showCloseButton={false}>
+      {#if confirmDialogConfig}
+        <Dialog.Header class="seat-lane-concede-dialog__header">
+          <Dialog.Title class="seat-lane-concede-dialog__title">
+            {confirmDialogConfig.title}
+          </Dialog.Title>
+          <Dialog.Description class="seat-lane-concede-dialog__description">
+            {confirmDialogConfig.description}
+          </Dialog.Description>
+        </Dialog.Header>
+        <Dialog.Footer class="seat-lane-concede-dialog__footer">
+          <Button
+            variant="outline"
+            class="seat-lane-concede-dialog__button"
+            onclick={() => { pendingAction = null; }}
+          >
+            {m["sim.actions.cancel"]({})}
+          </Button>
+          <Button
+            variant={confirmDialogConfig.destructive ? "destructive" : "default"}
+            class="seat-lane-concede-dialog__button"
+            onclick={confirmPendingAction}
+          >
+            {confirmDialogConfig.confirmLabel}
+          </Button>
+        </Dialog.Footer>
+      {/if}
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
 
 <style>
   .seat-lane {
@@ -278,6 +497,23 @@ const hiddenEffectSourceCount = $derived(
       background 160ms ease;
     overflow: visible;
     isolation: isolate;
+  }
+
+  .seat-lane__content {
+    display: contents;
+    transition: filter 0.5s ease;
+  }
+
+  .seat-lane__content--dimmed {
+    display: contents;
+    filter: grayscale(0.7) brightness(0.55);
+  }
+
+  /* When disconnected, apply filter to direct children via the content wrapper.
+     Since display:contents passes through, we target the actual children. */
+  .seat-lane--disconnected > .seat-lane__content--dimmed > * {
+    filter: grayscale(0.7) brightness(0.55);
+    transition: filter 0.5s ease;
   }
 
   .seat-lane__section {
@@ -313,6 +549,7 @@ const hiddenEffectSourceCount = $derived(
   .seat-corner-stack--top {
     left: 0.42rem;
     bottom: 0.42rem;
+    flex-direction: column;
   }
 
   .seat-corner-stack--bottom {
@@ -368,16 +605,43 @@ const hiddenEffectSourceCount = $derived(
   }
 
   .seat-lane--priority {
-    border-color: rgba(118, 199, 255, 0.72);
+    border-color: rgba(118, 199, 255, 0.85);
+    background:
+      linear-gradient(180deg, rgba(20, 55, 100, 0.22) 0%, rgba(8, 25, 55, 0.08) 100%),
+      linear-gradient(180deg, rgba(8, 17, 30, 0.14) 0%, rgba(8, 17, 30, 0.04) 100%);
     box-shadow:
-      0 0 0 1px rgba(118, 199, 255, 0.28),
-      0 0 28px rgba(45, 146, 221, 0.22),
+      0 0 0 1px rgba(118, 199, 255, 0.32),
+      0 0 32px rgba(45, 146, 221, 0.28),
       inset 0 0 0 1px rgba(190, 230, 255, 0.08),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    animation: priority-glow-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes priority-glow-pulse {
+    0%, 100% {
+      box-shadow:
+        0 0 0 1px rgba(118, 199, 255, 0.32),
+        0 0 32px rgba(45, 146, 221, 0.28),
+        inset 0 0 0 1px rgba(190, 230, 255, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    50% {
+      box-shadow:
+        0 0 0 2px rgba(118, 199, 255, 0.48),
+        0 0 52px rgba(45, 146, 221, 0.42),
+        inset 0 0 0 1px rgba(190, 230, 255, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .seat-lane--priority {
+      animation: none;
+    }
   }
 
   .seat-lane--player-effect-target {
-    animation: seat-player-effect-pulse 600ms ease-out both;
+    animation: seat-player-effect-pulse 300ms ease-out both;
   }
 
   @keyframes seat-player-effect-pulse {
@@ -430,6 +694,8 @@ const hiddenEffectSourceCount = $derived(
     background: linear-gradient(180deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.96) 100%);
     color: #cbd5e1;
     text-shadow: none;
+    font-size: 1rem;
+    padding: 0.22rem 0.72rem;
   }
 
   .seat-chip--turn {
@@ -446,6 +712,7 @@ const hiddenEffectSourceCount = $derived(
 
   .seat-effect-strip {
     display: flex;
+    margin-bottom: 1.5rem;
     align-items: center;
     min-height: 1.35rem;
   }
@@ -516,7 +783,7 @@ const hiddenEffectSourceCount = $derived(
     --bar-shell-padding: 0.26rem;
     --bar-shell-radius: 12px;
     display: grid;
-    grid-template-columns: var(--side-zone-width) minmax(0, 1fr) var(--side-zone-width);
+    grid-template-columns: minmax(0, 1fr) var(--side-zone-width) var(--side-zone-width);
     align-items: stretch;
     width: 100%;
     height: 90px;
@@ -599,14 +866,6 @@ const hiddenEffectSourceCount = $derived(
     }
   }
 
-  .bar-zones :global(.discard-zone) {
-    grid-column: 1;
-  }
-
-  .bar-zones :global([data-zone-id="deck"]) {
-    grid-column: 3;
-  }
-
   .bar-zones :global(.discard-zone),
   .bar-zones :global(.deck-zone) {
     min-width: var(--side-zone-width);
@@ -671,7 +930,7 @@ const hiddenEffectSourceCount = $derived(
 
   .seat-lane[data-layout-mode="mobile"] {
     gap: 0.25rem;
-    padding: 0.35rem 0.35rem 0.3rem;
+    padding: 0.22rem 0.25rem 0.2rem;
     border-radius: 14px;
   }
 
@@ -681,17 +940,17 @@ const hiddenEffectSourceCount = $derived(
 
   .seat-lane[data-layout-mode="mobile"] .bar-zones {
     --bar-row-card-height: 36px;
-    height: 58px;
-    min-height: 58px;
-    max-height: 58px;
-    padding: 0.2rem;
-    gap: 0.2rem;
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
+    padding: 0;
+    gap: 0;
   }
 
   .seat-lane[data-layout-mode="mobile"] .seat-chip {
-    min-height: 1.3rem;
-    padding-inline: 0.46rem;
-    font-size: 0.56rem;
+    min-height: 1.15rem;
+    padding-inline: 0.38rem;
+    font-size: 0.52rem;
     letter-spacing: 0.08em;
   }
 
@@ -717,5 +976,32 @@ const hiddenEffectSourceCount = $derived(
       height: calc(var(--zone-card-height) + 1.25rem);
       padding: clamp(0.3rem, 0.8cqh, 0.45rem);
     }
+  }
+
+  :global(.seat-lane-concede-dialog) {
+    max-width: 24rem;
+  }
+
+  :global(.seat-lane-concede-dialog__header) {
+    gap: 0.45rem;
+  }
+
+  :global(.seat-lane-concede-dialog__title) {
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  :global(.seat-lane-concede-dialog__description) {
+    color: rgba(71, 85, 105, 1);
+  }
+
+  :global(.seat-lane-concede-dialog__footer) {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+  }
+
+  :global(.seat-lane-concede-dialog__button) {
+    min-width: 7rem;
   }
 </style>

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { princeNaveenUkulelePlayer } from "..";
+import { princeNaveenUkulelePlayer } from "./003-prince-naveen-ukulele-player";
 
 export const princeNaveenUkulelePlayerEnchanted: CharacterCard = {
   ...princeNaveenUkulelePlayer,

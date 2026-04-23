@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { cinderellaMelodyWeaver } from "..";
+import { cinderellaMelodyWeaver } from "./004-cinderella-melody-weaver";
 
 export const cinderellaMelodyWeaverEnchanted: CharacterCard = {
   ...cinderellaMelodyWeaver,

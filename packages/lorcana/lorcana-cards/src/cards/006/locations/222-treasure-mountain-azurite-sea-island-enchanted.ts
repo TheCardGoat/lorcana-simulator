@@ -1,5 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { treasureMountainAzuriteSeaIsland } from "..";
+import { treasureMountainAzuriteSeaIsland } from "./203-treasure-mountain-azurite-sea-island";
 
 export const treasureMountainAzuriteSeaIslandEnchanted: LocationCard = {
   ...treasureMountainAzuriteSeaIsland,

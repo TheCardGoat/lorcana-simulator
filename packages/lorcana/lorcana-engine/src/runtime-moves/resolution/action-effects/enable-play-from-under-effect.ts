@@ -1,6 +1,7 @@
 import type { EnablePlayFromUnderEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
 import { resolveTemporaryEffectExpiryTurn } from "../../effects/temporary-effects";
+import { addPlayFromUnderPermission } from "../../effects/play-from-under-permissions";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 
 export function isEnablePlayFromUnderEffect(effect: unknown): effect is EnablePlayFromUnderEffect {
@@ -24,10 +25,7 @@ export function resolveEnablePlayFromUnderEffect(
     effect.duration ?? "this-turn",
   );
 
-  const pendingPlayFromUnder =
-    ctx.G.turnMetadata.pendingPlayFromUnder ?? (ctx.G.turnMetadata.pendingPlayFromUnder = []);
-
-  pendingPlayFromUnder.push({
+  addPlayFromUnderPermission(ctx.G.playFromUnderPermissions, cardPlayed.playerId, {
     sourceItemId: cardPlayed.cardId,
     expiresAtTurn,
     cardType: effect.cardType,

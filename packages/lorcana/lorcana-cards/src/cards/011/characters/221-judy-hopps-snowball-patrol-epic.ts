@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { judyHoppsSnowballPatrol } from "..";
+import { judyHoppsSnowballPatrol } from "./194-judy-hopps-snowball-patrol";
 
 export const judyHoppsSnowballPatrolEpic: CharacterCard = {
   ...judyHoppsSnowballPatrol,

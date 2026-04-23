@@ -24,10 +24,9 @@ export const restoringTheHeart: ActionCard = {
       effect: {
         steps: [
           {
-            amount: 3,
+            amount: { type: "up-to", value: 3 },
             target: "CHOSEN_CHARACTER_OR_LOCATION",
             type: "remove-damage",
-            upTo: true,
           },
           {
             amount: 1,

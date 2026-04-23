@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { hadesLookingForADeal } from "..";
+import { hadesLookingForADeal } from "./056-hades-looking-for-a-deal";
 
 export const hadesLookingForADealIconic: CharacterCard = {
   ...hadesLookingForADeal,

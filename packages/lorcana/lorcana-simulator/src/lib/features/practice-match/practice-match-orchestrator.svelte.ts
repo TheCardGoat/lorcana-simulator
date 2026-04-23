@@ -5,6 +5,7 @@ import {
   type CardsMaps,
   type EngineMoveHistoryEntry,
   type LorcanaServer,
+  type LorcanaServerAuthoritativeSnapshot,
 } from "@tcg/lorcana-engine";
 import { HumanVsAiOrchestrator } from "../simulator-devtools/vs-ai/human-vs-ai-orchestrator.svelte.js";
 import {
@@ -13,7 +14,7 @@ import {
 } from "../simulator-devtools/ai-match/playback-controller.js";
 import type { GatewayClientStore } from "../gateway/gateway-client.svelte.js";
 import type { HumanVsAiMatchConfig } from "../simulator-devtools/vs-ai/types.js";
-import type { PracticeMatchRecentHistory, PracticeMatchSnapshot } from "./types.js";
+import type { PracticeMatchRecentHistory } from "./types.js";
 
 interface PracticeMatchOrchestratorOptions {
   gameId: string;
@@ -21,8 +22,12 @@ interface PracticeMatchOrchestratorOptions {
   botPlayerId: string;
   deckConfig: HumanVsAiMatchConfig;
   gateway: GatewayClientStore;
+  /** Which seat the human player occupies. Defaults to "playerOne" (practice games). */
+  humanSeat?: "playerOne" | "playerTwo";
+  /** Whether state is managed by the server or client. Defaults to "client". */
+  authority?: "client" | "server";
   /** If provided, restore from this snapshot instead of starting fresh. */
-  restoredSnapshot?: PracticeMatchSnapshot;
+  restoredSnapshot?: LorcanaServerAuthoritativeSnapshot;
   restoredVersion?: number;
   restoredRecentHistory?: PracticeMatchRecentHistory;
 }
@@ -33,6 +38,8 @@ export class PracticeMatchOrchestrator {
   readonly #gameId: string;
   readonly #playerId: string;
   readonly #botPlayerId: string;
+  readonly #humanSeat: "playerOne" | "playerTwo";
+  readonly #authority: "client" | "server";
   readonly #cardsMaps: CardsMaps;
   #version: number;
   #pushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -46,18 +53,25 @@ export class PracticeMatchOrchestrator {
     this.#gameId = options.gameId;
     this.#botPlayerId = options.botPlayerId;
     this.#playerId = options.playerId;
+    this.#humanSeat = options.humanSeat ?? "playerOne";
+    this.#authority = options.authority ?? "client";
 
     // Create orchestrator (builds the engine from deck config)
-    this.orchestrator = new HumanVsAiOrchestrator(options.deckConfig);
+    this.orchestrator = new HumanVsAiOrchestrator(options.deckConfig, {
+      initialPerspective: options.humanSeat,
+    });
 
     if (options.restoredSnapshot) {
-      // Restore from snapshot
-      this.#cardsMaps = options.restoredSnapshot.engineSnapshot.cardsMaps;
+      // Restore from snapshot (LorcanaServerAuthoritativeSnapshot)
+      this.#cardsMaps = options.restoredSnapshot.cardsMaps;
       this.#version = options.restoredVersion ?? 0;
-      this.#restoreState(options.restoredSnapshot);
+      this.orchestrator.restoreAuthoritativeSnapshot(options.restoredSnapshot);
       this.#hydrateRecentHistory(options.restoredRecentHistory);
       this.#persistedMoveCount = this.#getAcceptedMoveHistory().length;
       this.#persistedLogCount = this.#getMoveLogHistory().length;
+      // Push on reconnect so the server snapshot is refreshed with cardsMaps.
+      // This covers games where an older client session never stored cardsMaps.
+      this.#schedulePush("reconnect");
     } else {
       // Fresh match — extract cardsMaps from the orchestrator's engine
       this.#cardsMaps = this.orchestrator.cardsMaps;
@@ -90,8 +104,14 @@ export class PracticeMatchOrchestrator {
     this.#hydrateRecentHistory(history);
   }
 
-  #restoreState(snapshot: PracticeMatchSnapshot): void {
-    this.orchestrator.restoreAuthoritativeSnapshot(snapshot.engineSnapshot);
+  /**
+   * Immediately pushes the current state to the server, bypassing the debounce
+   * timer. Called when the server sends a `request_state_sync` message (e.g. a
+   * spectator joined but the stored snapshot lacks `cardsMaps`).
+   */
+  forcePush(): void {
+    this.#clearPushTimer();
+    this.#pushState("sync");
   }
 
   #schedulePush(moveType: string): void {
@@ -110,6 +130,8 @@ export class PracticeMatchOrchestrator {
   }
 
   #pushState(moveType: string): void {
+    if (this.#authority === "server") return;
+
     const server = this.orchestrator.server as unknown as LorcanaServer;
     const engineSnapshot = getLorcanaServerAuthoritativeSnapshot(server, this.#cardsMaps);
     const nextMoveEntries = this.#getAcceptedMoveHistory().slice(this.#persistedMoveCount);
@@ -134,9 +156,6 @@ export class PracticeMatchOrchestrator {
           stateVersion: latestStateVersion,
         }),
       );
-    const snapshot: PracticeMatchSnapshot = {
-      engineSnapshot,
-    };
     const actorId = acceptedMoveRecords.at(-1)?.actorId ?? this.#playerId;
     this.#version = latestStateVersion;
     this.#persistedMoveCount += nextMoveEntries.length;
@@ -148,10 +167,13 @@ export class PracticeMatchOrchestrator {
       );
     }
 
+    // Send raw engine state + cardsMaps as separate fields, matching the
+    // flat EngineSnapshot format used by server-authority matches.
     this.#gateway.send({
       type: "push_state",
       gameId: this.#gameId,
-      state: snapshot,
+      state: engineSnapshot.state,
+      cardsMaps: engineSnapshot.cardsMaps,
       version: this.#version,
       moveType,
       actorId,
@@ -173,11 +195,14 @@ export class PracticeMatchOrchestrator {
   }
 
   #resolveActorId(playerId?: string): string {
-    if (playerId === "player_one") {
+    const humanKey = this.#humanSeat === "playerOne" ? "player_one" : "player_two";
+    const opponentKey = this.#humanSeat === "playerOne" ? "player_two" : "player_one";
+
+    if (playerId === humanKey) {
       return this.#playerId;
     }
 
-    if (playerId === "player_two") {
+    if (playerId === opponentKey) {
       return this.#botPlayerId;
     }
 
@@ -186,11 +211,11 @@ export class PracticeMatchOrchestrator {
 
   #resolveActorSide(actorId: string) {
     if (actorId === this.#playerId) {
-      return "playerOne" as const;
+      return this.#humanSeat;
     }
 
     if (actorId === this.#botPlayerId) {
-      return "playerTwo" as const;
+      return this.#humanSeat === "playerOne" ? ("playerTwo" as const) : ("playerOne" as const);
     }
 
     return undefined;

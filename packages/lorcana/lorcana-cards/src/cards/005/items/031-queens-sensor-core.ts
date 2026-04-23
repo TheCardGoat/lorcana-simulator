@@ -39,49 +39,49 @@ export const queensSensorCore: ItemCard = {
         event: "start-turn",
         on: "YOU",
         timing: "at",
-      },
-      condition: {
-        type: "or",
-        conditions: [
-          {
-            type: "target-query",
-            query: {
-              selector: "all",
-              owner: "you",
-              zones: ["play"],
-              cardType: "character",
-              filters: [
-                {
-                  type: "has-classification",
-                  classification: "Princess",
-                },
-              ],
+        condition: {
+          type: "or",
+          conditions: [
+            {
+              type: "target-query",
+              query: {
+                selector: "all",
+                owner: "you",
+                zones: ["play"],
+                cardType: "character",
+                filters: [
+                  {
+                    type: "has-classification",
+                    classification: "Princess",
+                  },
+                ],
+              },
+              comparison: {
+                operator: "gte",
+                value: 1,
+              },
             },
-            comparison: {
-              operator: "gte",
-              value: 1,
+            {
+              type: "target-query",
+              query: {
+                selector: "all",
+                owner: "you",
+                zones: ["play"],
+                cardType: "character",
+                filters: [
+                  {
+                    type: "has-classification",
+                    classification: "Queen",
+                  },
+                ],
+              },
+              comparison: {
+                operator: "gte",
+                value: 1,
+              },
             },
-          },
-          {
-            type: "target-query",
-            query: {
-              selector: "all",
-              owner: "you",
-              zones: ["play"],
-              cardType: "character",
-              filters: [
-                {
-                  type: "has-classification",
-                  classification: "Queen",
-                },
-              ],
-            },
-            comparison: {
-              operator: "gte",
-              value: 1,
-            },
-          },
-        ],
+          ],
+        },
       },
       effect: {
         amount: 1,

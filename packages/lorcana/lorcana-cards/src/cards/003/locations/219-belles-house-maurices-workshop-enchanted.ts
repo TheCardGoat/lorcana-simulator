@@ -1,5 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { bellesHouseMauricesWorkshop } from "..";
+import { bellesHouseMauricesWorkshop } from "./168-belles-house-maurices-workshop";
 
 export const bellesHouseMauricesWorkshopEnchanted: LocationCard = {
   ...bellesHouseMauricesWorkshop,

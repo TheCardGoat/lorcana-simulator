@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { tiggerInTheCrowsNest } from "..";
+import { tiggerInTheCrowsNest } from "./126-tigger-in-the-crows-nest";
 
 export const tiggerInTheCrowsNestEnchanted: CharacterCard = {
   ...tiggerInTheCrowsNest,

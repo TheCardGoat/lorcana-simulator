@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { mulanEliteArcher } from "./114-mulan-elite-archer";
 import { mulanInjuredSoldier } from "./116-mulan-injured-soldier";
+import { nalaUndauntedLioness } from "../../009";
 
 const defender = createMockCharacter({
   id: "mea-defender",
@@ -41,6 +42,25 @@ const attacker = createMockCharacter({
   strength: 3,
   willpower: 10,
   lore: 1,
+});
+
+const defenderWithResist = createMockCharacter({
+  id: "mea-defender-resist",
+  name: "Defender",
+  version: "With Resist",
+  cost: 3,
+  strength: 2,
+  willpower: 10,
+  lore: 1,
+  abilities: [
+    {
+      id: "mea-defender-resist-kw",
+      type: "keyword",
+      keyword: "Resist",
+      value: 1,
+      text: "Resist +1",
+    },
+  ],
 });
 
 describe("Mulan - Elite Archer", () => {
@@ -133,6 +153,61 @@ describe("Mulan - Elite Archer", () => {
       // Bystanders take the same amount of damage
       expect(testEngine.asPlayerOne().getDamage(bystander1)).toBe(mulanEliteArcher.strength);
       expect(testEngine.asPlayerOne().getDamage(bystander2)).toBe(mulanEliteArcher.strength);
+    });
+
+    it("applies Resist to Triple Shot splash so fully reduced damage does not banish (Nala Undaunted Lioness)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: mulanEliteArcher, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [{ card: defenderWithResist, exerted: true }, { card: nalaUndauntedLioness }],
+          deck: 1,
+        },
+      );
+
+      // Challenge damage to defender: 2 strength - 1 Resist = 1 dealt; trigger-amount for Triple Shot is 1
+      expect(
+        testEngine.asPlayerOne().challenge(mulanEliteArcher, defenderWithResist),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(mulanEliteArcher, {
+          targets: [nalaUndauntedLioness],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getDamage(nalaUndauntedLioness)).toBe(0);
+      expect(testEngine.asPlayerTwo().getCardZone(nalaUndauntedLioness)).toBe("play");
+    });
+
+    // Regression: player bug report (bugrepoJ8Xp4ah8RGuk5njLcUQM) — "TRIPLE SHOT can
+    // only select (1) target". Confirm the engine accepts 1 target under count.upTo: 2.
+    it("accepts exactly 1 target under count.upTo: 2 without requiring 2", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: mulanEliteArcher, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [{ card: defender, exerted: true }, { card: bystander1 }, { card: bystander2 }],
+          deck: 1,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(mulanEliteArcher, defender),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(mulanEliteArcher, {
+          targets: [bystander1],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getDamage(bystander1)).toBe(mulanEliteArcher.strength);
+      expect(testEngine.asPlayerOne().getDamage(bystander2)).toBe(0);
     });
 
     it("does NOT trigger during opponent's turn", () => {

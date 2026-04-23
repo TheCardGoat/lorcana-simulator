@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mulanConsiderateDiplomat } from "..";
+import { mulanConsiderateDiplomat } from "./142-mulan-considerate-diplomat";
 
 export const mulanConsiderateDiplomatEnchanted: CharacterCard = {
   ...mulanConsiderateDiplomat,

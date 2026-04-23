@@ -1,5 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
-import { halfHexwellCrown } from "..";
+import { halfHexwellCrown } from "./065-half-hexwell-crown";
 
 export const halfHexwellCrownEpic: ItemCard = {
   ...halfHexwellCrown,

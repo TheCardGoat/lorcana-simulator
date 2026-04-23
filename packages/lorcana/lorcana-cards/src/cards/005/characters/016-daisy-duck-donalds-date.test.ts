@@ -43,12 +43,10 @@ describe("Daisy Duck - Donald's Date", () => {
       },
     );
 
+    // Single mandatory opponent-chooser trigger auto-accepts from bag
     expect(testEngine.asPlayerOne().quest(daisyDuckDonaldsDate)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
-    expect(
-      testEngine.asPlayerOne().resolvePendingByCard(daisyDuckDonaldsDate),
-    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerTwo().resolveNextPending({
         destinations: [{ zone: "hand", cards: [topCharacter] }],
@@ -76,12 +74,10 @@ describe("Daisy Duck - Donald's Date", () => {
       },
     );
 
+    // Single mandatory opponent-chooser trigger auto-accepts from bag
     expect(testEngine.asPlayerOne().quest(daisyDuckDonaldsDate)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
-    expect(
-      testEngine.asPlayerOne().resolvePendingByCard(daisyDuckDonaldsDate),
-    ).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerTwo().resolveNextPending({ destinations: [] }),
     ).toBeSuccessfulCommand();
@@ -115,10 +111,8 @@ describe("Daisy Duck - Donald's Date", () => {
     );
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    // Single mandatory opponent-chooser trigger auto-accepts from bag
     expect(testEngine.asPlayerTwo().quest(daisyDuckDonaldsDate)).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerTwo().resolvePendingByCard(daisyDuckDonaldsDate),
-    ).toBeSuccessfulCommand();
 
     // The pending effect should be assigned to Player One (the opponent), not Player Two
     const pending = testEngine.getAuthoritativeState().G.pendingEffects ?? [];

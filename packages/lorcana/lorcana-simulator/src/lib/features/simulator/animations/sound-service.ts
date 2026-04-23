@@ -23,7 +23,9 @@ export type SoundEffectId =
   | "sing"
   | "resolve-effect"
   | "victory"
-  | "defeat";
+  | "defeat"
+  | "match-found"
+  | "clock-tick";
 
 const howlMap = new Map<SoundEffectId, Howl>();
 const blobUrls: string[] = [];
@@ -104,6 +106,8 @@ const recipes: Record<SoundEffectId, SynthRecipe> = {
   "resolve-effect": { duration: 0.2, render: synthResolveEffect },
   victory: { duration: 1.6, render: synthVictory },
   defeat: { duration: 1.4, render: synthDefeat },
+  "match-found": { duration: 1.2, render: synthMatchFound },
+  "clock-tick": { duration: 0.08, render: synthClockTick },
 };
 
 async function prerenderSound(
@@ -613,4 +617,64 @@ function synthDefeat(ctx: BaseAudioContext, dest: AudioNode, now: number): void 
     osc.start(t);
     osc.stop(t + noteDur + 0.35);
   }
+}
+
+function synthMatchFound(ctx: BaseAudioContext, dest: AudioNode, now: number): void {
+  // Bright ascending fanfare: G4 → B4 → D5 → G5 then sustained chord
+  const notes = [392.0, 493.88, 587.33, 783.99];
+  const noteDur = 0.14;
+  for (let i = 0; i < notes.length; i++) {
+    const t = now + i * noteDur;
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.value = notes[i];
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.001, t);
+    env.gain.linearRampToValueAtTime(0.3, t + 0.01);
+    env.gain.exponentialRampToValueAtTime(0.001, t + noteDur + 0.5);
+    osc.connect(env).connect(dest);
+    osc.start(t);
+    osc.stop(t + noteDur + 0.55);
+  }
+  // Held major chord (G4+B4+D5) for fullness
+  const chordStart = now + notes.length * noteDur;
+  for (const freq of [392.0, 493.88, 587.33]) {
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.001, chordStart);
+    env.gain.linearRampToValueAtTime(0.15, chordStart + 0.02);
+    env.gain.exponentialRampToValueAtTime(0.001, chordStart + 0.5);
+    osc.connect(env).connect(dest);
+    osc.start(chordStart);
+    osc.stop(chordStart + 0.55);
+  }
+  // Shimmer
+  const noise = ctx.createBufferSource();
+  noise.buffer = createNoiseBuffer(ctx, 0.6);
+  const filter = ctx.createBiquadFilter();
+  filter.type = "highpass";
+  filter.frequency.value = 6000;
+  const noiseEnv = ctx.createGain();
+  noiseEnv.gain.setValueAtTime(0.06, now);
+  noiseEnv.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+  noise.connect(filter).connect(noiseEnv).connect(dest);
+  noise.start(now);
+  noise.stop(now + 0.6);
+}
+
+function synthClockTick(ctx: BaseAudioContext, dest: AudioNode, now: number): void {
+  // Short, sharp clock tick — sine pulse with fast attack/decay
+  const osc = ctx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(800, now);
+  osc.frequency.exponentialRampToValueAtTime(600, now + 0.06);
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0.001, now);
+  env.gain.linearRampToValueAtTime(0.45, now + 0.003);
+  env.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+  osc.connect(env).connect(dest);
+  osc.start(now);
+  osc.stop(now + 0.08);
 }
