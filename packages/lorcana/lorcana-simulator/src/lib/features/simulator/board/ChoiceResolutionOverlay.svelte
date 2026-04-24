@@ -320,7 +320,7 @@ onMount(() => {
     min-width: 0;
   }
 
-  .choice-overlay__target-icon {
+  :global(.choice-overlay__target-icon) {
     flex-shrink: 0;
     opacity: 0.6;
   }

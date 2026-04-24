@@ -1,6 +1,6 @@
 import { sequence } from "@sveltejs/kit/hooks";
 import type { Handle } from "@sveltejs/kit";
-import { paraglideMiddleware } from "$lib/paraglide/server";
+import { paraglideMiddleware } from "$lib/paraglide/server.js";
 import { getApiOrigin } from "$lib/config/public-url-config.js";
 import { getServerApiOrigin, serverFetch } from "$lib/server/fetch-with-cf.js";
 import type { AuthUser, AuthSession } from "@tcg/shared/auth";
