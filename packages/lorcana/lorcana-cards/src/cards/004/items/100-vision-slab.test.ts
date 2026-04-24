@@ -59,7 +59,11 @@ describe("Vision Slab", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(visionSlab, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(0);
     });
   });

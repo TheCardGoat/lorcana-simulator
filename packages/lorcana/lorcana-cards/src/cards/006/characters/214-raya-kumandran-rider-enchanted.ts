@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { rayaKumandranRider } from "..";
+import { rayaKumandranRider } from "./107-raya-kumandran-rider";
 
 export const rayaKumandranRiderEnchanted: CharacterCard = {
   ...rayaKumandranRider,

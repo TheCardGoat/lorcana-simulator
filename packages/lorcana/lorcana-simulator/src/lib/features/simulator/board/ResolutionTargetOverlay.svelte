@@ -1,6 +1,7 @@
 <script lang="ts">
 import MapPinnedIcon from "@lucide/svelte/icons/map-pinned";
 import MoveDiagonalIcon from "@lucide/svelte/icons/move-diagonal";
+import * as Dialog from "$lib/design-system/primitives/dialog";
 
 import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import {
@@ -67,216 +68,266 @@ function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
   }
 }
 
+const yourCandidates = $derived(
+  selectionState.candidateEntries.filter((entry) => {
+    if (entry.kind !== "card" || !entry.cardId) return false;
+    const card = getCard(entry.cardId);
+    return card && selectionState.viewerSide && card.ownerSide === selectionState.viewerSide;
+  }),
+);
+
+const opponentCandidates = $derived(
+  selectionState.candidateEntries.filter((entry) => {
+    if (entry.kind !== "card" || !entry.cardId) return false;
+    const card = getCard(entry.cardId);
+    return card && selectionState.viewerSide && card.ownerSide !== selectionState.viewerSide;
+  }),
+);
+
+const showGroupLabels = $derived(yourCandidates.length > 0 && opponentCandidates.length > 0);
+
+function handleOpenChange(open: boolean): void {
+  if (!open) {
+    onDismiss?.();
+  }
+}
+
 </script>
 
-<section class="target-overlay" data-testid="resolution-target-overlay" data-effect-type={selectionState.effectType ?? undefined}>
-  <header class="target-overlay__header">
-    <div class="target-overlay__header-copy">
-      <div class="target-overlay__eyebrow">
-        {#if selectionState.effectType === "move-to-location"}
-          <MapPinnedIcon class="size-4" />
-        {:else}
-          <MoveDiagonalIcon class="size-4" />
-        {/if}
-        <span>{selectionState.categoryLabel}</span>
-      </div>
-      <h2 class="target-overlay__title">{selectionState.title}</h2>
-      <p class="target-overlay__message">{selectionState.message}</p>
-    </div>
-
-    {#if resolvedSourceCard}
-      <div class="target-overlay__source">
-        <LorcanaCard
-          card={resolvedSourceCard}
-          size="small"
-          isMasked={resolvedSourceCard.isMasked}
-          interactionMeta={{
-            cardId: resolvedSourceCard.cardId,
-            ownerSide: resolvedSourceCard.ownerSide,
-            zoneId: resolvedSourceCard.zoneId,
-            selectionGroup: "resolution-target-overlay-source",
-            selectionMode: "none",
-            selectable: false,
-          }}
-        />
-      </div>
-    {/if}
-  </header>
-
-  <div class="target-overlay__slots">
-    {#each selectionState.slots as slot, index (slot.id)}
-      {@const selectedCard = getCard(slot.targetCardId)}
-      <section
-        class="target-slot"
-        class:target-slot--active={selectionState.activeSlotIndex === index}
-        data-active={selectionState.activeSlotIndex === index ? "true" : "false"}
-      >
-        <div class="target-slot__header">
-          <div>
-            <p class="target-slot__label">{slot.label}</p>
-            <p class="target-slot__detail">
-              {#if slot.locked}
-                Locked in
-              {:else if slot.targetId}
-                Selected
-              {:else}
-                Waiting for selection
-              {/if}
-            </p>
+<Dialog.Root open onOpenChange={handleOpenChange}>
+  <Dialog.Portal>
+    <Dialog.Overlay class="bg-black/70" />
+    <Dialog.Content
+      class="target-overlay fixed left-1/2 top-1/2 z-50 h-[100dvh] max-h-[100dvh] w-[min(92vw,60rem)] -translate-x-1/2 -translate-y-1/2 gap-0 overflow-hidden rounded-[1.75rem] p-0"
+      showCloseButton={false}
+      data-testid="resolution-target-overlay"
+      data-effect-type={selectionState.effectType ?? undefined}
+    >
+      <Dialog.Header class="target-overlay__header">
+        <div
+          class="target-overlay__header-copy"
+          class:target-overlay__header-copy--with-source={Boolean(resolvedSourceCard)}
+        >
+          <div class="target-overlay__eyebrow">
+            {#if selectionState.effectType === "move-to-location"}
+              <MapPinnedIcon class="size-4" />
+            {:else}
+              <MoveDiagonalIcon class="size-4" />
+            {/if}
+            <span>{selectionState.categoryLabel}</span>
           </div>
-
-          {#if slot.locked}
-            <span class="target-slot__badge">Locked</span>
-          {:else if slot.targetId}
-            <div class="target-slot__header-actions">
-              <span class="target-slot__badge target-slot__badge--selected">Selected</span>
-              <button
-                type="button"
-                class="target-slot__edit"
-                onclick={() => onSelectSlot?.(index)}
-              >
-                Edit selection
-              </button>
-            </div>
-          {:else}
-            <button
-              type="button"
-              class="target-slot__edit"
-              onclick={() => onSelectSlot?.(index)}
-            >
-              Choose now
-            </button>
-          {/if}
+          <Dialog.Title class="target-overlay__title">{selectionState.title}</Dialog.Title>
+          <Dialog.Description class="target-overlay__message">{selectionState.message}</Dialog.Description>
         </div>
 
-        {#if selectedCard}
-          <div
-            class="target-slot__card"
-            role="presentation"
-            onmouseenter={() => handleCardPreviewEnter(selectedCard)}
-            onmouseleave={() => handleCardPreviewLeave(selectedCard)}
-          >
+        {#if resolvedSourceCard}
+          <div class="target-overlay__source">
             <LorcanaCard
-              card={selectedCard}
+              card={resolvedSourceCard}
               size="small"
-              isSelected={selectionState.activeSlotIndex === index}
-              isMasked={selectedCard.isMasked}
+              imageFormat="art_only"
+              isMasked={resolvedSourceCard.isMasked}
               interactionMeta={{
-                cardId: selectedCard.cardId,
-                ownerSide: selectedCard.ownerSide,
-                zoneId: selectedCard.zoneId,
-                selectionGroup: "resolution-target-overlay-slot",
+                cardId: resolvedSourceCard.cardId,
+                ownerSide: resolvedSourceCard.ownerSide,
+                zoneId: resolvedSourceCard.zoneId,
+                selectionGroup: "resolution-target-overlay-source",
                 selectionMode: "none",
                 selectable: false,
               }}
             />
           </div>
-        {:else}
-          <div class="target-slot__placeholder">
-            <span>{slot.cardType === "location" ? "Choose a location" : "Choose a character"}</span>
+        {/if}
+      </Dialog.Header>
+
+      <div class="target-overlay__body">
+        <div class="target-overlay__slots">
+          {#each selectionState.slots as slot, index (slot.id)}
+            {@const selectedCard = getCard(slot.targetCardId)}
+            <section
+              class="target-slot"
+              class:target-slot--active={selectionState.activeSlotIndex === index}
+              data-active={selectionState.activeSlotIndex === index ? "true" : "false"}
+            >
+              <div class="target-slot__header">
+                <div>
+                  <p class="target-slot__label">{slot.label}</p>
+                  <p class="target-slot__detail">
+                    {#if slot.locked}
+                      Locked in
+                    {:else if slot.targetId}
+                      Selected
+                    {:else}
+                      Waiting for selection
+                    {/if}
+                  </p>
+                </div>
+
+                {#if slot.locked}
+                  <span class="target-slot__badge">Locked</span>
+                {:else if slot.targetId}
+                  <div class="target-slot__header-actions">
+                    <span class="target-slot__badge target-slot__badge--selected">Selected</span>
+                    <button
+                      type="button"
+                      class="target-slot__edit"
+                      onclick={() => onSelectSlot?.(index)}
+                    >
+                      Edit selection
+                    </button>
+                  </div>
+                {:else}
+                  <button
+                    type="button"
+                    class="target-slot__edit"
+                    onclick={() => onSelectSlot?.(index)}
+                  >
+                    Choose now
+                  </button>
+                {/if}
+              </div>
+
+              {#if selectedCard}
+                <div
+                  class="target-slot__card"
+                  role="presentation"
+                  onmouseenter={() => handleCardPreviewEnter(selectedCard)}
+                  onmouseleave={() => handleCardPreviewLeave(selectedCard)}
+                >
+                  <LorcanaCard
+                    card={selectedCard}
+                    size="small"
+                    isSelected={selectionState.activeSlotIndex === index}
+                    isMasked={selectedCard.isMasked}
+                    interactionMeta={{
+                      cardId: selectedCard.cardId,
+                      ownerSide: selectedCard.ownerSide,
+                      zoneId: selectedCard.zoneId,
+                      selectionGroup: "resolution-target-overlay-slot",
+                      selectionMode: "none",
+                      selectable: false,
+                    }}
+                  />
+                </div>
+              {:else}
+                <div class="target-slot__placeholder">
+                  <span>{slot.cardType === "location" ? "Choose a location" : "Choose a character"}</span>
+                </div>
+              {/if}
+            </section>
+          {/each}
+        </div>
+
+        <section class="target-overlay__candidates">
+          <div class="target-overlay__candidate-header">
+            <h3>Available targets</h3>
+            {#if selectionState.activeSlotIndex !== null}
+              <span>
+                Step {selectionState.activeSlotIndex + 1} of {selectionState.slots.length}
+              </span>
+            {/if}
           </div>
+
+          {#each [{ label: "Your characters", entries: yourCandidates }, { label: "Opponent's characters", entries: opponentCandidates }] as group (group.label)}
+            {#if group.entries.length > 0}
+              {#if showGroupLabels}
+                <p class="target-overlay__group-label">{group.label}</p>
+              {/if}
+              <div class="target-overlay__candidate-grid">
+                {#each group.entries as entry (entry.id)}
+                  {@const candidateCard = entry.kind === "card" && entry.cardId ? getCard(entry.cardId) : null}
+                  {#if candidateCard}
+                    <button
+                      type="button"
+                      class="target-overlay__candidate-button"
+                      class:target-overlay__candidate-button--selected={entry.selected}
+                      onclick={() => onSelectCard?.(candidateCard.cardId)}
+                      onmouseenter={() => handleCardPreviewEnter(candidateCard)}
+                      onmouseleave={() => handleCardPreviewLeave(candidateCard)}
+                      data-testid={`resolution-target-candidate:${candidateCard.cardId}`}
+                    >
+                      <LorcanaCard
+                        card={candidateCard}
+                        size="small"
+                        isSelected={entry.selected}
+                        isMasked={candidateCard.isMasked}
+                        interactionMeta={{
+                          cardId: candidateCard.cardId,
+                          ownerSide: candidateCard.ownerSide,
+                          zoneId: candidateCard.zoneId,
+                          selectionGroup: "resolution-target-overlay-candidates",
+                          selectionMode: "none",
+                          selectable: true,
+                        }}
+                      />
+                      <span class="target-overlay__candidate-label">{entry.label}</span>
+                    </button>
+                  {/if}
+                {/each}
+              </div>
+            {/if}
+          {/each}
+        </section>
+
+        {#if selectionState.amountSelection}
+          <ResolutionAmountControls
+            selection={selectionState.amountSelection}
+            onChange={(value) => {
+              onAmountChange?.(value);
+            }}
+          />
         {/if}
-      </section>
-    {/each}
-  </div>
+      </div>
 
-  <section class="target-overlay__candidates">
-    <div class="target-overlay__candidate-header">
-      <h3>Available targets</h3>
-      {#if selectionState.activeSlotIndex !== null}
-        <span>
-          Step {selectionState.activeSlotIndex + 1} of {selectionState.slots.length}
-        </span>
-      {/if}
-    </div>
-
-    <div class="target-overlay__candidate-grid">
-      {#each selectionState.candidateEntries as entry (entry.id)}
-        {@const candidateCard = entry.kind === "card" && entry.cardId ? getCard(entry.cardId) : null}
-        {#if candidateCard}
-          <button
-            type="button"
-            class="target-overlay__candidate-button"
-            class:target-overlay__candidate-button--selected={entry.selected}
-            onclick={() => onSelectCard?.(candidateCard.cardId)}
-            onmouseenter={() => handleCardPreviewEnter(candidateCard)}
-            onmouseleave={() => handleCardPreviewLeave(candidateCard)}
-            data-testid={`resolution-target-candidate:${candidateCard.cardId}`}
-          >
-            <LorcanaCard
-              card={candidateCard}
-              size="small"
-              isSelected={entry.selected}
-              isMasked={candidateCard.isMasked}
-              interactionMeta={{
-                cardId: candidateCard.cardId,
-                ownerSide: candidateCard.ownerSide,
-                zoneId: candidateCard.zoneId,
-                selectionGroup: "resolution-target-overlay-candidates",
-                selectionMode: "none",
-                selectable: true,
-              }}
-            />
-            <span class="target-overlay__candidate-label">{entry.label}</span>
-          </button>
-        {/if}
-      {/each}
-    </div>
-  </section>
-
-  {#if selectionState.amountSelection}
-    <ResolutionAmountControls
-      selection={selectionState.amountSelection}
-      onChange={(value) => {
-        onAmountChange?.(value);
-      }}
-    />
-  {/if}
-
-  <footer class="target-overlay__footer">
-    <button type="button" class="target-overlay__button target-overlay__button--ghost" onclick={onDismiss}>
-      Cancel
-    </button>
-    <button
-      type="button"
-      class="target-overlay__button target-overlay__button--primary"
-      onclick={onConfirm}
-      disabled={!selectionState.canConfirm}
-    >
-      Confirm
-    </button>
-  </footer>
-</section>
+      <Dialog.Footer class="target-overlay__footer">
+        <button
+          type="button"
+          class="target-overlay__button target-overlay__button--ghost"
+          onclick={onDismiss}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="target-overlay__button target-overlay__button--primary"
+          onclick={onConfirm}
+          disabled={!selectionState.canConfirm}
+        >
+          Confirm
+        </button>
+      </Dialog.Footer>
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
 
 <style>
-  .target-overlay {
-    position: absolute;
-    left: 50%;
-    bottom: 1rem;
-    z-index: 20;
-    display: grid;
-    width: min(92vw, 60rem);
-    gap: 1rem;
-    transform: translateX(-50%);
+  :global(.target-overlay) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     border: 1px solid rgba(148, 163, 184, 0.22);
-    border-radius: 1.75rem;
     background:
       linear-gradient(180deg, rgba(9, 14, 27, 0.96), rgba(6, 9, 19, 0.98));
     box-shadow: 0 24px 80px rgba(2, 6, 23, 0.45);
-    padding: 1rem;
     backdrop-filter: blur(18px);
   }
 
-  .target-overlay__header {
+  :global(.target-overlay__header) {
     display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: flex-start;
+    align-items: stretch;
+    padding: 1rem 1rem 0.85rem;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.45);
+    position: relative;
   }
 
   .target-overlay__header-copy {
     display: grid;
     gap: 0.4rem;
+    min-width: 0;
+  }
+
+  .target-overlay__header-copy--with-source {
+    padding-right: 8.25rem;
   }
 
   .target-overlay__eyebrow {
@@ -289,21 +340,33 @@ function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
     letter-spacing: 0.1em;
   }
 
-  .target-overlay__title {
+  :global(.target-overlay__title) {
     margin: 0;
     color: #f8fafc;
     font-size: 1.15rem;
     font-weight: 800;
   }
 
-  .target-overlay__message {
+  :global(.target-overlay__message) {
     margin: 0;
     color: rgba(191, 219, 254, 0.8);
     font-size: 0.94rem;
   }
 
   .target-overlay__source {
-    flex: none;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1;
+  }
+
+  .target-overlay__body {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
   }
 
   .target-overlay__slots {
@@ -402,6 +465,15 @@ function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
     gap: 0.75rem;
   }
 
+  .target-overlay__group-label {
+    margin: 0;
+    color: rgba(148, 163, 184, 0.7);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
   .target-overlay__candidate-header {
     display: flex;
     align-items: center;
@@ -423,8 +495,6 @@ function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
     gap: 0.85rem;
-    max-height: min(34vh, 18rem);
-    overflow-y: auto;
   }
 
   .target-overlay__candidate-button {
@@ -458,10 +528,13 @@ function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
     text-align: center;
   }
 
-  .target-overlay__footer {
+  :global(.target-overlay__footer) {
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
+    padding: 0.9rem 1rem 1rem;
+    border-top: 1px solid rgba(71, 85, 105, 0.45);
+    background: rgba(2, 6, 23, 0.42);
   }
 
   .target-overlay__button {
@@ -486,10 +559,29 @@ function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
   }
 
   @media (max-width: 768px) {
-    .target-overlay {
+    :global(.target-overlay) {
       width: min(96vw, 32rem);
-      bottom: 0.5rem;
+    }
+
+    :global(.target-overlay__header) {
+      padding: 0.85rem 0.85rem 0.75rem;
+    }
+
+    .target-overlay__header-copy--with-source {
+      padding-right: 6.75rem;
+    }
+
+    .target-overlay__source {
+      top: 0.85rem;
+      right: 0.85rem;
+    }
+
+    .target-overlay__body {
       padding: 0.85rem;
+    }
+
+    :global(.target-overlay__footer) {
+      padding: 0.8rem 0.85rem 0.85rem;
     }
 
     .target-overlay__slots {

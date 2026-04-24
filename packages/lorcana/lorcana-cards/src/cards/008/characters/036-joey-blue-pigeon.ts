@@ -35,7 +35,7 @@ export const joeyBluePigeon: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 1,
+          amount: { type: "up-to", value: 1 },
           target: {
             selector: "all",
             count: "all",
@@ -45,7 +45,6 @@ export const joeyBluePigeon: CharacterCard = {
             filter: [{ type: "has-keyword", keyword: "Bodyguard" }],
           },
           type: "remove-damage",
-          upTo: true,
         },
         type: "optional",
       },

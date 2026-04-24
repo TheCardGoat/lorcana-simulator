@@ -10,6 +10,7 @@ import {
   simbaProtectiveCub,
   stitchNewDog,
 } from "@tcg/lorcana-cards/cards/001";
+import { neverLandMermaidLagoon } from "@tcg/lorcana-cards/cards/003";
 import { ladyKluckProtectiveConfidant } from "@tcg/lorcana-cards/cards/007";
 import { bodyguardEvasiveDefender, evasiveDefender } from "./section-08-test-utils";
 
@@ -117,6 +118,21 @@ describe("#### 8. KEYWORDS", () => {
 
       expect(
         testEngine.asPlayerOne().challenge(stitchNewDog, mickeyMouseTrueFriend),
+      ).toBeSuccessfulCommand();
+    });
+
+    it("8.3.3. Bodyguard does not restrict challenging locations — locations are not characters.", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: stitchNewDog, isDrying: false }],
+        },
+        {
+          play: [{ card: simbaProtectiveCub, exerted: true }, { card: neverLandMermaidLagoon }],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(stitchNewDog, neverLandMermaidLagoon),
       ).toBeSuccessfulCommand();
     });
 

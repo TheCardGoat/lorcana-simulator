@@ -39,7 +39,7 @@ export const minnieMouseMusicalArtist: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 2,
+          amount: { type: "up-to", value: 2 },
           target: {
             selector: "chosen",
             count: 1,
@@ -48,7 +48,6 @@ export const minnieMouseMusicalArtist: CharacterCard = {
             cardTypes: ["character"],
           },
           type: "remove-damage",
-          upTo: true,
         },
         type: "optional",
       },

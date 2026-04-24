@@ -4,7 +4,12 @@
  * Factory functions for creating initial match state.
  */
 
-import type { MatchState } from "./types";
+import type {
+  MatchState,
+  ChessClockContext,
+  PriorityClockContext,
+  DynamicClockContext,
+} from "./types";
 import { createInitialTCGCtx, type InitialStatusConfig } from "./types";
 import type { MatchRuntimeConfig, Player, RuntimeFlowDefinition } from "./match-runtime.types";
 import type { MatchStaticResources } from "./static-resources";
@@ -68,6 +73,16 @@ export function initializeMatchState(ctx: MatchInitContext): {
   // Set initial players in time control
   if (tcgCtx.time.mode !== "none") {
     initializeTimeControlPlayers(tcgCtx.time, players, tcgCtx.time.config);
+
+    // Start the clock immediately for the player choosing first.
+    // Pre-game decisions (choosing first player, mulliganing) should tick the clock.
+    if (choosingFirstPlayer) {
+      const time = tcgCtx.time as ChessClockContext | PriorityClockContext | DynamicClockContext;
+      time.activePlayerID = choosingFirstPlayer;
+      time.startedAtMs = Date.now();
+      time.running = true;
+      time.pausedReason = undefined;
+    }
   }
 
   // Initialize game-specific state via setup

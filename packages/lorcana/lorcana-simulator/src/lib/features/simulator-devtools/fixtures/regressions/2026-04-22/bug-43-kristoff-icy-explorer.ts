@@ -1,0 +1,23 @@
+import { kristoffIcyExplorer } from "@tcg/lorcana-cards/cards/011";
+import { peteBadGuy } from "@tcg/lorcana-cards/cards/002";
+import { donaldDuckStruttingHisStuff, grammaTalaStoryteller } from "@tcg/lorcana-cards/cards/001";
+import { createFixture } from "../../fixture-factory.js";
+
+export const bug43KristoffIcyExplorerFixture = createFixture({
+  id: "bug-43-kristoff-icy-explorer",
+  name: "Bug 43 - Kristoff Icy Explorer wrong-trigger prompt (no Anna)",
+  description:
+    "Kristoff - Icy Explorer in hand with sufficient ink to play. No Anna character is in play, so the related conditional trigger should not prompt on entry.",
+  playerOne: {
+    hand: [kristoffIcyExplorer],
+    inkwell: 5,
+    deck: [donaldDuckStruttingHisStuff, grammaTalaStoryteller],
+  },
+  playerTwo: {
+    play: [peteBadGuy],
+    inkwell: 3,
+    deck: [donaldDuckStruttingHisStuff],
+  },
+  seed: "bug-43-kristoff-icy-explorer",
+  skipPreGame: true,
+});

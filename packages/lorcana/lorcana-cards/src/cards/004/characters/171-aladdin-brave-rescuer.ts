@@ -24,8 +24,9 @@ export const aladdinBraveRescuer: CharacterCard = {
   },
   text: [
     {
-      title:
-        "Shift: Discard a location card (You may discard a location card to play this on top of one of your characters named Aladdin.)",
+      title: "Shift: Discard a location card",
+      description:
+        "(You may discard a location card to play this on top of one of your characters named Aladdin.)",
     },
     {
       title: "CRASHING THROUGH",

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { arielEtherealVoice } from "..";
+import { arielEtherealVoice } from "./017-ariel-ethereal-voice";
 
 export const arielEtherealVoiceIconic: CharacterCard = {
   ...arielEtherealVoice,

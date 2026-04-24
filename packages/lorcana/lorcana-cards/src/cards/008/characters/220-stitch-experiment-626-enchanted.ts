@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { stitchExperiment626 } from "..";
+import { stitchExperiment626 } from "./166-stitch-experiment-626";
 
 export const stitchExperiment626Enchanted: CharacterCard = {
   ...stitchExperiment626,

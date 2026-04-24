@@ -7,7 +7,9 @@ import type {
 
 import {
   buildResolutionCopyBundle,
+  buildScryOverlayHeaderHeading,
   getResolutionInteractionStatusMessage,
+  SCRY_OVERLAY_TITLE_MAX_CHARS,
 } from "./resolution-copy.js";
 import type { LorcanaCardSnapshot } from "./contracts.js";
 
@@ -226,6 +228,43 @@ describe("resolution-copy", () => {
     expect(copy.promptMessage).toBe("Select 1-2 valid targets for Twin Fire.");
   });
 
+  it('uses "up to N (optional)" wording when the selection accepts 0 targets', () => {
+    const copy = buildResolutionCopyBundle({
+      kind: "target-selection",
+      sourceCard: createCardSnapshot({ label: "Elsa - Spirit of Winter" }),
+      effectTitle: "DEEP FREEZE",
+      targetSelectionContext: createTargetSelectionContext({
+        minSelections: 0,
+        maxSelections: 2,
+      }),
+    });
+
+    expect(copy.promptMessage).toBe(
+      "Choose up to 2 targets for Elsa - Spirit of Winter: DEEP FREEZE (optional).",
+    );
+    expect(copy.subtitle).toBe("Target selection (optional)");
+  });
+
+  it("shows the printed max from declaredMaxSelections even when runtime candidates clamp it", () => {
+    // Elsa on an otherwise-empty board: only self is a valid target so the
+    // engine clamps `maxSelections` to 1, but the card text still reads
+    // "up to 2". The prompt should reflect the card text, not the clamp.
+    const copy = buildResolutionCopyBundle({
+      kind: "target-selection",
+      sourceCard: createCardSnapshot({ label: "Elsa - Spirit of Winter" }),
+      effectTitle: "DEEP FREEZE",
+      targetSelectionContext: createTargetSelectionContext({
+        minSelections: 0,
+        maxSelections: 1,
+        declaredMaxSelections: 2,
+      }),
+    });
+
+    expect(copy.promptMessage).toBe(
+      "Choose up to 2 targets for Elsa - Spirit of Winter: DEEP FREEZE (optional).",
+    );
+  });
+
   it("covers choice, name-card, and scry flows", () => {
     const sourceCard = createCardSnapshot({
       label: "Yzma - On Edge",
@@ -243,6 +282,27 @@ describe("resolution-copy", () => {
         sourceCard,
       }).promptMessage,
     ).toBe("Choose an effect for Yzma - On Edge: WHY DO WE EVEN HAVE THAT LEVER?.");
+
+    expect(
+      buildResolutionCopyBundle({
+        kind: "choice-selection",
+        sourceCard,
+        targetLabel: "Cinderella - Dream Come True",
+      }).promptMessage,
+    ).toBe(
+      "Choose an effect for Yzma - On Edge: WHY DO WE EVEN HAVE THAT LEVER? targeting Cinderella - Dream Come True.",
+    );
+
+    expect(
+      buildResolutionCopyBundle({
+        kind: "choice-selection",
+        sourceCard,
+        targetLabel: "Cinderella - Dream Come True",
+      }).sessionStatusMessage,
+    ).toBe(
+      "Choose how Yzma - On Edge: WHY DO WE EVEN HAVE THAT LEVER? resolves targeting Cinderella - Dream Come True.",
+    );
+
     expect(
       buildResolutionCopyBundle({
         kind: "name-card-selection",
@@ -259,6 +319,103 @@ describe("resolution-copy", () => {
     );
   });
 
+  it("returns null abilityDescription for optional-selection when description is already embedded in promptMessage", () => {
+    // When cardLabel + title + description are all present, the description is embedded
+    // in the promptMessage so abilityDescription is omitted to avoid duplication.
+    const sourceCard = createCardSnapshot({
+      label: "Mulan - Disguised Soldier",
+      textEntries: [
+        {
+          title: "WHERE DO I SIGN IN?",
+          description: "  When you play this character, you may draw a card.  ",
+        },
+      ],
+    });
+
+    const copy = buildResolutionCopyBundle({
+      kind: "optional-selection",
+      sourceCard,
+    });
+
+    expect(copy.abilityDescription).toBeNull();
+    expect(copy.promptMessage).toContain("When you play this character, you may draw a card.");
+  });
+
+  it("includes abilityDescription from the primary text entry description for non-optional-selection kinds", () => {
+    const sourceCard = createCardSnapshot({
+      label: "Mulan - Disguised Soldier",
+      textEntries: [
+        {
+          title: "WHERE DO I SIGN IN?",
+          description: "  When you play this character, you may draw a card.  ",
+        },
+      ],
+    });
+
+    const copy = buildResolutionCopyBundle({
+      kind: "target-selection",
+      sourceCard,
+      targetSelectionContext: createTargetSelectionContext(),
+    });
+
+    expect(copy.abilityDescription).toBe("When you play this character, you may draw a card.");
+  });
+
+  it("returns null abilityDescription when no text entries exist", () => {
+    const copy = buildResolutionCopyBundle({
+      kind: "target-selection",
+      sourceCard: createCardSnapshot({ textEntries: [] }),
+      targetSelectionContext: createTargetSelectionContext(),
+    });
+
+    expect(copy.abilityDescription).toBeNull();
+  });
+
+  it("returns null abilityDescription when the card itself is null", () => {
+    const copy = buildResolutionCopyBundle({
+      kind: "target-selection",
+      sourceCard: null,
+      targetSelectionContext: createTargetSelectionContext(),
+    });
+
+    expect(copy.abilityDescription).toBeNull();
+  });
+
+  it("uses abilityIndex to select the correct abilityDescription from multi-entry cards", () => {
+    const sourceCard = createCardSnapshot({
+      label: "Jasmine - Resourceful Infiltrator",
+      textEntries: [
+        {
+          title: "JUST WHAT YOU NEED",
+          description:
+            "When you play this character, you may give another chosen character Resist +1.",
+        },
+        {
+          title: "",
+          description: "Ward",
+        },
+      ],
+    });
+
+    const copyFirst = buildResolutionCopyBundle({
+      kind: "target-selection",
+      sourceCard,
+      abilityIndex: 0,
+      targetSelectionContext: createTargetSelectionContext(),
+    });
+    expect(copyFirst.abilityDescription).toBe(
+      "When you play this character, you may give another chosen character Resist +1.",
+    );
+
+    const copySecond = buildResolutionCopyBundle({
+      kind: "target-selection",
+      sourceCard,
+      abilityIndex: 1,
+      targetSelectionContext: createTargetSelectionContext(),
+    });
+    expect(copySecond.abilityDescription).toBe("Ward");
+  });
+
   it("uses generic copy when card context is unavailable", () => {
     const copy = buildResolutionCopyBundle({
       kind: "target-selection",
@@ -271,6 +428,31 @@ describe("resolution-copy", () => {
       "Select the required target or player before resolving this effect.",
     );
     expect(copy.sessionStatusMessage).toBe("Select target for this effect.");
+  });
+
+  it("keeps short scry overlay titles as a single line", () => {
+    expect(buildScryOverlayHeaderHeading("Arrange cards for Moana.", "Moana")).toEqual({
+      title: "Arrange cards for Moana.",
+      headerSubtitle: null,
+    });
+  });
+
+  it("splits long scry overlay titles using the card label", () => {
+    const long =
+      "Resolve optional effect from Water Has Memory: Look at the top 4 cards of chosen player's deck.";
+    expect(long.length).toBeGreaterThan(SCRY_OVERLAY_TITLE_MAX_CHARS);
+    expect(buildScryOverlayHeaderHeading(long, "Water Has Memory")).toEqual({
+      title: "Water Has Memory",
+      headerSubtitle: long,
+    });
+  });
+
+  it("ellipsizes long scry titles when no card label is available", () => {
+    const long = "x".repeat(SCRY_OVERLAY_TITLE_MAX_CHARS + 20);
+    const out = buildScryOverlayHeaderHeading(long, null);
+    expect(out.title.endsWith("…")).toBe(true);
+    expect(out.title.length).toBe(SCRY_OVERLAY_TITLE_MAX_CHARS + 1);
+    expect(out.headerSubtitle).toBe(long);
   });
 
   it("reports dynamic interaction status consistently", () => {

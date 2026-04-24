@@ -57,6 +57,7 @@ export const mauiHalfshark: CharacterCard = {
         event: "challenge",
         on: "SELF",
         timing: "whenever",
+        restrictions: [{ type: "defender-is-character" }],
       },
       type: "triggered",
     },

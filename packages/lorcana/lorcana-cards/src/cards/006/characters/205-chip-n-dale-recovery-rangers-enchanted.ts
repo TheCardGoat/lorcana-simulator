@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { chipNDaleRecoveryRangers } from "..";
+import { chipNDaleRecoveryRangers } from "./014-chip-n-dale-recovery-rangers";
 
 export const chipNDaleRecoveryRangersEnchanted: CharacterCard = {
   ...chipNDaleRecoveryRangers,

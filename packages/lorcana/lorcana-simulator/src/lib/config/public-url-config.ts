@@ -2,6 +2,7 @@ import { env } from "$env/dynamic/public";
 
 const DEFAULT_API_ORIGIN = "http://localhost:3000";
 const DEFAULT_GAME_SERVER_ORIGIN = "http://localhost:3001";
+const DEFAULT_TRACKER_ORIGIN = "https://thecardgoat.com";
 const DEFAULT_SIMULATOR_ASSET_BASE_URL = "https://r2.tcg.online/public/lorcana/simulator";
 const DEFAULT_LORCANA_ASSET_BASE_URL = "https://r2.tcg.online/public/lorcana";
 
@@ -91,6 +92,7 @@ function deriveGatewayWsUrl(gameServerOrigin: string): string {
 export interface PublicUrlConfig {
   apiOrigin: string;
   gameServerOrigin: string;
+  trackerOrigin: string;
   gatewayWsUrl: string;
   simulatorAssetBaseUrl: string;
   lorcanaAssetBaseUrl: string;
@@ -109,6 +111,12 @@ export function getPublicUrlConfig(): PublicUrlConfig {
     fallback: DEFAULT_GAME_SERVER_ORIGIN,
     allowedProtocols: ["http:", "https:"],
     stripTrailingV1: true,
+  });
+
+  const trackerOrigin = normalizeConfiguredUrl(env.PUBLIC_TRACKER_URL, {
+    envName: "PUBLIC_TRACKER_URL",
+    fallback: DEFAULT_TRACKER_ORIGIN,
+    allowedProtocols: ["http:", "https:"],
   });
 
   const simulatorAssetBaseUrl = normalizeConfiguredUrl(env.PUBLIC_SIMULATOR_ASSET_BASE_URL, {
@@ -134,6 +142,7 @@ export function getPublicUrlConfig(): PublicUrlConfig {
   return {
     apiOrigin,
     gameServerOrigin,
+    trackerOrigin,
     gatewayWsUrl,
     simulatorAssetBaseUrl,
     lorcanaAssetBaseUrl,
@@ -146,6 +155,10 @@ export function getApiOrigin(): string {
 
 export function getGameServerOrigin(): string {
   return getPublicUrlConfig().gameServerOrigin;
+}
+
+export function getTrackerOrigin(): string {
+  return getPublicUrlConfig().trackerOrigin;
 }
 
 export function getGatewayWsUrl(): string {

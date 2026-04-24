@@ -241,6 +241,73 @@ describe("passTurn", () => {
     expectFailureCode(result, "PASS_TURN_RECKLESS_CHALLENGE_REQUIRED");
   });
 
+  it("allows passTurn when Reckless attacker is damaged and only target has cant-be-challenged-by-damaged", () => {
+    // Reproduces the Ed - Hysterical Partygoer + Reckless deadlock:
+    // Liquidator (damaged, Reckless) cannot challenge Ed (ROWDY GUEST prevents
+    // damaged characters from challenging him). Since Ed is the only exerted
+    // opposing character, Liquidator has no legal target and turn should pass.
+    const recklessAttacker = createMockCharacter({
+      id: "reckless-damaged-attacker",
+      name: "Liquidator",
+      version: "Iced Over",
+      cost: 2,
+      strength: 4,
+      willpower: 2,
+      lore: 0,
+      abilities: [{ id: "reckless", type: "keyword", keyword: "Reckless", text: "Reckless" }],
+    });
+    const cantBeChallengedDefender = createMockCharacter({
+      id: "cant-be-challenged-by-damaged",
+      name: "Ed",
+      version: "Hysterical Partygoer",
+      cost: 4,
+      strength: 2,
+      willpower: 4,
+      lore: 3,
+      abilities: [
+        {
+          id: "rowdy-guest",
+          name: "ROWDY GUEST",
+          type: "static",
+          text: "Damaged characters can't challenge this character.",
+          effect: {
+            restriction: "cant-be-challenged",
+            target: "SELF",
+            type: "restriction",
+            challengerFilter: {
+              type: "is-damaged",
+            },
+          },
+        },
+      ],
+    });
+
+    engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      { play: [recklessAttacker], deck: 1 },
+      { play: [cantBeChallengedDefender], deck: 1 },
+    );
+
+    const attackerId = findInstanceInZone(engine, "play", PLAYER_ONE, recklessAttacker.id);
+    const defenderId = findInstanceInZone(engine, "play", PLAYER_TWO, cantBeChallengedDefender.id);
+
+    // Exert Ed so he would normally be a valid challenge target
+    const exertResult = executeMoveAsJudge(engine, "manualExertCard", { cardId: defenderId });
+    expect(exertResult.success).toBe(true);
+
+    // Deal 1 damage to Liquidator so he's "damaged"
+    const damageResult = executeMoveAsJudge(engine, "manualSetDamage", {
+      cardId: attackerId,
+      damage: 1,
+    });
+    expect(damageResult.success).toBe(true);
+
+    // Liquidator is damaged + Reckless, Ed has "damaged characters can't challenge this character"
+    // Ed is the only exerted opposing character => Liquidator has no legal target
+    // Turn should be passable
+    const result = executeMoveAsPlayer(engine, "passTurn", {});
+    expect(result.success).toBe(true);
+  });
+
   it("rejects passTurn from a non-active player", () => {
     engine = LorcanaMultiplayerTestEngine.createWithFixture({ deck: 1 }, { deck: 1 });
     const state = engine.getServerEngine().getState();

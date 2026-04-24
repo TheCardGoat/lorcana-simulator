@@ -30,10 +30,9 @@ export const dinglehopper: ItemCard = {
         exert: true,
       },
       effect: {
-        amount: 1,
+        amount: { type: "up-to", value: 1 },
         target: "CHOSEN_CHARACTER",
         type: "remove-damage",
-        upTo: true,
       },
       id: "7r6-1",
       name: "STRAIGHTEN HAIR",

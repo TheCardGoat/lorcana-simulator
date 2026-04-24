@@ -40,7 +40,7 @@ function createBePreparedMultipleTriggersEngine() {
         bePrepared, // Song action: Banish all characters
       ],
       play: [
-        belleSnowfieldStrategist, // On banish of your other character: may put card from discard into inkwell (facedown, exerted) — triggers 9x (7.4.3)
+        belleSnowfieldStrategist, // On banish of your character (including self): may put card from discard into inkwell (facedown, exerted) — triggers 10x (7.4.3)
         belleAccomplishedMysticEnchanted, // On play only — no banish trigger
         powerlineWorldsGreatestRockStar, // On sing only — no banish trigger
         marshmallowPersistentGuardian, // On banish IN CHALLENGE ONLY — does NOT trigger from Be Prepared
@@ -134,13 +134,13 @@ describe("Multiple Triggers Scenario", () => {
     const p2Triggers = bagEffects.filter((e) => e.controllerId === PLAYER_TWO);
 
     // P1 triggers:
-    // - Belle Snowfield × 9 (sees 9 other P1 characters banished with her — CR 7.4.3)
+    // - Belle Snowfield × 10 (sees all 10 P1 characters banished, including herself — CR 7.4.3)
     // - Kuzco × 1
     // - Ichabod Crane Scared × 1
     // - Mickey Mouse × 1
     // - Candlehead × 1
-    // Total: 13
-    expect(p1Triggers.length).toBe(13);
+    // Total: 14
+    expect(p1Triggers.length).toBe(14);
 
     // P2 triggers:
     // - Lyle Cunning × 6 (sees 6 other P2 characters banished with him — CR 7.4.3)
@@ -159,8 +159,8 @@ describe("Multiple Triggers Scenario", () => {
     // Lyle Crystallized did NOT trigger — on-ink, wrong event
     expect(countBagTriggersFromCard(lyleTiberiusRourkeCrystallizedMercenary)).toBe(0);
 
-    // Belle fired exactly 9× (one per other P1 character — CR 7.4.3)
-    expect(countBagTriggersFromCard(belleSnowfieldStrategist)).toBe(9);
+    // Belle fired exactly 10× (one per P1 character including herself — CR 7.4.3)
+    expect(countBagTriggersFromCard(belleSnowfieldStrategist)).toBe(10);
 
     // Lyle Cunning fired exactly 6× (one per other P2 character — CR 7.4.3)
     expect(countBagTriggersFromCard(lyleTiberiusRourkeCunningMercenary)).toBe(6);
@@ -172,7 +172,7 @@ describe("Multiple Triggers Scenario", () => {
     // Phase 1: Active player (P1) resolves all their triggers first (CR 7.7.4.2)
     // ──────────────────────────────────────────
 
-    // Belle × 9 — optional (may put from discard into inkwell); decline each
+    // Belle × 10 — optional (may put from discard into inkwell); decline each
     resolveAllTriggersFromCard(testEngine.asPlayerOne(), belleSnowfieldStrategist, {
       resolveOptional: false,
     });

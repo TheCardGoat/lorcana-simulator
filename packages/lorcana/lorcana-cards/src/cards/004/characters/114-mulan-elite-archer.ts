@@ -95,6 +95,7 @@ export const mulanEliteArcher: CharacterCard = {
           owner: "any",
           zones: ["play"],
           cardTypes: ["character"],
+          excludeSelf: true,
           excludeTriggerSubject: true,
         },
       },

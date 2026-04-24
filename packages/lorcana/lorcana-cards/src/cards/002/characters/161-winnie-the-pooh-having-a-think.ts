@@ -35,6 +35,7 @@ export const winnieThePoohHavingAThink: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
+          exerted: false,
           facedown: true,
           source: "hand",
           target: "CONTROLLER",

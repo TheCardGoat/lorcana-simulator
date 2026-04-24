@@ -8,7 +8,7 @@ type Deck = Array<{ cardId: CardPublicId; qty: number; cardName?: string }>;
 const upperLimit = 1296;
 
 // We'd like to create a short-id for cards, they must be random to prevent cheating.
-// They MUST also be unique, so we're running a loop to ensure that collisions get a change to generate unique ids.
+// They MUST also be unique, so we're running a loop to ensure that collisions get a chance to generate unique ids.
 export function fromDeckToCardInstances(input: Array<{ deck: Deck; owner: string }>): {
   cardInstances: Record<CardInstanceId, CardPublicId>;
   owners: Record<OwnerId, CardInstanceId[]>;
@@ -17,10 +17,9 @@ export function fromDeckToCardInstances(input: Array<{ deck: Deck; owner: string
   const owners: Record<OwnerId, CardInstanceId[]> = {};
 
   const instanceIds = new Set<CardInstanceId>();
-  let instanceIdCounter = 0;
 
-  function generateInstanceId(limit: number = 0): CardInstanceId {
-    if (limit >= upperLimit) {
+  function generateInstanceId(depth: number = 0): CardInstanceId {
+    if (depth >= upperLimit) {
       throw new Error(`Exceeded instance id limit of ${upperLimit}`);
     }
 
@@ -35,7 +34,7 @@ export function fromDeckToCardInstances(input: Array<{ deck: Deck; owner: string
       return id;
     }
 
-    return generateInstanceId(instanceIdCounter++);
+    return generateInstanceId(depth + 1);
   }
 
   input.forEach(({ deck, owner }) => {
@@ -50,7 +49,7 @@ export function fromDeckToCardInstances(input: Array<{ deck: Deck; owner: string
       }
 
       for (let i = 0; i < qty; i++) {
-        let instanceId = generateInstanceId();
+        const instanceId = generateInstanceId();
 
         cardInstances[instanceId] = cardId;
         owners[owner].push(instanceId);

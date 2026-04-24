@@ -35,6 +35,7 @@ export const grandmotherWillowAncientAdvisor: CharacterCard = {
       id: "r79-1",
       name: "SMOOTH THE WAY",
       type: "triggered",
+      autoResolve: true,
       trigger: {
         event: "play",
         on: "SELF",
@@ -53,6 +54,7 @@ export const grandmotherWillowAncientAdvisor: CharacterCard = {
       id: "r79-2",
       name: "SMOOTH THE WAY",
       type: "triggered",
+      autoResolve: true,
       trigger: {
         event: "start-turn",
         on: "YOU",

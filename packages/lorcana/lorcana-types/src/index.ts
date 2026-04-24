@@ -55,9 +55,17 @@ export type {
   FilterExpr,
   FilterSubject,
   PlayerFilter,
+  UpToAmount,
   VariableAmount,
   VariableAmountOperand,
 } from "./expressions";
-export { isVariableAmount } from "./expressions";
+export { isUpToAmount, isVariableAmount, unwrapAmount } from "./expressions";
 
 export type { MillEffect } from "./abilities/effect-types";
+
+// Re-export deck format validation
+export * from "./decks";
+
+export { shuffleArray } from "./utils/shuffle";
+export { createStopwatch, measureAsync, measureSync, nowMs } from "./utils/performance";
+export type { PerformanceMeasurement, PerformanceObserver } from "./utils/performance";

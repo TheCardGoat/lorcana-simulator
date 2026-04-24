@@ -1,5 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { arielsGrottoASecretPlace } from "..";
+import { arielsGrottoASecretPlace } from "./169-ariels-grotto-a-secret-place";
 
 export const arielsGrottoASecretPlaceEnchanted: LocationCard = {
   ...arielsGrottoASecretPlace,

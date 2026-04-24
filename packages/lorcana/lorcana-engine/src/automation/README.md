@@ -93,15 +93,17 @@ A strategy does not create new moves. It only says:
 
 The registry for selectable strategies is in [strategy-registry.ts](./strategy-registry.ts).
 
-Right now the engine ships with three strategies:
+The engine currently ships with these strategies:
 
-| Strategy id               | What it tries to do                                                                                                        |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `default-lore-race`       | Push lore in a straightforward way while staying legal and keeping choices simple.                                         |
-| `legacy-lore-race`        | Older ordering rules, mainly kept around for comparison and regression checking.                                           |
-| `board-control-lore-race` | Still wants lore, but is more willing to trade tempo to remove opposing threats and spend ink on stable board development. |
+| Strategy id                          | What it tries to do                                                                                                        |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `deck-aware-lore-race` **(default)** | Uses deck color, matchup, and per-card weighting for mulligans, inking, and target selection.                              |
+| `best-deck-aware-lore-race`          | Fair-information candidate that uses typed deck dossiers and card rules without hidden opponent deck access.               |
+| `best-deck-aware-oracle-lore-race`   | Oracle variant that allows full opponent deck knowledge through the typed rule system.                                     |
+| `board-control-lore-race`            | Still wants lore, but is more willing to trade tempo to remove opposing threats and spend ink on stable board development. |
+| `aggressive-board-control-lore-race` | Pushes harder into value trades and mutual-banish challenges to break opposing boards.                                     |
 
-The main ranking logic for those strategies lives in [default-strategy.ts](./default-strategy.ts).
+The main ranking logic for the default strategy lives in [deck-aware-strategy.ts](./deck-aware-strategy.ts), with shared family heuristics in [strategy/](./strategy/). The board-control and aggressive-board-control variants use [default-strategy.ts](./default-strategy.ts).
 
 ### 4. Try the candidates in order
 
@@ -194,34 +196,41 @@ So if a move is technically legal but creates too many combinations, the planner
 
 If you want to understand or change automation, these are the best starting points:
 
-| File                                                     | Why it matters                                                                     |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [types.ts](./types.ts)                                   | Shared types for candidates, strategies, traces, diagnostics, and limits.          |
-| [planner.ts](./planner.ts)                               | The main planner and executor. This is where legal candidates are built and tried. |
-| [default-strategy.ts](./default-strategy.ts)             | The ranking rules for the built-in strategies.                                     |
-| [strategy-registry.ts](./strategy-registry.ts)           | The list of strategies that can be selected by id.                                 |
-| [actor-resolution.ts](./actor-resolution.ts)             | How the server figures out which player should act.                                |
-| [move-adapter.ts](./move-adapter.ts)                     | Turns a chosen candidate into a real engine move request.                          |
-| [decision-trace.ts](./decision-trace.ts)                 | Builds stable snapshots and fingerprints for debugging and analysis.               |
-| [automated-actions.test.ts](./automated-actions.test.ts) | Best place to see concrete examples of current behavior.                           |
-| [REFINEMENT_PROMPT.md](./REFINEMENT_PROMPT.md)           | Maintainer notes for improving strategy quality with tests and simulations.        |
+| File                                                     | Why it matters                                                                          |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [types.ts](./types.ts)                                   | Shared types for candidates, strategies, traces, diagnostics, and limits.               |
+| [planner.ts](./planner.ts)                               | The main planner and executor. This is where legal candidates are built and tried.      |
+| [deck-aware-strategy.ts](./deck-aware-strategy.ts)       | The current default strategy. 5-axis scoring with deck profiles and card rules.         |
+| [deck-profile.ts](./deck-profile.ts)                     | Color pair profiles, role weights, opening plans, and matchup modifiers.                |
+| [strategy-data/](./strategy-data/)                       | Card-level rules and matchup plans that feed into the deck-aware strategy.              |
+| [default-strategy.ts](./default-strategy.ts)             | Legacy ranking rules for board-control and aggressive-board-control variants.           |
+| [strategy-registry.ts](./strategy-registry.ts)           | The list of strategies that can be selected by id.                                      |
+| [strategy/](./strategy/)                                 | Shared family evaluators (challenge, quest, play-card, etc.) and the strategy composer. |
+| [actor-resolution.ts](./actor-resolution.ts)             | How the server figures out which player should act.                                     |
+| [target-priority.ts](./target-priority.ts)               | Scores card targets for effects based on role weights and board state.                  |
+| [move-adapter.ts](./move-adapter.ts)                     | Turns a chosen candidate into a real engine move request.                               |
+| [decision-trace.ts](./decision-trace.ts)                 | Builds stable snapshots and fingerprints for debugging and analysis.                    |
+| [automated-actions.test.ts](./automated-actions.test.ts) | Best place to see concrete examples of current behavior.                                |
+| [REFINEMENT_PROMPT.md](./REFINEMENT_PROMPT.md)           | Complete guide for improving strategy quality with tests and simulations.               |
 
 ## How to improve an existing strategy
 
 If you want to make a strategy better, the safest path is:
 
-1. Read [default-strategy.ts](./default-strategy.ts) and understand the current ordering.
+1. Read [deck-aware-strategy.ts](./deck-aware-strategy.ts) and the [strategy/](./strategy/) family evaluators to understand the current ordering.
 2. Add or update focused tests in [automated-actions.test.ts](./automated-actions.test.ts).
 3. Use decision traces to see what the bot considered, what it picked, and what failed.
 4. Make a small, explainable change.
 5. Compare the result in deterministic AI-vs-AI simulations.
 
+The most common improvement is adding card-level rules in [strategy-data/cards.ts](./strategy-data/cards.ts) or matchup plans in [strategy-data/matchups.ts](./strategy-data/matchups.ts). These tune the deck-aware strategy without touching evaluator code. See [REFINEMENT_PROMPT.md](./REFINEMENT_PROMPT.md) Section 7 for a guide.
+
 There is already project guidance pointing in that direction:
 
 - [REFINEMENT_PROMPT.md](./REFINEMENT_PROMPT.md)
-- [strategy-iteration.ts](../../lorcana-simulator/src/testing/strategy/strategy-iteration.ts)
-- [strategy-suite.ts](../../lorcana-simulator/src/testing/strategy/strategy-suite.ts)
-- [simulate-game.test.ts](../../lorcana-simulator/src/testing/strategy/simulate-game.test.ts)
+- [strategy-iteration.ts](../../lorcana-simulator/src/testing/ai-strategy/strategy-iteration.ts)
+- [strategy-suite.ts](../../lorcana-simulator/src/testing/ai-strategy/strategy-suite.ts)
+- [simulate-game.test.ts](../../lorcana-simulator/src/testing/ai-strategy/simulate-game.test.ts)
 
 Good improvements are usually:
 

@@ -35,7 +35,7 @@ export const headsHeldHigh: ActionCard = {
       effect: {
         steps: [
           {
-            amount: 3,
+            amount: { type: "up-to", value: 3 },
             target: {
               selector: "chosen",
               count: "all",
@@ -44,7 +44,6 @@ export const headsHeldHigh: ActionCard = {
               cardTypes: ["character"],
             },
             type: "remove-damage",
-            upTo: true,
           },
           {
             duration: "this-turn",

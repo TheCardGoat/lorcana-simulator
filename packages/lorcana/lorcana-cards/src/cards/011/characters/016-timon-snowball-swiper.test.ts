@@ -32,7 +32,6 @@ describe("Timon - Snowball Swiper", () => {
       expect(testEngine.asPlayerOne().playCard(timonSnowballSwiper)).toBeSuccessfulCommand();
 
       // Controller chooses the non-character card to discard
-      expect(testEngine.asPlayerOne().resolveOnlyBag()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().respondWith(actionCardId)).toBeSuccessfulCommand();
 
       // Action card is discarded

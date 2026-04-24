@@ -17,6 +17,7 @@ import type {
   ExecutableMoveEntry,
   LorcanaSimulatorMoveParams,
 } from "@/features/simulator/model/contracts.js";
+import type { CardSnapshotMap } from "@/features/simulator/model/board-utils.js";
 
 class MemoryStorage implements Storage {
   #entries = new Map<string, string>();
@@ -58,9 +59,15 @@ function createGameContextStub(
   overrides: Partial<LorcanaGameContextValue> = {},
 ): LorcanaGameContextValue {
   const executableMovesFn = overrides.executableMoves ?? (() => []);
+  const cardSnapshotsByIdFn = overrides.cardSnapshotsById ?? (() => ({}));
   return {
     boardSnapshot: () => null,
-    cardSnapshotsById: () => ({}),
+    cardSnapshotsById: cardSnapshotsByIdFn,
+    resolveCardSnapshot:
+      overrides.resolveCardSnapshot ??
+      ((cardId: string) => (cardSnapshotsByIdFn() as CardSnapshotMap)[cardId] ?? null),
+    resolvePlayerName: () => null,
+    isPlayerMobile: () => false,
     getPlayerSummary: () => null,
     executableMoves: executableMovesFn,
     moveCategorySummaries: () => [],
@@ -101,6 +108,8 @@ function createGameContextStub(
     setAnimationSpeed: () => {},
     soundVolume: () => 50,
     setSoundVolume: () => {},
+    showZoneCounters: () => false,
+    setShowZoneCounters: () => {},
     previewChallenge: () => null,
     executeMove: () => false,
     playCard: () => false,
@@ -676,7 +685,7 @@ describe("LorcanaSidebarPresenter", () => {
         },
         options: {
           clearChallengeMode: false,
-          clearSelection: false,
+          clearSelection: true,
           status: "Resolved effect input",
         },
       },
@@ -1129,7 +1138,7 @@ describe("LorcanaSidebarPresenter", () => {
       title: "Resolve optional effect from Jasmine - Resourceful Infiltrator",
     });
     expect(presenter.activePlayerGuidance[0]?.actions.map((action) => action.label)).toEqual([
-      "Cancel",
+      "Hide",
       "Confirm",
     ]);
 
@@ -1893,8 +1902,13 @@ describe("LorcanaSidebarPresenter", () => {
     expect(presenter.handleAvailableMovesSelectionCard(targetCard.cardId)).toBe(true);
     expect(presenter.selectedActionSessionCardIds).toEqual([targetCard.cardId]);
 
+    // `ready` is now wired into the slot-overlay supported effect types
+    // (Phase 1 #5), so re-clicking the same card via the board handler
+    // re-assigns the slot rather than toggling the selection off — the
+    // slotted UX uses an explicit clear, not double-click. Both state
+    // holders still agree, which is the "sync" the test guards.
     expect(presenter.handleActionSessionCardSelection(targetCard)).toBe(true);
-    expect(presenter.selectedActionSessionCardIds).toEqual([]);
+    expect(presenter.selectedActionSessionCardIds).toEqual([targetCard.cardId]);
   });
 
   it("tracks scry assignment and submits ordered destinations", () => {
@@ -2523,7 +2537,7 @@ describe("LorcanaSidebarPresenter", () => {
 
     expect(presenter.handleManualCardActionSelection(inkCard)).toBe(true);
     expect(presenter.activePlayerGuidance[0]?.message).toBe(
-      "Confirm Ink. You can skip confirmations in Settings.",
+      "Confirm Ink. You can skip confirmations in Player Settings.",
     );
 
     expect(presenter.confirmManualCardActionSelection()).toBe(true);
@@ -2637,7 +2651,7 @@ describe("LorcanaSidebarPresenter", () => {
 
     expect(presenter.handleActionSessionCardSelection(defender)).toBe(true);
     expect(presenter.activePlayerGuidance[0]?.message).toBe(
-      `Confirm Challenge. You can skip confirmations in Settings.\nChallenge ${attacker.label} -> ${defender.label}`,
+      `Confirm Challenge. You can skip confirmations in Player Settings.\nChallenge ${attacker.label} -> ${defender.label}`,
     );
     expect(presenter.availableMovesSelectionState).toMatchObject({
       categoryId: "challenge",
@@ -2794,6 +2808,72 @@ describe("LorcanaSidebarPresenter", () => {
     );
     expect(presenter.handleActionSessionCardSelection(blockedDefender)).toBe(false);
     expect(pendingErrors.at(-1)).toBe("Another Bodyguard must be challenged first.");
+  });
+
+  it("routes challenge target selection through handleActionSessionCardSelection for exerted defender", () => {
+    const attacker = createCardSnapshot("playerOne", "play", {
+      id: "attacker-card",
+      name: "Moana - Determined Explorer",
+      type: "character",
+    });
+    const defender = createCardSnapshot("playerTwo", "play", {
+      id: "defender-card",
+      name: "Camilo Madrigal - Center Stage",
+      type: "character",
+    });
+    const executed: Array<{ moveId: string; params: Record<string, unknown> }> = [];
+    const challengeMove: ExecutableMoveEntry = {
+      id: `challenge:${attacker.cardId}:${defender.cardId}`,
+      label: "Challenge",
+      moveId: "challenge",
+      params: {
+        attackerId: attacker.cardId,
+        defenderId: defender.cardId,
+      },
+      presentation: {
+        kind: "targeted",
+        categoryId: "challenge",
+        categoryLabel: "Challenge",
+        optionLabel: `${attacker.label} -> ${defender.label}`,
+      },
+    };
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        cardSnapshotsById: () => ({
+          [attacker.cardId]: attacker,
+          [defender.cardId]: defender,
+        }),
+        ownerSide: () => "playerOne",
+        boardSnapshot: () =>
+          ({
+            stateID: 1,
+          }) as never,
+        executeMove: (moveId, params) => {
+          executed.push({ moveId, params: params as Record<string, unknown> });
+          return true;
+        },
+      }),
+    );
+
+    const storage = new MemoryStorage();
+    globalThis.localStorage = storage;
+
+    presenter.handleSkipActionConfirmationToggle(true);
+
+    expect(presenter.startActionSelectionSession("challenge", [challengeMove])).toBe(true);
+    expect(presenter.handleActionSessionCardSelection(attacker)).toBe(true);
+    expect(presenter.actionSelectionSession?.phase).toBe("choose-target");
+    expect(presenter.handleActionSessionCardSelection(defender)).toBe(true);
+    expect(executed).toEqual([
+      {
+        moveId: "challenge",
+        params: {
+          attackerId: attacker.cardId,
+          defenderId: defender.cardId,
+        },
+      },
+    ]);
   });
 
   it("executes single-card actions immediately when confirmation is disabled", () => {
@@ -3386,7 +3466,7 @@ describe("LorcanaSidebarPresenter", () => {
 
     expect(presenter.handleAvailableMovesSelectionOption(secondAbilityMove.id)).toBe(true);
     expect(presenter.activePlayerGuidance[0]?.message).toBe(
-      "Confirm Goofy - Musketeer: {E} Second Ability. You can skip confirmations in Settings.",
+      "Confirm Goofy - Musketeer: {E} Second Ability. You can skip confirmations in Player Settings.",
     );
     expect(presenter.availableMovesSelectionState).toMatchObject({
       categoryId: "activate-ability",
@@ -3698,5 +3778,132 @@ describe("LorcanaSidebarPresenter", () => {
     // Bag item should be unaffected
     expect(bagItem?.statusMessage).toBeUndefined();
     expect(bagItem?.canResolve).toBe(true);
+  });
+
+  it("routes discard-cost Shift through choose-cost before choosing a target", () => {
+    const shiftCard = createCardSnapshot("playerOne", "hand", {
+      id: "shift-card",
+      name: "Ursula - Eric's Bride",
+      type: "character",
+    });
+    const discardSong = createCardSnapshot("playerOne", "hand", {
+      id: "discard-song",
+      name: "Ariel's Song",
+      type: "action",
+    });
+    const alternateDiscardSong = createCardSnapshot("playerOne", "hand", {
+      id: "discard-song-2",
+      name: "Second Song",
+      type: "action",
+    });
+    const shiftTarget = createCardSnapshot("playerOne", "play", {
+      id: "shift-target",
+      name: "Ursula - Sea Witch",
+      type: "character",
+    });
+    const executedMoves: Array<LorcanaSimulatorMoveParams["playCard"]> = [];
+    const shiftMove = createExecutableMove({
+      id: "shiftCard:shift-card:shift-target",
+      label: "Shift onto Ursula - Sea Witch",
+      moveId: "playCard",
+      params: {
+        cardId: shiftCard.cardId,
+        cost: "shift",
+        shiftTarget: shiftTarget.cardId,
+        targets: [shiftTarget.cardId],
+      },
+      presentation: {
+        kind: "targeted",
+        categoryId: "shift-card",
+        categoryLabel: "Shift",
+        optionLabel: "Shift onto Ursula - Sea Witch",
+        selectableCosts: [
+          {
+            kind: "discardCards",
+            count: 1,
+            candidateCardIds: [
+              discardSong.cardId as CardInstanceId,
+              alternateDiscardSong.cardId as CardInstanceId,
+            ],
+            zone: "hand",
+            cardType: "song",
+          },
+        ],
+      },
+    });
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        ownerSide: () => "playerOne",
+        cardSnapshotsById: () => ({
+          [shiftCard.cardId]: shiftCard,
+          [discardSong.cardId]: discardSong,
+          [alternateDiscardSong.cardId]: alternateDiscardSong,
+          [shiftTarget.cardId]: shiftTarget,
+        }),
+        executeMove: (moveId, params) => {
+          if (moveId !== "playCard") {
+            return false;
+          }
+
+          executedMoves.push(params as LorcanaSimulatorMoveParams["playCard"]);
+          return true;
+        },
+      }),
+    );
+
+    expect(presenter.startActionSelectionSession("shift-card", [shiftMove])).toBe(true);
+    expect(presenter.handleAvailableMovesSelectionCard(shiftCard.cardId)).toBe(true);
+    expect(presenter.activePlayerGuidance[0]?.message).toBe(
+      `Choose a card song to discard for ${shiftCard.label}.`,
+    );
+    expect(presenter.availableMovesSelectionState).toMatchObject({
+      categoryId: "shift-card",
+      phase: "choose-cost",
+      sourceCardId: shiftCard.cardId,
+      sourceLabel: shiftCard.label,
+      entries: [
+        {
+          kind: "card",
+          cardId: discardSong.cardId,
+          label: discardSong.label,
+        },
+        {
+          kind: "card",
+          cardId: alternateDiscardSong.cardId,
+          label: alternateDiscardSong.label,
+        },
+      ],
+    });
+
+    expect(presenter.handleActionSessionCardSelection(discardSong)).toBe(true);
+    expect(presenter.activePlayerGuidance[0]?.message).toBe(
+      `Choose a shift target for ${shiftCard.label}.`,
+    );
+    expect(presenter.availableMovesSelectionState).toMatchObject({
+      categoryId: "shift-card",
+      phase: "choose-target",
+      sourceCardId: shiftCard.cardId,
+      sourceLabel: shiftCard.label,
+      entries: [
+        {
+          kind: "card",
+          cardId: shiftTarget.cardId,
+          label: shiftTarget.label,
+        },
+      ],
+    });
+
+    expect(presenter.handleActionSessionCardSelection(shiftTarget)).toBe(true);
+    expect(presenter.confirmActionSelection()).toBe(true);
+    expect(executedMoves).toEqual([
+      {
+        cardId: shiftCard.cardId,
+        cost: "shift",
+        shiftTarget: shiftTarget.cardId,
+        discardCards: [discardSong.cardId],
+        targets: [shiftTarget.cardId],
+      },
+    ]);
   });
 });

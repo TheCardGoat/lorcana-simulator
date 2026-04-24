@@ -184,6 +184,7 @@ export class MultiplayerEngine {
         payload: payload.input,
         timestamp: Date.now(),
       });
+
       return {
         success: true,
         patches: result.patches,

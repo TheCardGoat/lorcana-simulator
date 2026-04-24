@@ -20,6 +20,8 @@ import type { Amount } from "@tcg/lorcana-types";
 import type { LorcanaCardDerived } from "./projected-board";
 import type { ActionResolutionInput } from "../runtime-moves/resolution/action-effects/types";
 import type { DynamicAmountEventSnapshot } from "./domain-events";
+import type { ActivateAbilityEffectSelectionsInput } from "../targeting/runtime/target-analysis";
+import type { SlottedTargetInput } from "../targeting/slotted-targets";
 
 /**
  * Play Card Cost Types - Discriminated Union
@@ -30,8 +32,24 @@ import type { DynamicAmountEventSnapshot } from "./domain-events";
  * `playerTargets` directly, clients can migrate to the new field without breaking changes.
  * See: https://github.com/TheCardGoat/the-card-goat-online/pull/228#discussion_r2894733960
  */
+/**
+ * Target input accepted by moves that prompt for selections.
+ *
+ * - **Flat array / scalar**: single-filter "pick N" effects (e.g. "deal 2 damage
+ *   to chosen character", "remove damage from 3 chosen characters"). All picks
+ *   share one filter and are interchangeable by position.
+ * - **Slotted discriminated object**: effects with multiple distinct filter
+ *   steps (e.g. move-damage's `from`/`to`, shift-and-choose's shift cost + pick).
+ *   Each slot is addressable by key, so order can't be garbled by the UI.
+ */
+export type TargetInput =
+  | CardInstanceId
+  | PlayerId
+  | readonly (CardInstanceId | PlayerId)[]
+  | SlottedTargetInput;
+
 export interface PlayCardActionResolutionInput {
-  targets?: CardInstanceId | CardInstanceId[];
+  targets?: TargetInput;
   /** @internal Reserved for future runtime support. Currently consumed via `targets`. */
   playerTargets?: PlayerId | PlayerId[];
   amount?: Amount;
@@ -57,7 +75,8 @@ export type PlayCardCost =
   | { cost: "singTogether"; singers: CardInstanceId[] }
   | { cost: "free" }
   | { cost: "sacrifice"; sacrificeTarget: CardInstanceId }
-  | { cost: "exert-items"; exertTargets: CardInstanceId[] };
+  | { cost: "exert-items"; exertTargets: CardInstanceId[] }
+  | { cost: "put-on-deck-bottom"; deckBottomTarget: CardInstanceId };
 
 /**
  * Lorcana Move Parameters
@@ -94,7 +113,12 @@ export interface LorcanaRuntimeMoveParams {
     cardId: CardInstanceId;
     abilityIndex?: number;
     abilityText?: string;
-    targets?: CardInstanceId[];
+    targets?: TargetInput;
+    /**
+     * Structured selections for effect resolution (not printed `costs.*`).
+     * Merged into `targets` in canonical slot order; see `analyzeActivateAbilityEffectResolutionSlots`.
+     */
+    effectSelections?: ActivateAbilityEffectSelectionsInput;
     choiceIndex?: number;
     preventAutoResolveTriggeredEffects?: boolean;
     costs?: {
@@ -113,6 +137,9 @@ export interface LorcanaRuntimeMoveParams {
   // ===== Standard Moves =====
   passTurn: Record<string, never>;
   concede: { playerId: PlayerId };
+
+  // ===== Server-Only Moves =====
+  forfeitGame: { winnerId: PlayerId; reason: string };
 
   // ===== Debug/Manual Moves =====
   manualMoveCard: {

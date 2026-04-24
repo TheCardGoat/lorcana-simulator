@@ -24,6 +24,12 @@ const exhaustedCostCharacter = createMockCharacter({
   cost: 2,
 });
 
+const dryingCostCharacter = createMockCharacter({
+  id: "shan-yu-drying-cost",
+  name: "Drying Cost Character",
+  cost: 2,
+});
+
 describe("The Sword of Shan-Yu", () => {
   it("exerts one of your characters as a cost, then readies the chosen character and stops them from questing this turn", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
@@ -83,5 +89,26 @@ describe("The Sword of Shan-Yu", () => {
     expect(result.success).toBe(false);
     expect(testEngine.asPlayerOne().isExerted(theSwordOfShanyu)).toBe(false);
     expect(testEngine.asPlayerOne().isExerted(readyTarget)).toBe(true);
+  });
+
+  it("rejects a drying character as the additional exert cost", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [
+        theSwordOfShanyu,
+        { card: dryingCostCharacter, isDrying: true },
+        { card: readyTarget, exerted: true, isDrying: false },
+      ],
+    });
+
+    const result = testEngine.asPlayerOne().activateAbility(theSwordOfShanyu, {
+      ability: "WORTHY WEAPON",
+      costs: {
+        exertCharacters: [dryingCostCharacter],
+      },
+      targets: [readyTarget],
+    });
+
+    expect(result.success).toBe(false);
+    expect(testEngine.asPlayerOne().isExerted(theSwordOfShanyu)).toBe(false);
   });
 });

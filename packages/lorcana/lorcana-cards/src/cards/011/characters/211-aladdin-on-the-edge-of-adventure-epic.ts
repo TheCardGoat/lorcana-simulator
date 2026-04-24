@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { aladdinOnTheEdgeOfAdventure } from "..";
+import { aladdinOnTheEdgeOfAdventure } from "./081-aladdin-on-the-edge-of-adventure";
 
 export const aladdinOnTheEdgeOfAdventureEpic: CharacterCard = {
   ...aladdinOnTheEdgeOfAdventure,

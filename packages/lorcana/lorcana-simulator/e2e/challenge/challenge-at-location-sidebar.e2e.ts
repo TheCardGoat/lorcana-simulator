@@ -45,7 +45,7 @@ test("available moves panel can complete a challenge against a character at a lo
   await panel.getByRole("button", { name: defenderLabel }).click();
   await expect(
     panel.getByText(
-      `Confirm Challenge. You can skip confirmations in Settings.\nChallenge ${attackerLabel} -> ${defenderLabel}`,
+      `Confirm Challenge. You can skip confirmations in Player Settings.\nChallenge ${attackerLabel} -> ${defenderLabel}`,
     ),
   ).toBeVisible();
 

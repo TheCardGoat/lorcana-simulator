@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { theColdNeverBotheredMe } from "..";
+import { theColdNeverBotheredMe } from "./130-the-cold-never-bothered-me";
 
 export const theColdNeverBotheredMeEnchanted: ActionCard = {
   ...theColdNeverBotheredMe,

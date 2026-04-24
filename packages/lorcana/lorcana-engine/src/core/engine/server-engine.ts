@@ -57,6 +57,12 @@ export interface ServerEngineConfig {
   seed?: string;
   staticResources: MatchStaticResources;
   debugMode?: boolean;
+  choosingFirstPlayer?: string;
+  /**
+   * When true, skip game initialization in MatchRuntime.
+   * Used for the deserialization fast path (restoreAuthoritativeSnapshot follows immediately).
+   */
+  _skipInitialization?: boolean;
 }
 
 export interface StateSnapshot {
@@ -69,7 +75,7 @@ export interface StateSnapshot {
   undoneMoveId?: string;
 }
 
-export interface UndoCheckpoint {
+export interface UndoStackEntry {
   stateID: number;
   playerId: string;
   state: MatchState;
@@ -86,11 +92,30 @@ export class ServerEngine implements GameEngine {
   private stateUpdateHandlers: Array<(stateID: number) => void> = [];
   private debug: boolean = false;
   private staticResources: MatchStaticResources;
-  private undoCheckpoint: UndoCheckpoint | null = null;
+  private undoStack: UndoStackEntry[] = [];
 
   constructor(config: ServerEngineConfig) {
     this.debug = config.debugMode ?? false;
     this.staticResources = config.staticResources;
+
+    if (config._skipInitialization) {
+      // Fast path: skip game initialization and static resource round-trip.
+      // restoreAuthoritativeSnapshot() will immediately load the real state.
+      const emptyCardsMaps = { cardInstances: {}, owners: {} };
+      this.runtime = new MatchRuntime(config.runtimeConfig, {
+        players: config.players,
+        seed: config.seed,
+        capturePatches: true,
+        cardsMaps: emptyCardsMaps,
+        cardCatalog: config.staticResources.cards,
+        choosingFirstPlayer: config.choosingFirstPlayer,
+        _skipInitialization: true,
+        _prebuiltStaticResources: config.staticResources,
+      });
+      // stateHistory will be populated by restoreAuthoritativeSnapshot()
+      return;
+    }
+
     this.runtime = new MatchRuntime(config.runtimeConfig, {
       players: config.players,
       seed: config.seed,
@@ -98,6 +123,7 @@ export class ServerEngine implements GameEngine {
       //TODO: We could pass both `cardsMaps` and `cardCatalog` from constructuror
       cardsMaps: createCardsMapsFromStaticResources(config.staticResources),
       cardCatalog: config.staticResources.cards,
+      choosingFirstPlayer: config.choosingFirstPlayer,
     });
 
     this.stateHistory.push({
@@ -140,11 +166,12 @@ export class ServerEngine implements GameEngine {
       const previousState = this.runtime.getState();
       const previousStateID = this.runtime.getCurrentStateID();
       const runtimeSnapshotBeforeMove = this.runtime.createRuntimeSnapshot();
+      const commandTimestamp = Date.now();
       const result = this.runtime.processCommand(
         message.command,
         playerId,
         message.prevStateID,
-        Date.now(),
+        commandTimestamp,
         "player",
       );
 
@@ -158,42 +185,20 @@ export class ServerEngine implements GameEngine {
         );
         const newStateID = this.runtime.getCurrentStateID();
         const newState = this.runtime.getState();
-        this.stateHistory.push({
-          stateID: newStateID,
-          state: newState,
-          timestamp: Date.now(),
-          transitionType: "move",
-        });
-        this.moveHistory.push({
-          moveId: message.command.move,
+        this.recordMoveTransition({
           input: message.command.input,
+          moveId: message.command.move,
+          newState,
+          newStateID,
           playerId,
-          role: "player",
-          timestamp: Date.now(),
-          stateID: newStateID,
-          // Attribute the move to the turn it was issued in, even if the move
-          // itself advances the game to the next turn before history is stored.
-          turnNumber: previousState.ctx.status.turn,
+          previousState,
+          previousStateID,
+          runtimeSnapshotBeforeMove,
+          timestamp: commandTimestamp,
           transitionType: "move",
-          newStateID: newStateID,
+          undoable: result.undoable,
+          actorRole: "player",
         });
-
-        // Undo checkpoint management
-        const hasTurnStarted = result.gameEvents.some((e) => e.event.kind === "TURN_STARTED");
-        if (hasTurnStarted) {
-          this.undoCheckpoint = null;
-        } else if (result.undoable) {
-          this.undoCheckpoint = {
-            stateID: previousStateID,
-            playerId,
-            state: previousState,
-            runtimeSnapshot: runtimeSnapshotBeforeMove,
-            undoneStateID: newStateID,
-            undoneMoveId: message.command.move,
-          };
-        } else {
-          this.undoCheckpoint = null;
-        }
 
         this.broadcastStateUpdate(processedResult, newStateID);
       } else {
@@ -288,7 +293,8 @@ export class ServerEngine implements GameEngine {
   }
 
   canUndo(playerId: string): boolean {
-    return this.undoCheckpoint !== null && this.undoCheckpoint.playerId === playerId;
+    const topEntry = this.undoStack.at(-1);
+    return topEntry !== undefined && topEntry.playerId === playerId;
   }
 
   undo(playerId: string, prevStateID?: number, commandID?: string): boolean {
@@ -303,16 +309,11 @@ export class ServerEngine implements GameEngine {
     }
 
     if (!this.canUndo(playerId)) {
-      this.sendError(
-        playerId,
-        "INVALID_MOVE",
-        "Cannot undo: no undoable checkpoint available",
-        false,
-      );
+      this.sendError(playerId, "INVALID_MOVE", "Cannot undo: no undoable history available", false);
       return false;
     }
 
-    const checkpoint = this.undoCheckpoint!;
+    const checkpoint = this.undoStack.at(-1)!;
     const previousState = this.runtime.getState();
     const previousStateID = this.runtime.getCurrentStateID();
     const timestamp = Date.now();
@@ -333,7 +334,7 @@ export class ServerEngine implements GameEngine {
     );
     const restoredState = this.runtime.getState();
 
-    this.undoCheckpoint = null;
+    this.undoStack = this.undoStack.slice(0, -1);
     this.stateHistory.push({
       stateID: nextStateID,
       state: restoredState,
@@ -364,7 +365,6 @@ export class ServerEngine implements GameEngine {
         state: restoredState,
         patches: [],
         gameEvents,
-        logEntries: [],
         processedCommand: undoCommand,
         animations: [],
         undoable: false,
@@ -480,16 +480,20 @@ export class ServerEngine implements GameEngine {
       input,
     };
     const previousState = this.runtime.getState();
+    const previousStateID = this.runtime.getCurrentStateID();
+    const runtimeSnapshotBeforeMove = this.runtime.createRuntimeSnapshot();
+    const commandTimestamp = Date.now();
     const result = this.runtime.processCommand(
       command,
       playerId,
-      this.runtime.getCurrentStateID(),
-      Date.now(),
+      previousStateID,
+      commandTimestamp,
       actorRole,
     );
 
     if (result.success) {
       const newStateID = this.runtime.getCurrentStateID();
+      const newState = this.runtime.getState();
       const processedResult = this.withPacketAnimations(
         result,
         previousState,
@@ -497,28 +501,23 @@ export class ServerEngine implements GameEngine {
         playerId,
         actorRole,
       );
+      this.recordMoveTransition({
+        input,
+        moveId,
+        newState,
+        newStateID,
+        playerId,
+        previousState,
+        previousStateID,
+        runtimeSnapshotBeforeMove,
+        timestamp: commandTimestamp,
+        transitionType: "move",
+        undoable: result.undoable,
+        actorRole,
+      });
       this.broadcastStateUpdate(processedResult, newStateID);
 
-      if (actorRole === "player") {
-        this.moveHistory.push({
-          moveId,
-          input,
-          playerId,
-          role: "player",
-          timestamp: Date.now(),
-          stateID: newStateID,
-          // Attribute the move to the turn it was issued in, even if the move
-          // itself advances the game to the next turn before history is stored.
-          turnNumber: previousState.ctx.status.turn,
-          transitionType: "move",
-          newStateID: newStateID,
-        });
-      }
-
-      // Clear undo checkpoint for non-protocol moves so it doesn't go stale
-      this.undoCheckpoint = null;
-
-      return { success: true };
+      return { success: true, result: processedResult };
     }
 
     // TODO: Reply to sender with the error.
@@ -575,17 +574,17 @@ export class ServerEngine implements GameEngine {
     return Array.from(this.transports.keys());
   }
 
-  getUndoCheckpointSnapshot(): UndoCheckpoint | null {
-    return this.undoCheckpoint ?? null;
+  getUndoStackSnapshot(): UndoStackEntry[] {
+    return [...this.undoStack];
   }
 
-  restoreUndoCheckpointSnapshot(checkpoint: UndoCheckpoint | null): void {
-    this.undoCheckpoint = checkpoint ?? null;
+  restoreUndoStackSnapshot(stack: UndoStackEntry[] | null | undefined): void {
+    this.undoStack = stack ? [...stack] : [];
   }
 
   restoreAuthoritativeSnapshot(snapshot: {
     state: MatchState;
-    undoCheckpoint?: UndoCheckpoint;
+    undoStack?: UndoStackEntry[];
   }): void {
     this.runtime.loadState(snapshot.state);
     this.stateHistory = [
@@ -596,7 +595,7 @@ export class ServerEngine implements GameEngine {
       },
     ];
     this.moveHistory = [];
-    this.undoCheckpoint = snapshot.undoCheckpoint ?? null;
+    this.undoStack = snapshot.undoStack ? [...snapshot.undoStack] : [];
 
     for (const connectedPlayerId of this.transports.keys()) {
       this.sendFullSync(connectedPlayerId);
@@ -649,6 +648,108 @@ export class ServerEngine implements GameEngine {
         staticResources: this.staticResources,
       }),
     ];
+  }
+
+  private recordMoveTransition(args: {
+    moveId: string;
+    input?: MoveInput;
+    playerId: string;
+    previousState: MatchState;
+    previousStateID: number;
+    newState: MatchState;
+    newStateID: number;
+    runtimeSnapshotBeforeMove: RuntimeSnapshot;
+    timestamp: number;
+    transitionType: "move";
+    undoable: boolean;
+    actorRole: RuntimeActorRole;
+  }): void {
+    const {
+      actorRole,
+      input,
+      moveId,
+      newState,
+      newStateID,
+      playerId,
+      previousState,
+      previousStateID,
+      runtimeSnapshotBeforeMove,
+      timestamp,
+      transitionType,
+      undoable,
+    } = args;
+
+    this.stateHistory.push({
+      stateID: newStateID,
+      state: newState,
+      timestamp,
+      transitionType,
+    });
+
+    if (actorRole === "player") {
+      this.moveHistory.push({
+        moveId,
+        input,
+        playerId,
+        role: "player",
+        timestamp,
+        stateID: newStateID,
+        turnNumber: previousState.ctx.status.turn,
+        transitionType,
+        newStateID,
+      });
+    }
+
+    this.updateUndoStackAfterMove({
+      actorRole,
+      moveId,
+      newStateID,
+      playerId,
+      previousState,
+      previousStateID,
+      runtimeSnapshotBeforeMove,
+      undoable,
+    });
+  }
+
+  private updateUndoStackAfterMove(args: {
+    actorRole: RuntimeActorRole;
+    moveId: string;
+    newStateID: number;
+    playerId: string;
+    previousState: MatchState;
+    previousStateID: number;
+    runtimeSnapshotBeforeMove: RuntimeSnapshot;
+    undoable: boolean;
+  }): void {
+    const {
+      actorRole,
+      moveId,
+      newStateID,
+      playerId,
+      previousState,
+      previousStateID,
+      runtimeSnapshotBeforeMove,
+      undoable,
+    } = args;
+
+    if (actorRole !== "player" || !undoable) {
+      this.undoStack = [];
+      return;
+    }
+
+    const nextEntry: UndoStackEntry = {
+      stateID: previousStateID,
+      playerId,
+      state: previousState,
+      runtimeSnapshot: runtimeSnapshotBeforeMove,
+      undoneStateID: newStateID,
+      undoneMoveId: moveId,
+    };
+    const topEntry = this.undoStack.at(-1);
+
+    this.undoStack =
+      topEntry && topEntry.playerId !== playerId ? [nextEntry] : [...this.undoStack, nextEntry];
   }
 
   private notifyStateUpdate(stateID: number): void {

@@ -403,7 +403,6 @@ function createSuccessResult() {
     ) as LorcanaMatchState,
     patches: [],
     gameEvents: [],
-    logEntries: [],
     processedCommand: {
       commandID: "test-command",
       move: "test-move",
@@ -2464,7 +2463,7 @@ describe("automated actions", () => {
     expect(boardControlResult.finalResult.success).toBe(true);
   });
 
-  it("lets board-control-lore-race spend available ink on a simple permanent play", () => {
+  it("lets board-control-lore-race play playable cards before inking", () => {
     const efficientPermanent = createMockCharacter({
       id: "board-control-efficient-permanent",
       name: "Board Control Permanent",
@@ -2487,17 +2486,6 @@ describe("automated actions", () => {
       deck: 1,
     });
 
-    // Ink first (ink-before-play ordering), then play the efficient permanent
-    const inkResult = engine.asPlayerOne().takeAutomatedAction({
-      strategy: boardControlLoreRaceAutomatedActionStrategy,
-    });
-
-    expect(inkResult.selectedCandidate).toMatchObject({
-      family: "putCardIntoInkwell",
-      cardId: engine.asPlayerOne().getCard(expensiveInkCard).id,
-    });
-    expect(inkResult.finalResult.success).toBe(true);
-
     const playResult = engine.asPlayerOne().takeAutomatedAction({
       strategy: boardControlLoreRaceAutomatedActionStrategy,
     });
@@ -2507,6 +2495,16 @@ describe("automated actions", () => {
       cardId: engine.asPlayerOne().getCard(efficientPermanent).id,
     });
     expect(playResult.finalResult.success).toBe(true);
+
+    const inkResult = engine.asPlayerOne().takeAutomatedAction({
+      strategy: boardControlLoreRaceAutomatedActionStrategy,
+    });
+
+    expect(inkResult.selectedCandidate).toMatchObject({
+      family: "putCardIntoInkwell",
+      cardId: engine.asPlayerOne().getCard(expensiveInkCard).id,
+    });
+    expect(inkResult.finalResult.success).toBe(true);
   });
 
   it("lets aggressive board-control challenge for a clear value trade before questing", () => {
@@ -3008,7 +3006,7 @@ describe("automated actions", () => {
     expect(topWeightHeuristic?.value).toContain("inkAvoid");
   });
 
-  it("inks before playing to gain available ink for the turn", () => {
+  it("plays affordable cards before inking unplayable ones", () => {
     const cheapPlayable = createMockCharacter({
       id: "ink-order-cheap-playable",
       name: "Ink Order Cheap Playable",
@@ -3039,9 +3037,15 @@ describe("automated actions", () => {
       deck: 1,
     });
 
-    // With ink-before-play ordering, the AI should:
-    // 1. Ink the unplayable 7-cost card first (gaining 4 available ink)
-    // 2. Then play the 4-cost card (now affordable with 4 ink)
+    // Play-before-ink ordering: play the affordable card first, then ink the unplayable one
+    const playResult = engine.asPlayerOne().takeAutomatedAction();
+
+    expect(playResult.selectedCandidate).toMatchObject({
+      family: "playCard",
+      cardId: engine.asPlayerOne().getCard(cheapPlayable).id,
+    });
+    expect(playResult.finalResult.success).toBe(true);
+
     const inkResult = engine.asPlayerOne().takeAutomatedAction();
 
     expect(inkResult.selectedCandidate).toMatchObject({
@@ -3049,16 +3053,9 @@ describe("automated actions", () => {
       cardId: engine.asPlayerOne().getCard(inkFodder).id,
     });
     expect(inkResult.finalResult.success).toBe(true);
-
-    const playResult = engine.asPlayerOne().takeAutomatedAction();
-
-    expect(playResult.selectedCandidate).toMatchObject({
-      family: "playCard",
-    });
-    expect(playResult.finalResult.success).toBe(true);
   });
 
-  it("prefers inking unplayable cards over playable ones", () => {
+  it("plays playable cards and inks unplayable ones", () => {
     const playable = createMockCharacter({
       id: "ink-unplayable-two-drop",
       name: "Ink Unplayable Two Drop",
@@ -3081,15 +3078,22 @@ describe("automated actions", () => {
       deck: 1,
     });
 
-    // The AI should ink the 6-cost card (unplayable with 2 ink) rather than
-    // the 2-cost card (playable), preserving the option to play the cheaper card
-    const result = engine.asPlayerOne().takeAutomatedAction();
+    // Play-before-ink: play the affordable card first, then ink the unplayable one
+    const playResult = engine.asPlayerOne().takeAutomatedAction();
 
-    expect(result.selectedCandidate).toMatchObject({
+    expect(playResult.selectedCandidate).toMatchObject({
+      family: "playCard",
+      cardId: engine.asPlayerOne().getCard(playable).id,
+    });
+    expect(playResult.finalResult.success).toBe(true);
+
+    const inkResult = engine.asPlayerOne().takeAutomatedAction();
+
+    expect(inkResult.selectedCandidate).toMatchObject({
       family: "putCardIntoInkwell",
       cardId: engine.asPlayerOne().getCard(unplayable).id,
     });
-    expect(result.finalResult.success).toBe(true);
+    expect(inkResult.finalResult.success).toBe(true);
   });
 
   it("changes sapphire-steel opening ink choices based on the opposing color pair", () => {
@@ -3703,17 +3707,7 @@ describe("automated actions", () => {
       },
     );
 
-    // Ink-before-play: the AI inks the generic five-drop first, then fires Grab Your Bow
-    const inkResult = engine.asPlayerOne().takeAutomatedAction({
-      strategy: bestDeckAwareOracleLoreRaceAutomatedActionStrategy,
-    });
-
-    expect(inkResult.selectedCandidate).toMatchObject({
-      family: "putCardIntoInkwell",
-      cardId: engine.asPlayerOne().getCard(genericFiveDrop).id,
-    });
-    expect(inkResult.finalResult.success).toBe(true);
-
+    // Play-before-ink: the AI fires Grab Your Bow directly (play outranks ink)
     const playResult = engine.asPlayerOne().takeAutomatedAction({
       strategy: bestDeckAwareOracleLoreRaceAutomatedActionStrategy,
     });
@@ -3722,6 +3716,16 @@ describe("automated actions", () => {
       family: "playCard",
       cardId: engine.asPlayerOne().getCard(grabYourBow).id,
       targets: [engine.asPlayerTwo().getCard(threat).id],
+    });
+
+    // Then inks the generic five-drop
+    const inkResult = engine.asPlayerOne().takeAutomatedAction({
+      strategy: bestDeckAwareOracleLoreRaceAutomatedActionStrategy,
+    });
+
+    expect(inkResult.selectedCandidate).toMatchObject({
+      family: "putCardIntoInkwell",
+      cardId: engine.asPlayerOne().getCard(genericFiveDrop).id,
     });
   });
 
@@ -4604,5 +4608,342 @@ describe("automated action execution", () => {
     });
     expect(result.fallbackTaken).toBeUndefined();
     expect(result.finalResult.success).toBe(true);
+  });
+
+  // THE-890: AI plays cards with invalid targets or illegal actions
+
+  it("does not enumerate a playCard candidate for an action requiring a chosen target when no valid targets exist", () => {
+    // Simulates Grab Your Bow: banish up to 2 chosen characters with strength ≤ 2
+    // AI should not play this card if no characters with strength ≤ 2 are on the field
+    const grabYourBow = createMockActionCard({
+      id: "grab-your-bow-test",
+      name: "Grab Your Bow Test",
+      cost: 2,
+      text: "Banish up to 2 chosen characters with 2 strength or less.",
+      abilities: [
+        {
+          id: "grab-your-bow-test-1",
+          type: "action",
+          text: "Banish up to 2 chosen characters with 2 strength or less.",
+          effect: {
+            type: "banish",
+            target: {
+              selector: "chosen",
+              count: { upTo: 2 },
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+              filter: [{ type: "strength-comparison", comparison: "less-or-equal", value: 2 }],
+            },
+          } as Effect,
+        },
+      ],
+    });
+    const strongEnemy = createMockCharacter({
+      id: "strong-enemy-the890",
+      name: "Strong Enemy",
+      cost: 3,
+      strength: 5,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [grabYourBow],
+        inkwell: grabYourBow.cost,
+        deck: 1,
+      },
+      {
+        play: [{ card: strongEnemy, isDrying: false }],
+        deck: 1,
+      },
+    );
+
+    const grabYourBowId = engine.asPlayerOne().getCard(grabYourBow).id;
+    const playCandidates = engine
+      .asPlayerOne()
+      .enumerateAutomatedActions()
+      .candidates.filter(
+        (candidate) => candidate.family === "playCard" && candidate.cardId === grabYourBowId,
+      );
+
+    // The AI must not play Grab Your Bow when no valid targets (strength ≤ 2) exist
+    expect(playCandidates).toHaveLength(0);
+  });
+
+  it("does enumerate a playCard candidate for an action requiring a chosen target when valid targets exist", () => {
+    // When valid targets exist, the card should still be enumerated
+    const grabYourBow = createMockActionCard({
+      id: "grab-your-bow-with-target",
+      name: "Grab Your Bow With Target",
+      cost: 2,
+      text: "Banish up to 2 chosen characters with 2 strength or less.",
+      abilities: [
+        {
+          id: "grab-your-bow-with-target-1",
+          type: "action",
+          text: "Banish up to 2 chosen characters with 2 strength or less.",
+          effect: {
+            type: "banish",
+            target: {
+              selector: "chosen",
+              count: { upTo: 2 },
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+              filter: [{ type: "strength-comparison", comparison: "less-or-equal", value: 2 }],
+            },
+          } as Effect,
+        },
+      ],
+    });
+    const weakEnemy = createMockCharacter({
+      id: "weak-enemy-the890",
+      name: "Weak Enemy",
+      cost: 2,
+      strength: 1,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [grabYourBow],
+        inkwell: grabYourBow.cost,
+        deck: 1,
+      },
+      {
+        play: [{ card: weakEnemy, isDrying: false }],
+        deck: 1,
+      },
+    );
+
+    const grabYourBowId = engine.asPlayerOne().getCard(grabYourBow).id;
+    const playCandidates = engine
+      .asPlayerOne()
+      .enumerateAutomatedActions()
+      .candidates.filter(
+        (candidate) => candidate.family === "playCard" && candidate.cardId === grabYourBowId,
+      );
+
+    // Valid target exists — the card should be playable
+    expect(playCandidates.length).toBeGreaterThan(0);
+  });
+
+  it("does not enumerate an activateAbility candidate when no valid targets exist for the ability", () => {
+    // Simulates Cheshire Cat From the Shadows: {E} — Banish chosen damaged character
+    // AI should not activate this ability when no damaged characters are on the field
+    const cheshireCatMock = createMockCharacter({
+      id: "cheshire-cat-the890",
+      name: "Cheshire Cat Test",
+      cost: 3,
+      abilities: [
+        {
+          id: "cheshire-cat-the890-wicked-smile",
+          name: "WICKED SMILE",
+          text: "WICKED SMILE {E} — Banish chosen damaged character.",
+          type: "activated",
+          cost: { exert: true },
+          effect: {
+            target: "CHOSEN_DAMAGED_CHARACTER",
+            type: "banish",
+          } as Effect,
+        } satisfies ActivatedAbilityDefinition,
+      ],
+    });
+    const healthyEnemy = createMockCharacter({
+      id: "healthy-enemy-the890",
+      name: "Healthy Enemy",
+      cost: 2,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: cheshireCatMock, isDrying: false }],
+        deck: 1,
+      },
+      {
+        play: [{ card: healthyEnemy, isDrying: false }],
+        deck: 1,
+      },
+    );
+
+    const abilityCandidates = engine
+      .asPlayerOne()
+      .enumerateAutomatedActions()
+      .candidates.filter((candidate) => candidate.family === "activateAbility");
+
+    // No damaged characters exist — the AI must not generate a WICKED SMILE candidate
+    expect(abilityCandidates).toHaveLength(0);
+  });
+
+  it("prefers opponent characters over allied characters when playing a harmful action card", () => {
+    // Simulates Let The Storm Rage On: deal-damage in a sequence — AI must prefer opponent targets
+    const stormRageOn = createMockActionCard({
+      id: "storm-rage-on-the890",
+      name: "Storm Rage On Test",
+      cost: 2,
+      text: "Deal 2 damage to chosen character. Draw a card.",
+      abilities: [
+        {
+          id: "storm-rage-on-the890-1",
+          type: "action",
+          text: "Deal 2 damage to chosen character. Draw a card.",
+          effect: {
+            type: "sequence",
+            steps: [
+              { amount: 2, target: "CHOSEN_CHARACTER", type: "deal-damage" },
+              { amount: 1, target: "CONTROLLER", type: "draw" },
+            ],
+          } as Effect,
+        },
+      ],
+    });
+    const ownCharacter = createMockCharacter({
+      id: "own-character-the890",
+      name: "Own Character",
+      cost: 3,
+      lore: 2,
+    });
+    const opponentCharacter = createMockCharacter({
+      id: "opponent-character-the890",
+      name: "Opponent Character",
+      cost: 3,
+      lore: 2,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [stormRageOn],
+        inkwell: stormRageOn.cost,
+        play: [{ card: ownCharacter, isDrying: false }],
+        deck: 1,
+      },
+      {
+        play: [{ card: opponentCharacter, isDrying: false }],
+        deck: 1,
+      },
+    );
+
+    const ownCharId = engine.asPlayerOne().getCard(ownCharacter).id as CardInstanceId;
+    const opponentCharId = engine.asPlayerTwo().getCard(opponentCharacter).id as CardInstanceId;
+    const stormRageOnId = engine.asPlayerOne().getCard(stormRageOn).id;
+
+    const stormCandidates = engine
+      .asPlayerOne()
+      .enumerateAutomatedActions()
+      .candidates.filter(
+        (candidate) => candidate.family === "playCard" && candidate.cardId === stormRageOnId,
+      );
+
+    // The first enumerated candidate should target the opponent character, not the player's own
+    expect(stormCandidates.length).toBeGreaterThan(0);
+    const firstCandidate = stormCandidates[0];
+    if (firstCandidate?.family === "playCard") {
+      expect(firstCandidate.targets).toContain(opponentCharId);
+      expect(firstCandidate.targets).not.toContain(ownCharId);
+    }
+  });
+
+  it("does not enumerate warded opponent characters as valid targets for harmful actions", () => {
+    const harmfulAction = createMockActionCard({
+      id: "harmful-action-ward-test",
+      name: "Harmful Action Ward Test",
+      cost: 2,
+      text: "Deal 1 damage to chosen character.",
+      abilities: [
+        {
+          id: "harmful-action-ward-test-1",
+          type: "action",
+          text: "Deal 1 damage to chosen character.",
+          effect: {
+            amount: 1,
+            target: "CHOSEN_CHARACTER",
+            type: "deal-damage",
+          } as Effect,
+        },
+      ],
+    });
+    const wardedEnemy = createMockCharacter({
+      id: "warded-enemy-the890",
+      name: "Warded Enemy",
+      cost: 3,
+      abilities: [{ id: "warded-enemy-ward", type: "keyword", keyword: "Ward", text: "Ward" }],
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [harmfulAction],
+        inkwell: harmfulAction.cost,
+        deck: 1,
+      },
+      {
+        play: [{ card: wardedEnemy, isDrying: false }],
+        deck: 1,
+      },
+    );
+
+    const harmfulActionId = engine.asPlayerOne().getCard(harmfulAction).id;
+    const wardedEnemyId = engine.asPlayerTwo().getCard(wardedEnemy).id as CardInstanceId;
+    const playCandidates = engine
+      .asPlayerOne()
+      .enumerateAutomatedActions()
+      .candidates.filter(
+        (candidate) => candidate.family === "playCard" && candidate.cardId === harmfulActionId,
+      );
+
+    // Only warded enemy on the field — no valid targets, so no candidate generated
+    expect(playCandidates).toHaveLength(0);
+
+    // Also verify the warded card is not referenced as a target in any candidate
+    for (const candidate of playCandidates) {
+      if (candidate.family === "playCard") {
+        expect(candidate.targets ?? []).not.toContain(wardedEnemyId);
+      }
+    }
+  });
+
+  it("keeps a resolveBag candidate with empty targets even for families that skip empty playCard", () => {
+    // Regression: the fix for THE-890 must not break the resolveBag fizzle path
+    const source = createMockCharacter({
+      id: "bag-empty-regression-source",
+      name: "Bag Empty Regression Source",
+      cost: 2,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: source, isDrying: false }],
+      deck: 1,
+    });
+    const sourceId = engine.asPlayerOne().getCard(source).id as CardInstanceId;
+
+    loadMutatedState(engine, (state) => {
+      state.G.triggeredAbilities.bag.items = [
+        {
+          id: "bag:regression:the890",
+          type: "bag-effect",
+          kind: "triggered-ability",
+          abilityId: "bag-regression-ability",
+          abilityKey: "bag-regression-ability",
+          controllerId: PLAYER_ONE,
+          chooserId: PLAYER_ONE,
+          sourceId,
+          cardPlayed: getCardPlayedPayload({
+            playerId: PLAYER_ONE,
+            cardId: sourceId,
+            cardType: "character",
+          }),
+          effect: {
+            type: "ready",
+            target: "CHOSEN_EXERTED_CHARACTER",
+          } satisfies Effect,
+          occurrenceIndex: 0,
+          resolutionInput: {},
+        } satisfies BagEffectEntry,
+      ];
+    });
+
+    const bagCandidates = engine
+      .asPlayerOne()
+      .enumerateAutomatedActions()
+      .candidates.filter((candidate) => candidate.family === "resolveBag");
+
+    // resolveBag with no valid targets still emits an empty-target candidate for fizzle
+    expect(bagCandidates).toHaveLength(1);
+    expect(bagCandidates[0]).toMatchObject({
+      family: "resolveBag",
+      bagId: "bag:regression:the890",
+    });
   });
 });

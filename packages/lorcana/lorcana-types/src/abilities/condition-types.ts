@@ -494,8 +494,8 @@ export interface ResourceCountCondition {
   type: "resource-count";
   /** What to count - REQUIRED */
   what: CountableResource;
-  /** Whose resources to count - REQUIRED. Use "active" for the current turn player. */
-  controller: "you" | "opponent" | "any" | "active";
+  /** Whose resources to count - REQUIRED */
+  controller: "you" | "opponent" | "any";
   /** Comparison operator - REQUIRED */
   comparison: ComparisonOperator;
   /** Value to compare against - REQUIRED */
@@ -751,6 +751,24 @@ export interface FirstThisTurnCondition {
 }
 
 // ============================================================================
+// Granted Ability Conditions
+// ============================================================================
+
+/**
+ * Check if this card currently has a granted activated ability with a specific ID.
+ *
+ * Checks both temporary grants (e.g., Donald Duck's MONEY EVERYWHERE)
+ * and static grants (e.g., The Great Illuminary's STARTLING DISCOVERY).
+ *
+ * @example "If this character has been granted '{E} — Draw a card'"
+ */
+export interface HasGrantedAbilityCondition {
+  type: "has-granted-ability";
+  /** The ability ID to check for */
+  abilityId: string;
+}
+
+// ============================================================================
 // Zone Conditions
 // ============================================================================
 
@@ -880,7 +898,9 @@ export type TurnMetric =
   | "challenges-by-player"
   | "banished-characters"
   | "damaged-characters-by-owner"
+  | "damage-removed-by-player"
   | "discard-cards-left"
+  | "discard-cards-entered"
   | "quested-characters"
   | "played-cards"
   | "cards-drawn-by-player";
@@ -1164,7 +1184,9 @@ export type Condition =
   | SecondInTurnCondition
   | TargetIsDamagedCondition
   // Discard-context conditions
-  | DiscardedCardHasClassificationCondition;
+  | DiscardedCardHasClassificationCondition
+  // Granted ability conditions
+  | HasGrantedAbilityCondition;
 
 // ============================================================================
 // Condition Builders (convenience)
@@ -1226,7 +1248,7 @@ export function hasCharacterCount(
 export function resourceCount(
   what: CountableResource,
   value: number,
-  controller: "you" | "opponent" | "any" | "active" = "you",
+  controller: "you" | "opponent" | "any" = "you",
   comparison: ComparisonOperator = "greater-or-equal",
 ): ResourceCountCondition {
   return {

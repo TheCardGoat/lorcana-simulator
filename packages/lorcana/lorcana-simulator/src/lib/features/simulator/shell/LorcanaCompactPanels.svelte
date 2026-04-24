@@ -1,17 +1,19 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import { ClipboardList, OctagonX, ScrollText, X } from "@lucide/svelte";
+  import { ClipboardList, MessageSquareText, OctagonX, ScrollText, X } from "@lucide/svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Drawer from "$lib/components/ui/drawer";
   import * as Dialog from "$lib/design-system/primitives/dialog";
   import { m } from "$lib/i18n/messages.js";
   import EmptyState from "@/design-system/simulator/display/EmptyState.svelte";
-  import {AvailableMovesPanel, EventLogPanel} from "@/features/simulator/index.js";
-  import {useSimulatorCardContext} from "@/features/simulator/context/simulator-card-context.svelte.js";
-  import {useLorcanaSidebarPresenter} from "@/features/simulator/context/game-context.svelte.js";
+  import { AvailableMovesPanel, EventLogPanel } from "@/features/simulator/index.js";
+  import MatchChatPanel from "@/features/match-chat/MatchChatPanel.svelte";
+  import { maybeUseMatchChatControllerContext } from "@/features/match-chat/match-chat-controller.svelte.js";
+  import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
+  import { useLorcanaSidebarPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
 
-  type CompactPanelTab = "moves" | "log";
+  type CompactPanelTab = "moves" | "log" | "chat";
 
   interface LorcanaCompactPanelsProps {
     open?: boolean;
@@ -27,6 +29,8 @@
 
   const sidebar = useLorcanaSidebarPresenter();
   const simulatorCardContext = useSimulatorCardContext();
+  const matchChatContext = maybeUseMatchChatControllerContext();
+  const matchChatController = $derived(matchChatContext?.controller ?? null);
 
   function handleCardHover(card: LorcanaCardSnapshot): void {
     simulatorCardContext.setExternalPreviewCard(card);
@@ -51,6 +55,7 @@
 
   const availableMovesTitle = $derived(m["sim.actions.panel.title"]({}));
   const eventLogTitle = $derived(m["sim.tabletop.eventLog.title"]({}));
+  const chatTitle = $derived(m["sim.tabletop.chat.title"]({}));
 
   let concedeDialogOpen = $state(false);
 
@@ -73,6 +78,12 @@
     open = false;
     sidebar.handleMobileConcede();
   }
+
+  $effect(() => {
+    if (!matchChatController && activeTab === "chat") {
+      activeTab = "moves";
+    }
+  });
 </script>
 
 <Drawer.Root bind:open direction="bottom" shouldScaleBackground={false}>
@@ -83,7 +94,11 @@
     <Drawer.Header class="compact-panels-header">
       <div class="flex items-center justify-between gap-3">
         <Drawer.Title class="compact-panels-title">
-          {activeTab === "moves" ? availableMovesTitle : eventLogTitle}
+          {activeTab === "moves"
+            ? availableMovesTitle
+            : activeTab === "log"
+              ? eventLogTitle
+              : chatTitle}
         </Drawer.Title>
         <div class="compact-panels-header-actions">
           {#if activeTab === "log"}
@@ -134,6 +149,21 @@
         <span>{eventLogTitle}</span>
         <span class="compact-tab-badge">{moveLogEntries.length}</span>
       </button>
+
+      {#if matchChatController}
+        <button
+          type="button"
+          role="tab"
+          class="compact-tab"
+          class:compact-tab--active={activeTab === "chat"}
+          aria-selected={activeTab === "chat"}
+          onclick={() => (activeTab = "chat")}
+        >
+          <MessageSquareText class="size-4" />
+          <span>{chatTitle}</span>
+          <span class="compact-tab-badge">{matchChatController.messages.length}</span>
+        </button>
+      {/if}
     </div>
 
     <div class="compact-panels-body">
@@ -178,13 +208,15 @@
             hotkeyMode={sidebar.hotkeyMode}
           />
         {/if}
-      {:else}
+      {:else if activeTab === "log"}
         <EventLogPanel
           compact
           entries={moveLogEntries}
           viewerSide={ownerSide}
           {showRawLogRegistryJson}
         />
+      {:else}
+        <MatchChatPanel compact viewerSide={ownerSide} />
       {/if}
     </div>
   </Drawer.Content>

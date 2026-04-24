@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { findersKeepers } from "..";
+import { findersKeepers } from "./060-finders-keepers";
 
 export const findersKeepersEnchanted: ActionCard = {
   ...findersKeepers,

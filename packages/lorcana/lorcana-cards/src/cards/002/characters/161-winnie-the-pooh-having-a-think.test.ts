@@ -51,6 +51,9 @@ describe("Winnie the Pooh - Having a Think", () => {
         hand: 0,
         inkwell: 1,
       });
+
+      const inkedId = testEngine.findCardInstanceId(handCard, "inkwell", "player_one");
+      expect(testEngine.isExertedByInstance(inkedId)).toBe(false);
     });
 
     it("does not move the hand card when the ability is declined", () => {

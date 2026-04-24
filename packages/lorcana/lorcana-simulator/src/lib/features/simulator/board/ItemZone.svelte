@@ -33,6 +33,7 @@ let {
 }: ItemZoneProps = $props();
 
 const board = useLorcanaBoardPresenter();
+const showZoneCounters = $derived(board.showZoneCounters);
 const sidebar = useLorcanaSidebarPresenter();
 const simulatorCardContext = useSimulatorCardContext();
 const items = $derived.by(() =>
@@ -139,9 +140,11 @@ $effect(() => {
 	data-player-seat={seat}
 	data-player-side={playerSide}
 >
+  {#if showZoneCounters}
   <div class="item-counter">
     <span class="item-counter-value">{items.length}</span>
   </div>
+  {/if}
 
   <div class="item-zone-cards">
     <div class="item-cards" bind:this={itemContainerEl}>

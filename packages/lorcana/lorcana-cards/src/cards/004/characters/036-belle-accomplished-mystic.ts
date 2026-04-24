@@ -51,8 +51,7 @@ export const belleAccomplishedMystic: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           type: "move-damage",
-          amount: 3,
-          upTo: true,
+          amount: { type: "up-to", value: 3 },
           from: "CHOSEN_CHARACTER",
           to: "CHOSEN_OPPOSING_CHARACTER",
         },

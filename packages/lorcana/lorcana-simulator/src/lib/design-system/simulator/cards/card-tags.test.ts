@@ -171,4 +171,16 @@ describe("card tags", () => {
     expect(handGroups.tags.find((tag) => tag.id === "shift")?.label).toBe("Shift 4");
     expect(playGroups.tags.map((tag) => tag.id)).not.toContain("shift");
   });
+
+  it("does not treat discard-cost Shift entries as numeric Shift values", () => {
+    const groups = getLorcanaCardTagGroups(
+      createCardSnapshot({
+        zoneId: "hand",
+        keywords: ["Shift"],
+        textEntries: [{ title: "Shift: Discard 2 cards", description: "" }],
+      }),
+    );
+
+    expect(groups.tags.find((tag) => tag.id === "shift")?.label).toBe("Shift");
+  });
 });

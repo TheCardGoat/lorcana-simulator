@@ -40,7 +40,7 @@ export const annaIceBreaker: CharacterCard = {
       effect: {
         duration: "until-start-of-next-turn",
         restriction: "cant-ready",
-        target: "SELF",
+        target: "CHOSEN_OPPOSING_CHARACTER",
         type: "restriction",
       },
       id: "pj2-2",

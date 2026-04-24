@@ -37,12 +37,14 @@ export const guntherInteriorDesigner: CharacterCard = {
       type: "triggered",
       sourceZones: ["play", "discard"],
       trigger: {
+        challengeContext: { role: "defender" },
         event: "challenged-and-banished",
         on: "SELF",
         timing: "when",
       },
       effect: {
         type: "return-to-hand",
+        chosenBy: "opponent",
         target: {
           selector: "chosen",
           count: 1,

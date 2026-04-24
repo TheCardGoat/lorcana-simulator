@@ -1,8 +1,9 @@
 import type { MatchState, PlayerId, RuntimeFlowDefinition, RuntimeLifecycleContext } from "#core";
-import type { LorcanaG } from "../types";
 import { hasTemporaryRestriction } from "../runtime-moves/effects/temporary-effects";
 import { hasStaticCardRestriction } from "../runtime-moves/rules/static-ability-utils";
 import { getOrBuildMoveRegistry } from "../runtime-moves/rules/move-registry-cache";
+import { resolveTurnOwnerId } from "../core/runtime/turn-owner";
+import { checkLoreWinCondition } from "../runtime-moves/state/game-state-check";
 
 function canAutoAdvanceBeginningPhase(state: MatchState): boolean {
   return (
@@ -96,7 +97,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
             order: 1,
             onEnter: (ctx: RuntimeLifecycleContext) => {
               // Ready exerted cards and clear drying only for the current player (play + inkwell)
-              const currentPlayer = ctx.playerId ?? ctx.framework.state.priority.holder;
+              const currentPlayer = resolveTurnOwnerId(ctx.framework.state, ctx.G);
               if (!currentPlayer) {
                 return;
               }
@@ -246,18 +247,16 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
             reason: state.ctx.status.reason ?? "Game ended",
           };
         }
-        // Lore win — default threshold is 20, but win-condition-modification
-        // abilities (e.g. Donald Duck - Flustered Sorcerer) can raise it for
-        // specific players by storing overrides in G.loreToWin.
-        const game: LorcanaG = state.G;
-        for (const [playerId, lore] of Object.entries(game.lore)) {
-          const loreToWin = game.loreToWin?.[playerId as PlayerId] ?? 20;
-          if (lore >= loreToWin) {
-            return {
-              winner: playerId,
-              reason: `Reached ${String(loreToWin)} lore`,
-            };
-          }
+        // Lore win (§1.8.1.1) — default threshold is 20, but
+        // win-condition-modification abilities (e.g. Donald Duck – Flustered
+        // Sorcerer) can raise it per player. Modified thresholds are stored in
+        // G.loreToWin and kept up-to-date whenever cards enter/leave play.
+        const loreWin = checkLoreWinCondition(state.G);
+        if (loreWin) {
+          return {
+            winner: loreWin.winner,
+            reason: `Reached ${String(loreWin.loreToWin)} lore`,
+          };
         }
         return undefined;
       },

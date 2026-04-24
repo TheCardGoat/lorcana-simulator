@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { ursulaDeceiverOfAll } from "..";
+import { ursulaDeceiverOfAll } from "./091-ursula-deceiver-of-all";
 
 export const ursulaDeceiverOfAllEnchanted: CharacterCard = {
   ...ursulaDeceiverOfAll,

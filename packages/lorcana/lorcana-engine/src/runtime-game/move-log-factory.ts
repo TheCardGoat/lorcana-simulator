@@ -9,7 +9,7 @@
  */
 
 import type { CardInstanceId, PlayerId, PublishedGameEvent } from "#core";
-import type { LorcanaGameLogEntry } from "../types/log-messages";
+import type { LorcanaGameLogEntry, ScryDestinationEntry } from "../types/log-messages";
 import type { ProjectedLogEntry } from "../core/runtime/match-runtime.types";
 import { privateField } from "../core/runtime/private-field";
 import type {
@@ -92,6 +92,14 @@ function buildFromMoveId(
       return { type: "passTurn", playerId, timestamp };
     case "concede":
       return { type: "concede", playerId, timestamp };
+    case "forfeitGame":
+      return {
+        type: "forfeitGame",
+        playerId,
+        timestamp,
+        winnerId: playerId as PlayerId,
+        reason: "",
+      };
     default:
       return undefined;
   }
@@ -118,12 +126,22 @@ function convertProjectedEntry(
     case "lorcana.move.concede":
       return { type: "concede", playerId, timestamp };
 
+    case "lorcana.move.forfeitGame":
+      return {
+        type: "forfeitGame",
+        playerId: (v.winnerId ?? playerId) as PlayerId,
+        timestamp,
+        winnerId: v.winnerId as PlayerId,
+        reason: (v.reason as string) ?? "",
+      };
+
     case "lorcana.card.inked":
       return {
         type: "inkCard",
         playerId,
         timestamp,
         cardId: v.cardId as CardInstanceId,
+        cardName: v.cardName as string | undefined,
       };
 
     case "lorcana.move.quest":
@@ -206,6 +224,9 @@ function convertProjectedEntry(
         timestamp,
         cardId: v.cardId as CardInstanceId,
         shiftTargetId: v.shiftTargetId as CardInstanceId,
+        ...(typeof v.shiftTargetName === "string" && v.shiftTargetName.length > 0
+          ? { shiftTargetName: v.shiftTargetName }
+          : {}),
         outcomes,
       };
 
@@ -239,6 +260,27 @@ function convertProjectedEntry(
         outcomes,
       };
 
+    case "lorcana.ability.activated.named.discardCost":
+      return {
+        type: "activateAbility",
+        playerId,
+        timestamp,
+        cardId: v.cardId as CardInstanceId,
+        abilityName: v.abilityName as string,
+        discardCardIds: (v.discardCardIds as CardInstanceId[]) ?? [],
+        outcomes,
+      };
+
+    case "lorcana.ability.activated.discardCost":
+      return {
+        type: "activateAbility",
+        playerId,
+        timestamp,
+        cardId: v.cardId as CardInstanceId,
+        discardCardIds: (v.discardCardIds as CardInstanceId[]) ?? [],
+        outcomes,
+      };
+
     // ── Setup ─────────────────────────────────────────────
     case "lorcana.setup.firstPlayerChosen":
       return {
@@ -264,6 +306,7 @@ function convertProjectedEntry(
 
     case "lorcana.bag.resolve.pending":
     case "lorcana.bag.resolve.pending.named":
+    case "lorcana.bag.resolve.pending.named.targets":
       return buildResolveBagLog("pending", v, timestamp, outcomes);
 
     case "lorcana.bag.resolve.cancelled":
@@ -337,15 +380,7 @@ function convertProjectedEntry(
 
     case "lorcana.effect.resolve.scrySelection":
     case "lorcana.effect.resolve.scrySelection.detail":
-      return buildResolveEffectLog(
-        {
-          kind: "scrySelection",
-          count: (v.count as number) ?? 0,
-        },
-        v,
-        timestamp,
-        outcomes,
-      );
+      return buildResolveScryEffectLog(actionEntry, v, timestamp, outcomes);
 
     case "lorcana.effect.resolve.revealTopCard":
     case "lorcana.effect.resolve.revealTopCard.autoBottom":
@@ -372,6 +407,48 @@ function convertProjectedEntry(
     default:
       return undefined;
   }
+}
+
+function buildResolveScryEffectLog(
+  actionEntry: ProjectedLogEntry,
+  values: Record<string, unknown>,
+  timestamp: number,
+  outcomes?: MoveOutcomes,
+): ResolveEffectLog {
+  const visibility = actionEntry.visibility;
+
+  if (visibility.mode === "PUBLIC_WITH_OVERRIDES") {
+    // The chooser's override message carries the full destination detail.
+    // Find the chooser by looking for the override keyed to the detail message.
+    for (const [chooserId, override] of Object.entries(visibility.overrides)) {
+      if (override.key === "lorcana.effect.resolve.scrySelection.detail") {
+        const detailValues = override.values as Record<string, unknown>;
+        const destinations = Array.isArray(detailValues.destinations)
+          ? (detailValues.destinations as ScryDestinationEntry[])
+          : undefined;
+        if (destinations) {
+          return buildResolveEffectLog(
+            {
+              kind: "scrySelection",
+              count: (values.count as number) ?? 0,
+              detail: privateField(destinations, [chooserId]),
+            },
+            values,
+            timestamp,
+            outcomes,
+          );
+        }
+        break;
+      }
+    }
+  }
+
+  return buildResolveEffectLog(
+    { kind: "scrySelection", count: (values.count as number) ?? 0 },
+    values,
+    timestamp,
+    outcomes,
+  );
 }
 
 function buildAlterHandMoveLog(

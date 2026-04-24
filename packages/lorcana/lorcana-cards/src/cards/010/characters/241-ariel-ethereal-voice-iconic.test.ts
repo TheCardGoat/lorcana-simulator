@@ -100,6 +100,12 @@ describe("Ariel - Ethereal Voice (Iconic)", () => {
     });
 
     expect(testEngine.asPlayerOne().playCard(firstSong)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    // Per CRD 6.2.7: ability IS enqueued; condition (card under) checked at resolution
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(arielEtherealVoiceIconic, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
   });
 });

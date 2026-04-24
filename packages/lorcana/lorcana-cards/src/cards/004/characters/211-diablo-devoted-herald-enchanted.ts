@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { diabloDevotedHerald } from "..";
+import { diabloDevotedHerald } from "./070-diablo-devoted-herald";
 
 export const diabloDevotedHeraldEnchanted: CharacterCard = {
   ...diabloDevotedHerald,

@@ -1,253 +1,289 @@
 <script lang="ts">
-import {
-	LorcanaTabletopSimulator,
-	type LorcanaPlayerSettingsMap,
-	type LorcanaSimulatorReadModel,
-	type LorcanaSimulatorView,
-	type SimulatorDebugAnimationPlayer,
-	type SimulatorDebugAnimationRequest,
-} from "$lib";
-import type { LorcanaGameContext } from "@/features/simulator/context/game-context.svelte.js";
-import {getLorcanaFixture} from "@/features/simulator-devtools/fixtures";
-import {LorcanaMultiplayerSimulatorAdapter} from "@/features/simulator-devtools/harness";
-import { getLocale, setLocale } from "$lib/paraglide/runtime.js";
-import { buildSimulatorAssetUrl } from "$lib/config/public-url-config.js";
+  import {
+    LorcanaTabletopSimulator,
+    type LorcanaPlayerSettingsMap,
+    type LorcanaSimulatorReadModel,
+    type LorcanaSimulatorView,
+    type SimulatorDebugAnimationPlayer,
+    type SimulatorDebugAnimationRequest,
+  } from '$lib';
+  import type { LorcanaGameContext } from '@/features/simulator/context/game-context.svelte.js';
+  import { getLorcanaFixture } from '@/features/simulator-devtools/fixtures';
+  import { LorcanaMultiplayerSimulatorAdapter } from '@/features/simulator-devtools/harness';
+  import { getLocale, setLocale } from '$lib/paraglide/runtime.js';
+  import { buildSimulatorAssetUrl } from '$lib/config/public-url-config.js';
 
-import LorcanaDebugControls from "./LorcanaDebugControls.svelte";
+  import LorcanaDebugControls from './LorcanaDebugControls.svelte';
 
-import type {LorcanaSimulatorFixture} from "@/features/simulator/model/contracts";
-import type {LorcanaSimulatorLocale} from "@/features/simulator/model/contracts";
-import {
-	type BrowserTransportConfig,
-	LorcanaMultiplayerTestEngine,
-	normalizeBrowserTransportConfig,
-} from "@tcg/lorcana-engine/testing";
+  import type { LorcanaSimulatorFixture } from '@/features/simulator/model/contracts';
+  import type { LorcanaSimulatorLocale } from '@/features/simulator/model/contracts';
+  import {
+    type BrowserTransportConfig,
+    LorcanaMultiplayerTestEngine,
+    normalizeBrowserTransportConfig,
+  } from '@tcg/lorcana-engine/testing';
 
-interface StoryWrapperProps {
-	browserTransport?: BrowserTransportConfig;
-	fixture?: LorcanaSimulatorFixture;
-	fixtureId: string;
-	initialView: LorcanaSimulatorView;
-	locale?: LorcanaSimulatorLocale;
-	frameWidth?: string;
-	frameHeight?: string;
-	onFixtureChange?: (fixtureId: string) => void;
-}
+  interface StoryWrapperProps {
+    browserTransport?: BrowserTransportConfig;
+    fixture?: LorcanaSimulatorFixture;
+    fixtureId: string;
+    initialView: LorcanaSimulatorView;
+    locale?: LorcanaSimulatorLocale;
+    frameWidth?: string;
+    frameHeight?: string;
+    onFixtureChange?: (fixtureId: string) => void;
+  }
 
-const PLAYER_LOCALE_STORAGE_KEY = "lorcana.simulator.playerLocale";
-const TEST_PLAYER_ONE_CARD_BACK_URL =
-	buildSimulatorAssetUrl("card-back/back-cosmos.webp");
-const TEST_PLAYER_TWO_CARD_BACK_URL =
-	buildSimulatorAssetUrl("card-back/back-yellow.webp");
-// const TEST_PLAYER_ONE_PLAYMAT_URL =
-// 	"https://r2.tcg.online/public/lorcana/simulator/playmats/005.webp";
-// const TEST_PLAYER_TWO_PLAYMAT_URL =
-// 	"https://r2.tcg.online/public/lorcana/simulator/playmats/pooh-001.webp";
+  const PLAYER_LOCALE_STORAGE_KEY = 'lorcana.simulator.playerLocale';
+  const TEST_PLAYER_ONE_CARD_BACK_URL = buildSimulatorAssetUrl(
+    'card-back/back-cosmos.webp',
+  );
+  const TEST_PLAYER_TWO_CARD_BACK_URL = buildSimulatorAssetUrl(
+    'card-back/back-yellow.webp',
+  );
+  // const TEST_PLAYER_ONE_PLAYMAT_URL =
+  // 	"https://r2.tcg.online/public/lorcana/simulator/playmats/005.webp";
+  // const TEST_PLAYER_TWO_PLAYMAT_URL =
+  // 	"https://r2.tcg.online/public/lorcana/simulator/playmats/pooh-001.webp";
 
-let {
-	browserTransport = { mode: "sync" },
-	fixtureId,
-	fixture: fixtureProp,
-	initialView,
-	locale: storyLocale = "en",
-	frameWidth = "100%",
-	frameHeight = "100vh",
-	onFixtureChange,
-}: StoryWrapperProps = $props();
+  let {
+    browserTransport = { mode: 'sync' },
+    fixtureId,
+    fixture: fixtureProp,
+    initialView,
+    locale: storyLocale = 'en',
+    frameWidth = '100%',
+    frameHeight = '100vh',
+    onFixtureChange,
+  }: StoryWrapperProps = $props();
 
-let wrapperElement = $state<HTMLDivElement | null>(null);
-let serializedState = $state<string>("No state available.");
-let serializedBoardProjection = $state<string>("No board projection available.");
-let currentViewOverride = $state<LorcanaSimulatorView | null>(null);
-let debugStateId = $state<number | null>(null);
-let currentView = $derived(currentViewOverride ?? initialView);
+  let wrapperElement = $state<HTMLDivElement | null>(null);
+  let serializedState = $state<string>('No state available.');
+  let serializedBoardProjection = $state<string>(
+    'No board projection available.',
+  );
+  let currentViewOverride = $state<LorcanaSimulatorView | null>(null);
+  let debugStateId = $state<number | null>(null);
+  let currentView = $derived(currentViewOverride ?? initialView);
 
-$effect.pre(() => {
-	if (getLocale() !== storyLocale) {
-		setLocale(storyLocale, { reload: false });
-	}
+  let fixture = $derived<LorcanaSimulatorFixture>(
+    fixtureProp || getLorcanaFixture(fixtureId),
+  );
+  let normalizedBrowserTransport = $derived(
+    normalizeBrowserTransportConfig(browserTransport),
+  );
+  let testEngine = $derived.by<LorcanaMultiplayerTestEngine>(() => {
+    return LorcanaMultiplayerTestEngine.createWithFixture(
+      fixture.playerOne,
+      fixture.playerTwo,
+      {
+        browserTransport: normalizedBrowserTransport,
+        seed: fixture.seed ?? 'simulator-default',
+        skipPreGame: fixture.skipPreGame ?? true,
+        validateSync: false,
+        debugServerCommunication: true,
+      },
+    );
+  });
 
-	if (typeof localStorage !== "undefined") {
-		localStorage.setItem(PLAYER_LOCALE_STORAGE_KEY, storyLocale);
-	}
-});
+  let engine = $derived.by(() => {
+    if (currentView === 'spectator') {
+      return testEngine.asServer();
+    }
 
-let fixture = $derived<LorcanaSimulatorFixture>(fixtureProp || getLorcanaFixture(fixtureId));
-let normalizedBrowserTransport = $derived(
-	normalizeBrowserTransportConfig(browserTransport),
-);
-let testEngine = $derived.by<LorcanaMultiplayerTestEngine>(() => {
-	return LorcanaMultiplayerTestEngine.createWithFixture(
-		fixture.playerOne,
-		fixture.playerTwo,
-		{
-			browserTransport: normalizedBrowserTransport,
-			seed: fixture.seed ?? "simulator-default",
-			skipPreGame: fixture.skipPreGame ?? true,
-			validateSync: false,
-			debugServerCommunication: true,
-		},
-	);
-});
+    if (currentView === 'playerOne') {
+      return testEngine.asPlayerOne();
+    }
 
-let engine = $derived.by(() => {
-	if (currentView === "spectator") {
-		return testEngine.asServer();
-	}
+    if (currentView === 'playerTwo') {
+      return testEngine.asPlayerTwo();
+    }
 
-	if (currentView === "playerOne") {
-		return testEngine.asPlayerOne();
-	}
+    return testEngine.asServer();
+  });
 
-	if (currentView === "playerTwo") {
-		return testEngine.asPlayerTwo();
-	}
+  let readModel = $derived.by<Pick<LorcanaSimulatorReadModel, 'getMoveLog'>>(
+    () => {
+      const adapter = new LorcanaMultiplayerSimulatorAdapter(testEngine);
+      return {
+        getMoveLog: (limit?: number) => adapter.getMoveLog(limit, currentView),
+      };
+    },
+  );
 
-	return testEngine.asServer();
-});
+  let playerSettings = $derived.by<LorcanaPlayerSettingsMap>(() => {
+    const [playerOneId, playerTwoId] = testEngine
+      .getBoard(currentView)
+      .playerOrder.map(String);
 
-let readModel = $derived.by<Pick<LorcanaSimulatorReadModel, "getMoveLog">>(() => {
-	const adapter = new LorcanaMultiplayerSimulatorAdapter(testEngine);
-	return {
-		getMoveLog: (limit?: number) => adapter.getMoveLog(limit, currentView),
-	};
-});
+    return {
+      [playerOneId]: {
+        cardBack: TEST_PLAYER_ONE_CARD_BACK_URL,
+        // playmat: TEST_PLAYER_ONE_PLAYMAT_URL,
+      },
+      [playerTwoId]: {
+        cardBack: TEST_PLAYER_TWO_CARD_BACK_URL,
+        // playmat: TEST_PLAYER_TWO_PLAYMAT_URL,
+      },
+    };
+  });
 
-let playerSettings = $derived.by<LorcanaPlayerSettingsMap>(() => {
-	const [playerOneId, playerTwoId] = testEngine.getBoard(currentView).playerOrder.map(String);
+  function refreshDebugPayloads(): void {
+    debugStateId = testEngine.getStateID();
+    serializedState = JSON.stringify(
+      testEngine.getAuthoritativeState(),
+      null,
+      2,
+    );
+    serializedBoardProjection = JSON.stringify(
+      testEngine.getBoard(currentView),
+      null,
+      2,
+    );
+  }
 
-	return {
-		[playerOneId]: {
-			cardBack: TEST_PLAYER_ONE_CARD_BACK_URL,
-			// playmat: TEST_PLAYER_ONE_PLAYMAT_URL,
-		},
-		[playerTwoId]: {
-			cardBack: TEST_PLAYER_TWO_CARD_BACK_URL,
-			// playmat: TEST_PLAYER_TWO_PLAYMAT_URL,
-		},
-	};
-});
+  $effect(() => {
+    const activeFixtureId = fixtureId;
+    const activeView = currentView;
 
-function refreshDebugPayloads(): void {
-	debugStateId = testEngine.getStateID();
-	serializedState = JSON.stringify(testEngine.getAuthoritativeState(), null, 2);
-	serializedBoardProjection = JSON.stringify(testEngine.getBoard(currentView), null, 2);
-}
+    refreshDebugPayloads();
 
-$effect(() => {
-	const activeFixtureId = fixtureId;
-	const activeView = currentView;
+    const playerOneEngine = testEngine.getClientEngine('playerOne');
+    const playerTwoEngine = testEngine.getClientEngine('playerTwo');
 
-	refreshDebugPayloads();
+    const unsubscribePlayerOne =
+      playerOneEngine?.engine.onStateUpdate(() => {
+        refreshDebugPayloads();
+      }) ?? (() => {});
+    const unsubscribePlayerTwo =
+      playerTwoEngine?.engine.onStateUpdate(() => {
+        refreshDebugPayloads();
+      }) ?? (() => {});
 
-	const playerOneEngine = testEngine.getClientEngine("playerOne");
-	const playerTwoEngine = testEngine.getClientEngine("playerTwo");
+    return () => {
+      void activeFixtureId;
+      void activeView;
+      unsubscribePlayerOne();
+      unsubscribePlayerTwo();
+    };
+  });
 
-	const unsubscribePlayerOne = playerOneEngine?.engine.onStateUpdate(() => {
-			refreshDebugPayloads();
-		}) ?? (() => {});
-	const unsubscribePlayerTwo = playerTwoEngine?.engine.onStateUpdate(() => {
-			refreshDebugPayloads();
-		}) ?? (() => {});
+  function setCurrentView(nextView: LorcanaSimulatorView): void {
+    if (currentView === nextView) {
+      return;
+    }
 
-	return () => {
-		void activeFixtureId;
-		void activeView;
-		unsubscribePlayerOne();
-		unsubscribePlayerTwo();
-	};
-});
+    currentViewOverride = nextView;
+  }
 
-function setCurrentView(nextView: LorcanaSimulatorView): void {
-	if (currentView === nextView) {
-		return;
-	}
+  function swapPlayers(): void {
+    const nextView = currentView === 'playerTwo' ? 'playerOne' : 'playerTwo';
+    setCurrentView(nextView);
+  }
 
-	currentViewOverride = nextView;
-}
+  function resetToInitialFixture(): void {
+    currentViewOverride = null;
+  }
 
-function swapPlayers(): void {
-	const nextView = currentView === "playerTwo" ? "playerOne" : "playerTwo";
-	setCurrentView(nextView);
-}
+  let gameContextRef = $state<LorcanaGameContext | null>(null);
 
-function resetToInitialFixture(): void {
-	currentViewOverride = null;
-}
+  function runAnimation(animation: SimulatorDebugAnimationRequest): boolean {
+    if (!gameContextRef) {
+      return false;
+    }
+    return gameContextRef.runAnimation(animation);
+  }
 
-let gameContextRef = $state<LorcanaGameContext | null>(null);
+  function runQuestAnimation(
+    cardId: string,
+    player: SimulatorDebugAnimationPlayer,
+    loreGained: number,
+  ): boolean {
+    if (!gameContextRef) {
+      return false;
+    }
+    const side =
+      player === 'player_one' ? ('playerOne' as const) : ('playerTwo' as const);
+    return gameContextRef.runQuestAnimation(cardId, side, loreGained);
+  }
 
-function runAnimation(animation: SimulatorDebugAnimationRequest): boolean {
-	if (!gameContextRef) {
-		return false;
-	}
-	return gameContextRef.runAnimation(animation);
-}
-
-function runQuestAnimation(cardId: string, player: SimulatorDebugAnimationPlayer, loreGained: number): boolean {
-	if (!gameContextRef) {
-		return false;
-	}
-	const side = player === "player_one" ? "playerOne" as const : "playerTwo" as const;
-	return gameContextRef.runQuestAnimation(cardId, side, loreGained);
-}
-
-function runChallengeAnimation(attackerId: string, defenderId: string, player: SimulatorDebugAnimationPlayer, preview: { attackerDamageDealt: number; defenderDamageDealt: number; defenderKind: "character" | "location"; attackerWouldBeBanished: boolean; defenderWouldBeBanished: boolean }): boolean {
-	if (!gameContextRef) {
-		return false;
-	}
-	const side = player === "player_one" ? "playerOne" as const : "playerTwo" as const;
-	return gameContextRef.runChallengeAnimation(attackerId, defenderId, side, preview);
-}
-
+  function runChallengeAnimation(
+    attackerId: string,
+    defenderId: string,
+    player: SimulatorDebugAnimationPlayer,
+    preview: {
+      attackerDamageDealt: number;
+      defenderDamageDealt: number;
+      defenderKind: 'character' | 'location';
+      attackerWouldBeBanished: boolean;
+      defenderWouldBeBanished: boolean;
+    },
+  ): boolean {
+    if (!gameContextRef) {
+      return false;
+    }
+    const side =
+      player === 'player_one' ? ('playerOne' as const) : ('playerTwo' as const);
+    return gameContextRef.runChallengeAnimation(
+      attackerId,
+      defenderId,
+      side,
+      preview,
+    );
+  }
 </script>
 
 <div
-	class="story-wrapper dark"
-	style={`--story-frame-width: ${frameWidth}; --story-frame-height: ${frameHeight};`}
-	bind:this={wrapperElement}
+  class="story-wrapper dark"
+  style={`--story-frame-width: ${frameWidth}; --story-frame-height: ${frameHeight};`}
+  bind:this={wrapperElement}
 >
-	{#if engine}
-		<LorcanaTabletopSimulator {engine} {readModel} {playerSettings} bind:gameContext={gameContextRef}/>
+  {#if engine}
+    <LorcanaTabletopSimulator
+      {engine}
+      {readModel}
+      {playerSettings}
+      bind:gameContext={gameContextRef}
+    />
 
-			<LorcanaDebugControls
-					{wrapperElement}
-					{fixtureId}
-					view={currentView}
-					stateId={debugStateId}
-					{serializedState}
-					{serializedBoardProjection}
-					onViewChange={setCurrentView}
-					{onFixtureChange}
-					onSwapPlayers={swapPlayers}
-					onReset={resetToInitialFixture}
-				onRefresh={() => {}}
-				onRunAnimation={runAnimation}
-				onRunQuestAnimation={runQuestAnimation}
-				onRunChallengeAnimation={runChallengeAnimation}
-		/>
-	{:else}
-		<p class="loading">Loading...</p>
-	{/if}
+    <LorcanaDebugControls
+      {wrapperElement}
+      {fixtureId}
+      view={currentView}
+      stateId={debugStateId}
+      {serializedState}
+      {serializedBoardProjection}
+      onViewChange={setCurrentView}
+      {onFixtureChange}
+      onSwapPlayers={swapPlayers}
+      onReset={resetToInitialFixture}
+      onRefresh={() => {}}
+      onRunAnimation={runAnimation}
+      onRunQuestAnimation={runQuestAnimation}
+      onRunChallengeAnimation={runChallengeAnimation}
+    />
+  {:else}
+    <p class="loading">Loading...</p>
+  {/if}
 </div>
 
 <style>
-	.story-wrapper {
-		position: relative;
-		width: min(100%, var(--story-frame-width, 100%));
-		height: var(--story-frame-height, 100vh);
-		max-width: 100%;
-		margin: 0 auto;
-		overflow: hidden;
-		padding: 0 !important;
-	}
+  .story-wrapper {
+    position: relative;
+    width: min(100%, var(--story-frame-width, 100%));
+    height: var(--story-frame-height, 100vh);
+    max-width: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+    padding: 0 !important;
+  }
 
-	.loading {
-		margin: 0;
-		height: 100%;
-		display: grid;
-		place-items: center;
-		color: #d4e2f3;
-		font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-	}
+  .loading {
+    margin: 0;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    color: #d4e2f3;
+    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  }
 </style>

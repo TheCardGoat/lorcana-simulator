@@ -37,9 +37,11 @@ describe("Pride Lands - Jungle Oasis", () => {
     });
 
     expect(testEngine.asPlayerOne().activateAbility(prideLandsJungleOasis)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }).success).toBe(
-      true,
-    );
+    expect(
+      testEngine
+        .asPlayerOne()
+        .resolveNextPending({ resolveOptional: true, targets: [discardedLion] }).success,
+    ).toBe(true);
 
     expect(testEngine.asPlayerOne().getCardZone(prideLandsJungleOasis)).toBe("discard");
     expect(testEngine.asPlayerOne().getCardZone(discardedLion)).toBe("play");

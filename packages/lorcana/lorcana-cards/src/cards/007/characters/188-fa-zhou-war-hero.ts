@@ -52,6 +52,7 @@ export const faZhouWarHero: CharacterCard = {
         event: "challenge",
         on: "YOUR_CHARACTERS",
         timing: "whenever",
+        restrictions: [{ type: "defender-is-character" }],
       },
       type: "triggered",
     },

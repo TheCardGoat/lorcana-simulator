@@ -16,6 +16,10 @@ export const doYouWantToBuildASnowmanI18n: Record<Languages, I18nProperties> = {
           "* NO! They choose a character of theirs and put that card on the bottom of their deck.",
       },
     ],
+    optionTexts: [
+      "YES! They gain 3 lore.",
+      "NO! Choose one of your characters and put it on the bottom of your deck.",
+    ],
   },
   de: {
     name: "Willst du einen Schneemann bauen?",
@@ -30,6 +34,10 @@ export const doYouWantToBuildASnowmanI18n: Record<Languages, I18nProperties> = {
       {
         title: "• NEIN! Die Person wählt einen ihrer Charaktere und legt diesen unter ihr Deck.",
       },
+    ],
+    optionTexts: [
+      "JA! Sie sammeln 3 Legenden.",
+      "NEIN! Wähle einen deiner Charaktere und lege ihn unter dein Deck.",
     ],
   },
   fr: {
@@ -46,6 +54,10 @@ export const doYouWantToBuildASnowmanI18n: Record<Languages, I18nProperties> = {
         title: "• NON! il choisit l'un de ses personnages et le place sous sa pioche.",
       },
     ],
+    optionTexts: [
+      "D'ACCORD ! Il gagne 3 éclats de Lore.",
+      "NON ! Choisissez l'un de vos personnages et placez-le sous votre pioche.",
+    ],
   },
   it: {
     name: "Sei Già in Piedi Oppure Dormi?",
@@ -61,6 +73,10 @@ export const doYouWantToBuildASnowmanI18n: Record<Languages, I18nProperties> = {
         title:
           "• NO! Quell'avversario sceglie un suo personaggio e mette quella carta in fondo al suo mazzo.",
       },
+    ],
+    optionTexts: [
+      "SÌ! Ottiene 3 leggenda.",
+      "NO! Scegli un tuo personaggio e mettilo in fondo al tuo mazzo.",
     ],
   },
 };

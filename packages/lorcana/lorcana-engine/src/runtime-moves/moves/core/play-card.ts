@@ -15,6 +15,7 @@ import type {
   Condition,
   KeywordAbilityDefinition,
   LorcanaCard,
+  LorcanaCardDefinition,
 } from "@tcg/lorcana-types";
 import { createLorcanaLogProjection } from "../../../types";
 import type {
@@ -52,11 +53,16 @@ import {
   validateBasicCost,
   type ShiftDiscardCost,
 } from "../../rules/play-card-rules";
-import { attachShiftStack, moveCardOutOfPlayWithStack } from "../../state/shift-stack";
-import { recordBanishedCharacterThisTurn } from "../../state/turn-metrics";
-import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
+import { executeShiftPlay } from "../../shared/execute-shift-play";
+import { recomputeLoreToWin } from "../../effects/win-condition-effects";
+import { recordDiscardExitThisTurn } from "../../state/turn-metrics";
 import { resolveActionCardEffects } from "../../resolution/action-effect-resolver";
 import type { ActionResolutionInput } from "../../resolution/action-effects/types";
+import {
+  flattenSlottedTargets,
+  isSlottedTargetInput,
+  type SlottedTargetInput,
+} from "../../../targeting/slotted-targets";
 import {
   finalizeResolvedActionCard,
   hasPendingActionEffectResolution,
@@ -90,7 +96,7 @@ import {
   getLorcanaCardName,
   traceLorcanaRuntimeStep,
 } from "../../../runtime-trace";
-import { hasBodyguard } from "../../../card-utils";
+import { hasBodyguard, hasMayEnterPlayExertedOption } from "../../../card-utils";
 import {
   evaluateStaticCondition,
   hasOpponentStaticPlayRestriction,
@@ -99,7 +105,7 @@ import {
 import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import { buildStaticEffectRegistry } from "../../../rules/static-effect-registry";
 import type { StaticEffectRegistry } from "../../../rules/static-effect-registry";
-import { retargetContinuousEffects } from "../../effects/continuous-effects";
+import { getActivePlayFromUnderPermissions } from "../../effects/play-from-under-permissions";
 
 function validateInitialActionTargetSelection(
   effectOrAbility: unknown,
@@ -312,6 +318,24 @@ function getExertItemsAlternativeCostAbility(
       ability.type === "action" &&
       "alternativeCost" in ability &&
       ability.alternativeCost === "exert-4-items",
+  );
+}
+
+/**
+ * Check if a card has an action ability that represents a "put a Toy character card
+ * from your discard on the bottom of your deck" alternative cost.
+ * Pattern: "You may put a Toy character card from your discard on the bottom of your deck
+ * to play this character for free."
+ * Modeled as: action ability with `alternativeCost: "put-toy-character-on-deck-bottom"` property.
+ */
+function getPutToyOnDeckBottomAlternativeCostAbility(
+  cardDef: LorcanaCard,
+): ActionAbilityDefinition | undefined {
+  return cardDef.abilities?.find(
+    (ability): ability is ActionAbilityDefinition =>
+      ability.type === "action" &&
+      "alternativeCost" in ability &&
+      ability.alternativeCost === "put-toy-character-on-deck-bottom",
   );
 }
 
@@ -530,6 +554,11 @@ function getControlledCharactersInPlay(
 }
 
 function normalizeActionTargets(targets: unknown): CardInstanceId[] {
+  if (isSlottedTargetInput(targets)) {
+    return flattenSlottedTargets(targets).filter(
+      (target): target is CardInstanceId => typeof target === "string",
+    );
+  }
   if (Array.isArray(targets)) {
     return targets.filter((target): target is CardInstanceId => typeof target === "string");
   }
@@ -537,6 +566,24 @@ function normalizeActionTargets(targets: unknown): CardInstanceId[] {
     return [targets as CardInstanceId];
   }
   return [];
+}
+
+/**
+ * Split a move-level `targets` value into the slotted form (if present) and the
+ * flat form expected by the validator/resolver pipeline. Slot-aware resolvers
+ * read `slottedTargets` directly; everything else continues using the flat list.
+ */
+function splitActionTargetInput(targets: unknown): {
+  slottedTargets: SlottedTargetInput | undefined;
+  flatTargets: unknown;
+} {
+  if (isSlottedTargetInput(targets)) {
+    return {
+      slottedTargets: targets,
+      flatTargets: flattenSlottedTargets(targets),
+    };
+  }
+  return { slottedTargets: undefined, flatTargets: targets };
 }
 
 function tracePlayCardValidationFailure(
@@ -919,6 +966,7 @@ function getSelfPlayConditionError(
 export const playCard: LorcanaMoveDefinition<"playCard"> = {
   validate: (ctx): RuntimeValidationResult => {
     const params = ctx.args;
+    const cost = params.cost ?? "standard";
     const { cardId } = params;
     const tracedCardId = cardId as CardInstanceId;
     const fail = (
@@ -958,15 +1006,14 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         const cardMeta = (ctx.cards.require(cardId).meta ?? {}) as LorcanaCardMeta;
         const sourceItemId = cardMeta.stackParentId as CardInstanceId | undefined;
         const currentTurnForLimboCheck = ctx.framework.state.status.turn ?? 1;
-        const pendingPlayFromUnder = ctx.G.turnMetadata?.pendingPlayFromUnder ?? [];
+        const activePermissions = getActivePlayFromUnderPermissions(
+          ctx.G.playFromUnderPermissions,
+          currentPlayer,
+          currentTurnForLimboCheck,
+        );
         const matchingPermission =
           sourceItemId !== undefined
-            ? pendingPlayFromUnder.find(
-                (p) =>
-                  p.sourceItemId === sourceItemId &&
-                  p.expiresAtTurn >= currentTurnForLimboCheck &&
-                  p.controllerId === currentPlayer,
-              )
+            ? activePermissions.find((p) => p.sourceItemId === sourceItemId)
             : undefined;
         if (!matchingPermission) {
           return fail("Card not in hand", "CARD_NOT_IN_HAND");
@@ -1019,7 +1066,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       cardDef,
       currentTurn,
       registry,
-      params.cost === "standard" || params.cost === "shift" ? params.cost : undefined,
+      cost === "standard" || cost === "shift" ? cost : undefined,
     );
     const costIncrease = computeCostIncrease(ctx, cardDef, registry);
     const reducedCardCost = Math.max(
@@ -1027,7 +1074,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       cardDef.cost - costReduction.reductionAmount + costIncrease,
     );
 
-    switch (params.cost) {
+    switch (cost) {
       case "standard": {
         const costValidation = validateBasicCost(
           {
@@ -1318,7 +1365,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           );
         }
 
-        const sacrificeTargetId = params.sacrificeTarget;
+        const sacrificeTargetId = "sacrificeTarget" in params ? params.sacrificeTarget : undefined;
         if (!sacrificeTargetId || typeof sacrificeTargetId !== "string") {
           return fail(
             "Sacrifice cost requires a valid sacrificeTarget",
@@ -1361,7 +1408,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           );
         }
 
-        const exertTargets = params.exertTargets;
+        const exertTargets = "exertTargets" in params ? params.exertTargets : undefined;
         if (!exertTargets || !Array.isArray(exertTargets) || exertTargets.length !== 4) {
           return fail(
             "Exert cost requires exactly 4 exertTargets",
@@ -1398,6 +1445,75 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         }
         break;
       }
+
+      case "put-on-deck-bottom": {
+        // Validate "put a Toy character card from your discard on the bottom of your deck"
+        // alternative cost (e.g., Hand-in-the-Box - Sid's Toy)
+        const putAbility = getPutToyOnDeckBottomAlternativeCostAbility(cardDef);
+        if (!putAbility) {
+          return fail(
+            "Card does not have a put-on-deck-bottom alternative cost ability",
+            "NO_PUT_ON_DECK_BOTTOM_ABILITY",
+            cardDef,
+          );
+        }
+
+        const deckBottomTargetId =
+          "deckBottomTarget" in params ? params.deckBottomTarget : undefined;
+        if (!deckBottomTargetId || typeof deckBottomTargetId !== "string") {
+          return fail(
+            "Put-on-deck-bottom cost requires a valid deckBottomTarget",
+            "MISSING_DECK_BOTTOM_TARGET",
+            cardDef,
+          );
+        }
+
+        const discardCard = ctx.cards.get(deckBottomTargetId);
+        if (!discardCard) {
+          return fail(
+            "Put-on-deck-bottom target card not found",
+            "PUT_ON_DECK_BOTTOM_TARGET_NOT_FOUND",
+            cardDef,
+          );
+        }
+
+        const discardCardDef = discardCard.definition as LorcanaCard | undefined;
+        if (!discardCardDef || discardCardDef.cardType !== "character") {
+          return fail(
+            "Put-on-deck-bottom target must be a character card",
+            "PUT_ON_DECK_BOTTOM_TARGET_NOT_CHARACTER",
+            cardDef,
+          );
+        }
+
+        const discardClassifications = discardCardDef.classifications ?? [];
+        if (!discardClassifications.includes("Toy")) {
+          return fail(
+            "Put-on-deck-bottom target must be a Toy character card",
+            "PUT_ON_DECK_BOTTOM_TARGET_NOT_TOY",
+            cardDef,
+          );
+        }
+
+        const discardZoneKey = ctx.framework.zones.getCardZone(deckBottomTargetId);
+        const discardZone = getZoneFromZoneKey(discardZoneKey);
+        const discardOwner = ctx.framework.zones.getCardOwner(deckBottomTargetId);
+        if (discardZone !== "discard" || discardOwner !== currentPlayer) {
+          return fail(
+            "Put-on-deck-bottom target must be in your discard",
+            "PUT_ON_DECK_BOTTOM_TARGET_NOT_IN_DISCARD",
+            cardDef,
+          );
+        }
+        break;
+      }
+
+      default:
+        return fail(
+          `Unrecognized or missing cost type: ${JSON.stringify((params as unknown as { cost: string }).cost)}`,
+          "INVALID_COST_TYPE",
+          cardDef,
+        );
     }
 
     if (cardDef.cardType === "action") {
@@ -1540,9 +1656,10 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           },
         );
 
+        const { flatTargets: flatTargetsForValidation } = splitActionTargetInput(params.targets);
         const selectionValidation = validateInitialActionTargetSelection(
           actionEffects.map((ability) => ability.effect),
-          params.targets,
+          flatTargetsForValidation,
           combinedAnalysis,
           {
             currentPlayer: currentPlayer as PlayerId,
@@ -1570,7 +1687,8 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
 
   execute: (ctx) => {
     const params = ctx.args;
-    const { cardId, cost } = params;
+    const { cardId } = params;
+    const cost = params.cost ?? "standard";
     const currentPlayer = ctx.framework.state.currentPlayer! as PlayerId;
     const cardDef = ctx.cards.require(cardId).definition as LorcanaCard;
     const cardName = formatLorcanaCardName(cardDef) ?? "Unknown Card";
@@ -1637,7 +1755,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       }
 
       case "shift": {
-        shiftTargetId = params.shiftTarget;
+        shiftTargetId = "shiftTarget" in params ? params.shiftTarget : undefined;
         const shiftRules = getShiftRules(cardDef);
         if (!shiftRules || shiftRules.unsupportedReason) {
           throw new Error(
@@ -1694,15 +1812,18 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       }
 
       case "sing": {
-        singerIds = [params.singer];
-        const singerDef = ctx.cards.require(params.singer).definition as LorcanaCard | undefined;
+        const singer = "singer" in params ? params.singer : undefined;
+        singerIds = singer ? [singer] : [];
+        const singerDef = singer
+          ? (ctx.cards.require(singer).definition as LorcanaCard | undefined)
+          : undefined;
         const payResult = payBasicCost(
           {
             framework: ctx.framework,
             cards: ctx.cards,
             playerId: currentPlayer,
           },
-          getSingPlayCardBasicCost(params.singer, singerDef),
+          getSingPlayCardBasicCost(singer!, singerDef),
         );
         if (!payResult.success) {
           throw new Error(`Failed to pay play cost: ${payResult.error} (${payResult.errorCode})`);
@@ -1711,7 +1832,8 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       }
 
       case "singTogether": {
-        singerIds = [...params.singers];
+        const singers = "singers" in params ? params.singers : [];
+        singerIds = [...singers];
         const payResult = payBasicCost(
           {
             framework: ctx.framework,
@@ -1719,7 +1841,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             playerId: currentPlayer,
           },
           getSingTogetherPlayCardBasicCost(
-            params.singers,
+            singers,
             (cardId) => ctx.cards.require(cardId).definition as LorcanaCard | undefined,
           ),
         );
@@ -1734,7 +1856,9 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
 
       case "sacrifice": {
         // Banish the sacrifice target (item) as the cost of playing this card
-        const sacrificeTargetId = params.sacrificeTarget;
+        const sacrificeTargetId = (
+          "sacrificeTarget" in params ? params.sacrificeTarget : undefined
+        )!;
         ctx.framework.zones.moveCard(sacrificeTargetId, {
           zone: "discard",
           playerId: currentPlayer,
@@ -1756,7 +1880,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       }
 
       case "exert-items": {
-        const exertTargets = params.exertTargets;
+        const exertTargets = "exertTargets" in params ? params.exertTargets : [];
         for (const exertTargetId of exertTargets) {
           ctx.cards.patchMeta(exertTargetId, { state: "exerted" });
           traceLorcanaRuntimeStep({
@@ -1772,6 +1896,51 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         }
         break;
       }
+
+      case "put-on-deck-bottom": {
+        // Move the chosen discard card to the bottom of the controller's deck
+        const deckBottomTargetId = (
+          "deckBottomTarget" in params ? params.deckBottomTarget : undefined
+        )!;
+        ctx.framework.zones.moveCard(
+          deckBottomTargetId,
+          { zone: "deck", playerId: currentPlayer },
+          { index: 0 },
+        );
+        recordDiscardExitThisTurn(ctx);
+        emitTriggeredLorcanaEvent(
+          ctx,
+          "cardLeftDiscard",
+          { cardId: deckBottomTargetId, ownerId: currentPlayer, toZone: "deck" },
+          {
+            event: "leave-discard",
+            playerId: currentPlayer,
+            subjectCardId: deckBottomTargetId,
+            fromZone: "discard",
+            toZone: "deck",
+          },
+        );
+        traceLorcanaRuntimeStep({
+          kind: "card.moved",
+          moveId: "playCard",
+          playerId: currentPlayer,
+          cardId: deckBottomTargetId,
+          cardName:
+            formatLorcanaCardName(
+              ctx.cards.require(deckBottomTargetId).definition as LorcanaCard,
+            ) ?? "Unknown Card",
+          message: "Card put on bottom of deck as alternative cost",
+          payload: {
+            toZone: "deck",
+          },
+        });
+        break;
+      }
+
+      default:
+        throw new Error(
+          `playCard execute: unrecognized or missing cost type: ${JSON.stringify(cost)}`,
+        );
     }
 
     tracePlayCardCostSelection(ctx, cost, cardDef, {
@@ -1793,7 +1962,12 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       cardId,
       cardType: cardDef.cardType,
       costType: cost,
-      ...(cost === "shift" ? { shiftTargetId: params.shiftTarget, usedShift: true } : {}),
+      ...(cost === "shift"
+        ? {
+            shiftTargetId: "shiftTarget" in params ? params.shiftTarget : undefined,
+            usedShift: true,
+          }
+        : {}),
       ...(singerIds ? { singerIds } : {}),
       ...(cost === "standard" || cost === "shift" ? { inkPaid } : {}),
     };
@@ -1817,6 +1991,8 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       zone: "play",
       playerId: currentPlayer,
     });
+    // A card entering play may carry a win-condition-modification static ability.
+    recomputeLoreToWin(ctx);
     traceLorcanaRuntimeStep({
       kind: "card.played",
       moveId: "playCard",
@@ -1837,6 +2013,9 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
               playerId: currentPlayer,
               cardId,
               shiftTargetId,
+              shiftTargetName: formatLorcanaCardName(
+                ctx.cards.require(shiftTargetId).definition as LorcanaCard,
+              ),
             },
             { mode: "PUBLIC" },
             "action",
@@ -1862,6 +2041,14 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
               "action",
             ),
     );
+
+    // Record the card as played BEFORE trigger processing so that turn-metric
+    // conditions (e.g. "played-actions eq 2") see the updated count when
+    // pruneFailedConditionBagEffects evaluates them at the resolution boundary.
+    ctx.G.turnMetadata.cardsPlayedThisTurn.push(cardId as CardInstanceId);
+    if (cost === "shift") {
+      ctx.G.turnMetadata.shiftPlayedThisTurn.push(cardId as CardInstanceId);
+    }
 
     if (cardDef.cardType === "action") {
       const actionEffects = (cardDef.abilities ?? []).filter(
@@ -1907,9 +2094,11 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           allowDuplicateTargets: false,
         },
       );
+      const { slottedTargets: playCardSlottedTargets, flatTargets: playCardFlatTargets } =
+        splitActionTargetInput(params.targets);
       const normalizedSelection = validateInitialActionTargetSelection(
         actionEffects.map((ability) => ability.effect),
-        params.targets,
+        playCardFlatTargets,
         combinedAnalysis,
         {
           currentPlayer,
@@ -1934,15 +2123,22 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         triggerSourceCardId: cardId,
       });
       if (singerIds) {
-        singerIds.forEach((singerId) =>
+        singerIds.forEach((singerId) => {
+          const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, singerId);
           emitTriggeredLorcanaEvent(ctx, "cardPlayed", cardPlayedPayload, {
             event: "sing",
             playerId: currentPlayer,
             subjectCardId: singerId,
             triggerSourceCardId: cardId,
-            triggerCandidates: snapshotTriggeredCandidatesForCard(ctx, singerId),
-          }),
-        );
+            triggerCandidates,
+          });
+          emitTriggeredLorcanaEvent(ctx, "cardPlayed", cardPlayedPayload, {
+            event: "exert",
+            playerId: currentPlayer,
+            subjectCardId: singerId,
+            triggerCandidates,
+          });
+        });
       }
       traceLorcanaRuntimeStep({
         kind: "effect.resolution.started",
@@ -1956,6 +2152,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       });
       const actionResolutionInput = {
         targets: flattenNormalizedTargetSelection(normalizedSelection.selection),
+        slottedTargets: playCardSlottedTargets,
         amount: params.amount as ActionResolutionInput["amount"],
         namedCard: typeof params.namedCard === "string" ? params.namedCard.trim() : undefined,
         choiceIndex: params.choiceIndex,
@@ -2025,64 +2222,15 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         flushTriggeredEventsToBag(ctx);
       }
     } else if (cost === "shift") {
-      const targetMeta = shiftTargetId ? ctx.cards.require(shiftTargetId).meta : undefined;
-
-      attachShiftStack(ctx, cardId, params.shiftTarget, currentPlayer, targetMeta);
-      retargetContinuousEffects(ctx, params.shiftTarget as CardInstanceId, cardId);
-      const shiftedMeta = ctx.cards.require(cardId).meta;
-      const entersWithDamage = getEntersWithDamageAmount(cardDef);
+      const shiftTarget = ("shiftTarget" in params ? params.shiftTarget : undefined)!;
       const entersExerted =
         entersPlayExerted(ctx, cardId, cardDef) ||
-        (hasBodyguard(cardDef) && params.resolveOptional === true);
-      const inheritedDamage = Number(shiftedMeta?.damage ?? 0) + entersWithDamage;
-      ctx.cards.setMeta(cardId, {
-        ...shiftedMeta,
-        state: entersExerted ? "exerted" : shiftedMeta?.state,
-        damage: inheritedDamage,
-        playedViaShift: true,
-        playedCostType: "shift",
+        ((hasBodyguard(cardDef) || hasMayEnterPlayExertedOption(cardDef)) &&
+          params.resolveOptional === true);
+      const banishedByGSC = executeShiftPlay(ctx, cardId, shiftTarget, currentPlayer, cardDef, {
+        entersExerted,
       });
-
-      // GSC (game state check): if the inherited damage is lethal (>= willpower),
-      // banish the shifted card immediately before triggered abilities can resolve.
-      // Per Lorcana rules, state-based actions are checked continuously and fire
-      // before players get priority to act on triggered abilities.
-      const shiftedWillpower = (cardDef as { willpower?: number }).willpower;
-      if (
-        typeof shiftedWillpower === "number" &&
-        Number.isFinite(shiftedWillpower) &&
-        inheritedDamage >= shiftedWillpower
-      ) {
-        const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId);
-        const keywordsBeforeBanish = getKeywordsBeforeBanish(ctx, cardId, currentPlayer);
-        moveCardOutOfPlayWithStack(ctx, cardId, {
-          zone: "discard",
-          playerId: currentPlayer,
-        });
-        emitTriggeredLorcanaEvent(
-          ctx,
-          "cardBanished",
-          {
-            cardId,
-            sourceId: null,
-            snapshot: {
-              damageDealt: 0,
-              keywordsBeforeBanish,
-            },
-            reason: "lethal damage",
-          },
-          {
-            event: "banish",
-            playerId: currentPlayer,
-            subjectCardId: cardId,
-            triggerSourceCardId: cardId,
-            triggerCandidates,
-          },
-        );
-        recordBanishedCharacterThisTurn(ctx, cardId);
-        ctx.G.turnMetadata.cardsPlayedThisTurn.push(cardId as CardInstanceId);
-        ctx.G.turnMetadata.shiftPlayedThisTurn.push(cardId as CardInstanceId);
-        flushTriggeredEventsToBag(ctx);
+      if (banishedByGSC) {
         traceLorcanaRuntimeStep({
           kind: "move.execution.completed",
           moveId: "playCard",
@@ -2097,7 +2245,8 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       const entersWithDamage = getEntersWithDamageAmount(cardDef);
       const entersExerted =
         entersPlayExerted(ctx, cardId, cardDef) ||
-        (hasBodyguard(cardDef) && params.resolveOptional === true);
+        ((hasBodyguard(cardDef) || hasMayEnterPlayExertedOption(cardDef)) &&
+          params.resolveOptional === true);
       ctx.cards.setMeta(cardId, {
         state: entersExerted ? "exerted" : "ready",
         damage: entersWithDamage,
@@ -2123,11 +2272,6 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       });
     }
 
-    ctx.G.turnMetadata.cardsPlayedThisTurn.push(cardId as CardInstanceId);
-    if (cost === "shift") {
-      ctx.G.turnMetadata.shiftPlayedThisTurn.push(cardId as CardInstanceId);
-    }
-
     if (cardDef.cardType !== "action") {
       emitTriggeredLorcanaEvent(ctx, "cardPlayed", cardPlayedPayload, {
         event: "play",
@@ -2136,15 +2280,22 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         triggerSourceCardId: cardId,
       });
       if (singerIds) {
-        singerIds.forEach((singerId) =>
+        singerIds.forEach((singerId) => {
+          const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, singerId);
           emitTriggeredLorcanaEvent(ctx, "cardPlayed", cardPlayedPayload, {
             event: "sing",
             playerId: currentPlayer,
             subjectCardId: singerId,
             triggerSourceCardId: cardId,
-            triggerCandidates: snapshotTriggeredCandidatesForCard(ctx, singerId),
-          }),
-        );
+            triggerCandidates,
+          });
+          emitTriggeredLorcanaEvent(ctx, "cardPlayed", cardPlayedPayload, {
+            event: "exert",
+            playerId: currentPlayer,
+            subjectCardId: singerId,
+            triggerCandidates,
+          });
+        });
       }
       flushTriggeredEventsToBag(ctx);
     }
@@ -2168,26 +2319,6 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       zone: "hand",
       playerId: ctx.playerId,
     });
-    const currentTurn = ctx.framework.state.status.turn ?? 1;
-    const pendingPlayFromUnder = ctx.G.turnMetadata?.pendingPlayFromUnder ?? [];
-    const validLimboPermissions = pendingPlayFromUnder.filter(
-      (p) => p.expiresAtTurn >= currentTurn && p.controllerId === ctx.playerId,
-    );
-    const limboCardsWithPermission: string[] = [];
-    for (const permission of validLimboPermissions) {
-      const sourceItemCard = (ctx.cards.require(String(permission.sourceItemId)).meta ??
-        {}) as LorcanaCardMeta;
-      const underCardIds = Array.isArray(sourceItemCard?.cardsUnder)
-        ? sourceItemCard.cardsUnder
-        : [];
-      for (const underCardId of underCardIds) {
-        if (!limboCardsWithPermission.includes(underCardId)) {
-          limboCardsWithPermission.push(underCardId);
-        }
-      }
-    }
-
-    const playableCandidates = [...handCards, ...limboCardsWithPermission];
     const availableInk = getAvailableInk(ctx, ctx.playerId as PlayerId);
     const playCards = ctx.framework.zones.getCards({
       zone: "play",
@@ -2204,19 +2335,18 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
 
     const availableRegistry = getOrBuildMoveRegistry(ctx);
 
-    for (const candidateId of playableCandidates) {
-      const cardDef = getCardDefinitionForEnumeration(candidateId, ctx);
+    for (const handCardId of handCards) {
+      const cardDef = getCardDefinitionForEnumeration(handCardId, ctx);
       if (!cardDef) {
         continue;
       }
 
-      const isHandCard = handCards.includes(candidateId);
-      const isLimboCardWithPermission = limboCardsWithPermission.includes(candidateId);
+      const currentTurn = ctx.framework.state.status.turn ?? 1;
       const standardCostReduction = computeCostReduction(
         ctx,
         ctx.G.turnMetadata,
         ctx.playerId as PlayerId,
-        candidateId as CardInstanceId,
+        handCardId as CardInstanceId,
         cardDef,
         currentTurn,
         availableRegistry,
@@ -2232,15 +2362,11 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         return true;
       }
 
-      if (!isHandCard && !isLimboCardWithPermission) {
-        continue;
-      }
-
       const shiftCostReduction = computeCostReduction(
         ctx,
         ctx.G.turnMetadata,
         ctx.playerId as PlayerId,
-        candidateId as CardInstanceId,
+        handCardId as CardInstanceId,
         cardDef,
         currentTurn,
         availableRegistry,
@@ -2277,6 +2403,36 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           return playCardDef?.cardType === "item";
         });
         if (hasItemInPlay) {
+          return true;
+        }
+      }
+
+      // Check for exert-items-based alternative cost (e.g., exert 4 items to play for free)
+      if (getExertItemsAlternativeCostAbility(cardDef)) {
+        const readyItems = playCards.filter((playCardId) => {
+          const playCardDef = getCardDefinitionForEnumeration(playCardId, ctx);
+          if (playCardDef?.cardType !== "item") return false;
+          const meta = ctx.cards.require(playCardId).meta;
+          return meta?.state !== "exerted";
+        });
+        if (readyItems.length >= 4) {
+          return true;
+        }
+      }
+
+      // Check for put-toy-character-on-deck-bottom alternative cost
+      // (e.g., Hand-in-the-Box - Sid's Toy)
+      if (getPutToyOnDeckBottomAlternativeCostAbility(cardDef)) {
+        const discardCards = ctx.framework.zones.getCards({
+          zone: "discard",
+          playerId: ctx.playerId,
+        });
+        const hasToyCharacterInDiscard = discardCards.some((discardCardId) => {
+          const discardCardDef = getCardDefinitionForEnumeration(discardCardId, ctx);
+          if (discardCardDef?.cardType !== "character") return false;
+          return (discardCardDef.classifications ?? []).includes("Toy");
+        });
+        if (hasToyCharacterInDiscard) {
           return true;
         }
       }

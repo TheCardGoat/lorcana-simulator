@@ -279,7 +279,9 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     });
 
     expect(testEngine.asPlayerOne().quest(quester)).toBeSuccessfulCommand();
+    // No opposing characters — effect fizzles; no bag row and no pending target picker.
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(testEngine.asPlayerOne().getPendingEffects().length).toBe(0);
   });
 
   it("keeps optional no-target triggers manual", () => {

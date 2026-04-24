@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { revive } from "..";
+import { revive } from "./027-revive";
 
 export const reviveEnchanted: ActionCard = {
   ...revive,

@@ -49,7 +49,7 @@
     position: absolute;
     border-radius: 999px;
     pointer-events: none;
-    animation: card-effect-pulse var(--card-effect-duration, 800ms) ease-out both;
+    animation: card-effect-pulse var(--card-effect-duration, 400ms) ease-out both;
   }
 
   .card-effect-glow--activate {

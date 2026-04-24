@@ -35,6 +35,14 @@ describe("Stitch - Carefree Surfer", () => {
     });
 
     expect(noTriggerEngine.asPlayerOne().playCard(stitchCarefreeSurfer)).toBeSuccessfulCommand();
-    expect(noTriggerEngine.asPlayerOne().getBagCount()).toBe(0);
+    // Per CRD 6.2.7: ability IS enqueued when trigger fires, Ohana condition checked at resolution
+    expect(noTriggerEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      noTriggerEngine.asPlayerOne().resolvePendingByCard(stitchCarefreeSurfer, {
+        resolveOptional: true,
+      }),
+    ).toBeSuccessfulCommand();
+    // No Ohana character in play — no card drawn
+    expect(noTriggerEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
   });
 });

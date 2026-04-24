@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { wreckitRalphHamHands } from "..";
+import { wreckitRalphHamHands } from "./190-wreck-it-ralph-ham-hands";
 
 export const wreckitRalphHamHandsEnchanted: CharacterCard = {
   ...wreckitRalphHamHands,

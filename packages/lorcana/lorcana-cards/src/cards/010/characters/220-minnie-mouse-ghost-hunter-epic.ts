@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { minnieMouseGhostHunter } from "..";
+import { minnieMouseGhostHunter } from "./181-minnie-mouse-ghost-hunter";
 
 export const minnieMouseGhostHunterEpic: CharacterCard = {
   ...minnieMouseGhostHunter,

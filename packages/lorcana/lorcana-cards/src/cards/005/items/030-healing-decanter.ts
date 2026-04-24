@@ -30,10 +30,9 @@ export const healingDecanter: ItemCard = {
         exert: true,
       },
       effect: {
-        amount: 2,
+        amount: { type: "up-to", value: 2 },
         target: "CHOSEN_CHARACTER",
         type: "remove-damage",
-        upTo: true,
       },
       id: "el0-1",
       name: "RENEWING ESSENCE",

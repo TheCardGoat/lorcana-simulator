@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mushuSneakyDragon } from "..";
+import { mushuSneakyDragon } from "./082-mushu-sneaky-dragon";
 
 export const mushuSneakyDragonEpic: CharacterCard = {
   ...mushuSneakyDragon,

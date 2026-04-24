@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mulanEliteArcher } from "..";
+import { mulanEliteArcher } from "./114-mulan-elite-archer";
 
 export const mulanEliteArcherEpic: CharacterCard = {
   ...mulanEliteArcher,

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { vanellopeVonSchweetzSugarRushPrincess } from "..";
+import { vanellopeVonSchweetzSugarRushPrincess } from "./019-vanellope-von-schweetz-sugar-rush-princess";
 
 export const vanellopeVonSchweetzSugarRushPrincessEnchanted: CharacterCard = {
   ...vanellopeVonSchweetzSugarRushPrincess,

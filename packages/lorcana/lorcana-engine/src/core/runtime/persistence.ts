@@ -1,4 +1,4 @@
-import type { CommandEnvelope, GameLogEntry, MatchState, PublishedGameEvent } from "./types";
+import type { MatchState } from "./types";
 import type { StaticResourceRefs } from "./static-resources";
 
 // =============================================================================
@@ -12,12 +12,13 @@ export interface MatchConfig {
   spectatorPolicy: "public" | "private" | "judges-only";
 }
 
-export interface CommandLogEntry {
-  commandID: string;
-  playerID: string;
-  command: CommandEnvelope;
+export interface ReplayStepEntry {
+  moveNumber: number;
+  patches: unknown[];
+  logs: unknown[];
+  turnNumber: number;
+  actorId: string;
   timestamp: number;
-  stateID: number;
 }
 
 export interface MatchSnapshot {
@@ -44,9 +45,7 @@ export interface MatchReplayData {
   matchID: string;
   metadata: MatchMetadata;
   initialState: MatchState;
-  commandLog: CommandLogEntry[];
-  gameEvents: PublishedGameEvent[];
-  gameLogEntries: GameLogEntry[];
+  steps: ReplayStepEntry[];
   finalState?: MatchState;
 }
 
@@ -54,7 +53,6 @@ export interface ReplayExportOptions {
   role: "player" | "judge";
   playerID?: string;
   includePrivateData?: boolean;
-  filterEvents?: (event: PublishedGameEvent) => boolean;
 }
 
 export interface AuditLogEntry {
@@ -80,15 +78,9 @@ export interface PersistenceAdapter {
   getMetadata(matchID: string): Promise<MatchMetadata | null>;
   listMatches(filters?: MatchListFilters): Promise<MatchMetadata[]>;
 
-  // Command Log
-  appendCommand(matchID: string, entry: CommandLogEntry): Promise<void>;
-  getCommandLog(matchID: string): Promise<CommandLogEntry[]>;
-
-  // Game Events
-  appendGameEvent(matchID: string, event: PublishedGameEvent): Promise<void>;
-  getGameEvents(matchID: string): Promise<PublishedGameEvent[]>;
-  appendGameLogEntry(matchID: string, entry: GameLogEntry): Promise<void>;
-  getGameLogEntries(matchID: string): Promise<GameLogEntry[]>;
+  // Steps
+  appendStep(matchID: string, entry: ReplayStepEntry): Promise<void>;
+  getSteps(matchID: string): Promise<ReplayStepEntry[]>;
 
   // Replay
   saveReplayData(data: MatchReplayData): Promise<void>;
@@ -117,9 +109,7 @@ export interface MatchListFilters {
 export class InMemoryPersistence implements PersistenceAdapter {
   private snapshots: Map<string, MatchSnapshot[]> = new Map();
   private metadata: Map<string, MatchMetadata> = new Map();
-  private commandLogs: Map<string, CommandLogEntry[]> = new Map();
-  private gameEvents: Map<string, PublishedGameEvent[]> = new Map();
-  private gameLogEntries: Map<string, GameLogEntry[]> = new Map();
+  private steps: Map<string, ReplayStepEntry[]> = new Map();
   private replayData: Map<string, MatchReplayData> = new Map();
   private auditLog: AuditLogEntry[] = [];
 
@@ -177,37 +167,15 @@ export class InMemoryPersistence implements PersistenceAdapter {
     return matches;
   }
 
-  async appendCommand(matchID: string, entry: CommandLogEntry): Promise<void> {
-    if (!this.commandLogs.has(matchID)) {
-      this.commandLogs.set(matchID, []);
+  async appendStep(matchID: string, entry: ReplayStepEntry): Promise<void> {
+    if (!this.steps.has(matchID)) {
+      this.steps.set(matchID, []);
     }
-    this.commandLogs.get(matchID)!.push(entry);
+    this.steps.get(matchID)!.push(entry);
   }
 
-  async getCommandLog(matchID: string): Promise<CommandLogEntry[]> {
-    return this.commandLogs.get(matchID) || [];
-  }
-
-  async appendGameEvent(matchID: string, event: PublishedGameEvent): Promise<void> {
-    if (!this.gameEvents.has(matchID)) {
-      this.gameEvents.set(matchID, []);
-    }
-    this.gameEvents.get(matchID)!.push(event);
-  }
-
-  async getGameEvents(matchID: string): Promise<PublishedGameEvent[]> {
-    return this.gameEvents.get(matchID) || [];
-  }
-
-  async appendGameLogEntry(matchID: string, entry: GameLogEntry): Promise<void> {
-    if (!this.gameLogEntries.has(matchID)) {
-      this.gameLogEntries.set(matchID, []);
-    }
-    this.gameLogEntries.get(matchID)!.push(entry);
-  }
-
-  async getGameLogEntries(matchID: string): Promise<GameLogEntry[]> {
-    return this.gameLogEntries.get(matchID) || [];
+  async getSteps(matchID: string): Promise<ReplayStepEntry[]> {
+    return this.steps.get(matchID) || [];
   }
 
   async saveReplayData(data: MatchReplayData): Promise<void> {
@@ -229,9 +197,7 @@ export class InMemoryPersistence implements PersistenceAdapter {
   async deleteMatch(matchID: string): Promise<void> {
     this.snapshots.delete(matchID);
     this.metadata.delete(matchID);
-    this.commandLogs.delete(matchID);
-    this.gameEvents.delete(matchID);
-    this.gameLogEntries.delete(matchID);
+    this.steps.delete(matchID);
     this.replayData.delete(matchID);
   }
 
@@ -239,9 +205,7 @@ export class InMemoryPersistence implements PersistenceAdapter {
   clear(): void {
     this.snapshots.clear();
     this.metadata.clear();
-    this.commandLogs.clear();
-    this.gameEvents.clear();
-    this.gameLogEntries.clear();
+    this.steps.clear();
     this.replayData.clear();
     this.auditLog = [];
   }
@@ -352,11 +316,6 @@ export class PersistenceManager {
       return this.filterReplayForPlayer(data, options.playerID, options);
     }
 
-    // Judge gets everything
-    if (options.role === "judge") {
-      return data;
-    }
-
     return data;
   }
 
@@ -365,63 +324,17 @@ export class PersistenceManager {
    */
   private filterReplayForPlayer(
     data: MatchReplayData,
-    playerID: string | undefined,
-    options: ReplayExportOptions,
+    _playerID: string | undefined,
+    _options: ReplayExportOptions,
   ): MatchReplayData {
-    // Clone the data
     const filtered: MatchReplayData = {
       matchID: data.matchID,
       metadata: data.metadata,
       initialState: data.initialState,
-      commandLog: data.commandLog,
-      gameEvents: data.gameEvents,
-      gameLogEntries: data.gameLogEntries,
+      steps: data.steps,
     };
 
-    // Filter game events if needed
-    if (options.filterEvents) {
-      filtered.gameEvents = filtered.gameEvents.filter(options.filterEvents);
-      const allowedEventSeqs = new Set(filtered.gameEvents.map((event) => event.seq));
-      filtered.gameLogEntries = filtered.gameLogEntries.filter((entry) =>
-        entry.sourceEventSeqs.some((seq) => allowedEventSeqs.has(seq)),
-      );
-    }
-
-    filtered.gameLogEntries = filtered.gameLogEntries.flatMap((entry) => {
-      switch (entry.visibility.mode) {
-        case "PUBLIC":
-          return [entry];
-        case "PRIVATE":
-          return playerID && entry.visibility.visibleTo.includes(playerID) ? [entry] : [];
-        case "PUBLIC_WITH_OVERRIDES": {
-          const overrideMessage = playerID ? entry.visibility.overrides[playerID] : undefined;
-          if (overrideMessage && playerID) {
-            return [
-              {
-                ...entry,
-                visibility: {
-                  mode: "PRIVATE",
-                  visibleTo: [playerID],
-                },
-                defaultMessage: overrideMessage,
-              },
-            ];
-          }
-          return [
-            {
-              ...entry,
-              visibility: {
-                mode: "PUBLIC",
-              },
-              defaultMessage: entry.defaultMessage,
-            },
-          ];
-        }
-      }
-    });
-
-    // Don't include final state if private data should be excluded
-    if (!options.includePrivateData) {
+    if (!_options.includePrivateData) {
       delete filtered.finalState;
     }
 
@@ -432,19 +345,16 @@ export class PersistenceManager {
    * Get match statistics.
    */
   async getMatchStats(matchID: string): Promise<{
-    totalCommands: number;
-    totalEvents: number;
+    totalSteps: number;
     duration?: number;
   } | null> {
     const metadata = await this.adapter.getMetadata(matchID);
     if (!metadata) return null;
 
-    const commandLog = await this.adapter.getCommandLog(matchID);
-    const gameEvents = await this.adapter.getGameEvents(matchID);
+    const steps = await this.adapter.getSteps(matchID);
 
     return {
-      totalCommands: commandLog.length,
-      totalEvents: gameEvents.length,
+      totalSteps: steps.length,
       duration:
         metadata.status === "completed" && metadata.createdAt
           ? metadata.updatedAt - metadata.createdAt

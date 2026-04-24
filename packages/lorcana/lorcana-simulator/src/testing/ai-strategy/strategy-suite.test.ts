@@ -41,6 +41,7 @@ function createMatchSummary(
       gameRuntime: `/tmp/${overrides.matchId}/game-runtime.jsonl`,
       strategyDecisions: `/tmp/${overrides.matchId}/strategy-decisions.jsonl`,
     },
+    challengeOverQuestCount: 0,
     deadlock: false,
     deadlockConcedeCount: 0,
     diagnosticCounts: {
@@ -67,7 +68,7 @@ function createMatchSummary(
     turns: 5,
     winner: resolveWinnerId("player_one"),
     ...overrides,
-  };
+  } as StrategyMatchSummary;
 }
 
 function createSyntheticSummary(): StrategySuiteRunSummary {
@@ -444,11 +445,12 @@ describe("strategy lab report builder", () => {
       status: "candidate",
     });
     expect(report.scorecards[0]?.score).toMatchObject({
-      blendedScore: 0.24,
+      blendedScore: 0.34,
       crossDeckScore: 0,
       deadlockFallbackPenalty: 1,
-      diagnosticPenalty: 1.6,
+      diagnosticPenalty: 0.6,
       mirrorScore: 1,
+      signalDiagnostics: 3,
     });
     expect(report.scorecards[0]?.promotionGate.passed).toBe(false);
   });
@@ -570,7 +572,7 @@ describe("strategy lab artifact writing", () => {
       const artifactRoot = mkdtempSync(join(tmpdir(), "strategy-lab-report-"));
       createdDirs.push(artifactRoot);
 
-      const summary = runStrategyLab({
+      const { summary } = runStrategyLab({
         artifactRoot,
         deckIds: [deck.id],
         gameCount: 1,
@@ -583,12 +585,14 @@ describe("strategy lab artifact writing", () => {
       const benchmarkMarkdownPath = join(summary.artifactRoot, "benchmark-summary.md");
       const matchupWeightJsonPath = join(summary.artifactRoot, "matchup-weight-report.json");
       const matchupWeightMarkdownPath = join(summary.artifactRoot, "matchup-weight-report.md");
+      const triageDigestPath = join(summary.artifactRoot, "triage-digest.md");
 
       expect(existsSync(runSummaryPath)).toBe(true);
       expect(existsSync(benchmarkJsonPath)).toBe(true);
       expect(existsSync(benchmarkMarkdownPath)).toBe(true);
       expect(existsSync(matchupWeightJsonPath)).toBe(true);
       expect(existsSync(matchupWeightMarkdownPath)).toBe(true);
+      expect(existsSync(triageDigestPath)).toBe(true);
 
       const persistedReport = JSON.parse(readFileSync(benchmarkJsonPath, "utf8"));
       const persistedMarkdown = readFileSync(benchmarkMarkdownPath, "utf8");
@@ -631,7 +635,7 @@ describe("strategy lab artifact writing", () => {
       const artifactRoot = mkdtempSync(join(tmpdir(), "strategy-lab-best-ai-report-"));
       createdDirs.push(artifactRoot);
 
-      const summary = runStrategyLab({
+      const { summary } = runStrategyLab({
         artifactRoot,
         deckIds: [deck.id],
         gameCount: 1,

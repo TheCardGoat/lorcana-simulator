@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { merlinCompletingHisResearch } from "..";
+import { merlinCompletingHisResearch } from "./058-merlin-completing-his-research";
 
 export const merlinCompletingHisResearchEpic: CharacterCard = {
   ...merlinCompletingHisResearch,

@@ -54,7 +54,7 @@ describe("Thaddeus E. Klang - Metallic Leader", () => {
       expect(testEngine.asPlayerTwo().getCardByInstance(targetCharacter).damage).toBe(1);
     });
 
-    it("does not trigger when questing without being at a location", () => {
+    it("does not deal damage when questing without being at a location (per CRD 6.2.7: condition checked at resolution)", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
           play: [thaddeusEKlangMetallicLeader, testLocation],
@@ -68,7 +68,16 @@ describe("Thaddeus E. Klang - Metallic Leader", () => {
 
       expect(testEngine.asPlayerOne().quest(thaddeusEKlangMetallicLeader).success).toBe(true);
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7, the intervening "if" (while at a location) is checked at resolution.
+      // The ability IS enqueued when Klang quests, but the condition fails at resolution —
+      // resulting in no effect (no damage dealt).
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(thaddeusEKlangMetallicLeader, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
       expect(testEngine.asPlayerTwo().getCardByInstance(targetCharacter).damage).toBe(0);
     });
 

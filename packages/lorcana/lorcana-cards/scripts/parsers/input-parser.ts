@@ -226,20 +226,37 @@ export interface ParsedCardIdentifier {
   totalCards: number;
   setNumber: number | null;
   language: string;
+  /**
+   * Promo sheet denominator (e.g. "P3" for "43/P3 EN 12"). When set, totalCards is not a set size.
+   */
+  promoSheetCode?: string;
 }
 
 export function parseCardIdentifier(identifier: string): ParsedCardIdentifier | null {
   // Match pattern: "1/204 EN 10" or "205/204 EN 10"
-  const match = identifier.match(/^(\d+)\/(\d+)\s+(\w+)(?:\s+(\d+))?$/);
+  const standard = identifier.match(/^(\d+)\/(\d+)\s+(\w+)(?:\s+(\d+))?$/);
+  if (standard) {
+    return {
+      cardNumber: Number.parseInt(standard[1], 10),
+      totalCards: Number.parseInt(standard[2], 10),
+      language: standard[3],
+      setNumber: standard[4] ? Number.parseInt(standard[4], 10) : null,
+    };
+  }
 
-  if (!match) return null;
+  // Promo / challenge sheet: "43/P3 EN 12" (denominator is a sheet code, not set size)
+  const promo = identifier.match(/^(\d+)\/(P\d+)\s+(\w+)(?:\s+(\d+))?$/i);
+  if (promo) {
+    return {
+      cardNumber: Number.parseInt(promo[1], 10),
+      totalCards: 0,
+      language: promo[3],
+      setNumber: promo[4] ? Number.parseInt(promo[4], 10) : null,
+      promoSheetCode: promo[2].toUpperCase(),
+    };
+  }
 
-  return {
-    cardNumber: Number.parseInt(match[1], 10),
-    totalCards: Number.parseInt(match[2], 10),
-    language: match[3],
-    setNumber: match[4] ? Number.parseInt(match[4], 10) : null,
-  };
+  return null;
 }
 
 /**
@@ -270,19 +287,23 @@ export function getFullNameFromCard(card: InputCard): string {
 }
 
 /**
- * Determine if a card is a special rarity variant (Enchanted, Epic, Iconic, Promo).
+ * Determine if a card is a special rarity variant (Enchanted, Epic, Iconic, Promo, Challenge).
  * special_rarity_id from Ravensburger is the source of truth when present; card number heuristic is fallback.
  */
 export function getSpecialRarity(
   card: InputCard,
-): "enchanted" | "epic" | "iconic" | "promo" | null {
+): "enchanted" | "epic" | "iconic" | "promo" | "challenge" | null {
   if (card.rarity === "ENCHANTED") return "enchanted";
   if (card.special_rarity_id === "PROMO") return "promo";
   if (card.special_rarity_id === "EPIC") return "epic";
   if (card.special_rarity_id === "ICONIC") return "iconic";
+  if (card.special_rarity_id === "CHALLENGE") return "challenge";
 
   // Fallback: check card number vs set size for Epic/Iconic when special_rarity_id is not set
   const parsed = parseCardIdentifier(card.card_identifier);
+  if (parsed?.promoSheetCode) {
+    return null;
+  }
   if (parsed && parsed.cardNumber > parsed.totalCards) {
     if (parsed.cardNumber >= 241) return "iconic";
     if (parsed.cardNumber >= 205) return "epic";
@@ -292,16 +313,20 @@ export function getSpecialRarity(
 }
 
 /**
- * Generate printing ID from set and card number
- * Optional specialRarity suffix ensures unique ids for alternate arts (e.g. set1-098-enchanted)
+ * Generate printing ID from set and card number.
+ * Optional specialRarity suffix ensures unique ids for alternate arts (e.g. set1-098-enchanted).
+ * When promoSheetCode is set (e.g. "P3"), the id uses set{N}-p3-NNN so promo numbers never collide with main-set slots.
  */
 export function generatePrintingId(
   setId: string,
   cardNumber: number,
   specialRarity?: string | null,
+  promoSheetCode?: string | null,
 ): string {
   const paddedNumber = cardNumber.toString().padStart(3, "0");
-  const base = `${setId}-${paddedNumber}`;
+  const base = promoSheetCode
+    ? `${setId}-${promoSheetCode.toLowerCase()}-${paddedNumber}`
+    : `${setId}-${paddedNumber}`;
   if (specialRarity) {
     return `${base}-${specialRarity}`;
   }

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { kidaProtectorOfAtlantis } from "..";
+import { kidaProtectorOfAtlantis } from "./007-kida-protector-of-atlantis";
 
 export const kidaProtectorOfAtlantisEnchanted: CharacterCard = {
   ...kidaProtectorOfAtlantis,

@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { fantasticalAndMagical } from "..";
+import { fantasticalAndMagical } from "./079-fantastical-and-magical";
 
 export const fantasticalAndMagicalEnchanted: ActionCard = {
   ...fantasticalAndMagical,

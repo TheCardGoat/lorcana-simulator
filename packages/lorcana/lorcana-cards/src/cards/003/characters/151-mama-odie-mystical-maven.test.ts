@@ -1,9 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import {
-  LorcanaMultiplayerTestEngine,
-  PLAYER_TWO,
-  createMockCharacter,
-} from "@tcg/lorcana-engine/testing";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { mamaOdieMysticalMaven } from "./151-mama-odie-mystical-maven";
 import { theBareNecessities } from "../actions/028-the-bare-necessities";
 
@@ -30,9 +26,7 @@ describe("Mama Odie - Mystical Maven", () => {
 
       expect(testEngine.asPlayerOne().playCard(mamaOdieMysticalMaven)).toBeSuccessfulCommand();
 
-      expect(
-        testEngine.asPlayerOne().playCardForPlayer(theBareNecessities, PLAYER_TWO),
-      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().playCard(theBareNecessities)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
         testEngine.asPlayerOne().resolvePendingByCard(mamaOdieMysticalMaven),
@@ -55,9 +49,7 @@ describe("Mama Odie - Mystical Maven", () => {
       );
 
       expect(testEngine.asPlayerOne().playCard(mamaOdieMysticalMaven)).toBeSuccessfulCommand();
-      expect(
-        testEngine.asPlayerOne().playCardForPlayer(theBareNecessities, PLAYER_TWO),
-      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().playCard(theBareNecessities)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       expect(
         testEngine

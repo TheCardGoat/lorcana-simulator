@@ -59,6 +59,7 @@ export const diabloFaithfulPet: CharacterCard = {
         on: {
           cardType: "character",
           controller: "you",
+          name: "Maleficent",
         },
         timing: "whenever",
       },

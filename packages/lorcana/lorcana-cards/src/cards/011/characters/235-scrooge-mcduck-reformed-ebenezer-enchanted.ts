@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { scroogeMcduckReformedEbenezer } from "..";
+import { scroogeMcduckReformedEbenezer } from "./152-scrooge-mcduck-reformed-ebenezer";
 
 export const scroogeMcduckReformedEbenezerEnchanted: CharacterCard = {
   ...scroogeMcduckReformedEbenezer,

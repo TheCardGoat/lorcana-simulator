@@ -14,6 +14,15 @@ export function buildCardTargetDialogState(params: {
   viewerSide?: LorcanaPlayerSide | null;
   selectedCardIds?: string[];
   selectedPlayerCount?: number;
+  /**
+   * When the caller already scoped `cards` to the engine-published
+   * `cardCandidateIds`, set this to `true`. The dialog skips its parallel
+   * filter evaluation (which lacks engine context such as event snapshots,
+   * granted keywords, and trigger references) and treats every input card
+   * as a match. Badges and unsupported-filter warnings are still derived
+   * from `target` so the operator can read the constraints.
+   */
+  trustCandidates?: boolean;
 }) {
   const {
     cards,
@@ -21,15 +30,19 @@ export function buildCardTargetDialogState(params: {
     viewerSide = null,
     selectedCardIds = [],
     selectedPlayerCount = 0,
+    trustCandidates = false,
   } = params;
-  const evaluation = target
-    ? evaluateCardTargetMatches(cards, target, {
-        viewerSide: viewerSide ?? undefined,
-      })
-    : {
-        matchedCards: cards,
-        unsupportedFilters: [],
-      };
+
+  let evaluation;
+  if (!target) {
+    evaluation = { matchedCards: cards, unsupportedFilters: [] };
+  } else if (trustCandidates) {
+    evaluation = { matchedCards: cards, unsupportedFilters: [] };
+  } else {
+    evaluation = evaluateCardTargetMatches(cards, target, {
+      viewerSide: viewerSide ?? undefined,
+    });
+  }
 
   return {
     evaluation,

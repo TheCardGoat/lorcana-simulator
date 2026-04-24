@@ -58,13 +58,9 @@ describe("Basil - Disguised Detective", () => {
           .resolvePendingByCard(basilDisguisedDetective, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
-      // Player one resolves the target selection
+      // The inner effect carries `chosenBy: "opponent"` — the chooser flips to
+      // player_two, who is the only player with a pending resolution to consume.
       const oppCard1Id = testEngine.findCardInstanceId(opponentHandCard1, "hand", "player_two");
-      expect(
-        testEngine.asPlayerOne().resolveNextPending({ targets: [oppCard1Id] }),
-      ).toBeSuccessfulCommand();
-
-      // Opponent chooses a card to discard
       expect(
         testEngine.asPlayerTwo().resolveNextPending({ targets: [oppCard1Id] }),
       ).toBeSuccessfulCommand();

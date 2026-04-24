@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { maliciousMeanAndScary } from "..";
+import { maliciousMeanAndScary } from "./097-malicious-mean-and-scary";
 
 export const maliciousMeanAndScaryEnchanted: ActionCard = {
   ...maliciousMeanAndScary,

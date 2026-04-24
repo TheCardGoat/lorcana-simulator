@@ -1,97 +1,99 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import {
-//   NeverLandMermaidLagoon,
-//   PrideLandsPrideRock,
-// } from "@lorcanito/lorcana-engine/cards/003/locations/locations";
-// Import {
-//   BelleApprenticeInventor,
-//   BoltHeadstrongDog,
-//   HoneymarenNorthuldraGuide,
-// } from "@lorcanito/lorcana-engine/cards/007";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Honeymaren - Northuldra Guide", () => {
-//   Describe("TALE OF THE FIFTH SPIRIT When you play this character, if an opponent has an exerted character in play, gain 1 lore.", () => {
-//     It("gain 1 lore when the opponent has an exerted character in play", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: honeymarenNorthuldraGuide.cost,
-//           Hand: [honeymarenNorthuldraGuide],
-//         },
-//         {
-//           Play: [boltHeadstrongDog],
-//         },
-//       );
-//
-//       Await testEngine.tapCard(boltHeadstrongDog);
-//       Const initialLore = testEngine.getLoreForPlayer("player_one");
-//
-//       Await testEngine.playCard(honeymarenNorthuldraGuide);
-//       Const finalLore = testEngine.getLoreForPlayer("player_one");
-//
-//       Expect(finalLore).toBe(initialLore + 1);
-//     });
-//
-//     It("does NOT gain 1 lore if the opponent has no exerted character in play", async () => {
-//       Const testEngine = new TestEngine(
-//         {
-//           Inkwell: honeymarenNorthuldraGuide.cost,
-//           Hand: [honeymarenNorthuldraGuide],
-//         },
-//         {
-//           Play: [boltHeadstrongDog],
-//         },
-//       );
-//
-//       Const initialLore = testEngine.getLoreForPlayer("player_one");
-//
-//       Await testEngine.playCard(honeymarenNorthuldraGuide);
-//       Const finalLore = testEngine.getLoreForPlayer("player_one");
-//
-//       Expect(finalLore).toBe(initialLore);
-//     });
-//
-//     It("does NOT gain 1 lore if player own character is exerted", async () => {
-//       Const testEngine = new TestEngine({
-//         Inkwell: honeymarenNorthuldraGuide.cost,
-//         Hand: [honeymarenNorthuldraGuide],
-//         Play: [boltHeadstrongDog],
-//       });
-//
-//       Await testEngine.tapCard(boltHeadstrongDog);
-//       Const initialLore = testEngine.getLoreForPlayer("player_one");
-//
-//       Await testEngine.playCard(honeymarenNorthuldraGuide);
-//       Const finalLore = testEngine.getLoreForPlayer("player_one");
-//
-//       Expect(finalLore).toBe(initialLore);
-//     });
-//   });
-// });
-//
-// Describe("Regression tests", () => {
-//   It("does NOT gain 1 lore for location", async () => {
-//     Const testEngine = new TestEngine(
-//       {
-//         Inkwell: honeymarenNorthuldraGuide.cost,
-//         Hand: [honeymarenNorthuldraGuide],
-//         Play: [boltHeadstrongDog, neverLandMermaidLagoon],
-//       },
-//       {
-//         Play: [belleApprenticeInventor, prideLandsPrideRock],
-//       },
-//     );
-//
-//     Const initialLore = testEngine.getLoreForPlayer("player_one");
-//     Await testEngine.playCard(honeymarenNorthuldraGuide);
-//     Const finalLore = testEngine.getLoreForPlayer("player_one");
-//
-//     Expect(finalLore).toBe(initialLore);
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { honeymarenNorthuldraGuide } from "./048-honeymaren-northuldra-guide";
+
+const opponentCharacter = createMockCharacter({
+  id: "honeymaren-test-opponent",
+  name: "Opponent Character",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+describe("Honeymaren - Northuldra Guide", () => {
+  describe("TALE OF THE FIFTH SPIRIT - When you play this character, if an opponent has an exerted character in play, gain 1 lore.", () => {
+    it("gains 1 lore when an opponent has an exerted character in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [honeymarenNorthuldraGuide],
+          inkwell: honeymarenNorthuldraGuide.cost,
+          lore: 0,
+        },
+        {
+          play: [{ card: opponentCharacter, exerted: true }],
+        },
+      );
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+      expect(testEngine.asPlayerOne().playCard(honeymarenNorthuldraGuide)).toBeSuccessfulCommand();
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(1);
+    });
+
+    it("does NOT gain lore when the opponent has no exerted character in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [honeymarenNorthuldraGuide],
+          inkwell: honeymarenNorthuldraGuide.cost,
+          lore: 0,
+        },
+        {
+          play: [{ card: opponentCharacter, exerted: false }],
+        },
+      );
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+      expect(testEngine.asPlayerOne().playCard(honeymarenNorthuldraGuide)).toBeSuccessfulCommand();
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+    });
+
+    it("does NOT gain lore when the opponent has no characters in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [honeymarenNorthuldraGuide],
+          inkwell: honeymarenNorthuldraGuide.cost,
+          lore: 0,
+        },
+        {
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+      expect(testEngine.asPlayerOne().playCard(honeymarenNorthuldraGuide)).toBeSuccessfulCommand();
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+    });
+
+    it("does NOT gain lore when only the player's own character is exerted", () => {
+      const ownCharacter = createMockCharacter({
+        id: "honeymaren-test-own",
+        name: "Own Character",
+        cost: 2,
+        strength: 2,
+        willpower: 2,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [honeymarenNorthuldraGuide],
+          inkwell: honeymarenNorthuldraGuide.cost,
+          play: [{ card: ownCharacter, exerted: true, isDrying: false }],
+          lore: 0,
+        },
+        {
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+      expect(testEngine.asPlayerOne().playCard(honeymarenNorthuldraGuide)).toBeSuccessfulCommand();
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+    });
+  });
+});

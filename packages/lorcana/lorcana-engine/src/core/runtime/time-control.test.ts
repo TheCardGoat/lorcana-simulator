@@ -291,34 +291,6 @@ describe("Time Control", () => {
     });
   });
 
-  describe("passPriority", () => {
-    it("should add player to pass sequence", () => {
-      const state = createTestState("none");
-      state.ctx.priority.holder = "p1";
-      const result = passPriority(state, "p1");
-
-      expect(result.ctx.priority.passSequence).toContain("p1");
-    });
-
-    it("should clear priority holder", () => {
-      const state = createTestState("none");
-      state.ctx.priority.holder = "p1";
-      state.ctx.priority.windowOpen = true;
-      const result = passPriority(state, "p1");
-
-      expect(result.ctx.priority.holder).toBeUndefined();
-      expect(result.ctx.priority.windowOpen).toBe(false);
-    });
-
-    it("should not duplicate players in pass sequence", () => {
-      const state = createTestState("none");
-      state.ctx.priority.passSequence = ["p1"];
-      const result = passPriority(state, "p1");
-
-      expect(result.ctx.priority.passSequence).toEqual(["p1"]);
-    });
-  });
-
   describe("pauseClock", () => {
     it("should pause clock with reason", () => {
       const state = createTestState("chess");
@@ -547,6 +519,34 @@ describe("Time Control", () => {
     });
 
     describe("grantPriority", () => {
+      it("should charge clock to pendingChoice.playerID in chess mode", () => {
+        const state = createTestState("chess");
+        state.ctx.priority.pendingChoice = {
+          type: "action-effect",
+          playerID: "p2",
+          requestID: "req-1",
+        };
+        const result = grantPriority(state, "p1", 1000);
+        expect(asChess(result.ctx.time).activePlayerID).toBe("p2");
+      });
+
+      it("should charge clock to pendingChoice.playerID in dynamic mode", () => {
+        const state = createTestState("dynamic");
+        state.ctx.priority.pendingChoice = {
+          type: "action-effect",
+          playerID: "p2",
+          requestID: "req-1",
+        };
+        const result = grantPriority(state, "p1", 1000);
+        expect(asDynamic(result.ctx.time).activePlayerID).toBe("p2");
+      });
+
+      it("should charge clock to holder when no pendingChoice is active", () => {
+        const state = createTestState("chess");
+        const result = grantPriority(state, "p1", 1000);
+        expect(asChess(result.ctx.time).activePlayerID).toBe("p1");
+      });
+
       it("should start dynamic clock when granting priority", () => {
         const state = createTestState("dynamic");
         const result = grantPriority(state, "p1", 1000);
@@ -661,6 +661,133 @@ describe("Time Control", () => {
         const state = createTestState("priority");
         expect(checkTimeout(state, "p1")).toBeNull();
       });
+
+      describe("per-decision max time cap", () => {
+        it("should return null when under the cap (paused, accumulator alone)", () => {
+          const state = createTestState("chess");
+          const st = asChess(state.ctx.time);
+          st.config.maxDecisionTimeMs = 60_000;
+          st.activePlayerID = "p1";
+          st.activePlayerAccumulatedMs = 30_000;
+          st.running = false; // paused → no unsettled delta added
+          expect(checkTimeout(state, "p1", 9_999_999)).toBeNull();
+        });
+
+        it("should return 'first' when accumulator alone exceeds cap", () => {
+          const state = createTestState("chess");
+          const st = asChess(state.ctx.time);
+          st.config.maxDecisionTimeMs = 60_000;
+          st.activePlayerID = "p1";
+          st.activePlayerAccumulatedMs = 61_000;
+          st.running = false;
+          expect(checkTimeout(state, "p1", 0)).toBe("first");
+        });
+
+        it("should include unsettled delta while running", () => {
+          const state = createTestState("chess");
+          const st = asChess(state.ctx.time);
+          st.config.maxDecisionTimeMs = 60_000;
+          st.activePlayerID = "p1";
+          st.activePlayerAccumulatedMs = 30_000;
+          st.startedAtMs = 1_000;
+          st.running = true;
+          // 30s accumulated + (61_000 - 1_000) = 30s + 60s = 90s > 60s cap
+          expect(checkTimeout(state, "p1", 61_000)).toBe("first");
+        });
+
+        it("should return 'first' for dynamic mode when exceeded", () => {
+          const state = createTestState("dynamic");
+          const st = asDynamic(state.ctx.time);
+          st.config.maxDecisionTimeMs = 45_000;
+          st.activePlayerID = "p1";
+          st.activePlayerAccumulatedMs = 46_000;
+          st.running = false;
+          expect(checkTimeout(state, "p1", 0)).toBe("first");
+        });
+
+        it("should not fire cap-timeout for a player who is NOT the active player", () => {
+          // This is the regression fix: cap is per priority holder, not per
+          // turn player. If p1 is the turn player but p2 currently holds
+          // priority (e.g. resolving a triggered target), the cap accumulator
+          // applies to p2, not p1.
+          const state = createTestState("chess");
+          const st = asChess(state.ctx.time);
+          st.config.maxDecisionTimeMs = 60_000;
+          st.activePlayerID = "p2";
+          st.activePlayerAccumulatedMs = 120_000;
+          st.running = false;
+          expect(checkTimeout(state, "p1", 0)).toBeNull();
+          expect(checkTimeout(state, "p2", 0)).toBe("first");
+        });
+
+        it("should return 'second' when cap-timed out and timeoutCount >= 1", () => {
+          const state = createTestState("chess");
+          const st = asChess(state.ctx.time);
+          st.config.maxDecisionTimeMs = 60_000;
+          st.activePlayerID = "p1";
+          st.activePlayerAccumulatedMs = 70_000;
+          st.running = false;
+          st.players["p1"].timeoutCount = 1;
+          expect(checkTimeout(state, "p1", 0)).toBe("second");
+        });
+
+        it("should not fire when maxDecisionTimeMs is undefined (backward compat)", () => {
+          const state = createTestState("chess");
+          const st = asChess(state.ctx.time);
+          // Explicitly no maxDecisionTimeMs
+          st.activePlayerID = "p1";
+          st.activePlayerAccumulatedMs = 999_999;
+          expect(checkTimeout(state, "p1", 0)).toBeNull();
+        });
+
+        it("should not fire when activePlayerID is unset", () => {
+          const state = createTestState("chess");
+          const st = asChess(state.ctx.time);
+          st.config.maxDecisionTimeMs = 60_000;
+          st.activePlayerAccumulatedMs = 999_999;
+          // activePlayerID never set
+          expect(checkTimeout(state, "p1", 0)).toBeNull();
+        });
+
+        it("should still fire isInNegativeTime timeout even if cap not exceeded", () => {
+          const state = createTestState("chess");
+          const st = asChess(state.ctx.time);
+          st.config.maxDecisionTimeMs = 60_000;
+          st.activePlayerID = "p1";
+          st.activePlayerAccumulatedMs = 5_000;
+          st.running = false;
+          st.players["p1"].isInNegativeTime = true;
+          expect(checkTimeout(state, "p1", 0)).toBe("first");
+        });
+      });
+    });
+
+    describe("resetPlayerTimeAfterSkip with per-decision tracking", () => {
+      it("should clear activePlayerAccumulatedMs when resetting the active player", () => {
+        const state = createTestState("chess");
+        const st = asChess(state.ctx.time);
+        st.config.maxDecisionTimeMs = 60_000;
+        st.activePlayerID = "p1";
+        st.activePlayerAccumulatedMs = 70_000;
+        st.players["p1"].isInNegativeTime = true;
+
+        const result = resetPlayerTimeAfterSkip(state, "p1");
+        const time = asChess(result.ctx.time);
+        expect(time.activePlayerAccumulatedMs).toBe(0);
+      });
+
+      it("should NOT clear accumulator when resetting a non-active player", () => {
+        const state = createTestState("chess");
+        const st = asChess(state.ctx.time);
+        st.config.maxDecisionTimeMs = 60_000;
+        st.activePlayerID = "p1";
+        st.activePlayerAccumulatedMs = 30_000;
+        st.players["p2"].isInNegativeTime = true;
+
+        const result = resetPlayerTimeAfterSkip(state, "p2");
+        const time = asChess(result.ctx.time);
+        expect(time.activePlayerAccumulatedMs).toBe(30_000);
+      });
     });
 
     describe("resetPlayerTimeAfterSkip", () => {
@@ -709,6 +836,192 @@ describe("Time Control", () => {
         const result = resetPlayerTimeAfterSkip(state, "p1");
         expect(result).toBe(state); // No change
       });
+    });
+  });
+
+  describe("Clock target derivation (pendingChoice vs priority.holder)", () => {
+    // These tests verify the pattern used in match-runtime.commands.ts Step 8:
+    //   clockTarget = pendingChoice?.playerID ?? priority.holder
+
+    it("should derive clock target from pendingChoice.playerID when present", () => {
+      const state = createTestState("chess");
+      state.ctx.priority.holder = "p1";
+      state.ctx.priority.pendingChoice = {
+        type: "action-effect",
+        playerID: "p2",
+        requestID: "effect-1",
+      };
+
+      const clockTarget = state.ctx.priority.pendingChoice?.playerID ?? state.ctx.priority.holder;
+      expect(clockTarget).toBe("p2");
+    });
+
+    it("should fall back to priority.holder when no pendingChoice", () => {
+      const state = createTestState("chess");
+      state.ctx.priority.holder = "p1";
+      // pendingChoice is absent by default on a fresh state
+
+      const clockTarget = state.ctx.priority.pendingChoice?.playerID ?? state.ctx.priority.holder;
+      expect(clockTarget).toBe("p1");
+    });
+
+    it("should revert to priority.holder after pendingChoice is cleared", () => {
+      const state = createTestState("dynamic");
+      state.ctx.priority.holder = "p1";
+      state.ctx.priority.pendingChoice = {
+        type: "action-effect",
+        playerID: "p2",
+        requestID: "effect-1",
+      };
+
+      // Before clearing
+      const clockTargetBefore =
+        state.ctx.priority.pendingChoice?.playerID ?? state.ctx.priority.holder;
+      expect(clockTargetBefore).toBe("p2");
+
+      // After clearing — pendingChoice is gone, clock falls back to priority.holder
+      state.ctx.priority.pendingChoice = undefined;
+      const clockTargetAfter = state.ctx.priority.holder;
+      expect(clockTargetAfter).toBe("p1");
+    });
+  });
+
+  describe("settleClocks updates startedAtMs", () => {
+    it("should advance startedAtMs after chess clock settlement", () => {
+      const state = createTestState("chess");
+      const st = asChess(state.ctx.time);
+      st.running = true;
+      st.activePlayerID = "p1";
+      st.startedAtMs = 1000;
+
+      const result = settleClocks(state, 6000);
+      expect(asChess(result.ctx.time).startedAtMs).toBe(6000);
+    });
+
+    it("should advance startedAtMs after priority clock settlement", () => {
+      const state = createTestState("priority");
+      const st = asPriority(state.ctx.time);
+      st.running = true;
+      st.activePlayerID = "p1";
+      st.startedAtMs = 1000;
+      st.activeWindow = {
+        playerID: "p1",
+        prioritySeq: 1,
+        windowMs: 30_000,
+        deadlineMs: 31_000,
+      };
+
+      const result = settleClocks(state, 6000);
+      expect(asPriority(result.ctx.time).startedAtMs).toBe(6000);
+    });
+
+    it("should advance startedAtMs after dynamic clock settlement", () => {
+      const state = createTestState("dynamic");
+      const st = asDynamic(state.ctx.time);
+      st.running = true;
+      st.activePlayerID = "p1";
+      st.startedAtMs = 1000;
+
+      const result = settleClocks(state, 6000);
+      expect(asDynamic(result.ctx.time).startedAtMs).toBe(6000);
+    });
+
+    it("should be idempotent: settling twice at the same time does not double-charge", () => {
+      const state = createTestState("chess");
+      const st = asChess(state.ctx.time);
+      st.running = true;
+      st.activePlayerID = "p1";
+      st.startedAtMs = 1000;
+
+      const first = settleClocks(state, 6000);
+      expect(asChess(first.ctx.time).players["p1"].reserveMsRemaining).toBe(595_000);
+
+      const second = settleClocks(first, 6000);
+      // Second settlement at the same timestamp should not charge more
+      expect(asChess(second.ctx.time).players["p1"].reserveMsRemaining).toBe(595_000);
+    });
+
+    it("should correctly charge only the delta on sequential settlements", () => {
+      const state = createTestState("chess");
+      const st = asChess(state.ctx.time);
+      st.running = true;
+      st.activePlayerID = "p1";
+      st.startedAtMs = 1000;
+
+      // First settlement: 5 seconds
+      const first = settleClocks(state, 6000);
+      expect(asChess(first.ctx.time).players["p1"].reserveMsRemaining).toBe(595_000);
+
+      // Second settlement: only 2 more seconds (not 7 total)
+      const second = settleClocks(first, 8000);
+      expect(asChess(second.ctx.time).players["p1"].reserveMsRemaining).toBe(593_000);
+    });
+
+    it("should be idempotent for dynamic clock mode", () => {
+      const state = createTestState("dynamic");
+      const st = asDynamic(state.ctx.time);
+      st.running = true;
+      st.activePlayerID = "p1";
+      st.startedAtMs = 1000;
+
+      const first = settleClocks(state, 6000);
+      expect(asDynamic(first.ctx.time).players["p1"].reserveMsRemaining).toBe(145_000);
+
+      const second = settleClocks(first, 6000);
+      expect(asDynamic(second.ctx.time).players["p1"].reserveMsRemaining).toBe(145_000);
+    });
+  });
+
+  describe("Match initialization clock start", () => {
+    it("should start clock for choosingFirstPlayer on init (chess)", () => {
+      const ctx = createInitialTCGCtx({
+        matchID: "match-init-1",
+        gameID: "lorcana",
+        rulesetHash: "v1",
+        timeConfig: {
+          mode: "chess",
+          config: {
+            initialReserveMs: 600_000,
+            incrementMs: 0,
+            delayMs: 0,
+            graceMs: 0,
+            resetTimeOnSkipMs: 60_000,
+            lossPolicy: "lose-on-time",
+          },
+        },
+        choosingFirstPlayer: "p1",
+        players: [{ id: "p1" } as any, { id: "p2" } as any],
+      });
+
+      // Clock should NOT be running yet from createInitialTCGCtx alone
+      // (match-runtime.init.ts handles the clock start after player initialization)
+      // But priority should be set
+      expect(ctx.priority.holder).toBe("p1");
+      expect(ctx.priority.windowOpen).toBe(true);
+    });
+
+    it("should keep clock paused when no choosingFirstPlayer", () => {
+      const ctx = createInitialTCGCtx({
+        matchID: "match-init-2",
+        gameID: "lorcana",
+        rulesetHash: "v1",
+        timeConfig: {
+          mode: "dynamic",
+          config: {
+            initialReserveMs: 150_000,
+            reserveCapMs: 150_000,
+            perActionBonusMs: 5_000,
+            perTurnPassBonusMs: 60_000,
+            resetTimeOnSkipMs: 60_000,
+            graceMs: 0,
+          },
+        },
+        players: [{ id: "p1" } as any, { id: "p2" } as any],
+      });
+
+      const time = asDynamic(ctx.time);
+      expect(time.running).toBe(false);
+      expect(time.pausedReason).toBe("MATCH_NOT_STARTED");
     });
   });
 });

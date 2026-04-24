@@ -26,7 +26,7 @@ export const hakunaMatata: ActionCard = {
       text: "Remove up to 3 damage from each of your characters.",
       name: "Hakuna Matata",
       effect: {
-        amount: 3,
+        amount: { type: "up-to", value: 3 },
         target: {
           cardTypes: ["character"],
           count: "all",
@@ -35,7 +35,6 @@ export const hakunaMatata: ActionCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       type: "action",
     },

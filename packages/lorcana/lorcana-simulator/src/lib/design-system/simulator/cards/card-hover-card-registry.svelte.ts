@@ -1,13 +1,13 @@
 class CardHoverCardRegistry {
-  activeCardId = $state<string | null>(null);
+  activeKey = $state<symbol | null>(null);
 
-  open(cardId: string): void {
-    this.activeCardId = cardId;
+  open(key: symbol): void {
+    this.activeKey = key;
   }
 
-  close(cardId: string): void {
-    if (this.activeCardId === cardId) {
-      this.activeCardId = null;
+  close(key: symbol): void {
+    if (this.activeKey === key) {
+      this.activeKey = null;
     }
   }
 }

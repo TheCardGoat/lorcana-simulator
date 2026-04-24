@@ -1,0 +1,208 @@
+/**
+ * GA4 analytics event types and parameter definitions.
+ *
+ * All custom events use snake_case, domain-prefixed naming.
+ * Parameter values are strings or numbers only (GA4 constraint).
+ */
+
+// ── Auth Events ──────────────────────────────────────────────
+export type AuthSignInMethod = "discord" | "metafy";
+export interface AuthSignInStartParams {
+  method: AuthSignInMethod;
+}
+export interface AuthSignInCompleteParams {
+  method: AuthSignInMethod;
+}
+// auth_sign_out has no params
+
+// ── Onboarding Events ────────────────────────────────────────
+// onboard_start has no params
+// onboard_complete has no params
+export interface OnboardErrorParams {
+  error: string;
+}
+
+// ── Deck & Profile Events ────────────────────────────────────
+// profile_switch has no params
+// deck_select has no params
+// deck_import_start has no params
+export interface DeckImportCompleteParams {
+  card_count: number;
+}
+export interface DeckImportErrorParams {
+  error: string;
+}
+
+// ── Matchmaking Events ───────────────────────────────────────
+export interface QueueJoinParams {
+  format: string;
+  mode: string;
+  matchType: string;
+}
+export interface QueueJoinErrorParams {
+  error: string;
+}
+export interface QueueJoinBlockedParams {
+  reason: string;
+}
+// queue_leave has no params
+export interface QueueMatchFoundParams {
+  wait_seconds: number;
+}
+export interface QueueTimeoutParams {
+  wait_seconds: number;
+}
+// practice_start has no params
+
+// ── Game Events ──────────────────────────────────────────────
+export interface GameJoinParams {
+  mode: "ranked" | "practice" | "spectator";
+}
+export interface GamePregameFirstParams {
+  /** GA4 only supports string/number values — use "true"/"false" instead of boolean. */
+  chose_first: "true" | "false";
+}
+export interface GameMulliganParams {
+  cards_mulliganed: number;
+}
+export interface GameMoveParams {
+  move_id: string;
+  turn: number;
+}
+// game_concede has no params
+export interface GameEndParams {
+  result: "win" | "loss" | "draw";
+  turns: number;
+  duration_seconds: number;
+  mode: string;
+}
+
+// ── Connection Events ────────────────────────────────────────
+// ws_connect has no params
+export interface WsDisconnectParams {
+  reason: string;
+}
+export interface WsReconnectParams {
+  attempts: number;
+}
+
+// ── Replay & Spectator Events ────────────────────────────────
+// replay_view has no params
+// replay_save has no params
+// replay_download has no params
+// spectate_start has no params
+export interface SpectateEndParams {
+  duration_seconds: number;
+}
+
+// ── Matchmaking Lobby Events ─────────────────────────────────
+export interface MatchmakingFormatSelectParams {
+  format: string;
+}
+export interface MatchmakingModeSelectParams {
+  mode: string;
+}
+// live_match_spectate has no params
+// practice_error has no params
+
+// ── Engagement Events ────────────────────────────────────────
+export interface SettingsChangeParams {
+  setting: string;
+  value: string;
+}
+// install_nudge_shown has no params
+// install_nudge_dismiss has no params
+
+// ── Match History Events ────────────────────────────────────
+export interface DeckRundownViewParams {
+  deck_name: string;
+}
+export interface DeckRundownDeckSelectedParams {
+  deck_name: string;
+}
+export interface DeckRundownSortChangedParams {
+  sort_mode: string;
+}
+
+// ── Event Map ────────────────────────────────────────────────
+
+export interface AnalyticsEventMap {
+  // Auth
+  auth_sign_in_start: AuthSignInStartParams;
+  auth_sign_in_complete: AuthSignInCompleteParams;
+  auth_sign_out: Record<string, never>;
+
+  // Onboarding
+  onboard_start: Record<string, never>;
+  onboard_complete: Record<string, never>;
+  onboard_error: OnboardErrorParams;
+
+  // Deck & Profile
+  profile_switch: Record<string, never>;
+  deck_select: Record<string, never>;
+  deck_import_start: Record<string, never>;
+  deck_import_complete: DeckImportCompleteParams;
+  deck_import_error: DeckImportErrorParams;
+  deck_create: Record<string, never>;
+  deck_delete: Record<string, never>;
+  legacy_import_start: Record<string, never>;
+  legacy_import_complete: Record<string, never>;
+  legacy_import_error: { error: string };
+
+  // Matchmaking
+  queue_join: QueueJoinParams;
+  queue_join_error: QueueJoinErrorParams;
+  queue_join_blocked: QueueJoinBlockedParams;
+  queue_leave: Record<string, never>;
+  queue_match_found: QueueMatchFoundParams;
+  queue_match_ready_expired: { reason: string };
+  queue_timeout: QueueTimeoutParams;
+  practice_start: Record<string, never>;
+  match_forfeit: { source: string };
+
+  // Matchmaking Lobby
+  matchmaking_format_select: MatchmakingFormatSelectParams;
+  matchmaking_mode_select: MatchmakingModeSelectParams;
+  matchmaking_match_type_select: { matchType: string };
+  live_match_spectate: Record<string, never>;
+  spectate_while_queued_open: Record<string, never>;
+
+  // Game
+  game_join: GameJoinParams;
+  game_pregame_first: GamePregameFirstParams;
+  game_mulligan: GameMulliganParams;
+  game_move: GameMoveParams;
+  game_concede: Record<string, never>;
+  game_end: GameEndParams;
+
+  // Connection
+  ws_connect: Record<string, never>;
+  ws_disconnect: WsDisconnectParams;
+  ws_reconnect: WsReconnectParams;
+
+  // Replay & Spectator
+  replay_view: Record<string, never>;
+  replay_save: Record<string, never>;
+  replay_download: Record<string, never>;
+  replay_fork: { step: number; humanSide: string };
+  spectate_start: Record<string, never>;
+  spectate_end: SpectateEndParams;
+
+  // Engagement
+  settings_change: SettingsChangeParams;
+  install_nudge_shown: Record<string, never>;
+  install_nudge_dismiss: Record<string, never>;
+
+  // Match History
+  deck_rundown_view: DeckRundownViewParams;
+  deck_rundown_deck_selected: DeckRundownDeckSelectedParams;
+  deck_rundown_sort_changed: DeckRundownSortChangedParams;
+}
+
+export type AnalyticsEventName = keyof AnalyticsEventMap;
+
+export interface AnalyticsUserProperties {
+  auth_state: "authenticated" | "anonymous";
+  has_profile: "true" | "false";
+  locale: string;
+}

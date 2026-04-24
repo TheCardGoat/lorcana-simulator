@@ -43,6 +43,12 @@ export const merlinIntellectualVisionary: CharacterCard = {
       effect: {
         type: "optional",
         effect: {
+          source: {
+            selector: "chosen",
+            count: 1,
+            owner: "you",
+            zones: ["deck"],
+          },
           putInto: "hand",
           shuffle: true,
           type: "search-deck",

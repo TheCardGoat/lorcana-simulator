@@ -104,13 +104,14 @@ export function resolveRevealAndRouteEffect(
 
       const result = resolveNestedEffect(ctx, cardPlayed, nestedEffect, resolutionInput, options);
 
+      const currentZone = ctx.framework.zones.getCardZone(topCard);
+      const stillOnDeck =
+        typeof currentZone === "string" &&
+        (currentZone === "deck" || currentZone.startsWith("deck:"));
+
       if (result.status === "resolved") {
         // Player resolved the optional. Check if card was played or declined.
         // If card is still in deck (not played), move to fallback.
-        const currentZone = ctx.framework.zones.getCardZone(topCard);
-        const stillOnDeck =
-          typeof currentZone === "string" &&
-          (currentZone === "deck" || currentZone.startsWith("deck:"));
         if (stillOnDeck) {
           moveCardToDestination(ctx, topCard, fallback, targetPlayerId);
         } else {
@@ -123,6 +124,23 @@ export function resolveRevealAndRouteEffect(
             resolveNestedEffect(ctx, cardPlayed, sideEffect, resolutionInput, options);
           }
         }
+
+        return result;
+      }
+
+      if (result.status === "suspended" && !stillOnDeck) {
+        // The revealed card was accepted and played for free, but its own effects are
+        // independently pending (e.g. it also has a multi-step sequence that needs player input).
+        // We Know the Way's effect is complete at this point — the decision was made and the
+        // card started playing. Return "resolved" so the outer card is finalised to discard
+        // instead of staying orphaned in limbo while the inner card resolves separately.
+        markLastEffectPerformed(resolutionInput.eventSnapshot, true);
+        if (route.sideEffects) {
+          for (const sideEffect of route.sideEffects) {
+            resolveNestedEffect(ctx, cardPlayed, sideEffect, resolutionInput, options);
+          }
+        }
+        return { status: "resolved" };
       }
 
       return result;

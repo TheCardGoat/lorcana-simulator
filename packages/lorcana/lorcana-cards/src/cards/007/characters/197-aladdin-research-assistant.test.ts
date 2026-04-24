@@ -117,14 +117,8 @@ describe("Aladdin - Research Assistant", () => {
       // Quest with Aladdin
       expect(testEngine.asPlayerOne().quest(aladdinResearchAssistant)).toBeSuccessfulCommand();
 
-      // HELPING HAND triggers but the only hand card is not an Ally — decline the optional
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(aladdinResearchAssistant, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
+      // HELPING HAND auto-skips — no Ally in hand to play, so no player decision needed
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       // Non-Ally should still be in hand
       expect(testEngine.asPlayerOne().getCardZone(nonAllyCharacterCost2)).toBe("hand");

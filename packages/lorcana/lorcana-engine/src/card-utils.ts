@@ -192,6 +192,30 @@ export function hasBodyguard(card: LorcanaCardDefinition): boolean {
 }
 
 /**
+ * Check if a card offers the player the option to enter play exerted on play.
+ *
+ * This covers printed "This character may enter play exerted" text that is not
+ * part of the Bodyguard keyword. When this is true, the engine treats
+ * `playCard(..., { resolveOptional: true })` as the player's choice to have
+ * the card enter play exerted.
+ */
+export function hasMayEnterPlayExertedOption(card: LorcanaCardDefinition): boolean {
+  if (!Array.isArray(card.abilities)) {
+    return false;
+  }
+  return card.abilities.some((ability) => {
+    if (ability.type !== "static") {
+      return false;
+    }
+    const effect = ability.effect;
+    if (!effect || effect.type !== "restriction") {
+      return false;
+    }
+    return effect.restriction === "may-enter-play-exerted" && effect.target === "SELF";
+  });
+}
+
+/**
  * Check if a character has Evasive
  */
 export function hasEvasive(card: LorcanaCardDefinition): boolean {

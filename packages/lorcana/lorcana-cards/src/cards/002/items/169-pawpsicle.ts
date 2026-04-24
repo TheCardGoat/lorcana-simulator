@@ -54,10 +54,9 @@ export const pawpsicle: ItemCard = {
         banishSelf: true,
       },
       effect: {
-        amount: 2,
+        amount: { type: "up-to", value: 2 },
         target: "CHOSEN_CHARACTER",
         type: "remove-damage",
-        upTo: true,
       },
       id: "s1u-2",
       name: "THAT'S REDWOOD",

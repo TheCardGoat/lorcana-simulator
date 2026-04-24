@@ -1,6 +1,5 @@
 import type {
   CommandEnvelope,
-  GameLogEntry,
   MatchState,
   PacketAnimation,
   PublishedGameEvent,
@@ -89,7 +88,6 @@ export interface UpdatePatchMessage extends ProtocolEnvelope {
   animations: PacketAnimation[];
   deltalogDelta?: unknown[];
   gameEventsDelta?: PublishedGameEvent[];
-  logEntriesDelta?: GameLogEntry[];
 }
 
 export interface UpdateFullMessage extends ProtocolEnvelope {
@@ -101,7 +99,6 @@ export interface UpdateFullMessage extends ProtocolEnvelope {
   animations: PacketAnimation[];
   deltalogDelta?: unknown[];
   gameEventsDelta?: PublishedGameEvent[];
-  logEntriesDelta?: GameLogEntry[];
   reason?: "PATCH_DISABLED" | "FILTERING_FALLBACK" | "STALE_STATE";
 }
 
@@ -112,7 +109,6 @@ export interface SyncFullMessage extends ProtocolEnvelope {
   state: MatchState;
   deltalogDelta?: unknown[];
   gameEventsDelta?: PublishedGameEvent[];
-  logEntriesDelta?: GameLogEntry[];
   matchData?: NetworkMatchData;
 }
 

@@ -44,11 +44,16 @@ export function hasSupportReminderCooldown(
   now: number = Date.now(),
 ): boolean {
   const dismissedAt = readSupportReminderDismissedAt(storage);
-  if (dismissedAt === null) {
-    return false;
+  if (dismissedAt !== null && now - dismissedAt < SUPPORT_REMINDER_HIDE_DURATION_MS) {
+    return true;
   }
 
-  return now - dismissedAt < SUPPORT_REMINDER_HIDE_DURATION_MS;
+  const lastShownAt = readSupportReminderLastShownAt(storage);
+  if (lastShownAt !== null && now - lastShownAt < SUPPORT_REMINDER_HIDE_DURATION_MS) {
+    return true;
+  }
+
+  return false;
 }
 
 export function pickSupportReminderVariantIndex(

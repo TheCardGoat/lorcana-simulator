@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { goliathClanLeader } from "..";
+import { goliathClanLeader } from "./173-goliath-clan-leader";
 
 export const goliathClanLeaderEnchanted: CharacterCard = {
   ...goliathClanLeader,

@@ -5,6 +5,7 @@ import type {
   PlayCardExecutionContext,
   CardPlayedPayload,
 } from "./types";
+import type { ActionEffectResolutionOptions } from "./types";
 import type { PlayerId } from "#core";
 import { resolveActionEffect } from "./composed-effect-resolver";
 import { evaluateActionCondition } from "./action-condition-evaluator";
@@ -63,6 +64,7 @@ export function resolveForEachOpponentEffect(
   cardPlayed: CardPlayedPayload,
   effect: ForEachOpponentEffect,
   resolutionInput: ActionResolutionInput,
+  options?: ActionEffectResolutionOptions,
 ): ActionResolutionResult {
   const currentPlayerId = cardPlayed.playerId;
   const allPlayerIds = ctx.framework.state.playerIds;
@@ -88,7 +90,11 @@ export function resolveForEachOpponentEffect(
       }
     }
 
-    const result = resolveActionEffect(ctx, cardPlayed, effect.effect, resolutionInput);
+    const isLastOpponent = opponentId === opponentIds[opponentIds.length - 1];
+    const result = resolveActionEffect(ctx, cardPlayed, effect.effect, resolutionInput, {
+      ...options,
+      continuation: isLastOpponent ? options?.continuation : undefined,
+    });
 
     if (result.status === "suspended") {
       return result;

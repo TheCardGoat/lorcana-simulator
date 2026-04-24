@@ -87,7 +87,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: overlay-announcement-lifecycle var(--overlay-duration, 1800ms)
+    animation: overlay-announcement-lifecycle var(--overlay-duration, 900ms)
       cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 

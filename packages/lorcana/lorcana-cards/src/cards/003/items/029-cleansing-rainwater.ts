@@ -30,7 +30,7 @@ export const cleansingRainwater: ItemCard = {
         banishSelf: true,
       },
       effect: {
-        amount: 2,
+        amount: { type: "up-to", value: 2 },
         target: {
           cardTypes: ["character"],
           count: "all",
@@ -39,7 +39,6 @@ export const cleansingRainwater: ItemCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       id: "w7f-1",
       name: "ANCIENT POWER",

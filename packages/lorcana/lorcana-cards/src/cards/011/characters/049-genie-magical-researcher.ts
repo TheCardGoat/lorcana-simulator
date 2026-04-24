@@ -23,7 +23,15 @@ export const genieMagicalResearcher: CharacterCard = {
     lorcast: "crd_13f9925099454b7a8fd6225381d11061",
     tcgPlayer: 675280,
   },
-  text: "Boost 1 {I} INCREASING WISDOM This character gets +1 {L} for each card under him.",
+  text: [
+    {
+      title: "Boost 1 {I}",
+    },
+    {
+      title: "INCREASING WISDOM",
+      description: "This character gets +1 {L} for each card under him.",
+    },
+  ],
   classifications: ["Storyborn", "Ally", "Whisper"],
   abilities: [
     boost(1),

@@ -15,6 +15,10 @@ export const educationOrEliminationI18n: Record<Languages, I18nProperties> = {
         title: "* Banish chosen damaged character.",
       },
     ],
+    optionTexts: [
+      "Draw a card. Chosen character of yours gets +1 {L} and gains Evasive until the start of your next turn.",
+      "Banish chosen damaged character.",
+    ],
   },
   de: {
     name: "Erziehung oder Eliminierung",

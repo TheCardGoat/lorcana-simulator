@@ -20,4 +20,17 @@ describe("Healing Touch", () => {
     expect(testEngine.asPlayerOne()).toHaveDamage({ card: goofyKnightForADay, value: 1 });
     expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toBe(1);
   });
+
+  it("draws a card even when there are no characters in play to heal", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [healingTouch],
+      inkwell: healingTouch.cost,
+      deck: [simbaProtectiveCub],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(healingTouch)).toBeSuccessfulCommand();
+
+    // The remove-damage step has no valid targets, but the draw step should still execute
+    expect(testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count).toBe(1);
+  });
 });

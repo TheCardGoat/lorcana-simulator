@@ -17,7 +17,7 @@ export const INKWELL_CANDIDATE_QUERY_DSL = {
   selector: "chosen",
   count: 1,
   owner: "you",
-  zones: ["hand"],
+  zones: ["hand", "discard"],
 } as const;
 
 export {

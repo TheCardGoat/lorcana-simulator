@@ -46,9 +46,6 @@ describe("Mowgli - Man Cub", () => {
       // Play Mowgli — triggers the ability
       expect(testEngine.asPlayerOne().playCard(mowgliManCub)).toBeSuccessfulCommand();
 
-      // Controller resolves the bag (reveal + discard sequence)
-      expect(testEngine.asPlayerOne().resolveOnlyBag()).toBeSuccessfulCommand();
-
       // Opponent chooses which non-character card to discard
       expect(
         testEngine.asPlayerTwo().resolveNextPending({
@@ -88,7 +85,6 @@ describe("Mowgli - Man Cub", () => {
 
       // Play Mowgli — triggers the ability
       expect(testEngine.asPlayerOne().playCard(mowgliManCub)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().resolveOnlyBag()).toBeSuccessfulCommand();
 
       // Opponent resolves the pending discard choice
       expect(

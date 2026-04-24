@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { theQueenConceitedRuler } from "..";
+import { theQueenConceitedRuler } from "./001-the-queen-conceited-ruler";
 
 export const theQueenConceitedRulerEpic: CharacterCard = {
   ...theQueenConceitedRuler,

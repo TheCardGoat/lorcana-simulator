@@ -11,7 +11,7 @@ import type { LorcanaCard } from "@tcg/lorcana-types";
 import { LorcanaServer, createLorcanaServerGame } from "./lorcana-server";
 import type { LorcanaMatchState } from "./types";
 
-export interface LorcanaUndoCheckpointSnapshot {
+export interface LorcanaUndoStackEntrySnapshot {
   stateID: number;
   playerId: string;
   state: LorcanaMatchState;
@@ -23,7 +23,7 @@ export interface LorcanaUndoCheckpointSnapshot {
 export interface LorcanaServerAuthoritativeSnapshot {
   state: LorcanaMatchState;
   cardsMaps: CardsMaps;
-  undoCheckpoint?: LorcanaUndoCheckpointSnapshot;
+  undoStack?: LorcanaUndoStackEntrySnapshot[];
 }
 
 /**
@@ -41,7 +41,7 @@ export function getLorcanaServerAuthoritativeSnapshot(
   return {
     state: getLorcanaServerAuthoritativeState(engine),
     cardsMaps,
-    undoCheckpoint: engine.getUndoCheckpointSnapshot(),
+    undoStack: engine.getUndoStackSnapshot(),
   };
 }
 
@@ -67,6 +67,7 @@ export function loadLorcanaServerAuthoritativeState(
       matchID: state.ctx.matchID,
       gameID: state.ctx.gameID,
       goingFirst: (state.ctx.status.choosingFirstPlayer ?? "") as PlayerId,
+      _skipInitialization: true,
     });
   engine.loadState(state);
 
@@ -94,6 +95,7 @@ export function loadLorcanaServerAuthoritativeSnapshot(
       matchID: snapshot.state.ctx.matchID,
       gameID: snapshot.state.ctx.gameID,
       goingFirst: (snapshot.state.ctx.status.choosingFirstPlayer ?? "") as PlayerId,
+      _skipInitialization: true,
     });
 
   engine.restoreAuthoritativeSnapshot(snapshot);

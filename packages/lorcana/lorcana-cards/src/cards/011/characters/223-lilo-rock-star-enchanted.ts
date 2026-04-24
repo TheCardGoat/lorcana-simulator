@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { liloRockStar } from "..";
+import { liloRockStar } from "./017-lilo-rock-star";
 
 export const liloRockStarEnchanted: CharacterCard = {
   ...liloRockStar,

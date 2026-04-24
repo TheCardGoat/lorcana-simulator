@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { beastRelentless } from "..";
+import { beastRelentless } from "./070-beast-relentless";
 
 export const beastRelentlessEnchanted: CharacterCard = {
   ...beastRelentless,

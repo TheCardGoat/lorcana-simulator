@@ -29,12 +29,12 @@ export const theBareNecessities: ActionCard = {
         steps: [
           {
             type: "reveal-hand",
-            target: "CHOSEN_PLAYER",
+            target: "OPPONENT",
           },
           {
             type: "discard",
             amount: 1,
-            target: "CHOSEN_PLAYER",
+            target: "OPPONENT",
             from: "hand",
             chosen: true,
             chosenBy: "you",

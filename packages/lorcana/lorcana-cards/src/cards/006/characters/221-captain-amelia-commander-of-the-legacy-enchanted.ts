@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { captainAmeliaCommanderOfTheLegacy } from "..";
+import { captainAmeliaCommanderOfTheLegacy } from "./192-captain-amelia-commander-of-the-legacy";
 
 export const captainAmeliaCommanderOfTheLegacyEnchanted: CharacterCard = {
   ...captainAmeliaCommanderOfTheLegacy,

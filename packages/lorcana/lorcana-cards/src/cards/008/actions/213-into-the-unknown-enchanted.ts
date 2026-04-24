@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { intoTheUnknown } from "..";
+import { intoTheUnknown } from "./081-into-the-unknown";
 
 export const intoTheUnknownEnchanted: ActionCard = {
   ...intoTheUnknown,

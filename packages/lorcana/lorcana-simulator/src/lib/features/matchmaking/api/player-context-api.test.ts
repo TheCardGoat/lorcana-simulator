@@ -20,7 +20,12 @@ mock.module("$lib/config/public-url-config.js", () => ({
 
 const {
   fetchDeckListSnapshotByDeckListId,
+  fetchMatchmakingEngagementState,
   fetchMatchmakingContext,
+  fetchProfileDeckSummaries,
+  fetchSelectedProfileDeckSummary,
+  importDeckForProfile,
+  joinMatchmakingEngagementEvent,
   updateActiveMatchmakingProfile,
   updateProfileSelectedDeck,
 } = await import("./player-context-api.js");
@@ -46,6 +51,11 @@ describe("player-context-api", () => {
             },
             activeGameProfileId: "gp_1",
             profiles: [],
+            engagement: {
+              walletBalance: 5,
+              featuredEvent: null,
+              activeEvents: [],
+            },
           }),
         ),
     );
@@ -58,6 +68,38 @@ describe("player-context-api", () => {
       { credentials: "include" },
     );
     expect(result.activeGameProfileId).toBe("gp_1");
+    expect(result.engagement.walletBalance).toBe(5);
+  });
+
+  it("loads and joins engagement events through dedicated endpoints", async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            walletBalance: 7,
+            featuredEvent: null,
+            activeEvents: [],
+          }),
+        ),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await fetchMatchmakingEngagementState();
+    await joinMatchmakingEngagementEvent("engevt_1");
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "https://api.example.test/v1/users/me/games/lorcana/engagement",
+      { credentials: "include" },
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://api.example.test/v1/users/me/games/lorcana/engagement/events/engevt_1/join",
+      {
+        method: "POST",
+        credentials: "include",
+      },
+    );
   });
 
   it("updates active profile and selected deck through dedicated endpoints", async () => {
@@ -81,6 +123,92 @@ describe("player-context-api", () => {
         method: "PUT",
       }),
     );
+  });
+
+  it("loads deck summaries for a single profile on demand", async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify([
+            {
+              deckId: "deck_1",
+              deckName: "Amber Steel",
+              activeDeckVersionId: "dv_1",
+              activeDeckListId: "dl_1",
+              cardCount: 60,
+              colorMask: 33,
+              updatedAt: "2026-03-03T00:00:00.000Z",
+            },
+          ]),
+        ),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await fetchProfileDeckSummaries("gp_2");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.test/v1/users/me/games/lorcana/profiles/gp_2/decks",
+      { credentials: "include" },
+    );
+    expect(result[0]?.deckId).toBe("deck_1");
+  });
+
+  it("loads the selected deck summary for a single profile on demand", async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            selectedDeckId: "deck_1",
+            selectedDeckSummary: {
+              deckId: "deck_1",
+              deckName: "Amber Steel",
+              activeDeckVersionId: "dv_1",
+              activeDeckListId: "dl_1",
+              cardCount: 60,
+              colorMask: 33,
+              updatedAt: "2026-03-03T00:00:00.000Z",
+            },
+          }),
+        ),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await fetchSelectedProfileDeckSummary("gp_2");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.test/v1/users/me/games/lorcana/profiles/gp_2/selected-deck",
+      { credentials: "include" },
+    );
+    expect(result.selectedDeckSummary?.deckId).toBe("deck_1");
+  });
+
+  it("imports a deck through the profile-scoped endpoint", async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            deckId: "deck_9",
+            deckName: "Emerald Steel Tempo",
+            activeDeckVersionId: "dv_9",
+            activeDeckListId: "dl_9",
+          }),
+        ),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const result = await importDeckForProfile("gp_2", {
+      deckName: "Emerald Steel Tempo",
+      deckText: "4 Diablo - Devoted Herald",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.test/v1/users/me/games/lorcana/profiles/gp_2/decks/import",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+      }),
+    );
+    expect(result.deckId).toBe("deck_9");
   });
 
   it("turns a deck list payload into a historic deck and deck text snapshot", async () => {

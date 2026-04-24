@@ -580,6 +580,7 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
           resolveOptional: true,
         }),
     ).toBeSuccessfulCommand();
+    // Bag row is cleared while resolution continues via pendingEffects (no duplicate queue).
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
 
@@ -588,6 +589,7 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [resolvedTarget] }),
     ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.isExerted(target)).toBe(true);
   });
 
@@ -849,6 +851,93 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     });
   });
 
+  it("auto-accepts a single mandatory opponent-chooser trigger from the bag", () => {
+    const opponentChooserQuestWatcher = createMockCharacter({
+      id: "opponent-chooser-quest-watcher",
+      name: "Opponent Chooser Quest Watcher",
+      cost: 2,
+      lore: 1,
+      abilities: [
+        {
+          id: "opponent-chooser-quest-watcher-1",
+          name: "Opponent Chooser Quest Watcher",
+          text: "Whenever this character quests, each opponent reveals the top card of their deck. If it's a character card, they may put it into their hand. Otherwise, they put it on the bottom of their deck.",
+          type: "triggered",
+          trigger: {
+            event: "quest",
+            on: "SELF",
+            timing: "whenever",
+          },
+          effect: {
+            type: "scry",
+            amount: 1,
+            target: "EACH_OPPONENT",
+            chooser: "OPPONENT",
+            revealAll: true,
+            destinations: [
+              {
+                zone: "hand",
+                min: 0,
+                max: 1,
+                filter: { type: "card-type", cardType: "character" },
+                reveal: true,
+              },
+              {
+                zone: "deck-bottom",
+                remainder: true,
+                reveal: true,
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [opponentChooserQuestWatcher],
+        deck: 2,
+      },
+      {
+        deck: 2,
+      },
+    );
+
+    // Quest — opponent must resolve the EACH_OPPONENT scry; bag clears while pending holds the flow.
+    expect(testEngine.asPlayerOne().quest(opponentChooserQuestWatcher)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(testEngine.asPlayerTwo().getPendingEffects().length).toBeGreaterThan(0);
+  });
+
+  it("does not auto-accept a single mandatory controller-chooser trigger from the bag", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [quester, targetedActionWatcher],
+        hand: [simpleAction],
+        inkwell: simpleAction.cost,
+        deck: 2,
+      },
+      {
+        play: [
+          createMockCharacter({
+            id: "target-for-no-auto",
+            name: "Target",
+            cost: 2,
+            strength: 2,
+            willpower: 2,
+            lore: 1,
+          }),
+        ],
+        deck: 2,
+      },
+    );
+
+    // Play action — the single mandatory trigger needs the controller to pick targets,
+    // so it should NOT auto-accept
+    expect(testEngine.asPlayerOne().playCard(simpleAction)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+  });
+
   it("does not queue bag effects when their trigger condition fails", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [simpleAction],
@@ -863,14 +952,20 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
       }),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
+    // Per CRD 6.2.7: ability IS enqueued when trigger fires, condition is checked at resolution.
+    // Non-turn-metric conditions (like target-query) stay in the bag because another bag item
+    // could change the game state to satisfy the condition.
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     expect(
       testEngine
-        .getServerEngine()
-        .getRuntime()
-        .getMoveLogHistory()
-        .find((log) => log.type === "resolveBag"),
-    ).toBeUndefined();
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          resolveOptional: true,
+        }),
+    ).toBeSuccessfulCommand();
+
+    // Condition (>= 3 cards in hand) failed at resolution — no additional lore gained
+    expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
   });
 });

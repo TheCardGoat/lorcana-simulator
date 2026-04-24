@@ -97,5 +97,65 @@ describe("Tinker Bell - Giant Fairy", () => {
       // Should have a bag effect for the optional 2 damage
       expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
     });
+
+    it("regression: does not trigger when Tinker Bell banishes the ONLY opposing character", () => {
+      const soloOpponent = createMockCharacter({
+        id: "tink-solo-opponent-zero",
+        name: "Solo Opponent",
+        cost: 1,
+        willpower: 1,
+        strength: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        { play: [tinkerBellGiantFairy] },
+        { play: [{ card: soloOpponent, exerted: true }] },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(tinkerBellGiantFairy, soloOpponent),
+      ).toBeSuccessfulCommand();
+
+      // No opposing characters remain — PUNY PIRATE! should not fire
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
+    it("triggers when opposing characters remain after banishing one", () => {
+      const opponent1 = createMockCharacter({
+        id: "tink-opponent-1",
+        name: "Opponent 1",
+        cost: 1,
+        willpower: 1,
+        strength: 1,
+      });
+      const opponent2 = createMockCharacter({
+        id: "tink-opponent-2b",
+        name: "Opponent 2",
+        cost: 1,
+        willpower: 1,
+        strength: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        { play: [tinkerBellGiantFairy] },
+        { play: [{ card: opponent1, exerted: true }, opponent2] },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(tinkerBellGiantFairy, opponent1),
+      ).toBeSuccessfulCommand();
+
+      // opponent2 still in play — PUNY PIRATE! should trigger
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(tinkerBellGiantFairy, {
+          resolveOptional: true,
+          targets: [opponent2],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
   });
 });

@@ -3,7 +3,7 @@
     import LorcanaBrowserHarnessView from "@/features/simulator-devtools/harness/LorcanaBrowserHarnessView.svelte";
 
     import {
-        donaldDuckBoisterousFowl,
+        donaldDuckBoisterousFowl, maximusPalaceHorse,
         mickeyMouseTrueFriend, suddenChill,
     } from "@tcg/lorcana-cards/cards/001";
     import { divebomb, lastditchEffort } from "@tcg/lorcana-cards/cards/003";
@@ -12,7 +12,11 @@
         donaldDuckAlongForTheRide,
     } from "@tcg/lorcana-cards/cards/011";
     import {daisyDuckDonaldsDate} from "@tcg/lorcana-cards/cards/005";
-    import {donaldDuckCoinCollector} from "@tcg/lorcana-cards/cards/008";
+    import {
+        donaldDuckCoinCollector,
+        jasmineSteadyStrategist,
+        jasmineSteadyStrategistEnchanted
+    } from "@tcg/lorcana-cards/cards/008";
     import {donaldDuckBuccaneer} from "@tcg/lorcana-cards/cards/004";
 
     const fixture = createFixture({
@@ -21,13 +25,19 @@
         description: "Exercises multi-target simulator interactions.",
         playerOne: {
             inkwell: 3,
-            deck: [donaldDuckAlongForTheRide, divebomb, loseTheWay, lastditchEffort, mickeyMouseTrueFriend],
+            play: [
+                daisyDuckDonaldsDate,
+                daisyDuckDonaldsDate,
+                daisyDuckDonaldsDate,
+                jasmineSteadyStrategistEnchanted
+            ],
+            deck: [donaldDuckAlongForTheRide, divebomb, loseTheWay,maximusPalaceHorse, lastditchEffort, mickeyMouseTrueFriend],
         },
         playerTwo: {
             play: [
                 daisyDuckDonaldsDate,
                 daisyDuckDonaldsDate,
-                daisyDuckDonaldsDate,
+                jasmineSteadyStrategist
             ],
             hand: [donaldDuckBoisterousFowl],
             deck: [donaldDuckCoinCollector, suddenChill, donaldDuckBuccaneer]

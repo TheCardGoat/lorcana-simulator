@@ -24,8 +24,7 @@ export const quickPatch: ActionCard = {
       type: "action",
       effect: {
         type: "remove-damage",
-        upTo: true,
-        amount: 3,
+        amount: { type: "up-to", value: 3 },
         target: {
           cardTypes: ["location"],
           count: 1,

@@ -34,6 +34,8 @@ export interface DynamicAmountEventSnapshot {
   revealWindowIds?: ReadonlyArray<string>;
   /** Card IDs discarded during the current effect sequence (accumulated across multiple discard steps) */
   discardedCardIds?: ReadonlyArray<CardInstanceId>;
+  /** Number of cards drawn during the current effect sequence (accumulated across multiple draw steps) */
+  drawnCount?: number;
   namedCardName?: string;
   chosenCardId?: CardInstanceId;
   chosenCardCost?: number;
@@ -136,6 +138,8 @@ export interface CardsDrawnPayload {
   playerId: PlayerId;
   amount: number;
   cardIds?: CardInstanceId[];
+  /** Present only on mandatory start-of-turn draws; used to route to TurnStartLog instead of move outcomes. */
+  source?: "mandatory-draw";
 }
 
 export interface TurnPassedPayload {
@@ -147,7 +151,15 @@ export interface CardPlayedPayload {
   playerId: PlayerId;
   cardId: CardInstanceId;
   cardType: "character" | "action" | "item" | "location";
-  costType: "standard" | "shift" | "sing" | "singTogether" | "free" | "sacrifice" | "exert-items";
+  costType:
+    | "standard"
+    | "shift"
+    | "sing"
+    | "singTogether"
+    | "free"
+    | "sacrifice"
+    | "exert-items"
+    | "put-on-deck-bottom";
   shiftTargetId?: CardInstanceId;
   singerIds?: readonly CardInstanceId[];
   inkPaid?: number;
@@ -184,6 +196,9 @@ export interface CardInkedPayload {
   cardId: CardInstanceId;
   from: string;
   to: string;
+  exerted?: boolean;
+  /** Card name preserved for log rendering when the card is face-down in the inkwell */
+  cardName?: string;
 }
 
 export interface DeckShuffledPayload {

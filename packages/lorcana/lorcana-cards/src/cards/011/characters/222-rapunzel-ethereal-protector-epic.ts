@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { rapunzelEtherealProtector } from "..";
+import { rapunzelEtherealProtector } from "./171-rapunzel-ethereal-protector";
 
 export const rapunzelEtherealProtectorEpic: CharacterCard = {
   ...rapunzelEtherealProtector,

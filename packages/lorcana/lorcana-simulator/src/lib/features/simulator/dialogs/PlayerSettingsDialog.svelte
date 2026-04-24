@@ -8,7 +8,7 @@
     CardPreviewMode,
     HotkeyMode,
     PrimaryClickAction,
-  } from "@/features/simulator/context/game-context.svelte.js";
+  } from "@/features/settings/player-settings-store.svelte.js";
   import SimulatorSupportActions from "@/features/simulator/support/SimulatorSupportActions.svelte";
   import PlaymatPicker from "./PlaymatPicker.svelte";
   import CardSleevePicker from "./CardSleevePicker.svelte";
@@ -37,6 +37,8 @@
     onSoundVolumeChange?: (volume: number) => void;
     accessibleMobileControls?: boolean;
     onToggleAccessibleMobileControls?: (enabled: boolean) => void;
+    showZoneCounters?: boolean;
+    onToggleShowZoneCounters?: (enabled: boolean) => void;
     selectedCardBack?: string;
     selectedPlaymat?: string;
     onCardBackChange?: (id: string) => void;
@@ -53,7 +55,7 @@
     hotkeyMode = "confirm-only",
     cardPreviewMode = "delayed",
     primaryClickAction = "challenge",
-    animationSpeed = "normal",
+    animationSpeed = "off",
     soundVolume = 50,
     onOpenHotkeys,
     onLocaleSelection,
@@ -66,6 +68,8 @@
     onSoundVolumeChange,
     accessibleMobileControls = false,
     onToggleAccessibleMobileControls,
+    showZoneCounters = false,
+    onToggleShowZoneCounters,
     selectedCardBack = "default",
     selectedPlaymat = "default",
     onCardBackChange,
@@ -155,7 +159,7 @@
     const select = event.currentTarget;
     if (!(select instanceof HTMLSelectElement)) return;
     const next = select.value as AnimationSpeed;
-    if (next === "fast" || next === "normal" || next === "slow") {
+    if (next === "off" || next === "fast" || next === "normal" || next === "slow") {
       onAnimationSpeedChange?.(next);
     }
   }
@@ -173,6 +177,15 @@
     }
 
     onToggleAccessibleMobileControls?.(input.checked);
+  }
+
+  function handleShowZoneCountersToggle(event: Event): void {
+    const input = event.currentTarget;
+    if (!(input instanceof HTMLInputElement)) {
+      return;
+    }
+
+    onToggleShowZoneCounters?.(input.checked);
   }
 
   function handleOpenHotkeysClick(): void {
@@ -320,6 +333,7 @@
             value={animationSpeed}
             onchange={handleAnimationSpeedSelection}
           >
+            <option value="off">{m["sim.settings.animationSpeed.off"]({})}</option>
             <option value="fast">{m["sim.settings.animationSpeed.fast"]({})}</option>
             <option value="normal">{m["sim.settings.animationSpeed.normal"]({})}</option>
             <option value="slow">{m["sim.settings.animationSpeed.slow"]({})}</option>
@@ -361,6 +375,22 @@
             <span>{m["sim.settings.accessibleMobileControlsLabel"]({})}</span>
           </label>
           <p class="player-settings-help">{m["sim.settings.accessibleMobileControlsDescription"]({})}</p>
+        </div>
+
+        <div class="grid gap-1.5">
+          <label
+            class="player-settings-checkbox-row"
+            for="player-show-zone-counters-toggle"
+          >
+            <input
+              id="player-show-zone-counters-toggle"
+              type="checkbox"
+              checked={showZoneCounters}
+              onchange={handleShowZoneCountersToggle}
+            />
+            <span>{m["sim.settings.showZoneCountersLabel"]({})}</span>
+          </label>
+          <p class="player-settings-help">{m["sim.settings.showZoneCountersDescription"]({})}</p>
         </div>
 
         {#if import.meta.env.DEV}

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { judyHoppsLeadDetective } from "..";
+import { judyHoppsLeadDetective } from "./150-judy-hopps-lead-detective";
 
 export const judyHoppsLeadDetectiveEnchanted: CharacterCard = {
   ...judyHoppsLeadDetective,

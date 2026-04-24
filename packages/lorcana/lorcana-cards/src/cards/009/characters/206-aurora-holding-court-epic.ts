@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { auroraHoldingCourt } from "..";
+import { auroraHoldingCourt } from "./006-aurora-holding-court";
 
 export const auroraHoldingCourtEpic: CharacterCard = {
   ...auroraHoldingCourt,

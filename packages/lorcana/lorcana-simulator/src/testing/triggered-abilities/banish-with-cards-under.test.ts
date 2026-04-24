@@ -1,5 +1,14 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, PLAYER_ONE } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import {
+  lonelyGrave,
+  scroogesCountingHouseEbenezersOffice,
+  wreckitRalphRagingWrecker,
+} from "@tcg/lorcana-cards/cards/011";
 
 /**
  * BANISH INTERACTIONS WITH CARDS-UNDER
@@ -22,6 +31,54 @@ describe("Banish Interactions with Cards-Under", () => {
     it.todo("RALPH-002: Ralph's strength includes cards-under bonus", () => {});
 
     it.todo("RALPH-003: Uses snapshot at time of banish", () => {});
+
+    it("regression THE-960: uses pre-banish boosted strength when Ralph is banished as an activation cost", () => {
+      const fourStrengthTargetA = createMockCharacter({
+        id: "the-960-four-strength-target-a",
+        name: "THE-960 Target A",
+        cost: 4,
+        strength: 4,
+        willpower: 4,
+      });
+
+      const fourStrengthTargetB = createMockCharacter({
+        id: "the-960-four-strength-target-b",
+        name: "THE-960 Target B",
+        cost: 4,
+        strength: 4,
+        willpower: 4,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          deck: 5,
+          play: [lonelyGrave, scroogesCountingHouseEbenezersOffice, wreckitRalphRagingWrecker],
+          inkwell: 10,
+        },
+        {
+          play: [fourStrengthTargetA, fourStrengthTargetB],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(wreckitRalphRagingWrecker, { ability: "Boost" }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardStrength(wreckitRalphRagingWrecker)).toBe(4);
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(lonelyGrave, {
+          costs: {
+            banishCharacters: [
+              testEngine.findCardInstanceId(wreckitRalphRagingWrecker, "play", PLAYER_ONE),
+            ],
+          },
+          targets: [scroogesCountingHouseEbenezersOffice],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(fourStrengthTargetA)).toBe("discard");
+      expect(testEngine.asPlayerTwo().getCardZone(fourStrengthTargetB)).toBe("discard");
+    });
   });
 
   describe("MICKEY-001 to MICKEY-005: Mickey - A GIVING HEART", () => {

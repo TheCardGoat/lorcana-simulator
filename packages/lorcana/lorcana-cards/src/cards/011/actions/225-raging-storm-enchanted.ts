@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { ragingStorm } from "..";
+import { ragingStorm } from "./028-raging-storm";
 
 export const ragingStormEnchanted: ActionCard = {
   ...ragingStorm,

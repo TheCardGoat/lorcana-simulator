@@ -69,6 +69,7 @@
     canOpenTargetModal?: boolean;
     onOpenTargetModal?: () => void;
     initialDockPosition?: PendingEffectsDockPosition;
+    hasActiveOverlay?: boolean;
   }
 
   type ViewMode = PendingEffectsViewMode;
@@ -80,12 +81,58 @@
     canOpenTargetModal = false,
     onOpenTargetModal,
     initialDockPosition = 'middle',
+    hasActiveOverlay = false,
   }: PendingEffectsPopoverProps = $props();
   const simulatorCardContext = maybeUseSimulatorCardContext();
 
   let viewMode = $state<ViewMode>(DEFAULT_PENDING_EFFECTS_VIEW_MODE);
   let dockPosition = $state<PendingEffectsDockPosition>('middle');
   let hasHydratedDockPosition = $state(false);
+
+  let dragOffset = $state<{ x: number; y: number } | null>(null);
+  let isDragging = $state(false);
+  let dragStart = $state<{ pointerX: number; pointerY: number; offsetX: number; offsetY: number } | null>(null);
+
+  function handleDragPointerDown(event: PointerEvent): void {
+    if (event.button !== 0) return;
+    const target = event.currentTarget as HTMLElement;
+    target.setPointerCapture(event.pointerId);
+    const currentOffset = dragOffset ?? { x: 0, y: 0 };
+    dragStart = {
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      offsetX: currentOffset.x,
+      offsetY: currentOffset.y,
+    };
+    isDragging = false;
+    event.preventDefault();
+  }
+
+  function handleDragPointerMove(event: PointerEvent): void {
+    if (!dragStart) return;
+    const dx = event.clientX - dragStart.pointerX;
+    const dy = event.clientY - dragStart.pointerY;
+    if (!isDragging && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      isDragging = true;
+    }
+    if (isDragging) {
+      dragOffset = { x: dragStart.offsetX + dx, y: dragStart.offsetY + dy };
+    }
+  }
+
+  function handleDragPointerUp(event: PointerEvent): void {
+    if (!isDragging) {
+      handleReminderClick();
+    }
+    dragStart = null;
+    isDragging = false;
+  }
+
+  $effect(() => {
+    if (!open) {
+      dragOffset = null;
+    }
+  });
 
   $effect(() => {
     if (!hasHydratedDockPosition) {
@@ -96,6 +143,7 @@
   let hasHydratedViewModePreference = $state(false);
   let previousItemCount = $state(0);
   let previousActionableSignature = $state('');
+  let userManuallyOpenedWhileOverlayActive = $state(false);
 
   function ownerSortKey(item: PendingEffectsPopoverItem): number {
     if (item.isLocalPlayer === true) return 0;
@@ -108,9 +156,20 @@
   const pendingCount = $derived(
     items.filter((item) => item.kind === 'pending').length,
   );
+  const hasOpponentItems = $derived(items.some((item) => item.isLocalPlayer === false));
+  const localPlayerIsActive = $derived(
+    items.some(
+      (item) =>
+        item.isLocalPlayer !== false &&
+        Boolean(
+          (item.canResolve && item.onResolve) ||
+          (item.canAccept && item.onAccept) ||
+          (item.canReject && item.onReject),
+        ),
+    ),
+  );
   const hasMultipleOwners = $derived(
-    items.some((item) => item.isLocalPlayer === true) &&
-      items.some((item) => item.isLocalPlayer === false),
+    items.some((item) => item.isLocalPlayer === true) && hasOpponentItems,
   );
   const sortedItems = $derived(
     hasMultipleOwners
@@ -207,6 +266,16 @@
   );
 
   $effect(() => {
+    if (hasActiveOverlay) {
+      if (open && !userManuallyOpenedWhileOverlayActive) {
+        open = false;
+      }
+    } else {
+      userManuallyOpenedWhileOverlayActive = false;
+    }
+  });
+
+  $effect(() => {
     if (itemCount === 0) {
       open = false;
       previousItemCount = 0;
@@ -219,9 +288,12 @@
         itemCount,
         bagCount,
         pendingCount,
+        hasOpponentItems,
         actionableSignature,
         previousItemCount,
         previousActionableSignature,
+        localPlayerIsActive,
+        hasActiveOverlay,
       })
     ) {
       open = true;
@@ -305,6 +377,9 @@
 
   function handleReminderClick(): void {
     open = !open;
+    if (open && hasActiveOverlay) {
+      userManuallyOpenedWhileOverlayActive = true;
+    }
   }
 
   function minimizePanel(): void {
@@ -378,9 +453,13 @@
   <button
     type="button"
     class="pending-effects-reminder"
+    class:pending-effects-reminder--dragging={isDragging}
     data-queue-anchor="reminder"
     data-state={open ? 'open' : 'closed'}
-    onclick={handleReminderClick}
+    style={dragOffset ? `transform: translate(${dragOffset.x}px, ${dragOffset.y}px)` : undefined}
+    onpointerdown={handleDragPointerDown}
+    onpointermove={handleDragPointerMove}
+    onpointerup={handleDragPointerUp}
     aria-expanded={open}
     aria-controls="pending-effects-panel"
   >
@@ -711,9 +790,12 @@
 <style>
   .pending-effects-reminder {
     position: absolute;
-    top: calc(1rem + env(safe-area-inset-top));
+    bottom: calc(1rem + env(safe-area-inset-bottom));
     right: 1rem;
-    z-index: 210;
+    z-index: 500;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
     min-width: 11.5rem;
     display: grid;
     grid-template-columns: auto auto;
@@ -798,10 +880,14 @@
     font-weight: 800;
   }
 
+  .pending-effects-reminder--dragging {
+    cursor: grabbing;
+  }
+
   .pending-effects-panel-anchor {
     position: absolute;
     right: 1rem;
-    z-index: 209;
+    z-index: 30;
     pointer-events: none;
   }
 
@@ -1483,6 +1569,7 @@
   @media (max-width: 767px) {
     .pending-effects-reminder {
       top: calc(0.7rem + env(safe-area-inset-top));
+      bottom: auto;
       right: 0.7rem;
       min-width: 10.5rem;
       padding: 0.72rem 0.82rem;

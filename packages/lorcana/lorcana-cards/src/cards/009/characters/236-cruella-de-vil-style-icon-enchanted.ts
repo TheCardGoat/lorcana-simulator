@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { cruellaDeVilStyleIcon } from "..";
+import { cruellaDeVilStyleIcon } from "./143-cruella-de-vil-style-icon";
 
 export const cruellaDeVilStyleIconEnchanted: CharacterCard = {
   ...cruellaDeVilStyleIcon,

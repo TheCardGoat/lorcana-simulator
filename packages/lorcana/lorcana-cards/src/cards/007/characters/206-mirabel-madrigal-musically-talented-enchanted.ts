@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mirabelMadrigalMusicallyTalented } from "..";
+import { mirabelMadrigalMusicallyTalented } from "./035-mirabel-madrigal-musically-talented";
 
 export const mirabelMadrigalMusicallyTalentedEnchanted: CharacterCard = {
   ...mirabelMadrigalMusicallyTalented,

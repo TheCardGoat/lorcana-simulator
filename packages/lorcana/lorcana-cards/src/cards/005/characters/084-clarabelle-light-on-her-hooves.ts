@@ -1,5 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
 import { clarabelleLightOnHerHoovesI18n } from "./084-clarabelle-light-on-her-hooves.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const clarabelleLightOnHerHooves: CharacterCard = {
   id: "RGJ",
@@ -24,8 +25,6 @@ export const clarabelleLightOnHerHooves: CharacterCard = {
   text: [
     {
       title: "Shift 5",
-      description:
-        "(You may pay 5 {I} to play this on top of one of your characters named Clarabelle.)",
     },
     {
       title: "KEEP IN STEP",
@@ -35,16 +34,7 @@ export const clarabelleLightOnHerHooves: CharacterCard = {
   ],
   classifications: ["Floodborn", "Ally"],
   abilities: [
-    {
-      id: "RGJ-2",
-      keyword: "Shift",
-      cost: {
-        ink: 5,
-      },
-      shiftTarget: "Clarabelle",
-      type: "keyword",
-      text: "**Shift 5** (You may pay 5 {I} to play this on top of one of your characters named Clarabelle.)",
-    },
+    shift(5),
     {
       id: "RGJ-1",
       name: "KEEP IN STEP",

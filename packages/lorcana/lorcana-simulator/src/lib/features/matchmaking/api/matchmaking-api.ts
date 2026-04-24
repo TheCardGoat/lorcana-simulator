@@ -1,11 +1,26 @@
 import { getGameServerOrigin } from "$lib/config/public-url-config.js";
+import { HttpRequestError, requestJson, requestVoid } from "$lib/data/transport/http-client.js";
 
 export interface MatchmakingJoinParams {
   gameProfileId: string;
   format: string;
   mode: string;
-  archetypeId?: string;
+  /** Bitmask of opponent ink colors the player wants to face (casual only, ≤2 bits). */
+  preferredOpponentColors?: number;
+  /** Bitmask of opponent ink colors the player wants to avoid (casual only, ≤2 bits). */
+  excludedOpponentColors?: number;
+  /** Whether color preferences are hard requirements or soft suggestions relaxed after 60 s. */
+  colorPreferenceStrength?: "required" | "preferred";
   bracketId?: string;
+  /**
+   * Queue match type:
+   * - "ranked" (default)
+   * - "casual" (quick match)
+   * - "testing" (dev-only; backend rejects in production)
+   */
+  matchType?: "ranked" | "casual" | "testing";
+  /** Whether the player is on a mobile device (detected client-side via User-Agent). */
+  isMobile?: boolean;
 }
 
 export interface MatchmakingEntryResponse {
@@ -24,56 +39,104 @@ export interface MatchmakingStatusResponse {
     deckListId: string;
     format: string;
     mode: string;
-    archetypeId?: string;
     bracketId?: string;
+    matchType?: string;
     queuedAt: number;
     expiresAt: number;
   };
   position?: number;
+  /** Present when the player is in the pending-acceptance phase (dequeued until accept/decline/timeout). */
+  pendingMatchId?: string;
+  pendingMatchDeadline?: number;
+  pendingSelfAccepted?: boolean;
+  pendingOpponentAccepted?: boolean;
+}
+
+export interface RejoinMatchDetailsResponse {
+  currentGameId?: string;
+  participants?: Array<{ id: string; userId?: string }>;
+}
+
+export class MatchmakingJoinError extends Error {
+  public readonly matchId?: string;
+
+  constructor(message: string, matchId?: string) {
+    super(message);
+    this.name = "MatchmakingJoinError";
+    this.matchId = matchId;
+  }
 }
 
 export async function joinMatchmakingQueue(
   params: MatchmakingJoinParams,
 ): Promise<MatchmakingEntryResponse> {
-  const res = await fetch(`${getGameServerOrigin()}/v1/play/matchmaking/join`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
-  });
+  try {
+    return await requestJson<MatchmakingEntryResponse>(
+      `${getGameServerOrigin()}/v1/play/matchmaking/join`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      },
+      "Failed to join queue",
+    );
+  } catch (error) {
+    if (error instanceof HttpRequestError) {
+      const payload =
+        typeof error.payload === "object" && error.payload !== null
+          ? (error.payload as Record<string, unknown>)
+          : null;
+      const matchId = payload && typeof payload.matchId === "string" ? payload.matchId : undefined;
+      throw new MatchmakingJoinError(error.message, matchId);
+    }
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    const message =
-      typeof body === "object" && body !== null && "message" in body
-        ? String((body as Record<string, unknown>).message)
-        : `Failed to join queue: ${res.status}`;
-    throw new Error(message);
+    throw error;
   }
-
-  return res.json() as Promise<MatchmakingEntryResponse>;
 }
 
 export async function leaveMatchmakingQueue(): Promise<void> {
-  const res = await fetch(`${getGameServerOrigin()}/v1/play/matchmaking/leave`, {
-    method: "DELETE",
-    credentials: "include",
-  });
+  await requestVoid(
+    `${getGameServerOrigin()}/v1/play/matchmaking/leave`,
+    {
+      method: "DELETE",
+    },
+    "Failed to leave queue",
+  );
+}
 
-  // 204 No Content is success; ignore body
-  if (!res.ok && res.status !== 204) {
-    throw new Error(`Failed to leave queue: ${res.status}`);
+export async function forfeitMatch(matchId: string): Promise<void> {
+  await requestVoid(
+    `${getGameServerOrigin()}/v1/play/matchmaking/forfeit-match`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matchId }),
+    },
+    "Failed to forfeit match",
+  );
+}
+
+export async function fetchRejoinMatchDetails(
+  matchId: string,
+): Promise<RejoinMatchDetailsResponse | null> {
+  try {
+    return await requestJson<RejoinMatchDetailsResponse>(
+      `${getGameServerOrigin()}/v1/play/matches/${matchId}`,
+      undefined,
+      "Could not load match details. Please try again.",
+    );
+  } catch (error) {
+    if (error instanceof HttpRequestError) {
+      return null;
+    }
+    throw error;
   }
 }
 
 export async function getMatchmakingStatus(): Promise<MatchmakingStatusResponse> {
-  const res = await fetch(`${getGameServerOrigin()}/v1/play/matchmaking/status`, {
-    credentials: "include",
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to get matchmaking status: ${res.status}`);
-  }
-
-  return res.json() as Promise<MatchmakingStatusResponse>;
+  return requestJson<MatchmakingStatusResponse>(
+    `${getGameServerOrigin()}/v1/play/matchmaking/status`,
+    undefined,
+    "Failed to get matchmaking status",
+  );
 }

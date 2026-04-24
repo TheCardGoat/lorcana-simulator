@@ -10,7 +10,6 @@ import {
   type DeepReadonly,
   type EngineMoveHistoryEntry,
   type EngineLogRecord,
-  type GameLogEntry,
   type LorcanaMatchState,
   type LorcanaServer,
   type PlayerId,
@@ -51,7 +50,6 @@ export interface AutomatedMatchPlaybackServer {
   getActivePlayer(): PlayerId | undefined;
   getCurrentPhase(): string | undefined;
   getCurrentStep(): string | null | undefined;
-  getGameLog(): GameLogEntry[];
   getGameSegment(): string | undefined;
   getMoveHistory(limit?: number): EngineMoveHistoryEntry[];
   getMoveLogHistory(): import("@tcg/lorcana-engine").MoveLog[];

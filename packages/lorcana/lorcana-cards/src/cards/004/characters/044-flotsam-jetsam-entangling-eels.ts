@@ -24,8 +24,9 @@ export const flotsamJetsamEntanglingEels: CharacterCard = {
   },
   text: [
     {
-      title:
-        "Shift: Discard 2 cards (You may discard 2 cards to play this on top of one of your characters named Flotsam or Jetsam.)",
+      title: "Shift: Discard 2 cards ",
+      description:
+        "(You may discard 2 cards to play this on top of one of your characters named Flotsam or Jetsam.)",
     },
     {
       title: "(This character counts as being named both Flotsam and Jetsam.)",

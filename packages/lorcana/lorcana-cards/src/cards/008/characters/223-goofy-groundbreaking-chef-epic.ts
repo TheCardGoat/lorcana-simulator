@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { goofyGroundbreakingChef } from "..";
+import { goofyGroundbreakingChef } from "./004-goofy-groundbreaking-chef";
 
 export const goofyGroundbreakingChefEpic: CharacterCard = {
   ...goofyGroundbreakingChef,

@@ -34,4 +34,18 @@ describe("Beast's Mirror", () => {
     expect(testEngine.asPlayerOne().isExerted(beastsMirror)).toBe(true);
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("hand");
   });
+
+  it("cannot activate SHOW ME when you have cards in hand", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [cardInHand],
+      deck: [drawnCard],
+      inkwell: 3,
+      play: [beastsMirror],
+    });
+
+    expect(testEngine.asPlayerOne().activateAbility(beastsMirror).success).toBe(false);
+
+    expect(testEngine.asPlayerOne().isExerted(beastsMirror)).toBe(false);
+    expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
+  });
 });

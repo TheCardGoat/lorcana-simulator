@@ -73,6 +73,10 @@
     "./cards/011": {
       "types": "./src/cards/011/index.ts",
       "default": "./src/cards/011/index.ts"
+    },
+    "./cards/012": {
+      "types": "./src/cards/012/index.ts",
+      "default": "./src/cards/012/index.ts"
     }
   },
   "scripts": {

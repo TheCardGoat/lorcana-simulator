@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { tinkerBellFancyFootwork } from "..";
+import { tinkerBellFancyFootwork } from "./106-tinker-bell-fancy-footwork";
 
 export const tinkerBellFancyFootworkEpic: CharacterCard = {
   ...tinkerBellFancyFootwork,

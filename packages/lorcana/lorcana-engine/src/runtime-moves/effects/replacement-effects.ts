@@ -43,7 +43,7 @@ function getPrintedAbilityEventKinds(
   if (!abilityKind || typeof abilityKind !== "object") return [];
   if (abilityKind.type === "prevent-remove-damage") return ["remove-damage"];
   if (abilityKind.type === "redirect-damage" || abilityKind.type === "prevent-damage") {
-    return ["deal-damage", "challenge-damage"];
+    return ["deal-damage", "challenge-damage", "put-damage"];
   }
   return [];
 }
@@ -135,6 +135,14 @@ export type ReplacementEvent =
     }
   | {
       kind: "deal-damage";
+      eventId: string;
+      sourceId?: CardInstanceId;
+      controllerId: PlayerId;
+      targetId: CardInstanceId;
+      amount: number;
+    }
+  | {
+      kind: "put-damage";
       eventId: string;
       sourceId?: CardInstanceId;
       controllerId: PlayerId;
@@ -312,6 +320,7 @@ function appliesNumericSelfReplacement(
   replacement: NumericSelfReplacement,
   resolutionInput: ActionResolutionInput,
   _event: ReplacementEvent,
+  cardPlayed: CardPlayedPayload,
 ): boolean {
   switch (replacement.condition.type) {
     case "selected-target-name": {
@@ -335,6 +344,12 @@ function appliesNumericSelfReplacement(
         getCardStrength(ctx, resolutionInput.triggerContext?.subjectCardId) >=
         replacement.condition.value
       );
+    case "condition":
+      return evaluateCondition(replacement.condition.condition, {
+        ...buildConditionContext(ctx, cardPlayed.playerId, cardPlayed.cardId),
+        cardPlayed,
+        resolutionInput,
+      });
     default:
       return false;
   }
@@ -348,7 +363,10 @@ function createNumericSelfReplacementCandidate(
   cardPlayed: CardPlayedPayload,
   field: "amount" | "modifier",
 ): ReplacementCandidate | undefined {
-  if (!replacement || !appliesNumericSelfReplacement(ctx, replacement, resolutionInput, event)) {
+  if (
+    !replacement ||
+    !appliesNumericSelfReplacement(ctx, replacement, resolutionInput, event, cardPlayed)
+  ) {
     return undefined;
   }
 
@@ -450,11 +468,23 @@ function createPrintedReplacementCandidate(
     };
   }
 
-  if ((event.kind !== "deal-damage" && event.kind !== "challenge-damage") || event.amount <= 0) {
+  switch (event.kind) {
+    case "deal-damage":
+    case "challenge-damage":
+    case "put-damage":
+      break;
+    default:
+      return undefined;
+  }
+
+  if (event.amount <= 0) {
     return undefined;
   }
 
   if (abilityKind.type === "redirect-damage") {
+    if (event.kind !== "deal-damage" && event.kind !== "challenge-damage") {
+      return undefined;
+    }
     if (event.targetId === sourceId) {
       return undefined;
     }
@@ -527,7 +557,11 @@ function createRegisteredReplacementCandidate(
   }
 
   if (replacement.type === "prevent-damage") {
-    if (event.kind !== "deal-damage" && event.kind !== "challenge-damage") {
+    if (
+      event.kind !== "deal-damage" &&
+      event.kind !== "challenge-damage" &&
+      event.kind !== "put-damage"
+    ) {
       return undefined;
     }
     if (!registration.targetId || event.targetId !== registration.targetId || event.amount <= 0) {

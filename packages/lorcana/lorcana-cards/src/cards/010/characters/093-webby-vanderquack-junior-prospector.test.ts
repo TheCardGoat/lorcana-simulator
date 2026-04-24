@@ -83,9 +83,14 @@ describe("Webby Vanderquack - Junior Prospector", () => {
         testEngine.asPlayerOne().quest(webbyVanderquackJuniorProspector),
       ).toBeSuccessfulCommand();
 
-      // Should not trigger the optional ability
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-      // Inkwell stays the same
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(webbyVanderquackJuniorProspector, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      // Condition failed (equal inkwell), so inkwell stays the same
       expect(testEngine.asPlayerOne().getZonesCardCount().inkwell).toBe(3);
     });
 
@@ -106,9 +111,14 @@ describe("Webby Vanderquack - Junior Prospector", () => {
         testEngine.asPlayerOne().quest(webbyVanderquackJuniorProspector),
       ).toBeSuccessfulCommand();
 
-      // Should not trigger the optional ability
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-      // Inkwell stays the same
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(webbyVanderquackJuniorProspector, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      // Condition failed (player has more inkwell), so inkwell stays the same
       expect(testEngine.asPlayerOne().getZonesCardCount().inkwell).toBe(6);
     });
 

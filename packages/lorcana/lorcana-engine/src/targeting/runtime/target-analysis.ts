@@ -3,9 +3,11 @@ import type { CardInstanceId, MoveInput, PlayerId, RuntimeValidationResult } fro
 import type { LorcanaCard, LorcanaCardTarget, LorcanaTargetDSL } from "@tcg/lorcana-types";
 import type { MoveEnumerationContext, MoveValidationContext } from "#core";
 import type { LorcanaG } from "../../types";
+import type { DynamicAmountEventSnapshot } from "../../types/domain-events";
 import { hasKeyword } from "../../card-utils";
 import { normalizeTargetDescriptor, resolveCandidateTargets } from "./target-resolver";
 import type { TargetDescriptor } from "./target-resolver";
+import { flattenSlottedTargets, isSlottedTargetInput } from "../slotted-targets";
 
 type DiscardTargetSourceZone = "deck" | "hand" | "play" | "discard" | "inkwell";
 type ActionSelectionZone = "deck" | "hand" | "play" | "discard" | "inkwell" | "limbo";
@@ -26,6 +28,7 @@ type ReturnToHandTargetDescriptor = {
 
 type ReturnFromDiscardTargetDescriptor = {
   owner: "you" | "opponent" | "any";
+  count: number;
   actionSubtypes?: readonly string[];
   cardName?: string;
   cardTypes?: readonly string[];
@@ -81,6 +84,15 @@ type ActionTargetRuntimeContext = Pick<
 
 type TargetAnalysisOptions = {
   includeDeferredChosenSelections?: boolean;
+  /**
+   * Event snapshot for the trigger/context in which this effect is being
+   * resolved. Required for `excludeTriggerSubject: true` descriptors to filter
+   * the correct card out of the candidate pool (e.g. the challenge defender on
+   * a `deal-damage` trigger). When omitted, descriptors relying on
+   * trigger-subject exclusion silently fall through, leaving the subject as a
+   * legal candidate.
+   */
+  eventSnapshot?: DynamicAmountEventSnapshot;
 };
 
 export type TargetAnalysis = {
@@ -90,6 +102,14 @@ export type TargetAnalysis = {
   allowedZones: ActionSelectionZone[];
   minSelections: number;
   maxSelections: number;
+  /**
+   * The printed maximum from the card descriptor (e.g. `upTo: 2`) before
+   * clamping to the current candidate count. Shown in UI copy so "up to N"
+   * prompts always reflect the card text, even when fewer candidates exist.
+   * Optional for test fixtures — production paths in `analyzeEffectTargets`
+   * always populate it; callers that omit it fall back to `maxSelections`.
+   */
+  declaredMaxSelections?: number;
   requiresExplicitSelection: boolean;
   allowsDeferredResolutionWithoutInitialSelection: boolean;
   // True when the effect has multiple independent "chosen" descriptors (e.g. a sequence with two
@@ -563,6 +583,10 @@ function normalizeReturnFromDiscardTargetDescriptor(
   effect: Record<string, unknown>,
 ): ReturnFromDiscardTargetDescriptor | undefined {
   const owner = normalizeTargetOwner(effect.target);
+  const count =
+    typeof effect.count === "number" && Number.isFinite(effect.count) && effect.count > 0
+      ? effect.count
+      : 1;
   const rawFilter =
     effect.filter && typeof effect.filter === "object" && !Array.isArray(effect.filter)
       ? (effect.filter as Record<string, unknown>)
@@ -590,6 +614,7 @@ function normalizeReturnFromDiscardTargetDescriptor(
   if (cardType === "song") {
     return {
       owner,
+      count,
       actionSubtypes: ["song"],
       cardName,
       cardTypes: ["action"],
@@ -602,6 +627,7 @@ function normalizeReturnFromDiscardTargetDescriptor(
 
   return {
     owner,
+    count,
     cardName,
     cardTypes: typeof cardType === "string" ? [cardType] : undefined,
     filter:
@@ -632,6 +658,7 @@ function collectReturnFromDiscardTargetDescriptors(
     const cardType = typeof effectRecord.cardType === "string" ? effectRecord.cardType : undefined;
     const descriptor: ReturnFromDiscardTargetDescriptor = {
       owner: "you",
+      count: 1,
       cardTypes: cardType ? [cardType] : undefined,
     };
     return [descriptor];
@@ -855,6 +882,34 @@ function normalizePlayCardSelectionDescriptor(
     cardType,
     filter,
   };
+}
+
+/**
+ * Returns true if the effect (or any nested effect) is a play-card effect that uses the
+ * "shift" play method, requiring a secondary in-play shift-target selection.
+ */
+function hasPlayCardShiftMethod(effect: unknown): boolean {
+  if (!effect || typeof effect !== "object" || Array.isArray(effect)) {
+    return false;
+  }
+  const effectRecord = effect as Record<string, unknown>;
+  if (effectRecord.type === "play-card" && effectRecord.playMethod === "shift") {
+    return true;
+  }
+  const nestedEffects: unknown[] = [
+    effectRecord.effect,
+    ...(Array.isArray(effectRecord.options) ? effectRecord.options : []),
+    ...(Array.isArray(effectRecord.choices) ? effectRecord.choices : []),
+    ...(Array.isArray(effectRecord.effects) ? effectRecord.effects : []),
+    ...(Array.isArray(effectRecord.steps) ? effectRecord.steps : []),
+    effectRecord.trueEffect,
+    effectRecord.falseEffect,
+    effectRecord.ifTrue,
+    effectRecord.ifFalse,
+    effectRecord.then,
+    effectRecord.else,
+  ];
+  return nestedEffects.some((nested) => hasPlayCardShiftMethod(nested));
 }
 
 function collectPlayCardSelectionDescriptors(effect: unknown): PlayCardSelectionDescriptor[] {
@@ -1202,6 +1257,7 @@ function resolveActionChosenTargetCandidates(
   playerId: PlayerId,
   ctx: ActionTargetRuntimeContext,
   sourceCardId?: CardInstanceId,
+  eventSnapshot?: DynamicAmountEventSnapshot,
 ): CardInstanceId[] {
   if (targetDescriptors.length === 0) {
     return [];
@@ -1212,6 +1268,7 @@ function resolveActionChosenTargetCandidates(
     const resolved = resolveCandidateTargets(ctx, descriptor, {
       controllerId: playerId,
       sourceCardId,
+      eventSnapshot,
     });
     for (const cardId of resolved) {
       candidates.add(cardId as CardInstanceId);
@@ -1438,8 +1495,22 @@ export function analyzeEffectTargets(
   const hasDeferredHandDiscardSelection = discardTargetDescriptors.some(
     (descriptor) => descriptor.sourceZone === "hand",
   );
+  const baseChosenCardTargetDescriptors = collectChosenCardTargetDescriptors(effect, options);
+  // For play-card effects with playMethod: "shift", inject a secondary target descriptor so that
+  // an in-play character (the shift target) is accepted as a valid selection.
+  const shiftTargetDescriptor = hasPlayCardShiftMethod(effect)
+    ? (normalizeTargetDescriptor({
+        selector: "chosen",
+        count: 1,
+        owner: "you",
+        zones: ["play"],
+        cardTypes: ["character"],
+      }) as LorcanaCardTarget)
+    : undefined;
   const chosenCardTargetDescriptors = dedupeChosenCardTargetDescriptors(
-    collectChosenCardTargetDescriptors(effect, options),
+    shiftTargetDescriptor
+      ? [...baseChosenCardTargetDescriptors, shiftTargetDescriptor]
+      : baseChosenCardTargetDescriptors,
   );
   const playCardSelectionDescriptors = collectPlayCardSelectionDescriptors(effect);
   const chosenPlayerTarget = hasChosenPlayerTarget(effect);
@@ -1466,6 +1537,7 @@ export function analyzeEffectTargets(
     playerId,
     ctx,
     sourceCardId,
+    options?.eventSnapshot,
   );
   const discardCandidates = resolveActionDiscardTargetCandidates(
     returnFromDiscardTargetDescriptors,
@@ -1569,7 +1641,11 @@ export function analyzeEffectTargets(
     ) +
     returnFromDiscardTargetDescriptors.reduce(
       (total, descriptor) =>
-        total + resolveActionDiscardTargetCandidates([descriptor], playerId, ctx).length,
+        total +
+        Math.min(
+          descriptor.count,
+          resolveActionDiscardTargetCandidates([descriptor], playerId, ctx).length,
+        ),
       0,
     ) +
     discardTargetDescriptors.reduce(
@@ -1615,6 +1691,7 @@ export function analyzeEffectTargets(
       explicitDescriptorCount > 0
         ? Math.max(1, Math.min(cardCandidates.length + playerCandidates.length, maxSelections))
         : 0,
+    declaredMaxSelections: explicitDescriptorCount > 0 ? Math.max(1, maxSelections) : 0,
     requiresExplicitSelection: explicitDescriptorCount > 0,
     allowsDeferredResolutionWithoutInitialSelection: hasDeferredHandDiscardSelection,
     // Multiple independent chosen descriptors means each slot is its own selection —
@@ -1631,7 +1708,13 @@ export function validateAndNormalizeTargetSelection(
   analysis: TargetAnalysis,
   context?: TargetSelectionRestrictionContext,
 ): TargetValidationResult {
-  const rawTargets = Array.isArray(targets) ? targets : targets !== undefined ? [targets] : [];
+  const rawTargets = isSlottedTargetInput(targets)
+    ? [...flattenSlottedTargets(targets)]
+    : Array.isArray(targets)
+      ? targets
+      : targets !== undefined
+        ? [targets]
+        : [];
   const cardCandidateSet = new Set(analysis.cardCandidates);
   const playerCandidateSet = new Set(analysis.playerCandidates);
   const cardIds: CardInstanceId[] = [];
@@ -1719,4 +1802,202 @@ export function flattenNormalizedTargetSelection(
 ): Array<CardInstanceId | PlayerId> | undefined {
   const targets = [...selection.cardIds, ...selection.playerIds];
   return targets.length > 0 ? targets : undefined;
+}
+
+/** Labels for effect-resolution slots (not printed ability costs). */
+export type ActivateAbilityEffectResolutionSlotKind =
+  | "effectBanishCharacter"
+  | "effectPlayCardFromHand"
+  | "effectChosenCard";
+
+export type ActivateAbilityEffectResolutionSlot = {
+  kind: ActivateAbilityEffectResolutionSlotKind;
+  cardCandidates: CardInstanceId[];
+  minSelections: number;
+  maxSelections: number;
+};
+
+function walkActivateAbilityResolutionSlotKinds(
+  effect: unknown,
+): ActivateAbilityEffectResolutionSlotKind[] {
+  const kinds: ActivateAbilityEffectResolutionSlotKind[] = [];
+  const visit = (e: unknown): void => {
+    if (!e || typeof e !== "object") {
+      return;
+    }
+    const r = e as Record<string, unknown>;
+    const t = r.type;
+    if (t === "sequence") {
+      const steps = r.steps;
+      if (Array.isArray(steps)) {
+        for (const step of steps) {
+          visit(step);
+        }
+      }
+      return;
+    }
+    if (t === "conditional") {
+      visit(r.then);
+      visit(r.else);
+      return;
+    }
+    if (t === "optional") {
+      visit(r.effect);
+      return;
+    }
+    if (t === "choice" || t === "or") {
+      const opts = r.options ?? r.choices;
+      if (Array.isArray(opts)) {
+        for (const o of opts) {
+          visit(o);
+        }
+      }
+      return;
+    }
+    if (t === "for-each") {
+      visit(r.effect);
+      return;
+    }
+    if (t === "banish") {
+      kinds.push("effectBanishCharacter");
+      return;
+    }
+    if (t === "play-card") {
+      kinds.push("effectPlayCardFromHand");
+      return;
+    }
+  };
+  visit(effect);
+  return kinds;
+}
+
+/**
+ * Per-slot legal cards and labels for activated ability **effect** targeting (not `ability.cost` card payments).
+ * Order matches merged `targets[]` passed to `resolveActionEffect` for that ability.
+ */
+export function analyzeActivateAbilityEffectResolutionSlots(
+  effect: unknown,
+  playerId: PlayerId,
+  ctx: ActionTargetRuntimeContext,
+  sourceCardId?: CardInstanceId,
+): ActivateAbilityEffectResolutionSlot[] {
+  const chosen = dedupeChosenCardTargetDescriptors(collectChosenCardTargetDescriptors(effect));
+  const playDescriptors = collectPlayCardSelectionDescriptors(effect);
+  const walked = walkActivateAbilityResolutionSlotKinds(effect);
+  const slotCount = chosen.length + playDescriptors.length;
+
+  let kinds: ActivateAbilityEffectResolutionSlotKind[];
+  if (walked.length === slotCount && slotCount > 0) {
+    kinds = walked;
+  } else {
+    kinds = [
+      ...chosen.map((): ActivateAbilityEffectResolutionSlotKind => "effectChosenCard"),
+      ...playDescriptors.map(
+        (): ActivateAbilityEffectResolutionSlotKind => "effectPlayCardFromHand",
+      ),
+    ];
+  }
+
+  const slots: ActivateAbilityEffectResolutionSlot[] = [];
+  let kindIndex = 0;
+
+  for (const desc of chosen) {
+    const normalized = normalizeTargetDescriptor(desc);
+    const cardCandidates = normalized
+      ? (resolveCandidateTargets(ctx, normalized, {
+          controllerId: playerId,
+          sourceCardId,
+        }) as CardInstanceId[])
+      : [];
+    const minSelections = descriptorMinSelections(desc);
+    const maxSelections = descriptorMaxSelections(desc, cardCandidates.length);
+    slots.push({
+      kind: kinds[kindIndex] ?? "effectChosenCard",
+      cardCandidates,
+      minSelections,
+      maxSelections,
+    });
+    kindIndex += 1;
+  }
+
+  for (const playDesc of playDescriptors) {
+    const cardCandidates = resolveActionPlayCardSelectionCandidates(
+      [playDesc],
+      playerId,
+      ctx,
+      sourceCardId,
+    );
+    const dsl = buildPlayCardSelectionTargetDsl(playDesc);
+    const minSelections = descriptorMinSelections(dsl);
+    const maxSelections = descriptorMaxSelections(dsl, cardCandidates.length);
+    slots.push({
+      kind: kinds[kindIndex] ?? "effectPlayCardFromHand",
+      cardCandidates,
+      minSelections,
+      maxSelections,
+    });
+    kindIndex += 1;
+  }
+
+  return slots;
+}
+
+export type ActivateAbilityEffectSelectionsInput = {
+  /**
+   * One card id per effect-resolution slot (same order as `analyzeActivateAbilityEffectResolutionSlots`).
+   * When set with the correct length, used as the sole source for merged `targets`.
+   */
+  effectSlotCardIds?: readonly CardInstanceId[];
+  /**
+   * Convenience for banish-then-play lines (e.g. Retro Evolution Device). Ignored when `effectSlotCardIds`
+   * is provided with full length.
+   */
+  effectBanishCharacterIds?: readonly CardInstanceId[];
+  effectPlayCardFromHandIds?: readonly CardInstanceId[];
+};
+
+/**
+ * Builds ordered `targets` from structured effect selections.
+ */
+export function mergeActivateAbilityEffectSelectionsToTargets(
+  slotKinds: readonly ActivateAbilityEffectResolutionSlotKind[],
+  selections: ActivateAbilityEffectSelectionsInput,
+): CardInstanceId[] | undefined {
+  if (
+    Array.isArray(selections.effectSlotCardIds) &&
+    selections.effectSlotCardIds.length === slotKinds.length &&
+    slotKinds.length > 0
+  ) {
+    return [...(selections.effectSlotCardIds as CardInstanceId[])];
+  }
+
+  const banish = selections.effectBanishCharacterIds ?? [];
+  const play = selections.effectPlayCardFromHandIds ?? [];
+  let bi = 0;
+  let pi = 0;
+  const merged: CardInstanceId[] = [];
+
+  for (const kind of slotKinds) {
+    if (kind === "effectBanishCharacter") {
+      const id = banish[bi];
+      bi += 1;
+      if (typeof id === "string" && id.length > 0) {
+        merged.push(id as CardInstanceId);
+      }
+    } else if (kind === "effectPlayCardFromHand") {
+      const id = play[pi];
+      pi += 1;
+      if (typeof id === "string" && id.length > 0) {
+        merged.push(id as CardInstanceId);
+      }
+    } else {
+      return undefined;
+    }
+  }
+
+  if (merged.length !== slotKinds.length || merged.length === 0) {
+    return undefined;
+  }
+
+  return merged;
 }

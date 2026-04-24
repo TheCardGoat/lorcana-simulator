@@ -1,5 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
-import { devilsEyeDiamond } from "..";
+import { devilsEyeDiamond } from "./152-devils-eye-diamond";
 
 export const devilsEyeDiamondEnchanted: ItemCard = {
   ...devilsEyeDiamond,

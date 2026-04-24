@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { elsaExploringTheUnknown } from "..";
+import { elsaExploringTheUnknown } from "./045-elsa-exploring-the-unknown";
 
 export const elsaExploringTheUnknownEpic: CharacterCard = {
   ...elsaExploringTheUnknown,

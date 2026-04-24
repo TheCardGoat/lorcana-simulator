@@ -74,8 +74,13 @@ describe("Ratigan - Nefarious Criminal", () => {
         testEngine.asPlayerOne().playCard(testAction, { preventAutoResolveTriggeredEffects: true }),
       ).toBeSuccessfulCommand();
 
-      // No triggered ability should be in the bag (condition not met)
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(ratiganNefariousCriminal, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
       expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore);
     });

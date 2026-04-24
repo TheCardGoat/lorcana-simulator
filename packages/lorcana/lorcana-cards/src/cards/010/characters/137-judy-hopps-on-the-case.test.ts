@@ -28,8 +28,13 @@ describe("Judy Hopps - On the Case", () => {
       );
 
       expect(testEngine.asPlayerOne().playCard(judyHoppsOnTheCase)).toBeSuccessfulCommand();
-      // No bag should be created since there's no other Detective in play
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(judyHoppsOnTheCase, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
     });
 
     it("triggers and creates an optional bag when another Detective is in play", () => {

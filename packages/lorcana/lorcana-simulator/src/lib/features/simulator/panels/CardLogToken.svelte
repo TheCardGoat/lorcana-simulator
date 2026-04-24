@@ -16,8 +16,14 @@
   const sidebar = maybeUseLorcanaSidebarPresenter();
   const cardContext = maybeUseSimulatorCardContext();
 
-  const snapshot = $derived(sidebar?.resolveCardSnapshot(cardId) ?? null);
-  const label = $derived(snapshot?.label ?? fallbackLabel ?? cardId);
+  const snapshot = $derived(sidebar?.resolveCardSnapshot?.(cardId) ?? null);
+  // When the card is masked (hidden in opponent's view), prefer the pre-stored
+  // fallbackLabel (announced card name) over the snapshot's generic "Hidden card" label.
+  const label = $derived(
+    snapshot?.isMasked
+      ? (fallbackLabel ?? snapshot?.label ?? cardId)
+      : (snapshot?.label ?? fallbackLabel ?? cardId),
+  );
   const inkType = $derived(snapshot?.inkType ?? fallbackInkType);
 
   function handleHover(): void {

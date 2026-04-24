@@ -94,7 +94,12 @@ describe("Down in New Orleans", () => {
           max: 1,
           reveal: true,
           cost: "free",
-          filters: [{ type: "or" }, { type: "cost-comparison" }],
+          filters: [
+            {
+              type: "and",
+              filters: [{ type: "or" }, { type: "cost-comparison" }],
+            },
+          ],
         },
         {
           zone: "deck-bottom",

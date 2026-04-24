@@ -35,10 +35,9 @@ export const rapunzelGiftedWithHealing: CharacterCard = {
       effect: {
         steps: [
           {
-            amount: 3,
+            amount: { type: "up-to", value: 3 },
             target: "YOUR_CHOSEN_CHARACTER",
             type: "remove-damage",
-            upTo: true,
           },
           {
             amount: "DAMAGE_REMOVED",

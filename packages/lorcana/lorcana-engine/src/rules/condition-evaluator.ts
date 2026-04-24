@@ -13,6 +13,83 @@ import type {
   HasItemCountCondition,
   HasLocationCountCondition,
 } from "@tcg/lorcana-types";
+
+/**
+ * Authoritative list of condition discriminators handled by `evaluateCondition`'s
+ * runtime switch below. Drives the per-variant test coverage enforcement in
+ * `rules/conditions/__tests__/_coverage.test.ts`.
+ *
+ * When adding a new `case "<type>":` branch to `evaluateCondition`, add the
+ * same discriminator here. The `satisfies` guard on `CONDITION_VARIANT_TYPE_CHECK`
+ * below prevents typos: every entry must be assignable to `Condition["type"]`.
+ *
+ * See `packages/lorcana/lorcana-engine/AGENTS.md` → "How to add a condition".
+ */
+export const CONDITION_VARIANT_TYPES = [
+  "and",
+  "at-location",
+  "banished-in-challenge-this-turn",
+  "being-challenged",
+  "comparison",
+  "damage-comparison",
+  "discarded-card-has-classification",
+  "during-turn",
+  "exerted",
+  "first-turn-non-otp",
+  "has-another-character",
+  "has-any-damage",
+  "has-card-under",
+  "has-character-count",
+  "has-character-with-classification",
+  "has-character-with-keyword",
+  "has-character-with-strength",
+  "has-granted-ability",
+  "has-item-count",
+  "has-location-count",
+  "has-location-in-play",
+  "has-named-character",
+  "has-no-damage",
+  "if",
+  "if-you-do",
+  "in-challenge",
+  "inkwell-count",
+  "is-exerted",
+  "is-named",
+  "lore",
+  "no-damage",
+  "not",
+  "opponent-has-damaged-character",
+  "or",
+  "play-context",
+  "put-card-under-any-this-turn",
+  "put-card-under-self-this-turn",
+  "resource-count",
+  "returned-card-is-named",
+  "returned-card-is-princess",
+  "revealed-is-character-named",
+  "revealed-matches-chosen-name",
+  "revealed-matches-named",
+  "self-has-damage",
+  "stat-threshold",
+  "strength",
+  "target-aggregate-comparison",
+  "target-query",
+  "trigger-subject-had-card-under",
+  "turn",
+  "turn-metric",
+  "used-shift",
+  "willpower",
+  "your-turn",
+] as const;
+
+export type ConditionVariantType = (typeof CONDITION_VARIANT_TYPES)[number];
+
+// Note: this list mirrors the runtime `evaluateCondition` switch below. Some
+// entries (e.g. `"strength"`, `"is-named"`, `"is-exerted"`) are legacy parser
+// aliases without a matching `Condition` interface; keeping them as plain
+// strings means we enforce test coverage at runtime rather than compile time.
+// The coverage test in `rules/conditions/__tests__/_coverage.test.ts` verifies
+// that every entry has a dedicated test file.
 import type { LorcanaG, CardPlayedPayload, LorcanaMatchState } from "../types";
 import type { ActionResolutionInput } from "../runtime-moves/resolution/action-effects/types";
 import { cardHasName } from "../card-utils";
@@ -28,6 +105,7 @@ import type { ZoneRuntimeState } from "../core/runtime/types";
 import { normalizeSelectedTargets, resolveTargetQuery } from "../targeting/runtime";
 import { didLastEffectPerform } from "../runtime-moves/resolution/action-effects/event-snapshot-utils";
 import { getCombinedSelectionInput } from "../runtime-moves/resolution/action-effects/selection-state";
+import { resolveTurnOwnerId } from "../core/runtime/turn-owner";
 
 export interface PlayZoneCardTypeCache {
   charactersByPlayer: Map<PlayerId, CardInstanceId[]>;
@@ -212,6 +290,9 @@ function getCardNumericAttribute(
 
   switch (attribute) {
     case "strength": {
+      if (ctx.getCardStrengthByInstanceId) {
+        return ctx.getCardStrengthByInstanceId(cardId);
+      }
       return getEffectiveStrength(
         definition,
         buildDerivedStateFromConditionCtx(ctx),
@@ -320,9 +401,11 @@ function evaluateTargetAggregateComparisonCondition(
 function countCardsPlayedThisTurnMatching(
   ctx: ConditionEvaluationContext,
   predicate: (definition: LorcanaCardDefinition | undefined) => boolean,
+  excludeSourceCardId?: CardInstanceId,
 ): number {
   const cardsPlayedThisTurn = ctx.G.turnMetadata?.cardsPlayedThisTurn ?? [];
   return cardsPlayedThisTurn.reduce((count, cardId) => {
+    if (excludeSourceCardId && cardId === excludeSourceCardId) return count;
     return predicate(ctx.cards.getDefinition(cardId)) ? count + 1 : count;
   }, 0);
 }
@@ -376,9 +459,12 @@ function evaluateTurnMetricCondition(
         ctx,
         (definition) =>
           definition?.cardType === "character" &&
-          Array.isArray(definition.classifications) &&
-          typeof condition.classification === "string" &&
-          (definition.classifications as readonly string[]).includes(condition.classification),
+          (typeof condition.classification !== "string" ||
+            (Array.isArray(definition.classifications) &&
+              (definition.classifications as readonly string[]).includes(
+                condition.classification,
+              ))),
+        condition.excludeSource ? ctx.sourceCardId : undefined,
       );
       break;
 
@@ -411,8 +497,26 @@ function evaluateTurnMetricCondition(
       );
       break;
 
+    case "damage-removed-by-player":
+      value = resolveScopedPlayerCount(
+        ctx.G.turnMetadata?.damageRemovedByPlayerThisTurn,
+        condition.playerScope,
+        controllerId,
+        ctx.framework.state.playerIds,
+      );
+      break;
+
     case "discard-cards-left":
       value = ctx.G.turnMetadata?.discardCardsLeftThisTurn ?? 0;
+      break;
+
+    case "discard-cards-entered":
+      value = resolveScopedPlayerCount(
+        ctx.G.turnMetadata?.cardsPutIntoDiscardThisTurnByOwner,
+        condition.ownerScope,
+        controllerId,
+        ctx.framework.state.playerIds,
+      );
       break;
 
     case "quested-characters": {
@@ -730,7 +834,7 @@ function evaluateStaticTurnCondition(
   condition: Extract<Condition, { type: "turn" | "during-turn" | "your-turn" }>,
   ctx: ConditionEvaluationContext,
 ): boolean {
-  const activePlayer = ctx.framework.state.currentPlayer ?? ctx.framework.state.priority.holder;
+  const activePlayer = resolveTurnOwnerId(ctx.framework.state, ctx.G);
   if (!activePlayer) return false;
 
   switch (condition.type) {
@@ -1023,6 +1127,15 @@ export function evaluateCondition(
     case "in-challenge":
       return evaluateInChallengeCondition(condition, ctx);
 
+    case "being-challenged": {
+      if (!ctx.sourceCardId) return false;
+      const challenge = ctx.G.challengeState;
+      if (!challenge) return false;
+      // "Challenged character" is the defender (opposing character or location being challenged).
+      // The challenging character is not "being challenged" for text like "unless it's being challenged."
+      return challenge.defender === ctx.sourceCardId;
+    }
+
     case "banished-in-challenge-this-turn":
       return evaluateBanishedInChallengeCondition(condition, ctx);
 
@@ -1051,6 +1164,15 @@ export function evaluateCondition(
       }
       const damage = Number(ctx.cards.require(targetId).meta?.damage ?? 0);
       return damage > 0;
+    }
+
+    case "damage-comparison": {
+      const targetId = ctx.sourceCardId;
+      if (!targetId) {
+        return false;
+      }
+      const damage = Number(ctx.cards.require(targetId).meta?.damage ?? 0);
+      return compareOperator(damage, condition.comparison, condition.value);
     }
 
     case "opponent-has-damaged-character": {
@@ -1242,7 +1364,15 @@ export function evaluateCondition(
           if (!definition || definition.cardType !== "character") {
             return false;
           }
-          const strength = Number((definition as { strength?: unknown }).strength ?? 0);
+          const strength = ctx.getCardStrengthByInstanceId
+            ? ctx.getCardStrengthByInstanceId(cardId as CardInstanceId)
+            : getEffectiveStrength(
+                definition,
+                buildDerivedStateFromConditionCtx(ctx),
+                cardId as CardInstanceId,
+                ctx.cards.getDefinition,
+                ctx.registry,
+              );
           return compareOperator(strength, condition.comparison, condition.value);
         });
       });
@@ -1254,6 +1384,57 @@ export function evaluateCondition(
         const definition = ctx.cards.getDefinition(cardId as CardInstanceId);
         return definition ? cardHasName(definition, condition.name) : false;
       });
+    }
+
+    case "has-granted-ability": {
+      const sourceCardId = ctx.sourceCardId;
+      if (!sourceCardId) return false;
+
+      const targetAbilityId = condition.abilityId;
+
+      // Check temporary grants (e.g., Donald Duck's MONEY EVERYWHERE)
+      const currentTurn = ctx.framework.state.status?.turn ?? 1;
+      const meta = ctx.framework.state._zonesPrivate?.cardMeta?.[sourceCardId] as
+        | {
+            readonly temporaryAbilities?: Record<string, number>;
+            readonly temporaryAbilityStarts?: Record<string, number>;
+            readonly temporaryAbilityPayloads?: Record<string, { id?: string; type?: string }>;
+          }
+        | undefined;
+      const temporaryAbilities = meta?.temporaryAbilities;
+      if (temporaryAbilities) {
+        for (const [abilityKey, expiryTurn] of Object.entries(temporaryAbilities)) {
+          const startsAtTurn = meta?.temporaryAbilityStarts?.[abilityKey] ?? 1;
+          if (
+            typeof expiryTurn !== "number" ||
+            !Number.isFinite(expiryTurn) ||
+            currentTurn < startsAtTurn ||
+            currentTurn > expiryTurn
+          ) {
+            continue;
+          }
+          const payload = meta?.temporaryAbilityPayloads?.[abilityKey];
+          if (payload?.id === targetAbilityId || abilityKey === targetAbilityId) {
+            return true;
+          }
+        }
+      }
+
+      // Check static grants (e.g., The Great Illuminary's STARTLING DISCOVERY)
+      if (ctx.registry) {
+        const staticGrants = (ctx.registry.byTarget.get(sourceCardId) ?? []).filter(
+          (e: { kind: string }) =>
+            e.kind === "grant-abilities-while-here" || e.kind === "grant-ability",
+        );
+        for (const entry of staticGrants) {
+          const payload = entry.payload as { ability?: { id?: string } };
+          if (payload?.ability?.id === targetAbilityId) {
+            return true;
+          }
+        }
+      }
+
+      return false;
     }
 
     case "if":

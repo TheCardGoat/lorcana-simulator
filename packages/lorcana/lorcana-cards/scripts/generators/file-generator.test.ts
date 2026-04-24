@@ -123,7 +123,7 @@ describe("buildPrintingIdsByCanonicalId", () => {
     expect(map.get("ci_other")).toBeUndefined();
   });
 
-  it("excludes -enchanted, -epic, -iconic, -promo from reprints list", () => {
+  it("excludes -enchanted, -epic, -iconic, -promo, -challenge from reprints list", () => {
     const canonicalCards: Record<string, CanonicalCard> = {
       "set1-130": createMinimalCanonicalCharacter({
         id: "Jpc",
@@ -132,6 +132,11 @@ describe("buildPrintingIdsByCanonicalId", () => {
       }) as CanonicalCard,
       "set1-130-enchanted": createMinimalCanonicalCharacter({
         id: "xYz",
+        canonicalId: "ci_Jpc",
+        name: "Dragon Fire",
+      }) as CanonicalCard,
+      "set12-p3-053-challenge": createMinimalCanonicalCharacter({
+        id: "p3c",
         canonicalId: "ci_Jpc",
         name: "Dragon Fire",
       }) as CanonicalCard,
@@ -146,6 +151,7 @@ describe("buildPrintingIdsByCanonicalId", () => {
     expect(reprints).toBeDefined();
     expect(reprints!).toEqual(["set1-130", "set10-133"]);
     expect(reprints).not.toContain("set1-130-enchanted");
+    expect(reprints).not.toContain("set12-p3-053-challenge");
   });
 });
 

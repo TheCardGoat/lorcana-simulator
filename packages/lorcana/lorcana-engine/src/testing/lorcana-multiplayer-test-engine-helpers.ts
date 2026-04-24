@@ -172,13 +172,18 @@ export function buildFixtureSeedBundle(
 
         const limboKey = `limbo:${playerId}`;
         zoneCardsByKey[limboKey] ??= [];
-        const underInstanceIds = cardsUnder.map((underEntry) =>
-          registerCard(
-            playerId,
-            limboKey,
-            coerceFixtureCardDefinition(underEntry, zoneName, playerId),
-          ),
-        );
+        const underInstanceIds = cardsUnder.map((underEntry) => {
+          const { definition: underDefinition, publicFaceState: underFaceState } =
+            coerceFixtureCardUnderEntry(underEntry, zoneName, playerId);
+          const underInstanceId = registerCard(playerId, limboKey, underDefinition);
+          if (underFaceState) {
+            fixtureStateByInstanceId[underInstanceId] = {
+              ...fixtureStateByInstanceId[underInstanceId],
+              publicFaceState: underFaceState,
+            };
+          }
+          return underInstanceId;
+        });
         fixtureStateByInstanceId[instanceId] = {
           ...fixtureStateByInstanceId[instanceId],
           cardsUnder: underInstanceIds,
@@ -260,6 +265,26 @@ function isFixtureCardState(value: unknown): value is TestFixtureCardState {
   return Boolean(
     value && typeof value === "object" && "card" in (value as Record<string, unknown>),
   );
+}
+
+function coerceFixtureCardUnderEntry(
+  entry: unknown,
+  zoneName: InternalFixtureZoneName,
+  playerId: CanonicalPlayerId,
+): { definition: LorcanaCard; publicFaceState?: "faceUp" | "faceDown" } {
+  if (
+    entry &&
+    typeof entry === "object" &&
+    "card" in (entry as Record<string, unknown>) &&
+    !("id" in (entry as Record<string, unknown>))
+  ) {
+    const typed = entry as { card: unknown; publicFaceState?: "faceUp" | "faceDown" };
+    return {
+      definition: coerceFixtureCardDefinition(typed.card, zoneName, playerId),
+      publicFaceState: typed.publicFaceState,
+    };
+  }
+  return { definition: coerceFixtureCardDefinition(entry, zoneName, playerId) };
 }
 
 function coerceFixtureCardDefinition(

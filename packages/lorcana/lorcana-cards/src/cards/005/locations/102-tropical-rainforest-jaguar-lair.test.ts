@@ -45,4 +45,26 @@ describe("Tropical Rainforest - Jaguar Lair", () => {
 
     expect(testEngine.asPlayerOne().hasKeyword(damagedFriendly, "Reckless")).toBe(false);
   });
+
+  it("opposing damaged character with static-granted Reckless cannot quest", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [tropicalRainforestJaguarLair],
+        deck: 1,
+      },
+      {
+        play: [{ card: damagedOpponent, damage: 1 }],
+        deck: 1,
+      },
+    );
+
+    // Confirm Reckless is granted statically
+    expect(testEngine.asPlayerTwo().hasKeyword(damagedOpponent, "Reckless")).toBe(true);
+
+    // Pass turn so it's player two's turn
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    // Damaged opponent cannot quest because it has Reckless from the static effect
+    expect(testEngine.asPlayerTwo().quest(damagedOpponent).success).toBe(false);
+  });
 });

@@ -19,13 +19,21 @@ import {
   type DeckFixture,
 } from "../../lib/features/simulator-devtools/deck-fixtures/index.js";
 import {
+  buildRunComparisonConsoleOutput,
   buildStrategyLabReport,
+  buildTriageDigestConsoleOutput,
+  compareStrategyRuns,
+  getStrategyArtifactRoot,
+  loadPreviousRunSummary,
   parseStrategyLabFilter,
+  replayMatchFromRunSummary,
   resolveStrategyBenchmarkPreset,
   resolveStrategyLabGameCount,
   resolveStrategyLabMatchMode,
+  runQuickReplayCheck,
   runStrategyLab,
   simulateAutomatedDeckMatch,
+  type StrategySuiteRunSummary,
 } from "./strategy-suite.js";
 
 const logger = getLogger(["lorcana-simulator", "strategy", "simulate-game-test"]);
@@ -704,7 +712,7 @@ describe("strategy deck simulation convenience method", () => {
   it.if(RUN_STRATEGY_LAB || RUN_STRATEGY_BENCHMARK)(
     "runs the opt-in strategy lab matrix with env-driven filters",
     () => {
-      const summary = runStrategyLab({
+      const { digest, report, summary } = runStrategyLab({
         deckIds: parseStrategyLabFilter(process.env.STRATEGY_DECKS),
         gameCount: resolveStrategyLabGameCount(
           process.env.STRATEGY_GAME_COUNT,
@@ -716,7 +724,6 @@ describe("strategy deck simulation convenience method", () => {
         preset: STRATEGY_BENCHMARK_PRESET,
         strategyIds: parseStrategyLabFilter(process.env.STRATEGY_STRATEGIES),
       });
-      const report = buildStrategyLabReport(summary);
       const scorecard = report.scorecards[0];
 
       logger.info("Strategy lab summary {summary}", {
@@ -740,6 +747,14 @@ describe("strategy deck simulation convenience method", () => {
         }),
       });
 
+      console.log(buildTriageDigestConsoleOutput(digest));
+
+      const previousSummary = loadPreviousRunSummary(summary.artifactRoot);
+      if (previousSummary) {
+        const comparison = compareStrategyRuns(previousSummary, summary);
+        console.log(buildRunComparisonConsoleOutput(comparison));
+      }
+
       expect(summary.matches.length).toBeGreaterThan(0);
       expect(summary.matches.every((match) => match.playerOneStrategyId.length > 0)).toBe(true);
       expect(summary.matches.every((match) => match.playerTwoStrategyId.length > 0)).toBe(true);
@@ -753,5 +768,39 @@ describe("strategy deck simulation convenience method", () => {
       }
     },
     { timeout: STRATEGY_LAB_TIMEOUT_MS },
+  );
+});
+
+const RUN_STRATEGY_QUICK_REPLAY = process.env.RUN_STRATEGY_QUICK_REPLAY === "1";
+
+describe("strategy quick replay", () => {
+  it.if(RUN_STRATEGY_QUICK_REPLAY)(
+    "runs 20 quick replay mirror games on core decks",
+    () => {
+      const { summary } = runQuickReplayCheck();
+      expect(summary.matches).toHaveLength(20);
+      for (const match of summary.matches) {
+        expect(match.endReason).toBe("winner");
+      }
+    },
+    { timeout: 180_000 },
+  );
+});
+
+const RUN_STRATEGY_REPLAY = process.env.RUN_STRATEGY_REPLAY === "1";
+const STRATEGY_REPLAY_SUMMARY = process.env.STRATEGY_REPLAY_SUMMARY;
+const STRATEGY_REPLAY_INDEX = Number(process.env.STRATEGY_REPLAY_INDEX ?? "0");
+
+describe("strategy match replay", () => {
+  it.if(RUN_STRATEGY_REPLAY)(
+    "replays a specific match from a run summary",
+    () => {
+      const summaryPath =
+        STRATEGY_REPLAY_SUMMARY ?? join(getStrategyArtifactRoot(), "run-summary.json");
+      const rawSummary: StrategySuiteRunSummary = JSON.parse(readFileSync(summaryPath, "utf-8"));
+      const result = replayMatchFromRunSummary(rawSummary, STRATEGY_REPLAY_INDEX);
+      expect(result.endReason).toBe("winner");
+    },
+    { timeout: 60_000 },
   );
 });

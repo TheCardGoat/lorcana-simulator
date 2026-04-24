@@ -36,16 +36,17 @@ function ensureTurnMetadata(ctx: Pick<TurnMetricContext, "G">): LorcanaG["turnMe
     shiftPlayedThisTurn: [],
     challengesByPlayerThisTurn: {} as Record<PlayerId, number>,
     damagedCharactersByOwnerThisTurn: {} as Record<PlayerId, number>,
+    damageRemovedByPlayerThisTurn: {} as Record<PlayerId, number>,
     challengedCharactersThisTurn: [],
     banishedCharactersThisTurn: [],
     banishedCharactersInChallengeByOwnerThisTurn: {} as Record<PlayerId, number>,
     discardCardsLeftThisTurn: 0,
+    cardsPutIntoDiscardThisTurnByOwner: {} as Record<PlayerId, number>,
     pendingCostReductionsByPlayer: {} as Record<
       PlayerId,
       LorcanaG["turnMetadata"]["pendingCostReductionsByPlayer"][PlayerId]
     >,
     cardsDrawnThisTurnByPlayer: {} as Record<PlayerId, number>,
-    pendingPlayFromUnder: [],
   };
   ctx.G.turnMetadata = initialized;
   return initialized;
@@ -81,6 +82,21 @@ export function recordDamagedCharacterThisTurn(
     turnMetadata.damagedCharactersByOwnerThisTurn ??
     (turnMetadata.damagedCharactersByOwnerThisTurn = {} as Record<PlayerId, number>);
   incrementRecord(record, ownerId);
+}
+
+export function recordDamageRemovedThisTurn(
+  ctx: Pick<TurnMetricContext, "G">,
+  playerId: PlayerId,
+  amount: number,
+): void {
+  if (amount <= 0) {
+    return;
+  }
+  const turnMetadata = ensureTurnMetadata(ctx);
+  const record =
+    turnMetadata.damageRemovedByPlayerThisTurn ??
+    (turnMetadata.damageRemovedByPlayerThisTurn = {} as Record<PlayerId, number>);
+  incrementRecord(record, playerId, amount);
 }
 
 export function recordBanishedCharacterThisTurn(
@@ -147,6 +163,22 @@ export function recordDiscardExitThisTurn(ctx: Pick<TurnMetricContext, "G">, amo
 
   const turnMetadata = ensureTurnMetadata(ctx);
   turnMetadata.discardCardsLeftThisTurn = (turnMetadata.discardCardsLeftThisTurn ?? 0) + amount;
+}
+
+export function recordCardPutIntoDiscardThisTurn(
+  ctx: Pick<TurnMetricContext, "G">,
+  ownerId: PlayerId,
+  amount = 1,
+): void {
+  if (amount <= 0) {
+    return;
+  }
+
+  const turnMetadata = ensureTurnMetadata(ctx);
+  const record =
+    turnMetadata.cardsPutIntoDiscardThisTurnByOwner ??
+    (turnMetadata.cardsPutIntoDiscardThisTurnByOwner = {} as Record<PlayerId, number>);
+  incrementRecord(record, ownerId, amount);
 }
 
 export function recordCardPutIntoInkwellThisTurn(

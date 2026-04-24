@@ -69,6 +69,7 @@ export function cardTextEntriesToCardText(entries: CardTextEntry[]): CardText {
 function buildLogicalSegments(text: string): string[] {
   const lines = text
     .replace(/\r\n?/g, "\n")
+    .replace(/%/g, "\n") // Ravensburger uses % as ability separator
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
@@ -243,6 +244,13 @@ function splitAtEffectWord(segment: string): CardTextEntry | null {
   return null;
 }
 
+function splitAtBackslashTitle(segment: string): CardTextEntry | null {
+  // Handles Ravensburger's \Title\ description format (backslash delimiters, mixed case)
+  const match = segment.match(/^\\(.+?)\\ (.+)$/s);
+  if (!match) return null;
+  return { title: match[1]!.trim(), description: match[2]!.trim() };
+}
+
 function splitAtActivatedSeparator(segment: string): CardTextEntry | null {
   const match = segment.match(ACTIVATED_SEPARATOR_PATTERN);
 
@@ -264,6 +272,7 @@ function splitSegment(segment: string): CardTextEntry {
   }
 
   return (
+    splitAtBackslashTitle(segment) ??
     splitAtParenthetical(segment) ??
     splitAtActivatedSeparator(segment) ??
     splitAtUppercaseRun(segment) ??

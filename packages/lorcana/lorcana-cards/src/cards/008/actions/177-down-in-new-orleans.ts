@@ -32,28 +32,33 @@ export const downInNewOrleans: ActionCard = {
             max: 1,
             reveal: true,
             cost: "free",
-            filter: [
+            filters: [
               {
-                type: "or",
+                type: "and",
                 filters: [
                   {
-                    type: "card-type",
-                    cardType: "character",
+                    type: "or",
+                    filters: [
+                      {
+                        type: "card-type",
+                        cardType: "character",
+                      },
+                      {
+                        type: "card-type",
+                        cardType: "item",
+                      },
+                      {
+                        type: "card-type",
+                        cardType: "location",
+                      },
+                    ],
                   },
                   {
-                    type: "card-type",
-                    cardType: "item",
-                  },
-                  {
-                    type: "card-type",
-                    cardType: "location",
+                    type: "cost-comparison",
+                    comparison: "less-or-equal",
+                    value: 6,
                   },
                 ],
-              },
-              {
-                type: "cost-comparison",
-                comparison: "less-or-equal",
-                value: 6,
               },
             ],
           },

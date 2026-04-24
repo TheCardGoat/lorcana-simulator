@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { restoringAtlantis } from "..";
+import { restoringAtlantis } from "./201-restoring-atlantis";
 
 export const restoringAtlantisEnchanted: ActionCard = {
   ...restoringAtlantis,

@@ -3,6 +3,7 @@ import {
   LorcanaMultiplayerTestEngine,
   PLAYER_ONE,
   createMockCharacter,
+  createMockLocation,
 } from "@tcg/lorcana-engine/testing";
 import { beastsCastleWinterGardens } from "./136-beasts-castle-winter-gardens";
 
@@ -36,6 +37,14 @@ const secondChallengeTarget = createMockCharacter({
   cost: 2,
   strength: 1,
   willpower: 2,
+});
+
+const opponentLocation = createMockLocation({
+  id: "winter-garden-opponent-location",
+  name: "Opponent Location",
+  cost: 2,
+  moveCost: 1,
+  willpower: 8,
 });
 
 describe("Beast's Castle - Winter Gardens", () => {
@@ -99,5 +108,24 @@ describe("Beast's Castle - Winter Gardens", () => {
       testEngine.asPlayerOne().challenge(secondResident, secondChallengeTarget),
     ).toBeSuccessfulCommand();
     expect(testEngine.getLore(PLAYER_ONE)).toBe(2);
+  });
+
+  it("does not gain lore when a character here challenges a location", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [
+          beastsCastleWinterGardens,
+          { card: castleResident, atLocation: beastsCastleWinterGardens },
+        ],
+      },
+      {
+        play: [opponentLocation],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().challenge(castleResident, opponentLocation),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
   });
 });

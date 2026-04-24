@@ -1,99 +1,54 @@
 <script lang="ts">
+	import { deriveClockView, type ClockSnapshot } from "@tcg/lorcana-engine";
+	import { useClockNow } from "@/features/simulator/model/clock-ticker.svelte.js";
+	import { playSound } from "@/features/simulator/animations/sound-service.js";
+
 	interface PlayerTimerProps {
-		/** Remaining reserve time in ms (from last server settlement) */
-		reserveMsRemaining: number;
-		/** Whether this player's clock is currently running */
-		isActive: boolean;
-		/** Whether the clock is running (not paused) */
-		isRunning: boolean;
-		/** Server timestamp when clock started (for client-side interpolation) */
-		startedAtMs?: number;
-		/** Number of timeouts (0, 1, or 2) */
-		timeoutCount?: number;
-		/** Whether the player is in negative time */
-		isInNegativeTime?: boolean;
+		/** Authoritative clock snapshot for this player — emitted by the engine projection. */
+		snapshot: ClockSnapshot;
 		/** Visual presentation variant for timer chrome */
 		variant?: "inline" | "rail";
 		/** Optional visible label for rail presentation */
 		label?: string;
+		/** Whether this is the local player's own clock (enables low-time sound) */
+		isOwnClock?: boolean;
 	}
 
 	let {
-		reserveMsRemaining,
-		isActive = false,
-		isRunning = false,
-		startedAtMs,
-		timeoutCount = 0,
-		isInNegativeTime = false,
+		snapshot,
 		variant = "inline",
 		label = "Clock",
+		isOwnClock = false,
 	}: PlayerTimerProps = $props();
 
-	let displayMs = $state(0);
-	let intervalId: ReturnType<typeof setInterval> | undefined;
+	const clockNow = useClockNow();
+	const view = $derived(deriveClockView(snapshot, clockNow.value, { isOwnClock }));
 
-	// Client-side interpolation: tick every 100ms when this player's clock is running
+	// Low-time tick-tock warning sound (own clock only, last 10 seconds).
+	// Depends only on a boolean so the effect runs on transitions, not every tick.
 	$effect(() => {
-		// Capture reactive values for the closure
-		const currentReserve = reserveMsRemaining;
-		const currentStartedAt = startedAtMs;
-		const shouldTick = isActive && isRunning && typeof currentStartedAt === "number";
-
-		if (intervalId) {
-			clearInterval(intervalId);
-			intervalId = undefined;
-		}
-
-		if (shouldTick) {
-			const tick = () => {
-				const elapsed = Date.now() - currentStartedAt;
-				displayMs = currentReserve - elapsed;
-			};
-			tick();
-			intervalId = setInterval(tick, 100);
-		} else {
-			displayMs = currentReserve;
-		}
-
-		return () => {
-			if (intervalId) {
-				clearInterval(intervalId);
-				intervalId = undefined;
-			}
-		};
-	});
-
-	const isNegative = $derived(displayMs < 0);
-	const absMs = $derived(Math.abs(displayMs));
-	const minutes = $derived(Math.floor(absMs / 60_000));
-	const seconds = $derived(Math.floor((absMs % 60_000) / 1000));
-	const formattedTime = $derived(
-		`${isNegative ? "-" : ""}${minutes}:${String(seconds).padStart(2, "0")}`,
-	);
-
-	const urgencyClass = $derived.by(() => {
-		if (isInNegativeTime || isNegative) return "timer--critical";
-		if (displayMs < 10_000) return "timer--danger";
-		if (displayMs < 30_000) return "timer--warning";
-		return "";
+		if (!view.shouldPlayLowTimeTick) return;
+		playSound("clock-tick");
+		const id = setInterval(() => playSound("clock-tick"), 1000);
+		return () => clearInterval(id);
 	});
 </script>
 
 <div
-	class="player-timer {urgencyClass}"
-	class:player-timer--active={isActive && isRunning}
+	class="player-timer {view.urgencyClass}"
+	class:player-timer--active={view.isRunning}
 	class:player-timer--rail={variant === "rail"}
 	role="timer"
-	aria-label="Player time remaining: {formattedTime}"
+	aria-label="Player time remaining: {view.formattedTime}"
 >
 	{#if variant === "rail"}
 		<span class="timer-label">{label}</span>
 	{/if}
 	<div class="timer-main">
-		<span class="timer-value">{formattedTime}</span>
-		{#if timeoutCount > 0}
-			<span class="timeout-badge" title="Timeouts: {timeoutCount}">
-				{timeoutCount}
+		<span class="timer-value">{view.formattedTime}</span>
+		{#if view.timeoutCount > 0}
+			<span class="timeout-badge" title="Timeouts: {view.timeoutCount}">
+				{view.timeoutCount}
 			</span>
 		{/if}
 	</div>

@@ -1,8 +1,9 @@
-import type { PlayerId } from "#core";
 import type { DrawUntilHandSizeEffect } from "@tcg/lorcana-types";
+import type { CardInstanceId } from "#core";
 import type { CardPlayedPayload } from "../../../types";
+import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
+import { recordCardDrawnThisTurn } from "../../state/turn-metrics";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
-import { resolveCurrentTurnPlayerId } from "../../../targeting/runtime";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 
@@ -21,19 +22,12 @@ export function resolveDrawUntilHandSizeEffect(
   effect: DrawUntilHandSizeEffect,
   resolutionInput: ActionResolutionInput,
 ): void {
-  const effectTarget = effect.target ?? "CONTROLLER";
-  const targetPlayerIds =
-    effectTarget === "CURRENT_TURN"
-      ? (() => {
-          // Prefer triggerContext.playerId (the player whose turn fired the trigger)
-          // over the generic currentPlayer/priority.holder, which may be wrong when
-          // a non-turn-player (e.g. card controller) resolves the bag.
-          const currentTurnPlayerId =
-            (resolutionInput.triggerContext?.playerId as PlayerId | undefined) ??
-            resolveCurrentTurnPlayerId(ctx);
-          return currentTurnPlayerId ? [currentTurnPlayerId] : [];
-        })()
-      : resolveTargetPlayerIds(ctx, cardPlayed, effectTarget, resolutionInput.targets);
+  const targetPlayerIds = resolveTargetPlayerIds(
+    ctx,
+    cardPlayed,
+    effect.target ?? "CONTROLLER",
+    resolutionInput.targets,
+  );
   const targetSize =
     typeof effect.size === "number" && Number.isFinite(effect.size) && effect.size >= 0
       ? Math.floor(effect.size)
@@ -47,12 +41,41 @@ export function resolveDrawUntilHandSizeEffect(
       continue;
     }
 
-    ctx.framework.zones.drawCards({
+    const drawnCards = ctx.framework.zones.drawCards({
       from: { zone: "deck", playerId },
       to: { zone: "hand", playerId },
       count: drawAmount,
     });
+    const drawnCardIds = Array.isArray(drawnCards) ? (drawnCards as CardInstanceId[]) : [];
+    if (drawnCardIds.length === 0) {
+      continue;
+    }
     drewCards = true;
+
+    emitTriggeredLorcanaEvent(ctx, "cardsDrawn", {
+      playerId,
+      amount: drawnCardIds.length,
+      cardIds: drawnCardIds,
+    });
+
+    drawnCardIds.forEach((cardId) => {
+      recordCardDrawnThisTurn(ctx, playerId);
+      emitTriggeredLorcanaEvent(
+        ctx,
+        "cardsDrawn",
+        {
+          playerId,
+          amount: 1,
+          cardIds: [cardId],
+        },
+        {
+          event: "draw",
+          playerId,
+          subjectCardId: cardId,
+          triggerSourceCardId: cardPlayed.cardId,
+        },
+      );
+    });
   }
 
   if (drewCards) {

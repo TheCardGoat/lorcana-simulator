@@ -67,7 +67,7 @@
     letter-spacing: 0.03em;
     white-space: nowrap;
     transform: translate(-50%, -50%);
-    animation: quest-lore-fly var(--quest-fly-duration, 1000ms) cubic-bezier(0.22, 0.68, 0.36, 1) both;
+    animation: quest-lore-fly var(--quest-fly-duration, 500ms) cubic-bezier(0.22, 0.68, 0.36, 1) both;
     will-change: transform, opacity;
   }
 

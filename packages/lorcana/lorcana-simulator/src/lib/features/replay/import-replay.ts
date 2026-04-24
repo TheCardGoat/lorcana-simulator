@@ -53,7 +53,7 @@ async function readZipAsReplayData(
 async function gzipBytes(input: Uint8Array): Promise<ArrayBuffer> {
   const stream = new Blob([input.buffer as ArrayBuffer])
     .stream()
-    .pipeThrough(new CompressionStream("gzip"));
+    .pipeThrough(new CompressionStream("gzip") as ReadableWritablePair<Uint8Array, Uint8Array>);
   return new Response(stream).arrayBuffer();
 }
 
@@ -69,6 +69,9 @@ export async function importReplayFromFile(file: File): Promise<string> {
   const { data, raw } = await readZipAsReplayData(file);
   const compressed = await gzipBytes(raw);
 
+  const firstPlayerId = data.steps?.find((s) => s.acceptedMove.turnNumber === 1)?.acceptedMove
+    .actorId;
+
   await saveReplay({
     gameId: data.gameId,
     matchId: data.matchId,
@@ -81,6 +84,12 @@ export async function importReplayFromFile(file: File): Promise<string> {
     createdAt: data.metadata.createdAt,
     completedAt: data.metadata.completedAt,
     sizeBytes: compressed.byteLength,
+    durationMs: data.metadata.durationMs,
+    matchType: data.metadata.matchType,
+    endReason: data.metadata.endReason,
+    players: data.metadata.players,
+    deckColors: data.metadata.deckColors,
+    firstPlayerId,
     data: compressed,
   });
 

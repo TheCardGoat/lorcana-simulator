@@ -32,16 +32,27 @@ export const honeymarenNorthuldraGuide: CharacterCard = {
   classifications: ["Storyborn", "Ally"],
   abilities: [
     {
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          owner: "opponent",
+          zones: ["play"],
+          cardType: "character",
+          filters: [
+            {
+              type: "exerted",
+            },
+          ],
+        },
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
-        condition: {
-          expression: "an opponent has an exerted character in play",
-          type: "if",
-        },
-        then: {
-          amount: 1,
-          type: "gain-lore",
-        },
-        type: "conditional",
+        amount: 1,
+        type: "gain-lore",
       },
       id: "1d4-1",
       name: "TALE OF THE FIFTH SPIRIT",

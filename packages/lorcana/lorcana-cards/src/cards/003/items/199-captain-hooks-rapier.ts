@@ -51,6 +51,7 @@ export const captainHooksRapier: ItemCard = {
       name: "GET THOSE SCURVY BRATS!",
       text: "GET THOSE SCURVY BRATS! During your turn, whenever one of your characters banishes another character in a challenge, you may pay 1 {I} to draw a card.",
       trigger: {
+        challengeContext: { role: "attacker" },
         event: "banish-in-challenge",
         on: "YOUR_CHARACTERS",
         restrictions: [

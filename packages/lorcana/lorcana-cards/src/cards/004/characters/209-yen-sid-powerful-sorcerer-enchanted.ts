@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { yenSidPowerfulSorcerer } from "..";
+import { yenSidPowerfulSorcerer } from "./059-yen-sid-powerful-sorcerer";
 
 export const yenSidPowerfulSorcererEnchanted: CharacterCard = {
   ...yenSidPowerfulSorcerer,

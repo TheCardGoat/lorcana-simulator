@@ -19,6 +19,7 @@ import {
 } from "@tcg/lorcana-cards/cards/001";
 import { madamMimRivalOfMerlin, theQueenCommandingPresence } from "@tcg/lorcana-cards/cards/002";
 import {
+  bambiEtherealFawn,
   darkwingDuckCoolUnderPressure,
   donaldDuckAlongForTheRide,
   peteGhostOfChristmasFuture,
@@ -67,6 +68,7 @@ export const lookAtTheTopFixture = createFixture({
       robinHoodSharpshooter,
       powerlineWorldsGreatestRockStar,
       merlinBackFromBermuda,
+      { card: bambiEtherealFawn, cardsUnder: [loseTheWay] },
       televisionSet,
       peteGhostOfChristmasFuture,
       theQueenWickedAndVain,

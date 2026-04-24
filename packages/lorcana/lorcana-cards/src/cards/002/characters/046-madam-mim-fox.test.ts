@@ -51,5 +51,23 @@ describe("Madam Mim - Fox", () => {
       expect(testEngine.asPlayerOne().getCardZone(allyCharacter)).toBe("hand");
       expect(testEngine.asPlayerOne().getCardZone(madamMimFox)).toBe("play");
     });
+
+    it("targeting self (invalid due to excludeSelf) when choosing return forces the banish branch", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: madamMimFox.cost,
+        hand: [madamMimFox],
+        play: [allyCharacter],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(madamMimFox)).toBeSuccessfulCommand();
+
+      // Player attempts the exploit: picks option 1 but targets Mim herself (invalid)
+      testEngine.asPlayerOne().resolvePendingByCard(madamMimFox);
+      testEngine.asPlayerOne().resolveNextPending({ choiceIndex: 1, targets: [madamMimFox] });
+
+      // Option 1 is not legal (self is not a valid candidate), so option 0 (banish) is forced
+      expect(testEngine.asPlayerOne().getCardZone(madamMimFox)).toBe("discard");
+      expect(testEngine.asPlayerOne().getCardZone(allyCharacter)).toBe("play");
+    });
   });
 });

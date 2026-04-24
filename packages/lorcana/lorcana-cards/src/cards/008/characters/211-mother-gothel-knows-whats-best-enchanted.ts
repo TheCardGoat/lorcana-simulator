@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { motherGothelKnowsWhatsBest } from "..";
+import { motherGothelKnowsWhatsBest } from "./070-mother-gothel-knows-whats-best";
 
 export const motherGothelKnowsWhatsBestEnchanted: CharacterCard = {
   ...motherGothelKnowsWhatsBest,

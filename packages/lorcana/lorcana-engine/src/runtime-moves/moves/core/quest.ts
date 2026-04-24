@@ -18,6 +18,7 @@ import {
 import { normalizeTargetDescriptor, resolveCandidateTargets } from "../../../targeting/runtime";
 import { hasKeyword } from "../../../card-utils";
 import { createProjectionState, getEffectiveLore } from "../../../rules/derived-state";
+import { getEffectsForCard } from "../../../rules/static-effect-registry";
 import {
   hasStaticSelfRestriction,
   hasStaticCardRestriction,
@@ -107,25 +108,32 @@ function validateQuestCard(
     return { valid: false, error: "Only characters can quest", errorCode: "NOT_A_CHARACTER" };
   }
 
-  if (ctx.G.turnMetadata.charactersQuesting.includes(cardId)) {
-    return {
-      valid: false,
-      error: "Character already quested this turn",
-      errorCode: "ALREADY_QUESTED",
-    };
-  }
-
   const questMeta = ctx.cards.require(cardId).meta;
   const exertValidation = validateExertCost(questMeta, cardDef?.cardType);
   if (!exertValidation.valid) {
-    return exertValidation;
+    if (
+      exertValidation.errorCode === "CARD_DRYING" &&
+      getEffectsForCard(registry, cardId, "gain-keyword").some(
+        (e) => e.payload.keyword === "QuestWhileDrying",
+      )
+    ) {
+      // Card has an ability granting quest-while-drying (e.g. RECORD TIME) — allow it
+    } else {
+      return exertValidation;
+    }
   }
 
   const currentTurn = ctx.framework.state.status.turn ?? 1;
   const hasTemporaryRecklessLoss = hasTemporaryLostKeyword(questMeta, currentTurn, "Reckless");
+  const hasStaticGrantReckless =
+    !hasTemporaryRecklessLoss &&
+    getEffectsForCard(registry, cardId, "gain-keyword").some(
+      (e) => e.payload.keyword === "Reckless",
+    );
   const hasReckless =
     ((cardDef ? hasKeyword(cardDef, "Reckless") : false) && !hasTemporaryRecklessLoss) ||
-    hasTemporaryKeyword(questMeta, currentTurn, "Reckless");
+    hasTemporaryKeyword(questMeta, currentTurn, "Reckless") ||
+    hasStaticGrantReckless;
   if (hasReckless) {
     return {
       valid: false,
@@ -329,23 +337,30 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
       extraPredicate: (cardId) => {
         const cardDef = getCardDefinitionFromContext(ctx, cardId);
 
-        if (ctx.G.turnMetadata.charactersQuesting.includes(cardId as CardInstanceId)) {
-          return false;
-        }
-
         // Must not be exerted; must not be drying (cardMeta)
         const meta = ctx.cards.require(cardId).meta;
         if (meta?.state === "exerted") {
           return false;
         }
         if (meta?.isDrying) {
-          return false;
+          const hasQuestWhileDrying = getEffectsForCard(
+            registry,
+            cardId as CardInstanceId,
+            "gain-keyword",
+          ).some((e) => e.payload.keyword === "QuestWhileDrying");
+          if (!hasQuestWhileDrying) return false;
         }
         const currentTurn = ctx.framework.state.status.turn ?? 1;
         const hasTemporaryRecklessLoss = hasTemporaryLostKeyword(meta, currentTurn, "Reckless");
+        const hasStaticGrantReckless =
+          !hasTemporaryRecklessLoss &&
+          getEffectsForCard(registry, cardId as CardInstanceId, "gain-keyword").some(
+            (e) => e.payload.keyword === "Reckless",
+          );
         if (
           ((cardDef ? hasKeyword(cardDef, "Reckless") : false) && !hasTemporaryRecklessLoss) ||
-          hasTemporaryKeyword(meta, currentTurn, "Reckless")
+          hasTemporaryKeyword(meta, currentTurn, "Reckless") ||
+          hasStaticGrantReckless
         ) {
           return false;
         }

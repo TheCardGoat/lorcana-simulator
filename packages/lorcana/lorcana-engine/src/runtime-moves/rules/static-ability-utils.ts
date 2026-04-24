@@ -20,13 +20,16 @@ import type {
   TemporaryGrantedAbilityPayload,
 } from "../../types";
 import { isClassification } from "../../types";
+import { resolveTurnOwnerId } from "../../core/runtime/turn-owner";
 
 type StaticAbilityState = {
   readonly priority?: {
     readonly holder?: string;
   };
+  readonly playerIds?: readonly PlayerId[];
   readonly status?: {
     readonly turn?: number;
+    readonly turnOwnerId?: string;
     readonly otp?: string;
   };
   readonly _zonesPrivate?: {
@@ -58,6 +61,7 @@ type StaticAbilityState = {
     readonly lore?: LorcanaG["lore"];
     readonly turnMetadata?: Partial<LorcanaG["turnMetadata"]>;
     readonly challengeState?: LorcanaG["challengeState"];
+    readonly turnsCompletedByPlayer?: LorcanaG["turnsCompletedByPlayer"];
   }>;
 };
 
@@ -177,17 +181,23 @@ function getTemporaryGrantedActivatedAbilities(args: {
       continue;
     }
 
+    const payload = meta?.temporaryAbilityPayloads?.[abilityKey];
     const resolvedAbility = resolveTemporaryGrantedActivatedAbility({
       cardId,
       abilityKey,
-      payload: meta?.temporaryAbilityPayloads?.[abilityKey],
+      payload,
     });
     if (!resolvedAbility) {
       continue;
     }
 
+    const payloadSourceId =
+      typeof (payload as { sourceId?: unknown })?.sourceId === "string"
+        ? ((payload as unknown as { sourceId: string }).sourceId as CardInstanceId)
+        : undefined;
+
     grantedAbilities.push({
-      sourceId: cardId,
+      sourceId: payloadSourceId ?? cardId,
       ability: resolvedAbility,
     });
   }
@@ -270,8 +280,14 @@ function countCardsPlayedThisTurnMatching(args: {
   }, 0);
 }
 
+/**
+ * Active **turn** player for static conditions (`during-turn`, etc.).
+ * Must not use `priority.holder` alone — priority can move to the bag resolver or another
+ * player while the turn owner stays the same (see pass-turn / resolve-bag).
+ * Mirrors `resolveTurnPlayer` in runtime-game/project-board.ts.
+ */
 function getActivePlayerId(state: StaticAbilityState): PlayerId | undefined {
-  return state.priority?.holder as PlayerId | undefined;
+  return resolveTurnOwnerId(state, state.G);
 }
 
 export function getCardZoneKey(
@@ -288,6 +304,26 @@ export function isCardInPlay(state: StaticAbilityState, cardId: CardInstanceId):
   return zoneKey !== undefined && (zoneKey === "play" || zoneKey.startsWith("play:"));
 }
 
+function restrictionMatches(
+  effectRestriction: string | undefined,
+  queriedRestriction: string,
+): boolean {
+  if (effectRestriction === queriedRestriction) {
+    return true;
+  }
+  // `cant-quest-or-challenge` is an umbrella restriction that blocks both
+  // questing and challenging. Treat it as matching both `cant-quest` and
+  // `cant-challenge` lookups so validation paths that check the more
+  // specific restrictions also catch the umbrella variant.
+  if (
+    effectRestriction === "cant-quest-or-challenge" &&
+    (queriedRestriction === "cant-quest" || queriedRestriction === "cant-challenge")
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function staticEffectContainsRestriction(args: {
   effect: StaticAbilityDefinition["effect"] | Effect;
   restriction: string;
@@ -296,7 +332,10 @@ function staticEffectContainsRestriction(args: {
   const { effect, restriction, target } = args;
 
   if (effect.type === "restriction") {
-    return effect.restriction === restriction && (target === undefined || effect.target === target);
+    return (
+      restrictionMatches(effect.restriction, restriction) &&
+      (target === undefined || effect.target === target)
+    );
   }
 
   if (effect.type === "sequence") {
@@ -374,7 +413,7 @@ function staticEffectAppliesCardRestriction(args: {
 
   if (effect.type === "restriction") {
     return (
-      effect.restriction === restriction &&
+      restrictionMatches(effect.restriction, restriction) &&
       matchesStaticAbilityTarget({
         state,
         target: effect.target,
@@ -1173,6 +1212,15 @@ export function resolveStaticVariableAmount(args: {
             }
             case "song":
               return definition.cardType === "action" && definition.actionSubtype === "song";
+            case "card-type": {
+              const cardType =
+                "value" in filter && typeof filter.value === "string"
+                  ? filter.value
+                  : "cardType" in filter && typeof filter.cardType === "string"
+                    ? filter.cardType
+                    : undefined;
+              return cardType !== undefined ? definition.cardType === cardType : false;
+            }
             default:
               return false;
           }
@@ -1326,6 +1374,15 @@ export function resolveStaticVariableAmount(args: {
             }
             case "song":
               return definition.cardType === "action" && definition.actionSubtype === "song";
+            case "card-type": {
+              const cardType =
+                "value" in filter && typeof filter.value === "string"
+                  ? filter.value
+                  : "cardType" in filter && typeof filter.cardType === "string"
+                    ? filter.cardType
+                    : undefined;
+              return cardType !== undefined ? definition.cardType === cardType : false;
+            }
             default:
               return false;
           }
@@ -1476,7 +1533,7 @@ export function getGrantedActivatedAbilities(args: {
           text: ability.text ?? `Boost ${ability.value} {I}`,
           usesPerTurn: 1,
           cost: { ink: ability.value },
-          effect: { type: "put-under", source: "top-of-deck", under: "self", facedown: true },
+          effect: { type: "put-under", source: "top-of-deck", under: "self", faceup: false },
         },
         sourceId: cardId,
       });
@@ -1556,14 +1613,24 @@ export function getSelfStaticCostReductionAmount(args: {
       return total;
     }
 
+    // Cost-reduction `amount` may be a variable expression; `up-to` is not
+    // meaningful here (no chooser-selectable prompt), so we unwrap defensively.
+    const rawAmount = ability.effect.amount;
+    const normalizedAmount =
+      rawAmount &&
+      typeof rawAmount === "object" &&
+      (rawAmount as { type?: unknown }).type === "up-to"
+        ? (rawAmount as { value: unknown }).value
+        : rawAmount;
+
     const effectAmount =
-      ability.effect.amount === "full" || ability.effect.reduction?.ink === "full"
+      normalizedAmount === "full" || ability.effect.reduction?.ink === "full"
         ? baseCost
-        : typeof ability.effect.amount === "number"
-          ? ability.effect.amount
-          : typeof ability.effect.amount === "object"
+        : typeof normalizedAmount === "number"
+          ? normalizedAmount
+          : normalizedAmount && typeof normalizedAmount === "object"
             ? resolveStaticVariableAmount({
-                amount: ability.effect.amount,
+                amount: normalizedAmount as VariableAmount,
                 state,
                 controllerId,
                 sourceId: cardId,
@@ -1588,7 +1655,12 @@ export function getSelfStaticCostReductionAmount(args: {
 export function toStaticAbilityState(matchState: {
   readonly ctx: {
     readonly priority?: { readonly holder?: string };
-    readonly status?: { readonly turn?: number };
+    readonly status?: {
+      readonly turn?: number;
+      readonly turnOwnerId?: string;
+      readonly otp?: string;
+    };
+    readonly playerIds?: readonly PlayerId[];
     readonly zones: {
       readonly private: {
         readonly cardIndex?: Record<string, unknown>;
@@ -1602,6 +1674,7 @@ export function toStaticAbilityState(matchState: {
   return {
     priority: matchState.ctx.priority,
     status: matchState.ctx.status,
+    playerIds: matchState.ctx.playerIds,
     _zonesPrivate: matchState.ctx.zones.private as StaticAbilityState["_zonesPrivate"],
     G: matchState.G as StaticAbilityState["G"],
   };

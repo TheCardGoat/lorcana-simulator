@@ -1,5 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { ratigansPartySeedyBackRoom } from "..";
+import { ratigansPartySeedyBackRoom } from "./136-ratigans-party-seedy-back-room";
 
 export const ratigansPartySeedyBackRoomEnchanted: LocationCard = {
   ...ratigansPartySeedyBackRoom,

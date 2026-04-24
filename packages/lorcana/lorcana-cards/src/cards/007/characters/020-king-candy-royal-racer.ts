@@ -35,14 +35,17 @@ export const kingCandyRoyalRacer: CharacterCard = {
       effect: {
         type: "for-each-opponent",
         effect: {
-          type: "banish",
-          chosenBy: "opponent",
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "opponent",
-            zones: ["play"],
-            cardTypes: ["character"],
+          type: "optional",
+          chooser: "OPPONENT",
+          effect: {
+            type: "banish",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "opponent",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
           },
         },
       },

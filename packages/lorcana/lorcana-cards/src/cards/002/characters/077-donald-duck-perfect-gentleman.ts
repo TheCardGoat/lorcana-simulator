@@ -52,27 +52,33 @@ export const donaldDuckPerfectGentleman: CharacterCard = {
         timing: "at",
       },
       effect: {
-        type: "sequence",
-        steps: [
-          {
-            type: "optional",
-            chooser: "CONTROLLER",
-            effect: {
-              amount: 1,
-              target: "CONTROLLER",
-              type: "draw",
-            },
-          },
-          {
-            type: "optional",
-            chooser: "OPPONENT",
-            effect: {
-              amount: 1,
-              target: "OPPONENT",
-              type: "draw",
-            },
-          },
-        ],
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          amount: 1,
+          target: "CONTROLLER",
+          type: "draw",
+        },
+      },
+    },
+    {
+      id: "wjj-3",
+      name: "ALLOW ME",
+      text: "ALLOW ME At the start of your turn, each player may draw a card.",
+      type: "triggered",
+      trigger: {
+        event: "start-turn",
+        on: "YOU",
+        timing: "at",
+      },
+      effect: {
+        type: "optional",
+        chooser: "OPPONENT",
+        effect: {
+          amount: 1,
+          target: "OPPONENT",
+          type: "draw",
+        },
       },
     },
   ],

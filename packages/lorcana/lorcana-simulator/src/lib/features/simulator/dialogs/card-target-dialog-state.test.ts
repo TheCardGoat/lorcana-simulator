@@ -59,4 +59,30 @@ describe("buildCardTargetDialogState", () => {
 
     expect(state.selectedCount).toBe(2);
   });
+
+  // Regression for the parallel-filter divergence (Phase 1 #2): when the
+  // caller already scoped `cards` to the engine-published candidate set,
+  // the dialog must not run its own filter evaluator. The engine is the
+  // single source of truth for "is this card a legal target".
+  it("trusts candidates when trustCandidates is true (no parallel filter)", () => {
+    const state = buildCardTargetDialogState({
+      cards: [discardCharacter, discardItem],
+      target: {
+        // Filter would normally exclude `discardItem` (cardType: character),
+        // but the engine already validated the candidates — UI must not
+        // re-apply.
+        selector: "all",
+        owner: "you",
+        zones: ["discard"],
+        cardType: "character",
+      },
+      trustCandidates: true,
+    });
+
+    expect(state.orderedCards.map((card) => card.cardId).sort()).toEqual(
+      ["discard-character", "discard-item"].sort(),
+    );
+    // Badges still render so the operator can read the constraints.
+    expect(state.badgeModels.map((badge) => badge.label)).toContain("cardType: character");
+  });
 });

@@ -5,12 +5,13 @@
 import type {
   CommandEnvelope,
   GameEvent,
-  GameLogEntry,
   MatchState,
   MoveInput,
   PublishedGameEvent,
 } from "./types";
-import type { MoveLog } from "../../types/move-log";
+import type { MoveLog, TurnStartLog } from "../../types/move-log";
+import type { CardInstanceId, PlayerId } from "../types";
+import { privateField } from "./private-field";
 import { settleClocks, grantPriority } from "./time-control";
 import {
   createMatchStaticResourcesFromCardsMaps,
@@ -38,7 +39,6 @@ import type {
 } from "./match-runtime.types";
 import { buildValidationContext } from "./match-runtime.utils";
 import { executeCommand } from "./match-runtime.commands";
-import { executePriorityPass } from "./match-runtime.priority";
 import { initializeMatchState } from "./match-runtime.init";
 import { getFilteredView, type QueryContext } from "./match-runtime.queries";
 import { validateCommand as validateRuntimeCommand } from "./match-runtime.validation";
@@ -73,7 +73,6 @@ export type {
   FrameworkReadAPI,
   FrameworkWriteAPI,
   GameEndResult,
-  LogProjector,
   LogProjectionContext,
   PacketAnimationContext,
   MatchRuntimeInit,
@@ -103,15 +102,32 @@ export type {
   ZoneMutationAPI,
   ZoneQueryAPI,
 } from "./match-runtime.types";
+
+function injectMandatoryDraws(
+  history: MoveLog[],
+  draws: { playerId: PlayerId; cardIds: CardInstanceId[] }[],
+): void {
+  for (let i = history.length - 1; i >= 0; i--) {
+    const log = history[i];
+    if (log && log.type === "turnStart") {
+      const turnLog = log as TurnStartLog;
+      const matching = draws.filter((d) => d.playerId === turnLog.activePlayerId);
+      if (matching.length > 0) {
+        const cardIds = matching.flatMap((d) => d.cardIds);
+        history[i] = { ...turnLog, drawn: privateField(cardIds, [turnLog.activePlayerId]) };
+      }
+      return;
+    }
+  }
+}
+
 export class MatchRuntime {
   private config: MatchRuntimeConfig;
   private staticResources: MatchStaticResources;
   private capturePatches: boolean;
   private publishedGameEvents: PublishedGameEvent[] = [];
-  private gameLog: GameLogEntry[] = [];
   private moveLogHistory: MoveLog[] = [];
   private nextGameEventSeq = 0;
-  private nextGameLogSeq = 0;
   private gameEnded = false;
   private gameEndResult?: GameEndResult;
 
@@ -124,6 +140,16 @@ export class MatchRuntime {
   constructor(config: MatchRuntimeConfig, init: MatchRuntimeInit) {
     this.config = config;
     this.capturePatches = init.capturePatches ?? false;
+
+    if (init._skipInitialization && init._prebuiltStaticResources) {
+      // Fast path: skip static resource building and game initialization.
+      // Caller will immediately follow with loadState() to hydrate the real state.
+      this.staticResources = init._prebuiltStaticResources;
+      this.state = undefined as unknown as MatchState;
+      this.board = {} as FilteredMatchView;
+      return;
+    }
+
     this.staticResources = createMatchStaticResourcesFromCardsMaps(
       init.cardsMaps,
       init.cardCatalog,
@@ -166,10 +192,8 @@ export class MatchRuntime {
       ? { winner: state.ctx.status.winner, reason: state.ctx.status.reason ?? "" }
       : undefined;
     this.publishedGameEvents = [];
-    this.gameLog = [];
     this.moveLogHistory = [];
     this.nextGameEventSeq = 0;
-    this.nextGameLogSeq = 0;
   }
 
   processCommand(
@@ -187,10 +211,10 @@ export class MatchRuntime {
     const pendingGameEvents: GameEvent[] = [];
 
     const execResult = executeCommand(command, playerId, prevStateID, timestamp, {
+      actorRole,
       state: this.state,
       config: this.config as unknown as MatchRuntimeConfig,
       staticResources: this.staticResources,
-      actorRole,
       capturePatches: this.capturePatches,
       gameEnded: this.gameEnded,
       currentStateID: this.state.ctx._stateID,
@@ -219,6 +243,9 @@ export class MatchRuntime {
 
     this.publishedGameEvents.push(...publishedGameEvents);
     this.moveLogHistory.push(...projectedLogResult.moveLogs);
+    if (projectedLogResult.mandatoryDraws) {
+      injectMandatoryDraws(this.moveLogHistory, projectedLogResult.mandatoryDraws);
+    }
 
     if (execResult.gameEnded) {
       this.gameEnded = true;
@@ -230,55 +257,17 @@ export class MatchRuntime {
       stateID: execResult.result.stateID,
       state: execResult.result.state,
       patches: execResult.result.patches,
-      gameEvents: publishedGameEvents,
-      logEntries: [],
-      processedCommand: command,
-      animations: [],
       undoable: execResult.result.undoable,
       moveLogs: projectedLogResult.moveLogs,
+      gameEvents: publishedGameEvents,
+      processedCommand: command,
+      animations: [],
     };
   }
 
   grantPriority(playerId: string, timestamp: number): void {
     this.state = grantPriority(this.state, playerId, timestamp);
     this.clearEnumeratedMovesCache();
-  }
-
-  passPriority(playerId: string, timestamp: number): CommandResult {
-    const passResult = executePriorityPass(playerId, timestamp, {
-      state: this.state,
-      currentStateID: this.state.ctx._stateID,
-    });
-    this.state = passResult.newState;
-    this.clearEnumeratedMovesCache();
-    const gameEvents = this.publishGameEvents(
-      passResult.result.pendingGameEvents,
-      passResult.newState.ctx._stateID,
-      timestamp,
-    );
-    const projectedLogResult = projectGameLog({
-      publishedGameEvents: gameEvents,
-      state: passResult.newState,
-    });
-
-    this.publishedGameEvents.push(...gameEvents);
-    this.moveLogHistory.push(...projectedLogResult.moveLogs);
-
-    return {
-      success: true,
-      stateID: passResult.result.stateID,
-      state: passResult.result.state,
-      patches: passResult.result.patches,
-      gameEvents,
-      logEntries: [],
-      processedCommand: {
-        commandID: `priority-pass-${timestamp}`,
-        move: "__priorityPass",
-      },
-      animations: [],
-      undoable: false,
-      moveLogs: projectedLogResult.moveLogs,
-    };
   }
 
   // Queries
@@ -302,10 +291,6 @@ export class MatchRuntime {
   getPublishedGameEvents(): PublishedGameEvent[] {
     return [...this.publishedGameEvents];
   }
-  getGameLog(): GameLogEntry[] {
-    return [...this.gameLog];
-  }
-
   getMoveLogHistory(): MoveLog[] {
     return [...this.moveLogHistory];
   }
@@ -449,10 +434,8 @@ export class MatchRuntime {
   createRuntimeSnapshot(): RuntimeSnapshot {
     return {
       publishedGameEventsLength: this.publishedGameEvents.length,
-      gameLogLength: this.gameLog.length,
       moveLogHistoryLength: this.moveLogHistory.length,
       nextGameEventSeq: this.nextGameEventSeq,
-      nextGameLogSeq: this.nextGameLogSeq,
       gameEnded: this.gameEnded,
       gameEndResult: this.gameEndResult,
     };
@@ -475,10 +458,8 @@ export class MatchRuntime {
     this.clearEnumeratedMovesCache();
     if (!options?.preserveHistory) {
       this.publishedGameEvents.length = snapshot.publishedGameEventsLength;
-      this.gameLog.length = snapshot.gameLogLength;
       this.moveLogHistory.length = snapshot.moveLogHistoryLength;
       this.nextGameEventSeq = snapshot.nextGameEventSeq;
-      this.nextGameLogSeq = snapshot.nextGameLogSeq;
     }
     this.gameEnded = snapshot.gameEnded;
     this.gameEndResult = snapshot.gameEndResult;
@@ -513,6 +494,9 @@ export class MatchRuntime {
 
     this.publishedGameEvents.push(...gameEvents);
     this.moveLogHistory.push(...projectedLogResult.moveLogs);
+    if (projectedLogResult.mandatoryDraws) {
+      injectMandatoryDraws(this.moveLogHistory, projectedLogResult.mandatoryDraws);
+    }
 
     return {
       gameEvents,
@@ -528,7 +512,6 @@ export class MatchRuntime {
       staticResources: this.staticResources,
       gameEnded: this.gameEnded,
       gameEvents: this.publishedGameEvents,
-      gameLog: this.gameLog,
     };
   }
   private buildValidationContext(

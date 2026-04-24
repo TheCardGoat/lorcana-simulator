@@ -26,8 +26,13 @@ describe("Dopey - Knight Apprentice", () => {
       );
 
       expect(testEngine.asPlayerOne().playCard(dopeyKnightApprentice)).toBeSuccessfulCommand();
-      // No bag should be created since the condition is not met
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(dopeyKnightApprentice, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
     });
 
     it("triggers and deals 1 damage when another Knight is in play", () => {

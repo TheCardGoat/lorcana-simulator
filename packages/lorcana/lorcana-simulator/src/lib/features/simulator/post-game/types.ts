@@ -5,6 +5,7 @@ import type {
   MoveLogEntrySnapshot,
 } from "@/features/simulator/model/contracts.js";
 import type { EventLogSegment } from "@/features/simulator/model/event-log-formatting.js";
+import type { GameAnalyticsSummary } from "./notes-api.js";
 
 export type PostGameViewerResult = "victory" | "defeat" | "spectator" | "unknown";
 export type PostGameSectionId = "overview" | "timeline" | "notes";
@@ -117,6 +118,8 @@ export interface PostGameSummary {
   timeline: PostGameForensicEntry[];
   turns: PostGameTurnSummary[];
   totalLogEntries: number;
+  /** Full analytics record — present when source is "analytics" (persisted games) */
+  analytics?: GameAnalyticsSummary;
 }
 
 export interface PostGameNoteState {

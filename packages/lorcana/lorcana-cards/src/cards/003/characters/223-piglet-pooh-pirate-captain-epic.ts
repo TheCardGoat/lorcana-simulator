@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { pigletPoohPirateCaptain } from "..";
+import { pigletPoohPirateCaptain } from "./016-piglet-pooh-pirate-captain";
 
 export const pigletPoohPirateCaptainEpic: CharacterCard = {
   ...pigletPoohPirateCaptain,

@@ -29,7 +29,13 @@ export const ohanaMeansFamily: ActionCard = {
           {
             type: "remove-damage",
             amount: 99,
-            target: "CHOSEN_CHARACTER_OF_YOURS",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
           },
           {
             type: "draw",

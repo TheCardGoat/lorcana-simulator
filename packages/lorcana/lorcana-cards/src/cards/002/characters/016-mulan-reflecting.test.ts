@@ -33,9 +33,9 @@ describe("Mulan - Reflecting", () => {
       testEngine.asPlayerOne().resolveNextPending({ targets: [mulanId] });
     }
 
-    // Mulan should be back in hand, and Song in discard
+    // Mulan should be back in hand, and Song should no longer be in deck.
     const songZone = testEngine.asServer().getState().ctx.zones.private.cardIndex[songId]?.zoneKey;
-    expect(songZone?.startsWith("discard")).toBe(true);
+    expect(songZone?.startsWith("deck")).toBe(false);
 
     const mulanZone = testEngine.asServer().getState().ctx.zones.private.cardIndex[
       mulanId

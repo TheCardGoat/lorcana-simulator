@@ -67,7 +67,13 @@ describe("Pete - Steamboat Rival", () => {
 
       expect(testEngine.asPlayerOne().playCard(peteSteamboatRival)).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(peteSteamboatRival, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
       expect(testEngine.getCard(opponentCharacter)).toBeInZone("play");
     });
   });

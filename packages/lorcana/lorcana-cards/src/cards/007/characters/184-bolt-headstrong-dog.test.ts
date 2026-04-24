@@ -53,7 +53,11 @@ describe("Bolt - Headstrong Dog", () => {
     });
 
     expect(testEngine.asPlayerOne().quest(boltHeadstrongDog)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(boltHeadstrongDog, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
   });
 });

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { darkwingDuckCoolUnderPressure } from "..";
+import { darkwingDuckCoolUnderPressure } from "./192-darkwing-duck-cool-under-pressure";
 
 export const darkwingDuckCoolUnderPressureEnchanted: CharacterCard = {
   ...darkwingDuckCoolUnderPressure,

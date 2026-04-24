@@ -578,6 +578,9 @@ onDestroy(() => {
             </span>
             <p class="detail-title__text">{selectionState.title}</p>
           </div>
+          {#if selectionState.mode === "resolution-scry" && selectionState.headerSubtitle}
+            <p class="detail-title__subtext">{selectionState.headerSubtitle}</p>
+          {/if}
           <p class="detail-message">{selectionState.message}</p>
         </div>
 
@@ -1156,6 +1159,16 @@ onDestroy(() => {
 
   .detail-title__text {
     margin: 0;
+  }
+
+  .detail-title__subtext {
+    margin: 0.15rem 0 0;
+    max-height: 4.5rem;
+    overflow-y: auto;
+    color: #9eb6d6;
+    font-size: 0.68rem;
+    font-weight: 500;
+    line-height: 1.35;
   }
 
   .detail-message {

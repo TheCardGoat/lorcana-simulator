@@ -84,5 +84,32 @@ describe("Banzai - Taunting Hyena", () => {
 
       expect(testEngine.isExerted(damagedCharacter)).toBe(true);
     });
+
+    it("cannot target an undamaged character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [banzaiTauntingHyena],
+          inkwell: banzaiTauntingHyena.cost,
+          deck: 5,
+        },
+        {
+          play: [undamagedCharacter],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(banzaiTauntingHyena)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(banzaiTauntingHyena),
+      ).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          resolveOptional: true,
+          targets: [undamagedCharacter],
+        }),
+      ).not.toBeSuccessfulCommand();
+
+      expect(testEngine.isExerted(undamagedCharacter)).toBe(false);
+    });
   });
 });

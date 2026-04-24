@@ -77,34 +77,42 @@ export const madamMimElephant: CharacterCard = {
         event: "start-turn",
         on: "YOU",
         timing: "at",
-      },
-      condition: {
-        type: "and",
-        conditions: [
-          {
-            type: "self-has-damage",
-          },
-          {
-            type: "target-query",
-            query: {
-              selector: "all",
-              owner: "opponent",
-              zones: ["play"],
-              cardTypes: ["character"],
+        condition: {
+          type: "and",
+          conditions: [
+            {
+              type: "target-query",
+              query: {
+                selector: "all",
+                reference: "source",
+                filters: [{ type: "damaged" }],
+              },
+              comparison: {
+                operator: "gte",
+                value: 1,
+              },
             },
-            comparison: {
-              operator: "gte",
-              value: 1,
+            {
+              type: "target-query",
+              query: {
+                selector: "all",
+                owner: "opponent",
+                zones: ["play"],
+                cardTypes: ["character"],
+              },
+              comparison: {
+                operator: "gte",
+                value: 1,
+              },
             },
-          },
-        ],
+          ],
+        },
       },
       effect: {
         type: "optional",
         effect: {
           type: "move-damage",
-          amount: 2,
-          upTo: true,
+          amount: { type: "up-to", value: 2 },
           from: {
             ref: "self",
           },

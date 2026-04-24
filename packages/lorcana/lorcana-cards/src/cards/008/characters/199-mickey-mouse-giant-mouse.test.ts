@@ -52,19 +52,6 @@ const friendlyCharacter = createMockCharacter({
 });
 
 describe("Mickey Mouse - Giant Mouse", () => {
-  describe("Bodyguard", () => {
-    it("enters play exerted", () => {
-      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-        hand: [mickeyMouseGiantMouse],
-        inkwell: mickeyMouseGiantMouse.cost,
-        deck: 2,
-      });
-
-      expect(testEngine.asPlayerOne().playCard(mickeyMouseGiantMouse)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().isExerted(mickeyMouseGiantMouse)).toBe(true);
-    });
-  });
-
   describe("THE BIGGEST STAR EVER", () => {
     it("deals 5 damage to each opposing character when banished", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(

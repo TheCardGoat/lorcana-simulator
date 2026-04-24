@@ -14,6 +14,7 @@ export type {
   EngineViewUpdateSourceAuthority,
   EngineZoneProjection,
   EngineMoveValidationResult,
+  ProtocolError,
   GameEngine,
   TransportAwareEngine,
 } from "./contracts";

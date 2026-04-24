@@ -1,6 +1,6 @@
 ---
 name: review-pr-comments
-description: Systematically process GitHub pull request review feedback end-to-end: pick a target PR, identify unanswered or unresolved comments, handle each thread sequentially, implement required code updates, run repository verification checks, and post clear responses. Use when asked to review PR comments, resolve review threads, or address reviewer suggestions/questions.
+description: "Systematically process GitHub pull request review feedback end-to-end: pick a target PR, identify unanswered or unresolved comments, handle each thread sequentially, implement required code updates, run repository verification checks, and post clear responses. Use when asked to review PR comments, resolve review threads, or address reviewer suggestions/questions."
 ---
 
 # Review PR Comments

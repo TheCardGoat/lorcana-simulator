@@ -7,7 +7,6 @@
  */
 
 import type { LorcanaDomainEvent } from "../../types/domain-events";
-import type { LorcanaGameLogEntry } from "../../types/log-messages";
 import type { LorcanaG } from "../../types/runtime-state";
 import type { PlayerId } from "../types";
 import type { Player } from "./match-runtime.types";
@@ -67,6 +66,8 @@ export type CtxStatus = {
   gameEnded: boolean;
   winner?: string;
   reason?: string;
+  /** Canonical active turn owner. Separate from `priority.holder`. */
+  turnOwnerId?: string;
   /** Player id who is on the play (goes first). Set when first player is chosen. */
   otp?: string;
   /** Player id who has priority to choose who goes first (e.g. winner of tiebreaker). */
@@ -167,6 +168,14 @@ export type ChessClockContext = {
   pausedReason?: ClockPauseReason;
   players: Record<string, ChessClockPlayerState>;
   config: ChessClockConfig;
+  /**
+   * Time (ms) the current `activePlayerID` has held this priority window, as
+   * settled so far. Resets to 0 each time `activePlayerID` changes. Combined
+   * with `(now - startedAtMs)` while the clock is running this gives the full
+   * "how long has this player been holding priority" value used by the
+   * per-decision cap (`config.maxDecisionTimeMs`).
+   */
+  activePlayerAccumulatedMs?: number;
 };
 
 export type PriorityClockContext = {
@@ -218,6 +227,16 @@ export type ChessClockConfig = {
   graceMs: number;
   resetTimeOnSkipMs: number;
   lossPolicy: "lose-on-time";
+  /**
+   * Optional per-decision-window hard cap in ms. If the player who currently
+   * holds priority (`time.activePlayerID`) consumes more than this on a
+   * single priority window, `checkTimeout` reports a "first" timeout so the
+   * opponent can invoke `skip_opponent_turn`. The cap resets every time
+   * priority changes hands (turn pass, opponent trigger/target selection, etc.)
+   * so legitimate multi-action turns are never penalised — only single
+   * decisions that stall for too long. Independent of reserve.
+   */
+  maxDecisionTimeMs?: number;
 };
 
 export type PriorityClockConfig = {
@@ -237,6 +256,8 @@ export type DynamicClockConfig = {
   perTurnPassBonusMs: number;
   resetTimeOnSkipMs: number;
   graceMs: number;
+  /** See `ChessClockConfig.maxDecisionTimeMs`. */
+  maxDecisionTimeMs?: number;
 };
 
 export type DynamicClockContext = {
@@ -247,6 +268,8 @@ export type DynamicClockContext = {
   pausedReason?: ClockPauseReason;
   players: Record<string, DynamicClockPlayerState>;
   config: DynamicClockConfig;
+  /** See `ChessClockContext.activePlayerAccumulatedMs`. */
+  activePlayerAccumulatedMs?: number;
 };
 
 export type TimeControlConfig =
@@ -539,18 +562,6 @@ export type LogVisibility =
   | { mode: "PUBLIC" }
   | { mode: "PRIVATE"; visibleTo: string[] }
   | { mode: "PUBLIC_WITH_OVERRIDES"; overrides: Record<string, LogMessage> };
-
-export type GameLogEntry = {
-  id: string;
-  seq: number;
-  timestamp: number;
-  stateId: number;
-  sourceEventSeqs: number[];
-  category: "action" | "rules" | "system";
-  visibility: LogVisibility;
-  defaultMessage?: LogMessage;
-  typedEntry?: LorcanaGameLogEntry;
-};
 
 // =============================================================================
 // Filtered Views

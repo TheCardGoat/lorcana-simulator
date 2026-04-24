@@ -1,7 +1,13 @@
-import type { EnginePacketUpdate, LorcanaGameLogEntry, MoveLog } from "@tcg/lorcana-engine";
+import type {
+  ClockSnapshot,
+  EnginePacketUpdate,
+  LorcanaGameLogEntry,
+  MoveLog,
+} from "@tcg/lorcana-engine";
 import type {
   LorcanaProjectedBoardView,
   LorcanaCardTarget,
+  MoveOptionSelectableCost,
   LorcanaProjectedCard,
   LorcanaProjectedPlayerBoard,
   LorcanaRuntimeMoveParams,
@@ -11,6 +17,16 @@ import type { TestInitialState } from "@tcg/lorcana-engine/testing";
 
 export const LORCANA_PLAYER_SIDES = ["playerOne", "playerTwo"] as const;
 export type LorcanaPlayerSide = (typeof LORCANA_PLAYER_SIDES)[number];
+
+export interface MatchNavigationContext {
+  nextGameId: string | undefined;
+  matchCompleted: boolean;
+  format: string;
+  player1Score: number;
+  player2Score: number;
+  gameIndex: number;
+  navigating: boolean;
+}
 
 export const LORCANA_TABLE_SEATS = ["top", "bottom"] as const;
 export type LorcanaTableSeat = (typeof LORCANA_TABLE_SEATS)[number];
@@ -138,8 +154,11 @@ export interface LorcanaCardSnapshot {
   atLocationId?: string;
   atLocationLabel?: string;
   cardsUnderCount?: number;
-  cardsUnderIds?: string[];
+  /** Card IDs of face-up cards stacked under this card (visible to all players) */
+  faceUpCardsUnder?: string[];
   playedViaShift?: boolean;
+  /** True when this card is displayed in the hand via a play-from-under permission (e.g. Black Cauldron) */
+  isFromUnder?: boolean;
   facePresentation: CardFacePresentation;
   activeEffects?: LorcanaActiveEffectSummary[];
 
@@ -212,6 +231,7 @@ export interface ResolutionActionView {
 
 export type AvailableMovesSelectionPhase =
   | "choose-source"
+  | "choose-cost"
   | "choose-option"
   | "choose-target"
   | "confirm";
@@ -273,7 +293,19 @@ export interface ResolutionTargetAvailableMovesSelectionState extends AvailableM
   sessionKey: string;
   sourceCardId: string | null;
   entries: AvailableMovesSelectionEntry[];
-  effectType: "move-damage" | "move-to-location" | null;
+  effectType:
+    | "move-damage"
+    | "move-to-location"
+    | "deal-damage"
+    | "banish"
+    | "discard"
+    | "return-to-hand"
+    | "ready"
+    | "exert"
+    | "modify-stat"
+    | "gain-keyword"
+    | "remove-damage"
+    | null;
   target: LorcanaCardTarget | null;
   allowedZones: LorcanaZoneId[];
   candidateCardIds: string[];
@@ -291,7 +323,7 @@ export interface ResolutionTargetAvailableMovesSelectionState extends AvailableM
 export interface ResolutionTargetSelectionSlotState {
   id: string;
   label: string;
-  cardType: "character" | "location";
+  cardType: "character" | "location" | null;
   targetId: string | null;
   targetLabel: string | null;
   targetCardId: string | null;
@@ -308,6 +340,7 @@ export interface ResolutionAmountSelectionState {
 export interface ResolutionChoiceAvailableMovesSelectionState extends AvailableMovesSelectionBase {
   mode: "resolution-choice";
   entries: AvailableMovesSelectionEntry[];
+  targetCard?: LorcanaCardSnapshot | null;
 }
 
 export interface ResolutionOptionalAvailableMovesSelectionState extends AvailableMovesSelectionBase {
@@ -334,6 +367,8 @@ export interface AvailableMovesScryDestinationState {
 
 export interface ResolutionScryAvailableMovesSelectionState extends AvailableMovesSelectionBase {
   mode: "resolution-scry";
+  /** Full heading when {@link title} is shortened (e.g. card name only). */
+  headerSubtitle?: string | null;
   sourceCardId: string | null;
   entries: AvailableMovesSelectionEntry[];
   remainingManualAssignments: number;
@@ -377,6 +412,7 @@ export type ExecutableMovePresentation =
       categoryId: ExecutableMovePresentationCategoryId;
       categoryLabel: string;
       optionLabel: string;
+      selectableCosts?: MoveOptionSelectableCost[];
       selectionMode?: "singTogether";
       candidateCards?: Array<{ cardId: string; value: number }>;
       requiredValue?: number;
@@ -458,15 +494,6 @@ export interface SimulatorMoveError {
   rawReason?: string;
 }
 
-export interface LorcanaPlayerTimerSummary {
-  reserveMsRemaining: number;
-  isActive: boolean;
-  isRunning: boolean;
-  startedAtMs?: number;
-  timeoutCount?: number;
-  isInNegativeTime?: boolean;
-}
-
 export interface LorcanaPlayerSummary {
   lore: number;
   deckCount: number;
@@ -476,7 +503,7 @@ export interface LorcanaPlayerSummary {
   availableInk: number | null;
   activeEffects?: LorcanaActiveEffectSummary[];
   effectSourceCardIds?: string[];
-  timer?: LorcanaPlayerTimerSummary;
+  timer?: ClockSnapshot;
 }
 
 export type PendingResolutionMoveEntry =
@@ -518,7 +545,13 @@ export const LORCANA_SIMULATOR_MOVE_ID_REGISTRY = {
   manualSetLore: true,
   manualShuffleDeck: true,
   manualPassTurn: true,
-} as const satisfies Record<keyof LorcanaRuntimeMoveParams | "undo", true>;
+  turnSkipped: true,
+  playerDropped: true,
+  forfeitGame: true,
+} as const satisfies Record<
+  keyof LorcanaRuntimeMoveParams | "undo" | "turnSkipped" | "playerDropped",
+  true
+>;
 
 export type LorcanaSimulatorMoveId = keyof typeof LORCANA_SIMULATOR_MOVE_ID_REGISTRY;
 
@@ -548,14 +581,17 @@ export type LorcanaSimulatorMoveParams = ExactMoveParamMap<{
   };
   challenge: { attackerId: string; defenderId: string };
   chooseWhoGoesFirst: { playerId: string; side?: LorcanaPlayerSide };
-  concede: Record<string, never>;
+  concede: { playerId: string };
   moveCharacterToLocation: { characterId: string; locationId: string };
   alterHand: { playerId: string; cardsToMulligan: string[] };
   passTurn: Record<string, never>;
   playCard: {
     cardId: string;
-    cost?: LorcanaRuntimeMoveParams["playCard"]["cost"];
+    cost: LorcanaRuntimeMoveParams["playCard"]["cost"];
+    discardCards?: string[];
     shiftTarget?: string;
+    sacrificeTarget?: string;
+    exertTargets?: string[];
     singer?: string;
     singers?: string[];
     targets?: string[];
@@ -587,6 +623,9 @@ export type LorcanaSimulatorMoveParams = ExactMoveParamMap<{
   manualSetLore: { playerId: string; amount: number };
   manualShuffleDeck: { playerId: string };
   manualPassTurn: Record<string, never>;
+  turnSkipped: { skipperPlayerId: string; stallerPlayerId: string };
+  playerDropped: { dropperPlayerId: string; droppedPlayerId: string; reason: string };
+  forfeitGame: { winnerId: string; reason: string };
 }>;
 
 export interface LorcanaSimulatorReadModel {
@@ -744,6 +783,17 @@ export function getZoneCardIds(
     default:
       return [];
   }
+}
+
+export function getPlayableFromUnderCardIds(
+  board: LorcanaProjectedBoardView,
+  side: LorcanaPlayerSide,
+): string[] {
+  const { projected: playerBoard } = getProjectedPlayerBoardForSide(board, side);
+  if (!playerBoard?.playableFromUnderCardIds) {
+    return [];
+  }
+  return playerBoard.playableFromUnderCardIds.map(String);
 }
 
 export function getZoneCardCount(

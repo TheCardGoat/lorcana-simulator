@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { bambiLittlePrince } from "..";
+import { bambiLittlePrince } from "./063-bambi-little-prince";
 
 export const bambiLittlePrinceEnchanted: CharacterCard = {
   ...bambiLittlePrince,

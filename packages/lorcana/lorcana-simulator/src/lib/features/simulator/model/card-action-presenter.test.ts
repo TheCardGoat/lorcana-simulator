@@ -211,6 +211,7 @@ describe("buildCardActionViews", () => {
     const card = createCard({
       zoneId: "hand",
       label: "Stitch - Rock Star",
+      keywords: ["Shift"],
       shiftInkCost: 4,
       shiftPlayCost: 4,
     });
@@ -255,6 +256,101 @@ describe("buildCardActionViews", () => {
         moves: [],
       },
     ]);
+  });
+
+  it("shows a disabled shift action for discard-cost Shift cards", () => {
+    const card = createCard({
+      zoneId: "hand",
+      label: "Ursula - Eric's Bride",
+      keywords: ["Shift"],
+      textEntries: [
+        {
+          title: "Shift: Discard a song card",
+          description:
+            "(You may discard a song card to play this on top of one of your characters named Ursula.)",
+        },
+      ],
+    });
+
+    const actions = buildCardActionViews({
+      card,
+      executableMoves: [],
+      ownerSide: "playerOne",
+      challengeReadyCardIds: [],
+      movableToLocationCardIds: [],
+    });
+
+    expect(actions).toEqual([
+      {
+        id: `disabled:play-card:${card.cardId}`,
+        cardId: card.cardId,
+        categoryId: "play-card",
+        label: "Play",
+        interaction: "execute-or-select",
+        enabled: false,
+        reason: "This card cannot be played right now.",
+        moves: [],
+      },
+      {
+        id: `disabled:shift-card:${card.cardId}`,
+        cardId: card.cardId,
+        categoryId: "shift-card",
+        label: "Shift",
+        interaction: "execute-or-select",
+        enabled: false,
+        reason: "This card cannot be shifted right now.",
+        moves: [],
+      },
+      {
+        id: `disabled:ink-card:${card.cardId}`,
+        cardId: card.cardId,
+        categoryId: "ink-card",
+        label: "Ink",
+        interaction: "execute-or-select",
+        enabled: false,
+        reason: "This card cannot be inked right now.",
+        moves: [],
+      },
+    ]);
+  });
+
+  it("shows enabled move-to-location for exerted characters in movableToLocationCardIds", () => {
+    const exertedCard = createCard({ readyState: "exerted" });
+
+    const actions = buildCardActionViews({
+      card: exertedCard,
+      executableMoves: [],
+      ownerSide: "playerOne",
+      challengeReadyCardIds: [],
+      movableToLocationCardIds: [exertedCard.cardId],
+    });
+
+    const moveAction = actions.find((a) => a.categoryId === "move-to-location");
+    expect(moveAction).toEqual({
+      id: `move-to-location:${exertedCard.cardId}`,
+      cardId: exertedCard.cardId,
+      categoryId: "move-to-location",
+      label: "Move to Location",
+      interaction: "expand-on-click",
+      enabled: true,
+      moves: [],
+    });
+  });
+
+  it("does not claim exerted blocks move-to-location when no locations available", () => {
+    const exertedCard = createCard({ readyState: "exerted" });
+
+    const actions = buildCardActionViews({
+      card: exertedCard,
+      executableMoves: [],
+      ownerSide: "playerOne",
+      challengeReadyCardIds: [],
+      movableToLocationCardIds: [],
+    });
+
+    const moveAction = actions.find((a) => a.categoryId === "move-to-location");
+    expect(moveAction?.enabled).toBe(false);
+    expect(moveAction?.reason).toBe("No legal locations to move to right now.");
   });
 
   it("shows an enabled shift action with discounted payable cost detail", () => {

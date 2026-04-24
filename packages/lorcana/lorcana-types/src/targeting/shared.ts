@@ -151,7 +151,9 @@ export function normalizeCardTargetRecord(record: LegacyTargetRecord): LorcanaCa
         ? "selected-first"
         : legacyRef === "previous-target"
           ? "selected-first"
-          : undefined;
+          : legacyRef === "selected-all"
+            ? "selected-all"
+            : undefined;
 
   return {
     selector: normalizeSelector(record),

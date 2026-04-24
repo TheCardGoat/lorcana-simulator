@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { herculesDivineHero } from "..";
+import { herculesDivineHero } from "./181-hercules-divine-hero";
 
 export const herculesDivineHeroEnchanted: CharacterCard = {
   ...herculesDivineHero,

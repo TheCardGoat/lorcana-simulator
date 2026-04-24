@@ -35,7 +35,7 @@ export const rabbitIndignantPirate: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 1,
+          amount: { type: "up-to", value: 1 },
           target: {
             selector: "chosen",
             count: 1,
@@ -44,7 +44,6 @@ export const rabbitIndignantPirate: CharacterCard = {
             cardTypes: ["character"],
           },
           type: "remove-damage",
-          upTo: true,
         },
         type: "optional",
       },

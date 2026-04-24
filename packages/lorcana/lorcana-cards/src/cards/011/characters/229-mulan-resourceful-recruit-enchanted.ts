@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mulanResourcefulRecruit } from "..";
+import { mulanResourcefulRecruit } from "./069-mulan-resourceful-recruit";
 
 export const mulanResourcefulRecruitEnchanted: CharacterCard = {
   ...mulanResourcefulRecruit,

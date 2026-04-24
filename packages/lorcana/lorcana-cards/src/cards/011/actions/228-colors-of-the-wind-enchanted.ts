@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { colorsOfTheWind } from "..";
+import { colorsOfTheWind } from "./064-colors-of-the-wind";
 
 export const colorsOfTheWindEnchanted: ActionCard = {
   ...colorsOfTheWind,

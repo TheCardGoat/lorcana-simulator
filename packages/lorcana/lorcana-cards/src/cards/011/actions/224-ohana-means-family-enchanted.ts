@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { ohanaMeansFamily } from "..";
+import { ohanaMeansFamily } from "./032-ohana-means-family";
 
 export const ohanaMeansFamilyEnchanted: ActionCard = {
   ...ohanaMeansFamily,

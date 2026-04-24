@@ -9,7 +9,6 @@ import type {
   LorcanaCardTextEntrySnapshot,
   LorcanaPlayerSide,
   LorcanaPlayerSummary,
-  LorcanaPlayerTimerSummary,
   LorcanaSimulatorMoveParams,
   MoveCategorySummary,
   MoveValidationResult,
@@ -81,6 +80,12 @@ function getPlayCostLabel(params: Record<string, unknown>): string | null {
   }
   if (cost === "free") {
     return "Free";
+  }
+  if (cost === "sacrifice") {
+    return "Banish Item";
+  }
+  if (cost === "exert-items") {
+    return "Exert 4 Items";
   }
   return null;
 }
@@ -279,11 +284,19 @@ function getPlayModeOptionLabel(
     return "Play Exerted";
   }
 
-  if (supportsBodyguardPlayChoice(cardId, cards) && !params.cost && !params.targets) {
+  if (
+    supportsBodyguardPlayChoice(cardId, cards) &&
+    (!params.cost || params.cost === "standard") &&
+    !params.targets
+  ) {
     return "Play Ready";
   }
 
-  if (supportsBodyguardPlayChoice(cardId, cards) && !params.cost && Array.isArray(params.targets)) {
+  if (
+    supportsBodyguardPlayChoice(cardId, cards) &&
+    (!params.cost || params.cost === "standard") &&
+    Array.isArray(params.targets)
+  ) {
     return "Play Ready";
   }
 
@@ -410,11 +423,12 @@ function pushSupplementalExecutableMoves(
   }
 
   if (legalMoveIds.includes("concede") && !entries.some((entry) => entry.moveId === "concede")) {
+    const playerId = engine.getClientPlayerId() ?? "";
     entries.push({
       id: "concede",
       label: getMoveCategoryLabel("concede"),
       moveId: "concede",
-      params: {} as LorcanaSimulatorMoveParams["concede"],
+      params: { playerId } as LorcanaSimulatorMoveParams["concede"],
       presentation: {
         kind: "direct",
         categoryId: "concede",
@@ -471,6 +485,7 @@ function buildEntriesForAvailableMove(
                     idSuffix: "ready",
                     params: {
                       cardId: id,
+                      cost: "standard",
                       targets: [targetId],
                     } as LorcanaSimulatorMoveParams["playCard"],
                   },
@@ -478,6 +493,7 @@ function buildEntriesForAvailableMove(
                     idSuffix: "exerted",
                     params: {
                       cardId: id,
+                      cost: "standard",
                       targets: [targetId],
                       resolveOptional: true,
                     } as LorcanaSimulatorMoveParams["playCard"],
@@ -488,6 +504,7 @@ function buildEntriesForAvailableMove(
                     idSuffix: null,
                     params: {
                       cardId: id,
+                      cost: "standard",
                       targets: [targetId],
                     } as LorcanaSimulatorMoveParams["playCard"],
                   },
@@ -520,12 +537,13 @@ function buildEntriesForAvailableMove(
           ? [
               {
                 idSuffix: "ready",
-                params: { cardId: id } as LorcanaSimulatorMoveParams["playCard"],
+                params: { cardId: id, cost: "standard" } as LorcanaSimulatorMoveParams["playCard"],
               },
               {
                 idSuffix: "exerted",
                 params: {
                   cardId: id,
+                  cost: "standard",
                   resolveOptional: true,
                 } as LorcanaSimulatorMoveParams["playCard"],
               },
@@ -533,7 +551,7 @@ function buildEntriesForAvailableMove(
           : [
               {
                 idSuffix: null,
-                params: { cardId: id } as LorcanaSimulatorMoveParams["playCard"],
+                params: { cardId: id, cost: "standard" } as LorcanaSimulatorMoveParams["playCard"],
               },
             ];
 
@@ -553,6 +571,115 @@ function buildEntriesForAvailableMove(
             },
           });
         }
+
+        // Alternative cost entries (sacrifice / exert items)
+        const cardDef =
+          typeof engine.getCardDefinitionByInstanceId === "function"
+            ? (engine.getCardDefinitionByInstanceId(cardId) as
+                | { abilities?: Array<{ type: string; alternativeCost?: string }> }
+                | undefined)
+            : undefined;
+        if (cardDef?.abilities) {
+          const hasSacrificeCost = cardDef.abilities.some(
+            (a) => a.type === "action" && a.alternativeCost === "sacrifice-item",
+          );
+          const hasExertItemsCost = cardDef.abilities.some(
+            (a) => a.type === "action" && a.alternativeCost === "exert-4-items",
+          );
+
+          if (hasSacrificeCost || hasExertItemsCost) {
+            const board = engine.getBoard();
+            const clientPlayerId = engine.getClientPlayerId();
+            const playerBoard = clientPlayerId ? board.players[clientPlayerId] : null;
+
+            if (playerBoard) {
+              if (hasSacrificeCost) {
+                const itemIds = playerBoard.play
+                  .filter((pid) => {
+                    const pDef = engine.getCardDefinitionByInstanceId(pid as CardInstanceId) as
+                      | { cardType?: string }
+                      | undefined;
+                    return pDef?.cardType === "item";
+                  })
+                  .map(String);
+                if (itemIds.length > 0) {
+                  const sacrificeLabel = getMoveOptionLabel(
+                    "playCard",
+                    { cardId: id, cost: "sacrifice" },
+                    cards,
+                  );
+                  entries.push({
+                    id: `playCard:${id}:sacrifice`,
+                    label: sacrificeLabel,
+                    moveId: "playCard",
+                    params: {
+                      cardId: id,
+                      cost: "sacrifice",
+                    } as LorcanaSimulatorMoveParams["playCard"],
+                    presentation: {
+                      kind: "targeted",
+                      categoryId: "play-card",
+                      categoryLabel: getMoveCategoryLabel("playCard"),
+                      optionLabel: "Banish Item",
+                      selectableCosts: [
+                        {
+                          kind: "banishItems" as const,
+                          count: 1,
+                          candidateCardIds: itemIds as CardInstanceId[],
+                          zone: "play" as const,
+                        },
+                      ],
+                    },
+                  });
+                }
+              }
+
+              if (hasExertItemsCost) {
+                const readyItemIds = playerBoard.play
+                  .filter((pid) => {
+                    const pDef = engine.getCardDefinitionByInstanceId(pid as CardInstanceId) as
+                      | { cardType?: string }
+                      | undefined;
+                    if (pDef?.cardType !== "item") return false;
+                    const cardState = board.cards[String(pid)];
+                    return !cardState?.exerted;
+                  })
+                  .map(String);
+                if (readyItemIds.length >= 4) {
+                  const exertLabel = getMoveOptionLabel(
+                    "playCard",
+                    { cardId: id, cost: "exert-items" },
+                    cards,
+                  );
+                  entries.push({
+                    id: `playCard:${id}:exert-items`,
+                    label: exertLabel,
+                    moveId: "playCard",
+                    params: {
+                      cardId: id,
+                      cost: "exert-items",
+                    } as LorcanaSimulatorMoveParams["playCard"],
+                    presentation: {
+                      kind: "targeted",
+                      categoryId: "play-card",
+                      categoryLabel: getMoveCategoryLabel("playCard"),
+                      optionLabel: "Exert 4 Items",
+                      selectableCosts: [
+                        {
+                          kind: "exertItems" as const,
+                          count: 4,
+                          candidateCardIds: readyItemIds as CardInstanceId[],
+                          zone: "play" as const,
+                        },
+                      ],
+                    },
+                  });
+                }
+              }
+            }
+          }
+        }
+
         continue;
       }
       case "shiftCard": {
@@ -583,6 +710,7 @@ function buildEntriesForAvailableMove(
                 categoryId: "shift-card",
                 categoryLabel: getMoveCategoryLabel("shiftCard"),
                 optionLabel: label,
+                ...(option.selectableCosts ? { selectableCosts: option.selectableCosts } : {}),
               },
             });
           }
@@ -797,6 +925,7 @@ function buildEntriesForAvailableMove(
               categoryId: "activate-ability",
               categoryLabel: getMoveCategoryLabel("activateAbility"),
               optionLabel: label,
+              ...(option.selectableCosts ? { selectableCosts: option.selectableCosts } : {}),
             },
           });
         }
@@ -830,11 +959,12 @@ function buildEntriesForAvailableMove(
       break;
     }
     case "concede": {
+      const playerId = engine.getClientPlayerId() ?? "";
       entries.push({
         id: "concede",
         label: getMoveCategoryLabel("concede"),
         moveId: "concede",
-        params: {} as LorcanaSimulatorMoveParams["concede"],
+        params: { playerId } as LorcanaSimulatorMoveParams["concede"],
         presentation: {
           kind: "direct",
           categoryId: "concede",
@@ -1475,17 +1605,7 @@ export function getPlayerSummary(
     return null;
   }
 
-  const timerEntry = snapshot.timerView.players?.[ownerId];
-  const timer: LorcanaPlayerTimerSummary | undefined = timerEntry
-    ? {
-        reserveMsRemaining: timerEntry.timeRemaining,
-        isActive: timerEntry.timerTicking,
-        isRunning: timerEntry.timerTicking,
-        startedAtMs: timerEntry.startedAtMs,
-        isInNegativeTime: timerEntry.isInNegativeTime,
-        timeoutCount: timerEntry.timeoutCount,
-      }
-    : undefined;
+  const timer = snapshot.timerView.players?.[ownerId];
   const activeEffects = buildPlayerActiveEffects(ownerId, snapshot, cardSnapshotsById);
   const effectSourceCardIds = activeEffects
     ? ([...new Set(activeEffects.map((effect) => effect.sourceCardId).filter(Boolean))] as string[])

@@ -46,10 +46,23 @@ export const scroogeMcduckReformedEbenezer: CharacterCard = {
     {
       id: "1yi-2",
       effect: {
-        keyword: "Ward",
-        target: "YOUR_OTHER_CHARACTERS",
-        duration: "until-start-of-next-turn",
-        type: "gain-keyword",
+        type: "optional",
+        effect: {
+          type: "sequence",
+          effects: [
+            {
+              type: "put-under",
+              source: "top-of-deck",
+              under: "YOUR_OTHER_CHARACTERS",
+            },
+            {
+              type: "gain-keyword",
+              keyword: "Ward",
+              target: "YOUR_OTHER_CHARACTERS",
+              duration: "until-start-of-next-turn",
+            },
+          ],
+        },
       },
       name: "SPREADING JOY",
       trigger: {

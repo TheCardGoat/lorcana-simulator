@@ -100,7 +100,8 @@ export type CardReference =
   | { ref: "defender" } // Character being challenged
 
   // Effect chain context
-  | { ref: "previous-target" } // Target selected earlier in effect chain
+  | { ref: "previous-target" } // Last target selected earlier in effect chain
+  | { ref: "selected-all" } // All targets selected earlier in effect chain (e.g. "up to N" shared selection)
 
   // Player context
   | { ref: "controller" } // Controller of this card

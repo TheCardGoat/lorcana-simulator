@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowDownToLine, ArrowUpToLine } from "@lucide/svelte";
+  import { ArrowDownToLine, ArrowUpToLine, Crosshair } from "@lucide/svelte";
   import { m } from "$lib/i18n/messages.js";
   import type {
     ActivePlayerGuidanceItem,
@@ -15,9 +15,11 @@
     isBottomHandExpanded?: boolean;
     isTopHandExpanded?: boolean;
     onToggleAnchor?: () => void;
+    canOpenTargetModal?: boolean;
+    onOpenTargetModal?: () => void;
   }
 
-  let { items = [], anchor = "bottom", isBottomHandExpanded = false, isTopHandExpanded = false, onToggleAnchor }: ActivePlayerGuidanceProps = $props();
+  let { items = [], anchor = "bottom", isBottomHandExpanded = false, isTopHandExpanded = false, onToggleAnchor, canOpenTargetModal = false, onOpenTargetModal }: ActivePlayerGuidanceProps = $props();
 
   const PAGE_SIZE = 3;
   let page = $state(0);
@@ -88,11 +90,11 @@
       {/if}
 
       {#each visibleItems as item, index (item.id)}
-        <section class="guidance-pill relative" class:guidance-pill--has-search={Boolean(item.namedCardSearch)} data-mode={item.mode}>
+        <section class="guidance-pill relative" class:guidance-pill--has-search={Boolean(item.namedCardSearch)} class:guidance-pill--has-description={Boolean(item.abilityDescription)} data-mode={item.mode}>
           {#if index === 0}
             <button
               type="button"
-              class="guidance-toggle guidance-toggle--icon-only absolute top-0 left-0 -translate-y-1/2"
+              class="guidance-toggle guidance-toggle--icon-only absolute top-0 right-0 -translate-y-1/2 translate-x-1/2"
               class:guidance-toggle--top={isTopAnchor}
               onclick={onToggleAnchor}
               aria-label={toggleTitle}
@@ -134,6 +136,12 @@
             {/if}
           </p>
 
+          {#if item.abilityDescription}
+            <p class="guidance-ability-description">
+              {item.abilityDescription}
+            </p>
+          {/if}
+
           {#if item.namedCardSearch}
             <div class="guidance-search">
               <NamedCardSearchInput
@@ -145,8 +153,19 @@
             </div>
           {/if}
 
-          {#if item.actions.length > 0}
+          {#if item.actions.length > 0 || (index === 0 && canOpenTargetModal && onOpenTargetModal)}
             <div class="guidance-actions">
+              {#if index === 0 && canOpenTargetModal && onOpenTargetModal}
+                <button
+                  type="button"
+                  class="guidance-action guidance-action--target"
+                  onclick={onOpenTargetModal}
+                  aria-label="Open target selector"
+                  title="Open target selector"
+                >
+                  <Crosshair class="size-3.5" />
+                </button>
+              {/if}
               {#each item.actions as action (action.id)}
                 <button
                   type="button"
@@ -175,7 +194,7 @@
     pointer-events: none;
     display: flex;
     justify-content: center;
-    z-index: 60;
+    z-index: 30;
   }
 
   .guidance-stack {
@@ -280,13 +299,12 @@
     min-height: 2rem;
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
     border-radius: 999px;
     border: 1px solid rgba(130, 178, 235, 0.56);
     background: rgba(7, 18, 33, 0.96);
     color: #e8f1fc;
     padding: 0.38rem 0.72rem;
-    font-size: 0.68rem;
+    font-size: 0.5rem;
     font-weight: 800;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -318,6 +336,10 @@
   }
 
   .guidance-pill--has-search {
+    grid-template-columns: 1fr;
+  }
+
+  .guidance-pill--has-description {
     grid-template-columns: 1fr;
   }
 
@@ -353,6 +375,17 @@
     border-radius: 4px;
   }
 
+  .guidance-ability-description {
+    margin: 0;
+    color: rgba(200, 220, 248, 0.75);
+    font-size: 0.78rem;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1.35;
+    white-space: pre-line;
+  }
+
   .guidance-actions {
     display: flex;
     align-items: center;
@@ -381,6 +414,15 @@
     background: rgba(37, 76, 120, 0.98);
     border-color: rgba(192, 226, 255, 0.88);
     transform: translateY(-1px);
+  }
+
+  .guidance-action--target {
+    width: 2rem;
+    min-width: 2rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .guidance-action--emphasis {

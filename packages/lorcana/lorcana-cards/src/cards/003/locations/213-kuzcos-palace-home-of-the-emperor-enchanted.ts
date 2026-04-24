@@ -1,5 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { kuzcosPalaceHomeOfTheEmperor } from "..";
+import { kuzcosPalaceHomeOfTheEmperor } from "./102-kuzcos-palace-home-of-the-emperor";
 
 export const kuzcosPalaceHomeOfTheEmperorEnchanted: LocationCard = {
   ...kuzcosPalaceHomeOfTheEmperor,

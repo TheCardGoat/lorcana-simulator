@@ -170,5 +170,99 @@ describe("Elsa - Spirit of Winter", () => {
       // Character should not be exerted
       expect(testEngine.asPlayerTwo().isExerted(opponentCharacterOne)).toBe(false);
     });
+
+    // Regression: player bug report (bugrepIH1PlKU7d84kUUJqGhIwY) — self-targeted Elsa
+    // was exerted by DEEP FREEZE but readied on her controller's next turn, meaning the
+    // cant-ready restriction was not applied to the chosen target.
+    it("applies cant-ready to self-targeted Elsa (owner: any allows selecting your own character)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [elsaSpiritOfWinter],
+        inkwell: elsaSpiritOfWinter.cost,
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(elsaSpiritOfWinter)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(elsaSpiritOfWinter, { targets: [elsaSpiritOfWinter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().isExerted(elsaSpiritOfWinter)).toBe(true);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().isExerted(elsaSpiritOfWinter)).toBe(true);
+    });
+
+    // Regression: bug-38 (2026-04-22) — DEEP FREEZE encodes exert + cant-ready as a
+    // sequence with two independent "chosen" selectors. Before the engine fixes, a
+    // single `resolveBag` with targets:[] would suspend on step 0's target picker,
+    // and each follow-up resolveEffect with targets:[] would re-suspend the
+    // replay into a fresh pending-action — an infinite chain.
+    //
+    // Fixes in the engine:
+    //   - resolve-bag sets `targetSelectionResolved` when the player explicitly
+    //     submits targets:[] for an "up to N" effect.
+    //   - maybeSuspendForChosenTargets honors that flag + minSelections===0 to
+    //     skip re-suspending downstream steps that would read the same selection.
+    // Result: one resolveBag with targets:[] fully drains the sequence with no
+    // leftover pending-action, bag item, or pending choice.
+    it("resolves DEEP FREEZE with targets:[] in a single call on an otherwise-empty board", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [elsaSpiritOfWinter],
+          inkwell: elsaSpiritOfWinter.cost,
+          deck: 2,
+        },
+        { deck: 2 },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(elsaSpiritOfWinter)).toBeSuccessfulCommand();
+
+      // Exactly one prompt — the shared "up to 2" selection — resolved with 0
+      // targets fully drains the sequence: no follow-up pending-action appears.
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(elsaSpiritOfWinter, { targets: [] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+      expect(testEngine.asPlayerOne().getPendingChoice()).toBeUndefined();
+      expect(testEngine.asPlayerOne().isExerted(elsaSpiritOfWinter)).toBe(false);
+    });
+
+    it("applies cant-ready to both targets when mixing self and opposing", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [elsaSpiritOfWinter],
+          inkwell: elsaSpiritOfWinter.cost,
+          deck: 2,
+        },
+        {
+          play: [opponentCharacterOne],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(elsaSpiritOfWinter)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(elsaSpiritOfWinter, {
+          targets: [elsaSpiritOfWinter, opponentCharacterOne],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().isExerted(elsaSpiritOfWinter)).toBe(true);
+      expect(testEngine.asPlayerTwo().isExerted(opponentCharacterOne)).toBe(true);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().isExerted(opponentCharacterOne)).toBe(true);
+
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().isExerted(elsaSpiritOfWinter)).toBe(true);
+    });
   });
 });

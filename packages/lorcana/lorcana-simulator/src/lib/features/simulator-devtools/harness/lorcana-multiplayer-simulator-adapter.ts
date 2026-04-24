@@ -46,7 +46,6 @@ import {
   type LorcanaSimulatorView,
   type LorcanaZoneId,
   type MoveLogEntrySnapshot,
-  type MoveLogRelatedEntrySnapshot,
   assertLorcanaSimulatorMoveId,
 } from "@/features/simulator/model/contracts.js";
 import { formatEventLogBody } from "@/features/simulator/model/event-log-formatting.js";
@@ -101,20 +100,6 @@ function normalizeMoveParams(
   input?: SimulatorMoveInputSnapshot,
 ): SimulatorSerializedObject | undefined {
   return input?.args;
-}
-
-function snapshotDefaultMessage(defaultMessage?: {
-  key: string;
-  values: SimulatorSerializedObject;
-}): MoveLogRelatedEntrySnapshot["defaultMessage"] {
-  if (!defaultMessage) {
-    return undefined;
-  }
-
-  return {
-    key: defaultMessage.key,
-    values: defaultMessage.values as SimulatorSerializedObject,
-  };
 }
 
 function flattenCardText(
@@ -347,42 +332,11 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
    * Get the move log for display.
    */
   getMoveLog(limit = 50, view: LorcanaSimulatorView = "authoritative"): MoveLogEntrySnapshot[] {
-    // Get ALL move history first to ensure correct cursor-based matching
-    // against the full game log, then slice at the end for display.
     const allRawEntries = this.#engine.getMoveHistory() as SimulatorMoveHistoryEntrySnapshot[];
-    const gameLogEntries = this.#getFilteredGameLogEntries(view);
+    const allMoveLogs = this.#getFilteredMoveLogHistory(view);
 
-    const moveExecutedLogs = gameLogEntries.filter(
-      (entry) => entry.defaultMessage?.key === "move.executed",
-    );
-    const allFallbackMoveLogs =
-      gameLogEntries.length === 0 ? this.#getFilteredMoveLogHistory(view) : [];
+    const fallbackMoveLogs = selectFallbackMoveLogWindow(allMoveLogs, allRawEntries.length, limit);
 
-    // Calculate how many entries to skip for cursor positioning
-    const skipCount = Math.max(0, allRawEntries.length - limit);
-    const fallbackMoveLogs = selectFallbackMoveLogWindow(
-      allFallbackMoveLogs,
-      allRawEntries.length,
-      limit,
-    );
-    let moveExecutedCursor = 0;
-
-    // Fast-forward cursor past entries we're skipping
-    // We need to match the skipped entries to their log entries
-    for (let i = 0; i < skipCount; i++) {
-      const skippedEntry = allRawEntries[i];
-      const actorId = String(skippedEntry.playerId);
-      for (; moveExecutedCursor < moveExecutedLogs.length; moveExecutedCursor += 1) {
-        const candidate = moveExecutedLogs[moveExecutedCursor];
-        const candidateValues = candidate.defaultMessage?.values ?? {};
-        if (candidateValues.move === skippedEntry.moveId && candidateValues.playerId === actorId) {
-          moveExecutedCursor += 1;
-          break;
-        }
-      }
-    }
-
-    // Now process only the entries we'll return
     const entries = allRawEntries.slice(-limit);
     const viewerSide = view === "playerOne" || view === "playerTwo" ? view : undefined;
 
@@ -393,60 +347,9 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
       const moveId = assertLorcanaSimulatorMoveId(entry.moveId);
       const fallbackMoveLog = fallbackMoveLogs[index];
 
-      let matchingMoveLogEntry: MoveLogRelatedEntrySnapshot | undefined;
-
-      for (
-        ;
-        moveExecutedCursor < moveExecutedLogs.length && !matchingMoveLogEntry;
-        moveExecutedCursor += 1
-      ) {
-        const candidate = moveExecutedLogs[moveExecutedCursor];
-        const candidateValues = candidate.defaultMessage?.values ?? {};
-
-        if (candidateValues.move === moveId && candidateValues.playerId === actorId) {
-          matchingMoveLogEntry = {
-            sourceEventSeqs: [...candidate.sourceEventSeqs],
-            defaultMessage: snapshotDefaultMessage(candidate.defaultMessage),
-          };
-          moveExecutedCursor += 1;
-        }
-      }
-
-      let relatedLogEntries: MoveLogRelatedEntrySnapshot[] = [];
-
-      if (matchingMoveLogEntry) {
-        const moveSourceSeqs = new Set<number>(matchingMoveLogEntry.sourceEventSeqs);
-        for (const logEntry of gameLogEntries) {
-          const sameSource = logEntry.sourceEventSeqs.some((seq) => moveSourceSeqs.has(seq));
-          if (!sameSource) {
-            continue;
-          }
-
-          relatedLogEntries.push({
-            sourceEventSeqs: [...logEntry.sourceEventSeqs],
-            defaultMessage: snapshotDefaultMessage(logEntry.defaultMessage),
-          });
-        }
-      }
-
-      // Find the typed log entry from the game log entries that match this move
-      const typedLogEntry = (() => {
-        if (fallbackMoveLog) {
-          return fallbackMoveLog as MoveLogEntrySnapshot["typedLogEntry"];
-        }
-
-        if (!matchingMoveLogEntry) return undefined;
-        const moveSourceSeqs = new Set<number>(matchingMoveLogEntry.sourceEventSeqs);
-        for (const logEntry of gameLogEntries) {
-          if (
-            logEntry.typedEntry &&
-            logEntry.sourceEventSeqs.some((seq) => moveSourceSeqs.has(seq))
-          ) {
-            return logEntry.typedEntry;
-          }
-        }
-        return undefined;
-      })();
+      const typedLogEntry = fallbackMoveLog
+        ? (fallbackMoveLog as MoveLogEntrySnapshot["typedLogEntry"])
+        : undefined;
 
       const snapshotEntry: MoveLogEntrySnapshot = {
         actorSide,
@@ -648,105 +551,6 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
       label,
       text: localizedEntry?.text as LocalizedCardTextSource | undefined,
     };
-  }
-
-  #getFilteredGameLogEntries(view: LorcanaSimulatorView): Array<{
-    category: "action" | "rules" | "system";
-    defaultMessage?: { key: string; values: SimulatorSerializedObject };
-    sourceEventSeqs: number[];
-    typedEntry?: import("@tcg/lorcana-engine").LorcanaGameLogEntry;
-    visibility:
-      | { mode: "PUBLIC" }
-      | { mode: "PRIVATE"; visibleTo: string[] }
-      | {
-          mode: "PUBLIC_WITH_OVERRIDES";
-          overrides: Record<string, { key: string; values: SimulatorSerializedObject }>;
-        };
-  }> {
-    const sourceEntries = this.#engine
-      .getServerEngine()
-      .getRuntime()
-      .getGameLog()
-      .map((entry) => ({
-        ...entry,
-        defaultMessage: entry.defaultMessage
-          ? {
-              key: entry.defaultMessage.key,
-              values: entry.defaultMessage.values as SimulatorSerializedObject,
-            }
-          : undefined,
-        visibility:
-          entry.visibility.mode === "PUBLIC_WITH_OVERRIDES"
-            ? {
-                mode: "PUBLIC_WITH_OVERRIDES" as const,
-                overrides: Object.fromEntries(
-                  Object.entries(entry.visibility.overrides).map(([playerId, override]) => [
-                    playerId,
-                    {
-                      key: override.key,
-                      values: override.values as SimulatorSerializedObject,
-                    },
-                  ]),
-                ),
-              }
-            : entry.visibility,
-      }));
-
-    const role =
-      view === "authoritative"
-        ? { role: "judge" as const }
-        : view === "spectator"
-          ? { role: "spectator" as const }
-          : {
-              role: "player" as const,
-              playerId: view === "playerOne" ? String(PLAYER_ONE) : String(PLAYER_TWO),
-            };
-
-    return sourceEntries.flatMap((entry) => {
-      switch (entry.visibility.mode) {
-        case "PUBLIC":
-          return [entry];
-        case "PRIVATE":
-          if (role.role === "judge") {
-            return [entry];
-          }
-          if (role.role === "player") {
-            return entry.visibility.visibleTo.includes(role.playerId) ? [entry] : [];
-          }
-          return [];
-        case "PUBLIC_WITH_OVERRIDES":
-          if (role.role === "judge") {
-            return [entry];
-          }
-          if (role.role === "player") {
-            const overrideMessage = entry.visibility.overrides[role.playerId];
-            if (overrideMessage) {
-              return [
-                {
-                  ...entry,
-                  visibility: {
-                    mode: "PRIVATE" as const,
-                    visibleTo: [role.playerId],
-                  },
-                  defaultMessage: overrideMessage,
-                  // Keep the detail typedEntry for the override player
-                },
-              ];
-            }
-          }
-          return [
-            {
-              ...entry,
-              visibility: { mode: "PUBLIC" as const },
-              defaultMessage: entry.defaultMessage,
-              // Strip detail typedEntry for non-override viewers:
-              // fall back to base version without private card info
-              typedEntry:
-                entry.typedEntry?.visibility?.mode === "PRIVATE" ? undefined : entry.typedEntry,
-            },
-          ];
-      }
-    });
   }
 
   #getFilteredMoveLogHistory(view: LorcanaSimulatorView): MoveLog[] {

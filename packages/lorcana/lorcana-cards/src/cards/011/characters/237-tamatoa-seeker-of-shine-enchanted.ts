@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { tamatoaSeekerOfShine } from "..";
+import { tamatoaSeekerOfShine } from "./156-tamatoa-seeker-of-shine";
 
 export const tamatoaSeekerOfShineEnchanted: CharacterCard = {
   ...tamatoaSeekerOfShine,

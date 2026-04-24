@@ -615,6 +615,12 @@ function violatesBodyguardIfAbleRestriction(
   defenderOwnerId: PlayerId,
   registry: StaticEffectRegistry,
 ): boolean {
+  // Locations are never subject to Bodyguard — the restriction only applies when
+  // challenging characters. A character with Bodyguard does not protect locations.
+  if (isLocationCard(defenderDef)) {
+    return false;
+  }
+
   if (
     isCharacterCard(defenderDef) &&
     hasKeywordIncludingTemporary(ctx, defenderId, "Bodyguard", registry)
@@ -650,7 +656,7 @@ function isLegalDefenderForAttacker(
     return false;
   }
 
-  if (cantBeChallenged(ctx, defenderId)) {
+  if (cantBeChallenged(ctx, defenderId, attackerId)) {
     return false;
   }
 
@@ -992,6 +998,22 @@ export function finalizeChallengeDamageAmount(
 ): number {
   const reduced = reduceDamageByResist(ctx, targetId, targetDef, incomingDamage, registry);
   if (takesNoDamageFromChallenges(ctx, targetId, opponentCardId)) {
+    return 0;
+  }
+
+  // Check registry for "cant-be-dealt-damage" restriction.
+  // The registry is built with a synthetic challengeState so that "being-challenged"
+  // (defender only) resolves correctly: only the challenged card matches, so for
+  // "unless being challenged" damage prevention, the attacker's "NOT being-challenged"
+  // stays true and the restriction can remain active while the defender's does not.
+  if (
+    hasStaticCardRestriction({
+      state: ctx.framework.state as Parameters<typeof hasStaticCardRestriction>[0]["state"],
+      cardId: targetId,
+      restriction: "cant-be-dealt-damage",
+      registry,
+    })
+  ) {
     return 0;
   }
 

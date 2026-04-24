@@ -28,8 +28,7 @@ export const tryEverything: ActionCard = {
             steps: [
               {
                 type: "remove-damage",
-                amount: 3,
-                upTo: true,
+                amount: { type: "up-to", value: 3 },
                 target: {
                   selector: "chosen",
                   count: 1,

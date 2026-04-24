@@ -1,10 +1,20 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockAction,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
 import { belleBookworm } from "./071-belle-bookworm";
 
 const opponentHandCard = createMockCharacter({
   id: "belle-test-opp-hand-1",
   name: "Opponent Hand Card",
+  cost: 1,
+});
+
+const opponentHandAction = createMockAction({
+  id: "belle-test-opp-hand-action-1",
+  name: "Opponent Hand Action",
   cost: 1,
 });
 
@@ -37,6 +47,21 @@ describe("Belle - Bookworm", () => {
 
       // Use server view: the condition depends on opponent's hidden hand state,
       // which only the server can evaluate correctly.
+      expect(testEngine.asServer().getCardLore(belleBookworm)).toBe(1);
+    });
+
+    it("does not get +2 lore when opponent has only non-character cards in hand", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [belleBookworm],
+        },
+        {
+          hand: [opponentHandAction],
+          deck: 1,
+        },
+      );
+
+      // Even with only action cards in hand, opponent's hand is non-empty, so no +2 lore
       expect(testEngine.asServer().getCardLore(belleBookworm)).toBe(1);
     });
   });

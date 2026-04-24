@@ -112,7 +112,7 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    animation: challenge-animation-lifecycle var(--challenge-animation-duration, 1000ms) ease both;
+    animation: challenge-animation-lifecycle var(--challenge-animation-duration, 500ms) ease both;
   }
 
   @keyframes challenge-animation-lifecycle {

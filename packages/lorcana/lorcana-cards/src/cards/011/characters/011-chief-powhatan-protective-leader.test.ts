@@ -3,6 +3,7 @@ import type { CommandFailure } from "@tcg/lorcana-engine";
 import {
   LorcanaMultiplayerTestEngine,
   LorcanaTestEngine,
+  PLAYER_ONE,
   PLAYER_TWO,
 } from "@tcg/lorcana-engine/testing";
 import { simbaProtectiveCub } from "../../001";
@@ -15,6 +16,71 @@ describe("Chief Powhatan - Protective Leader", () => {
     });
 
     expect(testEngine.getCardModel(chiefPowhatanProtectiveLeader).hasBodyguard()).toBe(true);
+  });
+
+  it("can be played from hand with standard cost", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [chiefPowhatanProtectiveLeader],
+        inkwell: chiefPowhatanProtectiveLeader.cost,
+        deck: 5,
+      },
+      { deck: 5 },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(chiefPowhatanProtectiveLeader),
+    ).toBeSuccessfulCommand();
+  });
+
+  it("enters play ready by default (Bodyguard choice)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [chiefPowhatanProtectiveLeader],
+        inkwell: chiefPowhatanProtectiveLeader.cost,
+        deck: 5,
+      },
+      { deck: 5 },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(chiefPowhatanProtectiveLeader),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.isExerted(chiefPowhatanProtectiveLeader)).toBe(false);
+  });
+
+  it("can enter play exerted via Bodyguard choice", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [chiefPowhatanProtectiveLeader],
+        inkwell: chiefPowhatanProtectiveLeader.cost,
+        deck: 5,
+      },
+      { deck: 5 },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(chiefPowhatanProtectiveLeader, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.isExerted(chiefPowhatanProtectiveLeader)).toBe(true);
+  });
+
+  it("can be played via dispatch without explicit cost (defaults to standard)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [chiefPowhatanProtectiveLeader],
+        inkwell: chiefPowhatanProtectiveLeader.cost,
+        deck: 5,
+      },
+      { deck: 5 },
+    );
+
+    const cardId = testEngine.findCardInstanceId(chiefPowhatanProtectiveLeader, "hand", PLAYER_ONE);
+    const result = testEngine.executeMoveForView("authoritative", "playCard", {
+      args: { cardId },
+    });
+
+    expect(result.success).toBe(true);
   });
 
   it("should not be able to challenge (STANDS HIS GROUND)", () => {

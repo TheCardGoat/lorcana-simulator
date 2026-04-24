@@ -4,6 +4,7 @@ import {
   LorcanaTestEngine,
   createMockCharacter,
   createMockSong,
+  createMockAction,
 } from "@tcg/lorcana-engine/testing";
 import { arielEtherealVoice } from "./017-ariel-ethereal-voice";
 
@@ -82,6 +83,31 @@ describe("Ariel - Ethereal Voice", () => {
     });
 
     expect(testEngine.asPlayerOne().playCard(firstSong)).toBeSuccessfulCommand();
+    // Per CRD 6.2.7: ability IS enqueued; condition (card under) checked at resolution
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(arielEtherealVoice, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getCardZone(firstDrawnCard)).toBe("deck");
+  });
+
+  it("does not trigger when a non-song action is played", () => {
+    const nonSongAction = createMockAction({
+      id: "ariel-ethereal-voice-non-song-action",
+      name: "Non-Song Action",
+      cost: 1,
+      text: "A regular action.",
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: arielEtherealVoice, cardsUnder: [underCard] }],
+      hand: [nonSongAction],
+      inkwell: nonSongAction.cost,
+      deck: [firstDrawnCard],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(nonSongAction)).toBeSuccessfulCommand();
+    // Non-song action should NOT trigger COMMAND PERFORMANCE
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.asPlayerOne().getCardZone(firstDrawnCard)).toBe("deck");
   });

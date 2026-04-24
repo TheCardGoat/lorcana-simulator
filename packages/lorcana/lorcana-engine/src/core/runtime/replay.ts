@@ -6,19 +6,13 @@
  * Provides replay functionality for matches with role-based filtering.
  */
 
-import type {
-  GameLogEntry,
-  MatchState,
-  PublishedGameEvent,
-  SanitizedCommandEnvelope,
-} from "./types";
-import type { CommandLogEntry, MatchReplayData, ReplayExportOptions } from "./persistence";
+import type { MatchState } from "./types";
+import type { MatchReplayData, ReplayExportOptions, ReplayStepEntry } from "./persistence";
 import {
   getStaticResourceRefs,
   type MatchStaticResources,
   type StaticResourceRefs,
 } from "./static-resources";
-import { MatchRuntime } from "./match-runtime";
 import { StateSanitizer } from "./security";
 
 // =============================================================================
@@ -35,12 +29,11 @@ export interface ReplayState {
 
 export interface ReplayStep {
   step: number;
-  stateID: number;
   timestamp: number;
-  state: MatchState;
-  command?: CommandLogEntry;
-  events: PublishedGameEvent[];
-  logEntries: GameLogEntry[];
+  patches: unknown[];
+  logs: unknown[];
+  actorId: string;
+  turnNumber: number;
 }
 
 export interface ReplayExport {
@@ -52,14 +45,6 @@ export interface ReplayExport {
     exportedAt: number;
     totalSteps: number;
   };
-}
-
-export interface FilteredCommandLogEntry extends Omit<CommandLogEntry, "command"> {
-  command: SanitizedCommandEnvelope;
-}
-
-export interface FilteredMatchReplayData extends Omit<MatchReplayData, "commandLog"> {
-  commandLog: FilteredCommandLogEntry[];
 }
 
 export interface ReplayEngineOptions {
@@ -85,13 +70,11 @@ export interface ReplayEngineOptions {
 export class ReplayEngine {
   private replayData: MatchReplayData;
   private steps: ReplayStep[] = [];
-  private currentState: MatchState;
   private currentStep = 0;
 
   constructor(replayData: MatchReplayData, options: ReplayEngineOptions = {}) {
     ReplayEngine.assertRequiredResources(replayData, options);
     this.replayData = replayData;
-    this.currentState = JSON.parse(JSON.stringify(replayData.initialState));
     this.buildSteps();
   }
 
@@ -131,76 +114,35 @@ export class ReplayEngine {
   }
 
   /**
-   * Build replay steps from command log.
+   * Build replay steps from step entries.
    */
   private buildSteps(): void {
-    this.steps = [];
-
-    // Initial state is step 0
-    this.steps.push({
-      step: 0,
-      stateID: this.currentState.ctx._stateID,
-      timestamp: this.replayData.metadata.createdAt,
-      state: JSON.parse(JSON.stringify(this.currentState)),
-      events: [],
-      logEntries: [],
-    });
-
-    // Build steps from command log
-    for (let i = 0; i < this.replayData.commandLog.length; i++) {
-      const command = this.replayData.commandLog[i];
-      const events = this.replayData.gameEvents.filter(
-        (e) =>
-          e.timestamp >= command.timestamp &&
-          e.timestamp < (this.replayData.commandLog[i + 1]?.timestamp || Infinity),
-      );
-      const logEntries = this.replayData.gameLogEntries.filter((entry) =>
-        entry.sourceEventSeqs.some((seq) => events.some((event) => event.seq === seq)),
-      );
-
-      this.steps.push({
-        step: i + 1,
-        stateID: command.stateID,
-        timestamp: command.timestamp,
-        state: this.currentState, // Placeholder - would be computed
-        command,
-        events,
-        logEntries,
-      });
-    }
+    this.steps = this.replayData.steps.map((entry, i) => ({
+      step: i,
+      timestamp: entry.timestamp,
+      patches: entry.patches,
+      logs: entry.logs,
+      actorId: entry.actorId,
+      turnNumber: entry.turnNumber,
+    }));
   }
 
-  /**
-   * Get total number of steps.
-   */
   getTotalSteps(): number {
     return this.steps.length;
   }
 
-  /**
-   * Get current step.
-   */
   getCurrentStep(): number {
     return this.currentStep;
   }
 
-  /**
-   * Get step at index.
-   */
   getStep(index: number): ReplayStep | undefined {
     return this.steps[index];
   }
 
-  /**
-   * Get all steps.
-   */
   getAllSteps(): ReplayStep[] {
     return this.steps;
   }
 
-  /**
-   * Jump to a specific step.
-   */
   jumpToStep(step: number): ReplayStep | undefined {
     if (step < 0 || step >= this.steps.length) {
       return undefined;
@@ -209,34 +151,22 @@ export class ReplayEngine {
     return this.steps[step];
   }
 
-  /**
-   * Go to next step.
-   */
   nextStep(): ReplayStep | undefined {
     return this.jumpToStep(this.currentStep + 1);
   }
 
-  /**
-   * Go to previous step.
-   */
   previousStep(): ReplayStep | undefined {
     return this.jumpToStep(this.currentStep - 1);
   }
 
-  /**
-   * Get replay metadata.
-   */
   getMetadata(): MatchReplayData["metadata"] {
     return this.replayData.metadata;
   }
 
-  /**
-   * Export replay to JSON.
-   */
   exportToJSON(): string {
     return JSON.stringify(
       {
-        version: "1.0.0",
+        version: "2.0.0",
         exportedAt: Date.now(),
         data: this.replayData,
       },
@@ -245,28 +175,9 @@ export class ReplayEngine {
     );
   }
 
-  /**
-   * Get events at a specific step.
-   */
-  getEventsAtStep(step: number): PublishedGameEvent[] {
+  getLogsAtStep(step: number): unknown[] {
     const replayStep = this.steps[step];
-    return replayStep?.events || [];
-  }
-
-  /**
-   * Get projected log entries at a specific step.
-   */
-  getLogEntriesAtStep(step: number): GameLogEntry[] {
-    const replayStep = this.steps[step];
-    return replayStep?.logEntries || [];
-  }
-
-  /**
-   * Get command at a specific step.
-   */
-  getCommandAtStep(step: number): CommandLogEntry | undefined {
-    const replayStep = this.steps[step];
-    return replayStep?.command;
+    return replayStep?.logs || [];
   }
 }
 
@@ -285,58 +196,28 @@ export interface ReplayBuilderConfig {
 export class ReplayBuilder {
   private config: ReplayBuilderConfig;
   private initialState?: MatchState;
-  private commandLog: CommandLogEntry[] = [];
-  private gameEvents: PublishedGameEvent[] = [];
-  private gameLogEntries: GameLogEntry[] = [];
+  private steps: ReplayStepEntry[] = [];
   private finalState?: MatchState;
 
   constructor(config: ReplayBuilderConfig) {
     this.config = config;
   }
 
-  /**
-   * Set the initial state.
-   */
   setInitialState(state: MatchState): this {
     this.initialState = JSON.parse(JSON.stringify(state));
     return this;
   }
 
-  /**
-   * Add a command to the log.
-   */
-  addCommand(entry: CommandLogEntry): this {
-    this.commandLog.push(entry);
+  addStep(entry: ReplayStepEntry): this {
+    this.steps.push(entry);
     return this;
   }
 
-  /**
-   * Add a published game event.
-   */
-  addGameEvent(event: PublishedGameEvent): this {
-    this.gameEvents.push(event);
-    return this;
-  }
-
-  /**
-   * Add a projected game log entry.
-   */
-  addGameLogEntry(entry: GameLogEntry): this {
-    this.gameLogEntries.push(entry);
-    return this;
-  }
-
-  /**
-   * Set the final state.
-   */
   setFinalState(state: MatchState): this {
     this.finalState = JSON.parse(JSON.stringify(state));
     return this;
   }
 
-  /**
-   * Build the replay data.
-   */
   build(): MatchReplayData {
     if (!this.initialState) {
       throw new Error("Initial state is required");
@@ -355,9 +236,7 @@ export class ReplayBuilder {
         resourceRefs: this.config.resourceRefs,
       },
       initialState: this.initialState,
-      commandLog: this.commandLog,
-      gameEvents: this.gameEvents,
-      gameLogEntries: this.gameLogEntries,
+      steps: this.steps,
       finalState: this.finalState,
     };
   }
@@ -368,29 +247,21 @@ export class ReplayBuilder {
 // =============================================================================
 
 export class ReplayExporter {
-  /**
-   * Export replay to JSON format.
-   */
   static toJSON(replayData: MatchReplayData): ReplayExport {
     return {
       format: "json",
       data: JSON.stringify(replayData),
       metadata: {
         matchID: replayData.matchID,
-        version: "1.0.0",
+        version: "2.0.0",
         exportedAt: Date.now(),
-        totalSteps: replayData.commandLog.length + 1,
+        totalSteps: replayData.steps.length,
       },
     };
   }
 
-  /**
-   * Export replay to compressed format (base64 encoded JSON for now).
-   */
   static toCompressed(replayData: MatchReplayData): ReplayExport {
     const json = JSON.stringify(replayData);
-    // In a real implementation, this would use actual compression
-    // For now, we just base64 encode it
     const compressed =
       typeof Buffer !== "undefined" ? Buffer.from(json).toString("base64") : btoa(json);
 
@@ -399,71 +270,47 @@ export class ReplayExporter {
       data: compressed,
       metadata: {
         matchID: replayData.matchID,
-        version: "1.0.0",
+        version: "2.0.0",
         exportedAt: Date.now(),
-        totalSteps: replayData.commandLog.length + 1,
+        totalSteps: replayData.steps.length,
       },
     };
   }
 
-  /**
-   * Import replay from JSON format.
-   */
   static fromJSON(data: string): MatchReplayData {
     return JSON.parse(data);
   }
 
-  /**
-   * Import replay JSON and immediately construct a ReplayEngine.
-   * This ensures external resource refs are enforced at replay load time.
-   */
   static createEngineFromJSON(data: string, options?: ReplayEngineOptions): ReplayEngine {
     return new ReplayEngine(ReplayExporter.fromJSON(data), options);
   }
 
-  /**
-   * Import replay from compressed format.
-   */
   static fromCompressed(data: string): MatchReplayData {
     const json =
       typeof Buffer !== "undefined" ? Buffer.from(data, "base64").toString() : atob(data);
     return JSON.parse(json);
   }
 
-  /**
-   * Import compressed replay data and immediately construct a ReplayEngine.
-   * This ensures external resource refs are enforced at replay load time.
-   */
   static createEngineFromCompressed(data: string, options?: ReplayEngineOptions): ReplayEngine {
     return new ReplayEngine(ReplayExporter.fromCompressed(data), options);
   }
 
-  /**
-   * Filter replay data for a specific role.
-   */
   static filterForRole(
     replayData: MatchReplayData,
     role: "player" | "judge",
-    playerID?: string,
-  ): MatchReplayData | FilteredMatchReplayData {
+    _playerID?: string,
+  ): MatchReplayData {
     if (role === "judge") {
       return replayData;
     }
 
-    // For player view, filter sensitive information
-    const filtered: FilteredMatchReplayData = {
+    const filtered: MatchReplayData = {
       matchID: replayData.matchID,
       metadata: replayData.metadata,
       initialState: replayData.initialState,
-      commandLog: replayData.commandLog.map((cmd) => ({
-        ...cmd,
-        command: StateSanitizer.sanitizeCommand(cmd.command),
-      })),
-      gameEvents: replayData.gameEvents,
-      gameLogEntries: ReplayExporter.filterLogEntriesForPlayer(replayData.gameLogEntries, playerID),
+      steps: replayData.steps,
     };
 
-    // Remove RNG state from states
     if (filtered.initialState) {
       filtered.initialState = ReplayExporter.sanitizeState(filtered.initialState);
     }
@@ -475,56 +322,12 @@ export class ReplayExporter {
     return filtered;
   }
 
-  /**
-   * Sanitize state by removing sensitive information.
-   */
   private static sanitizeState(state: MatchState): MatchState {
     const sanitized = JSON.parse(JSON.stringify(state));
-
-    // Remove RNG state
     if (sanitized.ctx.random) {
       sanitized.ctx.random.state = null;
     }
-
     return sanitized;
-  }
-
-  private static filterLogEntriesForPlayer(
-    logEntries: GameLogEntry[],
-    playerID?: string,
-  ): GameLogEntry[] {
-    return logEntries.flatMap((entry) => {
-      switch (entry.visibility.mode) {
-        case "PUBLIC":
-          return [entry];
-        case "PRIVATE":
-          return playerID && entry.visibility.visibleTo.includes(playerID) ? [entry] : [];
-        case "PUBLIC_WITH_OVERRIDES": {
-          const overrideMessage = playerID ? entry.visibility.overrides[playerID] : undefined;
-          if (overrideMessage && playerID) {
-            return [
-              {
-                ...entry,
-                visibility: {
-                  mode: "PRIVATE",
-                  visibleTo: [playerID],
-                },
-                defaultMessage: overrideMessage,
-              },
-            ];
-          }
-          return [
-            {
-              ...entry,
-              visibility: {
-                mode: "PUBLIC",
-              },
-              defaultMessage: entry.defaultMessage,
-            },
-          ];
-        }
-      }
-    });
   }
 }
 
@@ -538,13 +341,9 @@ export interface ReplayValidationResult {
 }
 
 export class ReplayValidator {
-  /**
-   * Validate replay data integrity.
-   */
   static validate(replayData: MatchReplayData): ReplayValidationResult {
     const errors: string[] = [];
 
-    // Check required fields
     if (!replayData.matchID) {
       errors.push("Missing matchID");
     }
@@ -557,24 +356,8 @@ export class ReplayValidator {
       errors.push("Missing initialState");
     }
 
-    if (!replayData.commandLog) {
-      errors.push("Missing commandLog");
-    }
-
-    if (!replayData.gameEvents) {
-      errors.push("Missing gameEvents");
-    }
-
-    if (!replayData.gameLogEntries) {
-      errors.push("Missing gameLogEntries");
-    }
-
-    // Validate state consistency
-    if (replayData.initialState && replayData.commandLog.length > 0) {
-      const firstCommand = replayData.commandLog[0];
-      if (firstCommand.stateID !== replayData.initialState.ctx._stateID + 1) {
-        errors.push("Command log doesn't start from initial state");
-      }
+    if (!replayData.steps) {
+      errors.push("Missing steps");
     }
 
     return {
@@ -583,14 +366,11 @@ export class ReplayValidator {
     };
   }
 
-  /**
-   * Check if replay can be deterministically reconstructed.
-   */
   static canReconstruct(replayData: MatchReplayData): boolean {
     return (
       replayData.initialState !== undefined &&
-      replayData.commandLog.length > 0 &&
-      replayData.metadata?.rulesetHash !== undefined
+      replayData.steps.length > 0 &&
+      replayData.steps.every((s) => s.patches.length > 0)
     );
   }
 }

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { theHornedKingWickedRuler } from "..";
+import { theHornedKingWickedRuler } from "./036-the-horned-king-wicked-ruler";
 
 export const theHornedKingWickedRulerEnchanted: CharacterCard = {
   ...theHornedKingWickedRuler,

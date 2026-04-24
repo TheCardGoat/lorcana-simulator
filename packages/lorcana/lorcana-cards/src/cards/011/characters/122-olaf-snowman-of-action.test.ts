@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, PLAYER_ONE, PLAYER_TWO } from "@tcg/lorcana-engine/testing";
+import {
+  createMockCharacter,
+  LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
+  PLAYER_TWO,
+} from "@tcg/lorcana-engine/testing";
 import { ragingStorm } from "../../011/actions/028-raging-storm";
 import { swordplay } from "../../011/actions/063-swordplay";
 import { snowballFight } from "../../011/actions/095-snowball-fight";
@@ -21,9 +26,41 @@ describe("Olaf - Snowman of Action", () => {
       expect(testEngine.asPlayerOne().getCardZone(olafSnowmanOfAction)).toBe("play");
     });
 
-    it.todo("reduces cost by 1 for each action card in owner's discard", () => {});
+    it("reduces cost based only on action cards in discard", () => {
+      const nonActionCard = createMockCharacter({
+        id: "olaf-test-non-action-card",
+        name: "Not An Action",
+        cost: 1,
+      });
 
-    it.todo("reduces cost by 3 for three action cards in discard", () => {});
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [olafSnowmanOfAction],
+        inkwell: olafSnowmanOfAction.cost - 2,
+        discard: [ragingStorm, swordplay, nonActionCard],
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().getCard(olafSnowmanOfAction).playCost).toBe(
+        olafSnowmanOfAction.cost - 2,
+      );
+      expect(testEngine.asPlayerOne().playCard(olafSnowmanOfAction)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(olafSnowmanOfAction)).toBe("play");
+    });
+
+    it("reduces cost by 3 with three action cards in discard", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [olafSnowmanOfAction],
+        inkwell: olafSnowmanOfAction.cost - 3,
+        discard: [ragingStorm, swordplay, snowballFight],
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().getCard(olafSnowmanOfAction).playCost).toBe(
+        olafSnowmanOfAction.cost - 3,
+      );
+      expect(testEngine.asPlayerOne().playCard(olafSnowmanOfAction)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(olafSnowmanOfAction)).toBe("play");
+    });
 
     it("cannot be played with less ink than reduced cost", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({

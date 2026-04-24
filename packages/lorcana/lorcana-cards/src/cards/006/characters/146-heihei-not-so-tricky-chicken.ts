@@ -52,7 +52,7 @@ export const heiheiNotsotrickyChicken: CharacterCard = {
           {
             duration: "next-turn",
             restriction: "cant-ready",
-            target: "SELF",
+            target: { ref: "previous-target" },
             type: "restriction",
           },
         ],

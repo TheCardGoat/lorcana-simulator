@@ -40,7 +40,7 @@ export const cinderellaGentleAndKind: CharacterCard = {
         exert: true,
       },
       effect: {
-        amount: 3,
+        amount: { type: "up-to", value: 3 },
         target: {
           cardTypes: ["character"],
           count: 1,
@@ -55,7 +55,6 @@ export const cinderellaGentleAndKind: CharacterCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       id: "14u-2",
       name: "A WONDERFUL DREAM",

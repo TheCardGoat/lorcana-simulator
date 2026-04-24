@@ -22,10 +22,9 @@ export const healingGlow: ActionCard = {
   abilities: [
     {
       effect: {
-        amount: 2,
+        amount: { type: "up-to", value: 2 },
         target: "CHOSEN_CHARACTER",
         type: "remove-damage",
-        upTo: true,
       },
       id: "1ix-1",
       text: "Remove up to 2 damage from chosen character.",

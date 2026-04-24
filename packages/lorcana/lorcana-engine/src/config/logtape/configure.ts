@@ -1,4 +1,4 @@
-import { type LogLevel, configureSync, getConsoleSink } from "@logtape/logtape";
+import { type LogLevel, configureSync, getConsoleSink, getTextFormatter } from "@logtape/logtape";
 import { getPrettyFormatter, type PrettyFormatterOptions } from "@logtape/pretty";
 
 // const messageStyle: PrettyFormatterOptions["messageStyle"] = {};
@@ -10,6 +10,8 @@ const prettyFormatterOptions: PrettyFormatterOptions = {
   properties: true,
   categoryWidth: 1,
 };
+
+const isBrowser = typeof window !== "undefined";
 
 function getConfiguredLogLevel(): LogLevel {
   const validLogLevels: Record<string, LogLevel> = {
@@ -47,7 +49,7 @@ export function configureLogtape(logLevel?: LogLevel): void {
       sinks: {
         meta: getConsoleSink(),
         console: getConsoleSink({
-          formatter: getPrettyFormatter(prettyFormatterOptions),
+          formatter: isBrowser ? getTextFormatter() : getPrettyFormatter(prettyFormatterOptions),
         }),
       },
       loggers: [

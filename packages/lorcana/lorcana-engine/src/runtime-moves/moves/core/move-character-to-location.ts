@@ -2,7 +2,7 @@
 // .agents/skills/lorcana-rules/indexes/by-topic/turn-actions.md
 
 import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
-import type { LorcanaCard } from "@tcg/lorcana-types";
+import type { CardFilter, LorcanaCard } from "@tcg/lorcana-types";
 import { getMoveCost, isCharacter, isLocation } from "../../../card-utils";
 import {
   createLorcanaLogProjection,
@@ -48,6 +48,15 @@ type StaticMoveCostReductionEffect = {
     name?: string;
     classification?: Classification;
   };
+  /**
+   * Richer filter list evaluated in addition to `filter`.
+   *
+   * Currently supports the `exerted` status filter so locations like
+   * Ring of Stones - Place of Legends can express "Your exerted characters
+   * can move here for free". Other filter variants are ignored until they are
+   * needed by a printed card.
+   */
+  filters?: readonly CardFilter[];
   /** When "SELF", reduction only applies when the source card itself is the moving character */
   target?: "SELF";
 };
@@ -65,6 +74,57 @@ function getCardDefinition(
   cardId: CardInstanceId,
 ): LorcanaCard | undefined {
   return ctx.cards.getDefinition(cardId) as LorcanaCard | undefined;
+}
+
+function isCharacterExerted(ctx: MoveReadableContext, characterId: CardInstanceId): boolean {
+  const card = ctx.cards.get(characterId);
+  return card?.meta?.state === "exerted";
+}
+
+/**
+ * Evaluates the subset of `CardFilter` variants supported by
+ * `move-cost-reduction`. Only the filters required by printed cards today
+ * are considered; anything else is treated as a non-match so unrecognised
+ * filters don't silently grant free moves.
+ */
+function matchesMoveCostReductionFilters(
+  ctx: MoveReadableContext,
+  filters: readonly CardFilter[],
+  characterId: CardInstanceId,
+  characterDefinition: LorcanaCard | undefined,
+): boolean {
+  for (const filter of filters) {
+    if (filter.type === "exerted") {
+      if (!isCharacterExerted(ctx, characterId)) {
+        return false;
+      }
+      continue;
+    }
+
+    if (filter.type === "classification") {
+      const classifications: readonly string[] =
+        characterDefinition && characterDefinition.cardType === "character"
+          ? (characterDefinition.classifications ?? [])
+          : [];
+      if (!classifications.includes(filter.classification)) {
+        return false;
+      }
+      continue;
+    }
+
+    if (filter.type === "name" && "equals" in filter) {
+      if (characterDefinition?.name !== filter.equals) {
+        return false;
+      }
+      continue;
+    }
+
+    // Unsupported filter variant: be conservative and treat the
+    // reduction as inapplicable rather than silently enabling it.
+    return false;
+  }
+
+  return true;
 }
 
 function getStaticMoveCostReduction(
@@ -127,6 +187,13 @@ function getStaticMoveCostReduction(
         (!characterDefinition ||
           characterDefinition.cardType !== "character" ||
           !(characterDefinition.classifications ?? []).includes(effect.filter.classification))
+      ) {
+        continue;
+      }
+
+      if (
+        effect.filters &&
+        !matchesMoveCostReductionFilters(ctx, effect.filters, characterId, characterDefinition)
       ) {
         continue;
       }

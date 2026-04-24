@@ -126,8 +126,13 @@ describe("Donald Duck - Fred Honeywell", () => {
         }),
       ).toBeSuccessfulCommand();
 
-      // No WELL WISHES trigger since 0 cards were under Little John
-      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(donaldDuckFredHoneywell, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerTwo().getCardsInZone("hand", PLAYER_TWO).count;
       expect(handAfter).toBe(handBefore);

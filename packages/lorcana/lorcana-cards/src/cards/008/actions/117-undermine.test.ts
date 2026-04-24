@@ -18,7 +18,7 @@ describe("Undermine", () => {
     const discardId = testEngine.findCardInstanceId(mickeyMouseTrueFriend, "hand", PLAYER_TWO);
     const simbaId = testEngine.findCardInstanceId(simbaProtectiveCub, "play", "p1");
 
-    expect(testEngine.asPlayerOne().playCardForPlayer(undermine, PLAYER_TWO).success).toBe(true);
+    expect(testEngine.asPlayerOne().playCard(undermine).success).toBe(true);
     expect(testEngine.asPlayerTwo().respondWith(discardId)).toBeSuccessfulCommand();
     expect(
       testEngine.asPlayerOne().resolveNextPending({ targets: [simbaId] }),

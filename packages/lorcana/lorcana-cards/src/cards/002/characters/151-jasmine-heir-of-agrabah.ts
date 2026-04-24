@@ -33,7 +33,7 @@ export const jasmineHeirOfAgrabah: CharacterCard = {
   abilities: [
     {
       effect: {
-        amount: 1,
+        amount: { type: "up-to", value: 1 },
         target: {
           cardTypes: ["character"],
           count: 1,
@@ -42,7 +42,6 @@ export const jasmineHeirOfAgrabah: CharacterCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       id: "1sv-1",
       name: "I'M A FAST LEARNER",

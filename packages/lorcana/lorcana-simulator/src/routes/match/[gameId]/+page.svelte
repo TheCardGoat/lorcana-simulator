@@ -8,25 +8,27 @@
     CardTitle,
   } from "$lib/design-system/primitives/card";
   import { Button } from "$lib/design-system/primitives/button";
-  import { getApiOrigin, getGatewayWsUrl } from "$lib/config/public-url-config.js";
+  import { getGatewayWsUrl } from "$lib/config/public-url-config.js";
   import { LorcanaTabletopSimulator } from "$lib";
   import { onMount, onDestroy } from "svelte";
   import X from "@lucide/svelte/icons/x";
   import { authSession } from "$lib/auth/session.svelte.js";
-  import { GatewayClientStore } from "@/features/gateway/gateway-client.svelte.js";
+  import { trackEvent } from "$lib/analytics/analytics.js";
+  import { GatewayClientStore, createGatewayStore, destroyGatewayStore } from "@/features/gateway/gateway-client.svelte.js";
   import { fetchGatewayTicket } from "@/features/gateway/fetch-ticket.js";
+  import { fetchQuickMatchTicket } from "@/features/matchmaking/api/quick-match-ticket-api.js";
   import {
     clearPracticeSession,
     loadPracticeSession,
   } from "@/features/practice-match/practice-match-storage.js";
   import { PracticeMatchOrchestrator } from "@/features/practice-match/practice-match-orchestrator.svelte.js";
-  import type {
-    PracticeMatchRecentHistory,
-    PracticeMatchSnapshot,
-  } from "@/features/practice-match/types.js";
+  import type { PracticeMatchRecentHistory } from "@/features/practice-match/types.js";
+  import type { CardsMaps, LorcanaServerAuthoritativeSnapshot } from "@tcg/lorcana-engine";
   import { createHumanVsAiContext } from "@/features/simulator-devtools/vs-ai/context.js";
   import { immersiveExperience } from "$lib/features/immersive/immersive-state.svelte.js";
   import type { LorcanaPlayerSettingsMap } from "$lib/features/simulator/model/player-visual-settings.js";
+  import { MatchChatController } from "@/features/match-chat/match-chat-controller.svelte.js";
+  import type { ChatMessage } from "@tcg/shared";
   import HumanVsAiMatchPage from "@/features/simulator-devtools/vs-ai/HumanVsAiMatchPage.svelte";
   import {
     HUMAN_VS_AI_STORAGE_KEY,
@@ -34,9 +36,11 @@
     type HumanVsAiStorage,
   } from "@/features/simulator-devtools/vs-ai/storage.js";
   import type { HumanVsAiMatchConfig } from "@/features/simulator-devtools/vs-ai/types.js";
+  import { OpponentPresenceTracker } from "@/features/gateway/opponent-presence.svelte.js";
 
   let { data } = $props();
   const getGameId = (): string => data.gameId;
+  // svelte-ignore state_referenced_locally
   const isSpectator = data.spectate;
   const aiOrchestratorContext = createHumanVsAiContext();
   const PRACTICE_HINT_DISMISSED_AT_KEY = "lorcana.practice-match.hint-dismissed-at";
@@ -49,39 +53,19 @@
   let localFallbackStorage = $state<HumanVsAiStorage | null>(null);
   let showPracticeHint = $state(true);
   let pendingRecentHistory = $state<PracticeMatchRecentHistory | null>(null);
-  // Visual settings (card back, playmat) keyed by playerId.
-  // Populated from game_joined message at load time. For practice matches,
-  // playerId = userId; for ranked matches, playerId = gameProfileId.
-  // The server resolves both cases when building playerVisualSettings.
+  // Visual settings (card back, playmat) keyed by roster id.
+  // Populated from game_joined at load time. Practice may use user id as seat;
+  // ranked uses gameProfileId. Server resolves when building playerVisualSettings.
   // Updates are saved via REST (PUT /v1/users/me/visual-settings), not via WebSocket.
   let playerVisualSettings = $state<LorcanaPlayerSettingsMap>({});
+  let matchChatController = $state<MatchChatController | null>(null);
+  const opponentPresence = new OpponentPresenceTracker();
+  let ownPlayerId: string | null = null;
+  let isBotMatch = $state(false);
 
   const GATEWAY_WS_URL = getGatewayWsUrl();
 
-  let gateway: GatewayClientStore | null = null;
-
-  async function fetchQuickMatchTicket(matchId: string, playerId: string): Promise<string | null> {
-    const url = `${getApiOrigin()}/v1/play/quick-match/ticket`;
-    console.log("[match-page] fetching quick-match ticket", { url, matchId, playerId });
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matchId, playerId }),
-      });
-      if (!res.ok) {
-        const body = await res.text().catch(() => "");
-        console.error("[match-page] quick-match ticket failed", { status: res.status, body });
-        return null;
-      }
-      const data = (await res.json()) as { ticket: string };
-      console.log("[match-page] quick-match ticket received", { ticketLength: data.ticket?.length });
-      return data.ticket;
-    } catch (err) {
-      console.error("[match-page] quick-match ticket error", err);
-      return null;
-    }
-  }
+  let gateway = $state<GatewayClientStore | null>(null);
 
   async function initMatch(): Promise<void> {
     const gameId = getGameId();
@@ -93,9 +77,10 @@
       await goto(`/spectate/${gameId}`, { replaceState: true });
       return;
     }
+    isBotMatch = !!session.botPlayerId;
     console.log("[match-page] session loaded", {
       matchId: session.matchId,
-      playerId: session.playerId,
+      gameProfileId: session.gameProfileId,
       hasWsTicket: !!session.wsTicket,
     });
 
@@ -104,6 +89,7 @@
     // standard gateway ticket flow.
     const isQuickMatch = !!session.wsTicket;
     let ticket: string | null = null;
+    let authToken: string | null = null;
 
     /** Fall back to local-only play for quick-match sessions when gateway is unavailable. */
     const fallbackDeckConfig = session.deckConfig;
@@ -124,19 +110,26 @@
 
     if (isQuickMatch) {
       console.log("[match-page] quick-match session, fetching fresh ticket");
-      ticket = await fetchQuickMatchTicket(session.matchId, session.playerId);
-      if (!ticket) {
+      const qmResult = await fetchQuickMatchTicket(session.matchId, session.gameProfileId);
+      if (!qmResult) {
+        console.error("[match-page] quick-match ticket failed");
         fallbackToLocal("Failed to fetch quick-match ticket");
         return;
       }
+      console.log("[match-page] quick-match ticket received", { ticketLength: qmResult.ticket?.length });
+      ticket = qmResult.ticket;
+      authToken = qmResult.authToken;
     } else {
-      await authSession.fetchSession();
       if (!authSession.isAuthenticated) {
         console.warn("[match-page] auth required but not authenticated");
         loadError = "Authentication required. Please sign in and try again.";
         return;
       }
-      ticket = await fetchGatewayTicket();
+      const gwResult = await fetchGatewayTicket();
+      if (gwResult) {
+        ticket = gwResult.ticket;
+        authToken = gwResult.authToken;
+      }
     }
 
     console.log("[match-page] ticket resolved", { hasTicket: !!ticket, source: isQuickMatch ? "quick-match" : "api" });
@@ -147,7 +140,7 @@
 
     let gatewayError: string | null = null;
 
-    gateway = new GatewayClientStore(
+    gateway = createGatewayStore(
       GATEWAY_WS_URL,
       ticket ?? undefined,
       (msg) => {
@@ -160,6 +153,7 @@
         }
 
         if (msg.type === "game_joined") {
+          trackEvent("game_join", { mode: isQuickMatch ? "practice" : "ranked" });
           const joinedSettings = (msg as Record<string, unknown>).playerVisualSettings as
             | LorcanaPlayerSettingsMap
             | undefined;
@@ -188,8 +182,42 @@
             };
           }
         }
+
+        if (msg.type === "game_chat_history" && matchChatController) {
+          matchChatController.hydrateHistory(
+            String(msg.matchId ?? ""),
+            Array.isArray(msg.messages) ? (msg.messages as ChatMessage[]) : [],
+            { freeTextEnabled: msg.freeTextEnabled === true },
+          );
+          return;
+        }
+
+        if (msg.type === "chat_message" && matchChatController && msg.message) {
+          matchChatController.receiveMessage(
+            String(msg.matchId ?? ""),
+            msg.message as ChatMessage,
+          );
+        }
+
+        if (msg.type === "presence_change" && ownPlayerId && !isBotMatch) {
+          const playerId = String(msg.playerId ?? "");
+          if (playerId && playerId !== ownPlayerId) {
+            opponentPresence.handlePresenceChange(
+              msg.status as "connected" | "disconnected",
+              msg.disconnectedAt as string | undefined,
+            );
+          }
+        }
       },
+      undefined,
+      authToken ?? undefined,
+      () => authSession.session?.token,
     );
+    matchChatController = new MatchChatController({
+      gameId,
+      canSend: true,
+      sendMessage: (message) => gateway?.send(message),
+    });
 
     const welcomePromise = new Promise<void>((resolve) => {
       const checkInterval = setInterval(() => {
@@ -250,41 +278,70 @@
 
     const hasState = gameJoinedMsg.state != null;
     const deckConfig = session.deckConfig;
+    const cardsMaps = gameJoinedMsg.cardsMaps as CardsMaps | undefined;
 
-    if (import.meta.env.DEV) {
-      console.log("[match-page] game_joined", {
-        hasState,
-        stateVersion: gameJoinedMsg.stateVersion,
-        stateType: gameJoinedMsg.state == null ? "null" : typeof gameJoinedMsg.state,
-        stateKeys: gameJoinedMsg.state && typeof gameJoinedMsg.state === "object" ? Object.keys(gameJoinedMsg.state as object) : [],
-      });
+    console.log("[match-page] game_joined", {
+      hasState,
+      stateVersion: gameJoinedMsg.stateVersion,
+      hasCardsMaps: !!cardsMaps,
+      stateKeys: gameJoinedMsg.state && typeof gameJoinedMsg.state === "object"
+        ? Object.keys(gameJoinedMsg.state as object)
+        : [],
+    });
+
+    // Track own player ID for presence filtering
+    ownPlayerId = session.gameProfileId;
+
+    // Check initial opponent presence from game_joined (skip for bot matches — bots are never "connected")
+    if (!isBotMatch) {
+      const players = gameJoinedMsg.players as Array<{ id: string; connected: boolean; disconnectedAt?: string }> | undefined;
+      if (players) {
+        const opponent = players.find((p) => p.id !== session.gameProfileId);
+        if (opponent && !opponent.connected) {
+          opponentPresence.handlePresenceChange("disconnected", opponent.disconnectedAt);
+        }
+      }
     }
 
     if (hasState) {
-      const serverState = gameJoinedMsg.state as PracticeMatchSnapshot;
-
-      if (import.meta.env.DEV) {
-        console.log("[match-page] restoring from snapshot", {
-          hasEngineSnapshot: !!serverState.engineSnapshot,
-          hasUndoCheckpoint: !!serverState.engineSnapshot?.undoCheckpoint,
+      // Both practice and ranked matches now use the same flat format:
+      // game_joined.state = raw LorcanaMatchState
+      // game_joined.cardsMaps = CardsMaps
+      if (!cardsMaps) {
+        console.error("[match-page] game_joined missing cardsMaps", {
+          gameId,
+          stateVersion: gameJoinedMsg.stateVersion,
         });
+        loadError = "Match state is missing card data (cardsMaps). The match may have expired.";
+        return;
       }
+
+      const restoredSnapshot: LorcanaServerAuthoritativeSnapshot = {
+        state: gameJoinedMsg.state as LorcanaServerAuthoritativeSnapshot["state"],
+        cardsMaps,
+      };
+
+      console.log("[match-page] restoring match from snapshot", {
+        cardInstanceCount: Object.keys(cardsMaps.cardInstances).length,
+        ownerCount: Object.keys(cardsMaps.owners).length,
+      });
 
       practiceOrchestrator = new PracticeMatchOrchestrator({
         gameId,
-        playerId: session.playerId,
+        playerId: session.gameProfileId,
         botPlayerId: session.botPlayerId,
         deckConfig,
         gateway: gateway!,
-        restoredSnapshot: serverState,
+        restoredSnapshot,
         restoredVersion: (gameJoinedMsg.stateVersion as number) ?? 0,
         restoredRecentHistory: pendingRecentHistory ?? undefined,
       });
       pendingRecentHistory = null;
     } else {
+      console.log("[match-page] no state in game_joined, starting fresh");
       practiceOrchestrator = new PracticeMatchOrchestrator({
         gameId,
-        playerId: session.playerId,
+        playerId: session.gameProfileId,
         botPlayerId: session.botPlayerId,
         deckConfig,
         gateway: gateway!,
@@ -314,6 +371,14 @@
   function dismissPracticeHint(): void {
     localStorage.setItem(PRACTICE_HINT_DISMISSED_AT_KEY, String(Date.now()));
     showPracticeHint = false;
+  }
+
+  function handleDropOpponent(): void {
+    gateway?.send({ type: "drop_player", gameId: getGameId() });
+  }
+
+  function handleSkipOpponent(): void {
+    gateway?.send({ type: "skip_opponent_turn", gameId: getGameId() });
   }
 
   async function handleReturnToMatchmaking(): Promise<void> {
@@ -351,7 +416,8 @@
     immersiveExperience.deactivateRouteChrome();
     aiOrchestratorContext.set(null);
     practiceOrchestrator?.dispose();
-    gateway?.destroy();
+    opponentPresence.dispose();
+    destroyGatewayStore();
   });
 </script>
 
@@ -410,6 +476,11 @@
         playerSettings={playerVisualSettings}
         postGameGameId={getGameId()}
         isAuthenticated={authSession.isAuthenticated}
+        {matchChatController}
+        opponentPresence={isBotMatch ? null : opponentPresence}
+        onDropOpponent={isBotMatch ? null : handleDropOpponent}
+        onSkipOpponent={isBotMatch ? null : handleSkipOpponent}
+        gatewayStatus={gateway?.status ?? null}
         onReturnToMatchmaking={handleReturnToMatchmaking}
       />
     {/key}

@@ -480,14 +480,19 @@ describe("projectLorcanaBoardView", () => {
       return;
     }
 
+    // The card must be visible (not hidden) in both projections — action cards are played
+    // face-up and must show their real name in the pending effects UI, not "Hidden card".
     expect(playerOneBoard.cards[sourceId]).toMatchObject({
       id: sourceId,
       zone: "limbo",
     });
+    expect(playerOneBoard.cards[sourceId]?.hidden).not.toBe(true);
+
     expect(playerTwoBoard.cards[sourceId]).toMatchObject({
       id: sourceId,
       zone: "limbo",
     });
+    expect(playerTwoBoard.cards[sourceId]?.hidden).not.toBe(true);
   });
 
   it("requires explicit targets for multi-step chosen-target sequences and resolves once all targets are provided", () => {

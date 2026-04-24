@@ -29,71 +29,92 @@ describe("Scrooge McDuck - Reformed Ebenezer", () => {
     expect(cardUnderTest.shiftInkCost).toBe(4);
   });
 
-  it("SPREADING JOY - triggers on play and grants Ward to other characters", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      hand: [scroogeMcduckReformedEbenezer],
-      play: [allyOne, allyTwo],
-      inkwell: scroogeMcduckReformedEbenezer.cost,
-      deck: 5,
-    });
-
-    // Allies should not have Ward before Scrooge is played
-    expect(testEngine.hasKeyword(allyOne, "Ward")).toBe(false);
-    expect(testEngine.hasKeyword(allyTwo, "Ward")).toBe(false);
-
-    expect(
-      testEngine.asPlayerOne().playCard(scroogeMcduckReformedEbenezer),
-    ).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getCardZone(scroogeMcduckReformedEbenezer)).toBe("play");
-
-    // Resolve the SPREADING JOY triggered ability via bag
-    if (testEngine.asPlayerOne().getBagCount() > 0) {
-      expect(
-        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckReformedEbenezer),
-      ).toBeSuccessfulCommand();
-    }
-
-    // Both allies should now have Ward
-    expect(testEngine.hasKeyword(allyOne, "Ward")).toBe(true);
-    expect(testEngine.hasKeyword(allyTwo, "Ward")).toBe(true);
-    // Scrooge himself should NOT have Ward (only OTHER characters)
-    expect(testEngine.hasKeyword(scroogeMcduckReformedEbenezer, "Ward")).toBe(false);
-  });
-
-  it("SPREADING JOY - does not grant Ward to opponent characters", () => {
-    const opponentAlly = createMockCharacter({
-      id: "scrooge-reformed-opponent-ally",
-      name: "Opponent Ally",
-      cost: 2,
-    });
-
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-      {
+  describe("SPREADING JOY", () => {
+    it("puts a card facedown under each other character and grants them Ward when accepted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [scroogeMcduckReformedEbenezer],
-        play: [allyOne],
+        play: [allyOne, allyTwo],
         inkwell: scroogeMcduckReformedEbenezer.cost,
         deck: 5,
-      },
-      {
-        play: [opponentAlly],
-        deck: 2,
-      },
-    );
+      });
 
-    expect(
-      testEngine.asPlayerOne().playCard(scroogeMcduckReformedEbenezer),
-    ).toBeSuccessfulCommand();
-
-    // Resolve the SPREADING JOY triggered ability
-    if (testEngine.asPlayerOne().getBagCount() > 0) {
       expect(
-        testEngine.asPlayerOne().resolvePendingByCard(scroogeMcduckReformedEbenezer),
+        testEngine.asPlayerOne().playCard(scroogeMcduckReformedEbenezer),
       ).toBeSuccessfulCommand();
-    }
 
-    // Opponent's character should not gain Ward
-    expect(testEngine.hasKeyword(opponentAlly, "Ward")).toBe(false);
-    // Player's ally should have Ward
-    expect(testEngine.hasKeyword(allyOne, "Ward")).toBe(true);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scroogeMcduckReformedEbenezer, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.hasKeyword(allyOne, "Ward")).toBe(true);
+      expect(testEngine.hasKeyword(allyTwo, "Ward")).toBe(true);
+      expect(testEngine.hasKeyword(scroogeMcduckReformedEbenezer, "Ward")).toBe(false);
+
+      expect(testEngine.asPlayerOne().getCardsUnderCount(allyOne)).toBe(1);
+      expect(testEngine.asPlayerOne().getCardsUnderCount(allyTwo)).toBe(1);
+    });
+
+    it("grants no Ward and puts no cards under when declined", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [scroogeMcduckReformedEbenezer],
+        play: [allyOne, allyTwo],
+        inkwell: scroogeMcduckReformedEbenezer.cost,
+        deck: 5,
+      });
+
+      const deckBefore = testEngine.asPlayerOne().getZonesCardCount().deck;
+
+      expect(
+        testEngine.asPlayerOne().playCard(scroogeMcduckReformedEbenezer),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scroogeMcduckReformedEbenezer, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.hasKeyword(allyOne, "Ward")).toBe(false);
+      expect(testEngine.hasKeyword(allyTwo, "Ward")).toBe(false);
+      expect(testEngine.asPlayerOne().getCardsUnderCount(allyOne)).toBe(0);
+      expect(testEngine.asPlayerOne().getCardsUnderCount(allyTwo)).toBe(0);
+      expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(deckBefore);
+    });
+
+    it("does not grant Ward to opponent characters", () => {
+      const opponentAlly = createMockCharacter({
+        id: "scrooge-reformed-opponent-ally",
+        name: "Opponent Ally",
+        cost: 2,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [scroogeMcduckReformedEbenezer],
+          play: [allyOne],
+          inkwell: scroogeMcduckReformedEbenezer.cost,
+          deck: 5,
+        },
+        {
+          play: [opponentAlly],
+          deck: 2,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(scroogeMcduckReformedEbenezer),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(scroogeMcduckReformedEbenezer, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.hasKeyword(opponentAlly, "Ward")).toBe(false);
+      expect(testEngine.hasKeyword(allyOne, "Ward")).toBe(true);
+    });
   });
 });

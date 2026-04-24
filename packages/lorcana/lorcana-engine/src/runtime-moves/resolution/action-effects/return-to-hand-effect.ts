@@ -8,8 +8,10 @@ import {
 import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
+import { sweepLethalDamageInPlay } from "../../state/lethal-damage-sweep";
 import { resolveEffectTargets } from "../../../targeting/runtime";
 import { getEffectTargetSelectionInput } from "./selection-state";
+import { effectLogger } from "./effect-logger";
 
 export function isReturnToHandEffect(effect: unknown): effect is ReturnToHandEffect {
   return (
@@ -28,6 +30,8 @@ function moveCardToOwnerHand(
   const ownerId =
     (ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined) ?? fallbackPlayerId;
   const zoneKey = ctx.framework.zones.getCardZone(cardId);
+
+  effectLogger.debug`[return-to-hand] moveCardToOwnerHand — cardId=${cardId} ownerId=${ownerId} zoneKey=${String(zoneKey)}`;
 
   if (typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"))) {
     const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId);
@@ -63,14 +67,19 @@ export function resolveReturnToHandEffect(
   effect: ReturnToHandEffect,
   resolutionInput: ActionResolutionInput,
 ): void {
+  const selectionInput = getEffectTargetSelectionInput(effect.target, resolutionInput);
+  effectLogger.debug`[return-to-hand] resolveReturnToHandEffect — sourceCardId=${cardPlayed.cardId} target=${effect.target}`;
+
   const resolvedTargets =
     resolveEffectTargets(
       ctx,
       cardPlayed,
       effect.target,
-      getEffectTargetSelectionInput(effect.target, resolutionInput),
+      selectionInput,
       resolutionInput.eventSnapshot,
     ) ?? [];
+
+  effectLogger.debug`[return-to-hand] resolvedTargets=${resolvedTargets}`;
 
   for (const targetId of resolvedTargets) {
     moveCardToOwnerHand(ctx, targetId, cardPlayed.playerId);
@@ -81,4 +90,10 @@ export function resolveReturnToHandEffect(
   }
 
   markLastEffectPerformed(resolutionInput.eventSnapshot, resolvedTargets.length > 0);
+
+  // A card returned to hand may have been a source of continuous static abilities
+  // (e.g. +Willpower aura). Re-check remaining cards for lethal damage.
+  if (resolvedTargets.length > 0) {
+    sweepLethalDamageInPlay(ctx, { reasonCardId: cardPlayed.cardId });
+  }
 }

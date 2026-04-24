@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { auroraDreamingGuardian } from "..";
+import { auroraDreamingGuardian } from "./139-aurora-dreaming-guardian";
 
 export const auroraDreamingGuardianEnchanted: CharacterCard = {
   ...auroraDreamingGuardian,

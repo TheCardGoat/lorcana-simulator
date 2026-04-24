@@ -83,8 +83,13 @@ describe("Stitch - Carefree Snowboarder", () => {
       expect(testEngine.asPlayerOne().quest(stitchCarefreeSnowboarder)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getLore("player_one")).toBe(stitchCarefreeSnowboarder.lore);
 
-      // No bag effects should be created (condition not met)
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(stitchCarefreeSnowboarder, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getZonesCardCount().hand;
       const deckAfter = testEngine.asPlayerOne().getZonesCardCount().deck;
@@ -105,8 +110,13 @@ describe("Stitch - Carefree Snowboarder", () => {
       expect(testEngine.asPlayerOne().quest(stitchCarefreeSnowboarder)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getLore("player_one")).toBe(stitchCarefreeSnowboarder.lore);
 
-      // No bag effects should be created (no other characters)
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(stitchCarefreeSnowboarder, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
 
       const handAfter = testEngine.asPlayerOne().getZonesCardCount().hand;
       const deckAfter = testEngine.asPlayerOne().getZonesCardCount().deck;

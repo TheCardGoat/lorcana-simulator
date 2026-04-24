@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { stitchCarefreeSurfer } from "..";
+import { stitchCarefreeSurfer } from "./021-stitch-carefree-surfer";
 
 export const stitchCarefreeSurferEnchanted: CharacterCard = {
   ...stitchCarefreeSurfer,

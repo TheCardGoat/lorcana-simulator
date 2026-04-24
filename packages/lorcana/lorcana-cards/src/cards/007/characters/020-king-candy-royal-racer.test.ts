@@ -94,6 +94,7 @@ describe("King Candy - Royal Racer", () => {
       // Opponent (player two) should now have a pending effect to choose and banish one of their characters
       expect(
         testEngine.asPlayerTwo().resolveNextPending({
+          resolveOptional: true,
           targets: [opponentCharacter],
         }),
       ).toBeSuccessfulCommand();

@@ -229,7 +229,7 @@ export type Rarity =
   | "enchanted"
   | "special";
 
-export type SpecialRarity = "enchanted" | "epic" | "iconic" | "promo";
+export type SpecialRarity = "enchanted" | "epic" | "iconic" | "promo" | "challenge";
 
 // ============================================================================
 // Canonical Card Types - Discriminated Union
@@ -461,7 +461,7 @@ export interface AbilityDefinition {
 /**
  * Card Printing - Physical card instance
  *
- * Keyed by "{setId}-{cardNumber}" (e.g., "set10-001")
+ * Keyed by printing id (e.g. "set10-001", "set12-p3-043-promo")
  * Contains physical card metadata and variants
  */
 export interface CardPrinting {
@@ -482,6 +482,9 @@ export interface CardPrinting {
 
   /** Special rarity if applicable */
   specialRarity?: SpecialRarity;
+
+  /** Promo sheet code from card_identifier (e.g. "P3") when id uses set{N}-p3-NNN */
+  promoSheetCode?: string;
 
   /** Artist credit (from Ravensburger) */
   author?: string;
@@ -556,7 +559,7 @@ export interface CardsAuxKv {
   /** Map canonicalId -> all printing IDs for that card */
   printingIdsByCanonicalId: Record<string, string[]>;
 
-  /** Map canonicalId -> base reprint IDs (excludes enchanted/epic/iconic/promo variants) */
+  /** Map canonicalId -> base reprint IDs (excludes enchanted/epic/iconic/promo/challenge variants) */
   baseReprintIdsByCanonicalId: Record<string, string[]>;
 
   /** Map culture_invariant_id (as string) -> shortId for localization matching */
@@ -585,6 +588,9 @@ export interface CardPrintingMetadata {
 
   /** Special rarity if applicable */
   specialRarity?: SpecialRarity;
+
+  /** Promo sheet code when printing id uses set{N}-p3-NNN form */
+  promoSheetCode?: string;
 
   /** Artist credit (from Ravensburger) */
   author?: string;

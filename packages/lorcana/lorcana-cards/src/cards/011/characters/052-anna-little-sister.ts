@@ -40,7 +40,7 @@ export const annaLittleSister: CharacterCard = {
           steps: [
             {
               target: {
-                cardTypes: ["character", "action", "item", "location"],
+                cardTypes: ["character"],
                 count: 1,
                 owner: "any",
                 selector: "chosen",

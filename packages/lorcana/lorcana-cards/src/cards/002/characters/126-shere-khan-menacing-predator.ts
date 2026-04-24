@@ -39,6 +39,7 @@ export const shereKhanMenacingPredator: CharacterCard = {
       name: "DON'T INSULT MY INTELLIGENCE",
       text: "DON'T INSULT MY INTELLIGENCE Whenever one of your characters challenges another character, gain 1 lore.",
       trigger: {
+        defender: {},
         event: "challenge",
         on: "YOUR_CHARACTERS",
         timing: "whenever",

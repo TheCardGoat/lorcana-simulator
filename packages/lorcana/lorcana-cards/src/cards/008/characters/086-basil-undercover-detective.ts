@@ -68,7 +68,7 @@ export const basilUndercoverDetective: CharacterCard = {
         type: "discard",
         amount: 1,
         random: true,
-        target: "EACH_OPPONENT",
+        target: "OPPONENT",
       },
     },
   ],

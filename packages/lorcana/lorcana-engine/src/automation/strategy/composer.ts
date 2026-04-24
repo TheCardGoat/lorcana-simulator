@@ -4,7 +4,13 @@ import type {
   AutomatedActionPlanningContext,
   AutomatedActionStrategy,
 } from "../types";
-import { compareNumbersAscending, createHeuristic, getCardName, getFamilyOrder } from "./common";
+import {
+  compareNumbersAscending,
+  createHeuristic,
+  canActorReachLoreGoalByQuesting,
+  getCardName,
+  getFamilyOrder,
+} from "./common";
 import { compareActivateAbility, evaluateActivateAbility } from "./families/activate-ability";
 import { compareAlterHand, evaluateAlterHand } from "./families/alter-hand";
 import { compareChallenge, evaluateChallenge } from "./families/challenge";
@@ -219,7 +225,16 @@ function compareDetailedCandidateSummaries(
   left: DetailedCandidateSummary,
   right: DetailedCandidateSummary,
   preferences: LoreRaceHeuristicPreferences,
+  context: AutomatedActionPlanningContext,
 ): number {
+  if (
+    canActorReachLoreGoalByQuesting(context) &&
+    left.family !== right.family &&
+    (left.family === "quest" || right.family === "quest")
+  ) {
+    return left.family === "quest" ? -1 : 1;
+  }
+
   const familyOrder = compareNumbersAscending(left.ranking.familyOrder, right.ranking.familyOrder);
   if (familyOrder !== 0) {
     return familyOrder;
@@ -299,7 +314,7 @@ export function summarizeLoreRaceCandidates(
 ): AutomatedActionCandidateSummary[] {
   return candidates
     .map((candidate) => buildDetailedCandidateSummary(context, candidate, preferences))
-    .sort((left, right) => compareDetailedCandidateSummaries(left, right, preferences));
+    .sort((left, right) => compareDetailedCandidateSummaries(left, right, preferences, context));
 }
 
 export function createLoreRaceAutomatedActionStrategy(

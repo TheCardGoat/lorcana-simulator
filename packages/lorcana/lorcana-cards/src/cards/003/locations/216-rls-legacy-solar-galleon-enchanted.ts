@@ -1,5 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { rlsLegacySolarGalleon } from "..";
+import { rlsLegacySolarGalleon } from "./136-rls-legacy-solar-galleon";
 
 export const rlsLegacySolarGalleonEnchanted: LocationCard = {
   ...rlsLegacySolarGalleon,

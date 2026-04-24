@@ -111,12 +111,33 @@ describe("Maui - Half-Shark", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
-    // Regression: Maui's CHEEEEOHOOOO! trigger was interfering with other card abilities
-    // like Powerline's second song (fixed Feb 23). The root cause was the trigger firing
-    // on non-character challenges. This test verifies the trigger only fires on character challenges.
-    // Maui's trigger currently fires on location challenges too, but the card text says
-    // "another character". The trigger definition lacks a target-type filter.
-    it.todo("regression: CHEEEEOHOOOO! does not trigger when challenging a location", () => {});
+    it("regression: CHEEEEOHOOOO! does not trigger when challenging a location", () => {
+      const location = createMockLocation({
+        id: "maui-test-location",
+        name: "Test Location",
+        cost: 2,
+        moveCost: 1,
+        lore: 1,
+        willpower: 5,
+      });
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [mauiHalfshark],
+          discard: [{ card: actionInDiscard }],
+          deck: 1,
+        },
+        {
+          play: [{ card: location }],
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().challenge(mauiHalfshark, location)).toBeSuccessfulCommand();
+
+      // CHEEEEOHOOOO! must not fire — card text says "another character", not "another card"
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getCardZone(actionInDiscard)).toBe("discard");
+    });
   });
 
   describe("WAYFINDING - Whenever you play an action, gain 1 lore.", () => {

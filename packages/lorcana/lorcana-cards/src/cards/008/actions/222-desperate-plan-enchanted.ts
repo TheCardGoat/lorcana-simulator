@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { desperatePlan } from "..";
+import { desperatePlan } from "./201-desperate-plan";
 
 export const desperatePlanEnchanted: ActionCard = {
   ...desperatePlan,

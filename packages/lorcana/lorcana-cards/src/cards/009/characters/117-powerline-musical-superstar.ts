@@ -32,27 +32,23 @@ export const powerlineMusicalSuperstar: CharacterCard = {
   classifications: ["Storyborn"],
   abilities: [
     {
+      condition: {
+        type: "turn-metric",
+        metric: "played-songs",
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
       effect: {
-        condition: {
-          type: "turn-metric",
-          metric: "played-songs",
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          duration: "this-turn",
-          keyword: "Rush",
-          target: "SELF",
-          type: "gain-keyword",
-        },
-        type: "conditional",
+        keyword: "Rush",
+        target: "SELF",
+        type: "gain-keyword",
       },
       id: "yez-1",
       name: "ELECTRIC MOVE",
       text: "ELECTRIC MOVE If you've played a song this turn, this character gains Rush this turn.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: powerlineMusicalSuperstarI18n,

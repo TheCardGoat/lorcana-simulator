@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { theHornedKingTriumphantGhoul } from "..";
+import { theHornedKingTriumphantGhoul } from "./049-the-horned-king-triumphant-ghoul";
 
 export const theHornedKingTriumphantGhoulEpic: CharacterCard = {
   ...theHornedKingTriumphantGhoul,

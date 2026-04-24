@@ -1,73 +1,112 @@
 <script lang="ts">
-	import '../lib/app.css';
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
-	import { onMount } from 'svelte';
-	import { authSession } from '$lib/auth/session.svelte.js';
-	import { configureCoreSimulatorLogging } from '$lib/logtape/logger';
-	import { getApiOrigin } from '$lib/config/public-url-config.js';
-	import { locales, localizeHref } from '$lib/paraglide/runtime.js';
-	import * as Tooltip from '$lib/design-system/primitives/tooltip/index.js';
+  import '../lib/app.css';
+  import { afterNavigate, goto } from '$app/navigation';
+  import { page } from '$app/state';
+  import { onMount } from 'svelte';
+  import { authSession } from '$lib/auth/session.svelte.js';
+  import { configureCoreSimulatorLogging } from '$lib/logtape/logger';
+  import { HttpRequestError } from '$lib/data/transport/http-client.js';
+  import { joinDiscordGuild } from '$lib/features/auth/discord-api.js';
+  import {
+    deLocalizeUrl,
+    locales,
+    localizeHref,
+  } from '$lib/paraglide/runtime.js';
+  import * as Tooltip from '$lib/design-system/primitives/tooltip/index.js';
+  import { initAnalytics, trackPageView } from '$lib/analytics/analytics.js';
+  import {
+    QueryClientProvider,
+    type QueryClient,
+  } from '@tanstack/svelte-query';
+  import { createSimulatorQueryClient } from '$lib/data/query-client.js';
 
-	configureCoreSimulatorLogging();
+  configureCoreSimulatorLogging();
 
-	const DISCORD_JOIN_GUILD_NONCE_KEY = 'discord-join-guild-nonce';
+  const DISCORD_JOIN_GUILD_NONCE_KEY = 'discord-join-guild-nonce';
 
-	let { children } = $props();
+  let { children, data } = $props();
+  const queryClient: QueryClient = createSimulatorQueryClient();
 
-	onMount(() => {
-		const joinGuild = page.url.searchParams.get('join_guild');
-		const joinGuildNonce = page.url.searchParams.get('join_guild_nonce');
-		if (joinGuild !== 'true') {
-			return;
-		}
+  // Hydrate auth session eagerly so SSR renders the authenticated state (not a loading spinner).
+  // The $effect.pre re-runs on client-side navigations when layout data changes.
+  // svelte-ignore state_referenced_locally
+  authSession.hydrateFromServer(data.user ?? null, data.session ?? null);
+  // $effect.pre(() => {
+  // 	authSession.hydrateFromServer(data.user ?? null, data.session ?? null);
+  // });
 
-		const cleanUrl = new URL(page.url);
-		cleanUrl.searchParams.delete('join_guild');
-		cleanUrl.searchParams.delete('join_guild_nonce');
-		void goto(cleanUrl.pathname + cleanUrl.search, { replaceState: true });
+  onMount(() => {
+    initAnalytics();
+  });
 
-		const storedJoinGuildNonce = window.sessionStorage.getItem(DISCORD_JOIN_GUILD_NONCE_KEY);
-		window.sessionStorage.removeItem(DISCORD_JOIN_GUILD_NONCE_KEY);
+  afterNavigate(({ to }) => {
+    if (to?.url) {
+      trackPageView(to.url.pathname, deLocalizeUrl);
+    }
+  });
 
-		if (!joinGuildNonce || !storedJoinGuildNonce || joinGuildNonce !== storedJoinGuildNonce) {
-			console.warn('Ignoring Discord guild join callback with invalid nonce');
-			return;
-		}
+  onMount(() => {
+    const joinGuild = page.url.searchParams.get('join_guild');
+    const joinGuildNonce = page.url.searchParams.get('join_guild_nonce');
+    if (joinGuild !== 'true') {
+      return;
+    }
 
-		void (async () => {
-			try {
-				await authSession.fetchSession();
-				if (!authSession.isAuthenticated) {
-					return;
-				}
+    const cleanUrl = new URL(page.url);
+    cleanUrl.searchParams.delete('join_guild');
+    cleanUrl.searchParams.delete('join_guild_nonce');
+    void goto(cleanUrl.pathname + cleanUrl.search, { replaceState: true });
 
-				const response = await fetch(`${getApiOrigin()}/v1/discord/join-guild`, {
-					method: 'POST',
-					credentials: 'include',
-				});
+    const storedJoinGuildNonce = window.sessionStorage.getItem(
+      DISCORD_JOIN_GUILD_NONCE_KEY,
+    );
+    window.sessionStorage.removeItem(DISCORD_JOIN_GUILD_NONCE_KEY);
 
-				if (!response.ok) {
-					console.error('Failed to join Discord guild:', response.status);
-				}
-			} catch (error) {
-				console.error('Error joining Discord guild:', error);
-			}
-		})();
-	});
+    if (
+      !joinGuildNonce ||
+      !storedJoinGuildNonce ||
+      joinGuildNonce !== storedJoinGuildNonce
+    ) {
+      console.warn('Ignoring Discord guild join callback with invalid nonce');
+      return;
+    }
+
+    void (async () => {
+      try {
+        await authSession.fetchSession();
+        if (!authSession.isAuthenticated) {
+          return;
+        }
+
+        try {
+          await joinDiscordGuild();
+        } catch (error) {
+          if (error instanceof HttpRequestError) {
+            console.error('Failed to join Discord guild:', error.status);
+            return;
+          }
+          throw error;
+        }
+      } catch (error) {
+        console.error('Error joining Discord guild:', error);
+      }
+    })();
+  });
 </script>
 
 <Tooltip.Provider>
-	<div style="display:none">
-		{#each locales as locale}
-			<a
-				href={localizeHref(page.url.pathname, { locale })}
-				data-sveltekit-reload
-			>
-				{locale}
-			</a>
-		{/each}
-	</div>
+  <QueryClientProvider client={queryClient}>
+    <div style="display:none">
+      {#each locales as locale (locale)}
+        <a
+          href={localizeHref(page.url.pathname, { locale })}
+          data-sveltekit-reload
+        >
+          {locale}
+        </a>
+      {/each}
+    </div>
 
-	{@render children?.()}
+    {@render children?.()}
+  </QueryClientProvider>
 </Tooltip.Provider>

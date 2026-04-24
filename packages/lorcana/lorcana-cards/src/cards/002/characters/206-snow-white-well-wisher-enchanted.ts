@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { snowWhiteWellWisher } from "..";
+import { snowWhiteWellWisher } from "./025-snow-white-well-wisher";
 
 export const snowWhiteWellWisherEnchanted: CharacterCard = {
   ...snowWhiteWellWisher,

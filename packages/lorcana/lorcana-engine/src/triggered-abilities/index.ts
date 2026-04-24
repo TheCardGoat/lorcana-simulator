@@ -12,6 +12,7 @@ import type {
   DelayedTriggerTiming,
   DelayedTriggerWindow,
   LorcanaG,
+  PendingActionEffect,
   PendingActionResolutionInput,
   PendingTriggeredEvent,
   TriggeredEventCandidate,
@@ -31,14 +32,14 @@ import type {
 } from "@tcg/lorcana-types";
 import { emitLorcanaDomainEvent } from "../types";
 import { cloneActionResolutionInput } from "../runtime-moves/resolution/action-effects/pending-action-effects";
-import {
-  hasReturnFromDiscardCandidates,
-  isReturnFromDiscardEffect,
-} from "../runtime-moves/resolution/action-effects/return-from-discard-effect";
 import { cardHasName, hasKeyword } from "../card-utils";
 import { compareOperator } from "../rules/operator-utils";
 import { getLorcanaCardName, traceLorcanaRuntimeStep } from "../runtime-trace";
-import { passesFilter, resolveCandidateTargets } from "../targeting/runtime";
+import {
+  normalizeTargetDescriptor,
+  passesFilter,
+  shouldSkipEffectWithNoValidTargets,
+} from "../targeting/runtime";
 import {
   buildPlayZoneCardTypeCache,
   countDamagedCharactersInPlay,
@@ -158,6 +159,40 @@ function getTriggeredAbilitiesStateView(
 
 function getCurrentTurn(ctx: Pick<TriggerRuntimeContext, "framework">): number {
   return ctx.framework.state.status.turn ?? 1;
+}
+
+/**
+ * Turn player for "during your turn" (`whose: "your"`) trigger restrictions — OTP + completed turns.
+ * `framework.state.currentPlayer` follows priority and can differ from the turn player while
+ * bag effects resolve (e.g. Cursed Mermaid — Poor Souls). Restrictions with `whose: "opponent"`
+ * intentionally keep using `currentPlayer` (priority) for backward-compatible matching.
+ */
+function resolveTurnPlayerForTriggerRestrictions(
+  ctx: Pick<TriggerRuntimeContext, "framework" | "G">,
+): PlayerId | undefined {
+  const otp = ctx.framework.state.status.otp as PlayerId | undefined;
+  if (!otp) {
+    return ctx.framework.state.currentPlayer as PlayerId | undefined;
+  }
+
+  const playerIds = ctx.framework.state.playerIds;
+  const turnsCompleted = (ctx.G.turnsCompletedByPlayer ?? {}) as Record<string, number>;
+  const totalCompletedTurns = Object.values(turnsCompleted).reduce(
+    (sum, count) => sum + (count ?? 0),
+    0,
+  );
+
+  if (totalCompletedTurns === 0) {
+    return otp;
+  }
+
+  const otpIndex = playerIds.findIndex((p) => p === otp);
+  if (otpIndex < 0 || playerIds.length === 0) {
+    return otp;
+  }
+
+  const offset = totalCompletedTurns % playerIds.length;
+  return playerIds[(otpIndex + offset) % playerIds.length] as PlayerId;
 }
 
 function getCompletedTurnsForPlayer(G: LorcanaG, playerId: PlayerId): number {
@@ -353,6 +388,13 @@ function shouldAllowSnapshotCandidate(
     return candidate.ability.trigger?.on === "SELF";
   }
 
+  // A card moving into the inkwell cannot observe its own move through a non-SELF trigger.
+  // "Whenever a card is put into your inkwell" needs another card (or the ability must be
+  // explicitly on this card, e.g. "When you put this character into your inkwell").
+  if (event.event === "ink") {
+    return candidate.ability.trigger?.on === "SELF";
+  }
+
   // Only apply self-trigger filtering for zone-change events (banish, ink, return-to-hand).
   // For other events (e.g., remove-damage), a card CAN observe its own state changes.
   if (!ZONE_CHANGE_EVENTS.has(event.event)) {
@@ -360,11 +402,20 @@ function shouldAllowSnapshotCandidate(
   }
 
   // When the trigger source is the subject card itself (e.g. a card being
-  // banished or inked), only allow it through if the trigger explicitly
-  // references SELF or uses a query that could match the source.
-  // Non-self-referential triggers like on: "CONTROLLER" or "YOUR_CHARACTERS"
-  // should not fire for the card's own zone change, because the card is
-  // leaving play and cannot observe its own departure.
+  // banished or inked), only allow it through if the trigger can legitimately
+  // match the source card.
+  //
+  // Triggers that explicitly exclude the source card (OTHER_CHARACTERS,
+  // YOUR_OTHER_CHARACTERS, and ink-type variants) are blocked here so a
+  // banished card cannot fire an ability that was intentionally written to
+  // exclude itself. subjectMatches also enforces this, but the early exit
+  // avoids unnecessary work.
+  //
+  // All other string triggers (YOUR_CHARACTERS, ANY_CHARACTER, YOUR_ITEMS,
+  // etc.) are inclusive — "your characters" includes the card itself — so we
+  // let subjectMatches make the final call.
+  //
+  // Query-based objects are also passed through; triggerMatchesEvent decides.
   const triggerOn = candidate.ability.trigger?.on;
   if (triggerOn === "SELF") {
     return true;
@@ -374,7 +425,20 @@ function shouldAllowSnapshotCandidate(
     // may legitimately match the source card — let triggerMatchesEvent decide.
     return true;
   }
-  return false;
+  // Triggers explicitly named "other" exclude the source card by definition.
+  const SELF_EXCLUSIVE_TRIGGERS = new Set([
+    "OTHER_CHARACTERS",
+    "YOUR_OTHER_CHARACTERS",
+    "YOUR_OTHER_AMETHYST_CHARACTERS",
+    "YOUR_OTHER_SAPPHIRE_CHARACTERS",
+    "YOUR_OTHER_STEEL_CHARACTERS",
+  ]);
+  if (SELF_EXCLUSIVE_TRIGGERS.has(triggerOn as string)) {
+    return false;
+  }
+  // All remaining string triggers are inclusive (YOUR_CHARACTERS, ANY_CHARACTER,
+  // OPPONENT_CHARACTERS, YOUR_ITEMS, etc.) — pass to subjectMatches.
+  return true;
 }
 
 function buildSourcePayload(ctx: TriggerRuntimeContext, sourceId: string): CardPlayedPayload {
@@ -425,11 +489,17 @@ function collectTriggeredCandidatesFromCard(args: {
     return [];
   }
 
-  const triggerAbilities = (definition.abilities ?? []).filter(
-    (ability): ability is Extract<typeof ability, { type: "triggered" }> =>
-      ability.type === "triggered",
-  );
-  const hasPrintedSupportTriggeredAbility = triggerAbilities.some((ability) => {
+  const triggerAbilities = (definition.abilities ?? [])
+    .map((ability, index) => ({ ability, index }))
+    .filter(
+      (
+        entry,
+      ): entry is {
+        ability: Extract<typeof entry.ability, { type: "triggered" }>;
+        index: number;
+      } => entry.ability.type === "triggered",
+    );
+  const hasPrintedSupportTriggeredAbility = triggerAbilities.some(({ ability }) => {
     if (
       ability.trigger.event !== "quest" ||
       ability.trigger.on !== "SELF" ||
@@ -460,7 +530,7 @@ function collectTriggeredCandidatesFromCard(args: {
   const sourcePayload = buildSourcePayload(ctx, sourceId);
   const candidates: TriggerMatchCandidate[] = [];
 
-  triggerAbilities.forEach((ability, abilityIndex) => {
+  triggerAbilities.forEach(({ ability, index: abilityIndex }) => {
     const sourceZones = ability.sourceZones ?? ["play"];
     if (!sourceZones.includes(zone)) {
       return;
@@ -479,6 +549,7 @@ function collectTriggeredCandidatesFromCard(args: {
         sourceZones: ability.sourceZones,
         condition: ability.condition,
         effect: ability.effect,
+        ...(ability.autoResolve === true ? { autoResolve: true } : {}),
       },
       resolutionInput: {},
     });
@@ -501,7 +572,7 @@ function collectTriggeredCandidatesFromCard(args: {
         effect: {
           chooser: "CONTROLLER",
           effect: {
-            target: "ANOTHER_CHOSEN_CHARACTER_OF_YOURS",
+            target: "ANOTHER_CHOSEN_CHARACTER",
             type: "support",
           },
           type: "optional",
@@ -556,6 +627,7 @@ function collectTriggeredCandidatesFromCard(args: {
         sourceZones: payload.sourceZones,
         condition: payload.condition,
         effect: payload.effect,
+        ...(payload.autoResolve === true ? { autoResolve: true } : {}),
       },
       resolutionInput: {},
     });
@@ -580,6 +652,7 @@ function cloneTriggeredEventCandidate(candidate: TriggeredEventCandidate): Trigg
       sourceZones: candidate.ability.sourceZones,
       condition: candidate.ability.condition,
       effect: candidate.ability.effect,
+      ...(candidate.ability.autoResolve === true ? { autoResolve: true } : {}),
     },
     resolutionInput: cloneActionResolutionInput(candidate.resolutionInput),
   };
@@ -985,11 +1058,15 @@ function restrictionsMatch(
     return true;
   }
 
-  const activePlayer = ctx.framework.state.currentPlayer;
   return restrictions.every((restriction: TriggerRestriction) => {
     switch (restriction.type) {
-      case "during-turn":
+      case "during-turn": {
+        const activePlayer =
+          restriction.whose === "your"
+            ? resolveTurnPlayerForTriggerRestrictions(ctx)
+            : ctx.framework.state.currentPlayer;
         return relationMatches(activePlayer, candidate.controllerId, restriction.whose);
+      }
       case "from-location":
         return typeof event.fromZone === "string" && event.fromZone.startsWith("location:");
       case "from-discard":
@@ -997,6 +1074,8 @@ function restrictionsMatch(
           typeof event.fromZone === "string" &&
           (event.fromZone === "discard" || event.fromZone.startsWith("discard:"))
         );
+      case "to-hand":
+        return typeof event.toZone === "string" && event.toZone === "hand";
       case "in-challenge":
         return event.happenedInChallenge === true;
       case "defender-is-character":
@@ -1077,365 +1156,6 @@ function shouldSkipByNTimesPerTurn(
   }
 
   return false;
-}
-
-/**
- * Returns true when a triggered ability wraps an optional return-from-discard
- * effect but the controller's discard contains no cards that satisfy the
- * effect's filters.  In that case presenting the optional prompt to the
- * player is meaningless and the bag entry should be suppressed entirely.
- *
- * Also handles the case where the ability is a sequence whose first step is a
- * mandatory return-from-discard with no valid candidates.  Even if later steps
- * are optional, they are conditioned on the first step succeeding, so the
- * whole sequence can be safely suppressed.
- */
-function shouldSkipOptionalReturnFromDiscardWithNoTargets(
-  ctx: TriggerRuntimeContext,
-  candidate: TriggerMatchCandidate,
-): boolean {
-  const effect = candidate.ability.effect;
-  if (!effect || typeof effect !== "object") {
-    return false;
-  }
-  const effectRecord = effect as unknown as Record<string, unknown>;
-
-  // Case 1: Optional wrapper directly around return-from-discard
-  if (effectRecord.type === "optional") {
-    const innerEffect = effectRecord.effect;
-    if (isReturnFromDiscardEffect(innerEffect)) {
-      return !hasReturnFromDiscardCandidates(ctx, candidate.controllerId, innerEffect);
-    }
-
-    // Case 3: Optional wrapper around a sequence whose first step is return-from-discard.
-    // The subsequent steps are all conditioned on the first step succeeding, so the
-    // whole optional can be safely suppressed when there are no valid discard targets.
-    if (innerEffect && typeof innerEffect === "object") {
-      const innerRecord = innerEffect as Record<string, unknown>;
-      if (innerRecord.type === "sequence") {
-        const steps = Array.isArray(innerRecord.steps) ? innerRecord.steps : [];
-        const firstStep = steps[0];
-        if (isReturnFromDiscardEffect(firstStep)) {
-          return !hasReturnFromDiscardCandidates(ctx, candidate.controllerId, firstStep);
-        }
-      }
-    }
-
-    return false;
-  }
-
-  // Case 2: Sequence whose first step is a mandatory return-from-discard.
-  // If the first step has no valid targets the whole sequence is a no-op
-  // (subsequent steps are all conditioned on the first step producing a card).
-  if (effectRecord.type === "sequence") {
-    const steps = Array.isArray(effectRecord.steps) ? effectRecord.steps : [];
-    const firstStep = steps[0];
-    if (!isReturnFromDiscardEffect(firstStep)) {
-      return false;
-    }
-    return !hasReturnFromDiscardCandidates(ctx, candidate.controllerId, firstStep);
-  }
-
-  return false;
-}
-
-/**
- * Returns true when a triggered ability wraps an optional play-card effect
- * that sources from the discard zone, but the controller's discard contains
- * no cards that satisfy the effect's filters (cardType, maxCost, etc.).
- *
- * Presenting the optional prompt in that case is meaningless so the bag entry
- * is suppressed entirely.
- *
- * @example COME ALONG, CHILDREN (Perdita - Devoted Mother):
- *   optional → play-card { from: "discard", cardType: "character", filter: { maxCost: 2 } }
- *   If no character with cost 2 or less is in the controller's discard, skip.
- */
-function shouldSkipOptionalPlayCardFromDiscardWithNoTargets(
-  ctx: TriggerRuntimeContext,
-  candidate: TriggerMatchCandidate,
-): boolean {
-  const effect = candidate.ability.effect;
-  if (!effect || typeof effect !== "object") {
-    return false;
-  }
-  const effectRecord = effect as unknown as Record<string, unknown>;
-
-  if (effectRecord.type !== "optional") {
-    return false;
-  }
-
-  const innerEffect = effectRecord.effect;
-  if (!innerEffect || typeof innerEffect !== "object") {
-    return false;
-  }
-
-  const innerRecord = innerEffect as Record<string, unknown>;
-
-  // Direct play-card effect inside optional wrapper
-  if (innerRecord.type === "play-card" && innerRecord.from === "discard") {
-    return !hasPlayCardFromDiscardCandidates(ctx, candidate.controllerId, innerRecord);
-  }
-
-  return false;
-}
-
-function hasPlayCardFromDiscardCandidates(
-  ctx: TriggerRuntimeContext,
-  controllerId: PlayerId,
-  effect: Record<string, unknown>,
-): boolean {
-  const cardsInDiscard = ctx.framework.zones.getCards({
-    zone: "discard",
-    playerId: controllerId,
-  });
-
-  if (cardsInDiscard.length === 0) {
-    return false;
-  }
-
-  const expectedCardType = typeof effect.cardType === "string" ? effect.cardType : undefined;
-  const filter =
-    effect.filter && typeof effect.filter === "object" && !Array.isArray(effect.filter)
-      ? (effect.filter as Record<string, unknown>)
-      : undefined;
-  const maxCost = typeof filter?.maxCost === "number" ? filter.maxCost : undefined;
-  const classification =
-    typeof filter?.classification === "string" ? filter.classification : undefined;
-
-  return cardsInDiscard.some((cardId) => {
-    const definition = ctx.cards.getDefinition(cardId as CardInstanceId) as LorcanaCard | undefined;
-    if (!definition) {
-      return false;
-    }
-
-    if (expectedCardType && definition.cardType !== expectedCardType) {
-      return false;
-    }
-
-    if (typeof maxCost === "number") {
-      const cost = Number((definition as { cost?: unknown }).cost ?? Number.NaN);
-      if (!Number.isFinite(cost) || cost > maxCost) {
-        return false;
-      }
-    }
-
-    if (classification) {
-      const classifications = (definition as { classifications?: string[] }).classifications ?? [];
-      if (!classifications.includes(classification)) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-}
-
-/**
- * Returns true when a triggered ability wraps an optional return-to-hand
- * effect that targets the discard zone, but the controller's discard contains
- * no cards that satisfy the target's filters (including `excludeSelf`).
- *
- * Presenting the optional prompt in that case is meaningless so the bag entry
- * is suppressed entirely.
- *
- * @example A NEW ROSTER (King Candy - Sugar Rush Nightmare):
- *   optional → return-to-hand { target: { zones: ["discard"], excludeSelf: true, filter: [has-classification Racer] } }
- *   If no other Racer character is in the controller's discard, skip.
- */
-function shouldSkipOptionalReturnToHandFromDiscardWithNoTargets(
-  ctx: TriggerRuntimeContext,
-  candidate: TriggerMatchCandidate,
-): boolean {
-  const effect = candidate.ability.effect;
-  if (!effect || typeof effect !== "object") {
-    return false;
-  }
-  const effectRecord = effect as unknown as Record<string, unknown>;
-  if (effectRecord.type !== "optional") {
-    return false;
-  }
-
-  const innerEffect = effectRecord.effect;
-  if (!innerEffect || typeof innerEffect !== "object") {
-    return false;
-  }
-  const innerRecord = innerEffect as Record<string, unknown>;
-  if (innerRecord.type !== "return-to-hand") {
-    return false;
-  }
-
-  const target = innerRecord.target;
-  if (!target || typeof target !== "object") {
-    return false;
-  }
-  const targetRecord = target as Record<string, unknown>;
-  const zones = Array.isArray(targetRecord.zones) ? (targetRecord.zones as string[]) : [];
-  if (!zones.includes("discard")) {
-    return false;
-  }
-
-  // Use resolveCandidateTargets to check if there are any valid targets in the discard,
-  // which will apply all filters (classification, cardType, excludeSelf, etc.)
-  const fakeCardPlayed = {
-    cardId: candidate.sourceId,
-    playerId: candidate.controllerId,
-    cardType: "character" as const,
-    costType: "standard" as const,
-  };
-
-  const candidates = resolveCandidateTargets(ctx, fakeCardPlayed, targetRecord as never, {
-    controllerId: candidate.controllerId,
-    sourceCardId: candidate.sourceId,
-  });
-
-  return candidates.length === 0;
-}
-
-/**
- * Returns true when a triggered ability wraps an optional sequence whose first
- * step is a `discard` effect with filters, but the controller's hand contains
- * no cards that satisfy those filters.
- *
- * Presenting the optional prompt in that case is meaningless – the player
- * cannot pay the discard cost – so the bag entry is suppressed entirely.
- *
- * @example STEALTH MODE (Stitch - Experiment 626):
- *   optional → sequence → [discard {inkable}, play-card from discard free+exerted]
- *   If no inkable card is in hand, skip.
- */
-function shouldSkipOptionalDiscardEffectWithNoHandTargets(
-  ctx: TriggerRuntimeContext,
-  candidate: TriggerMatchCandidate,
-): boolean {
-  const effect = candidate.ability.effect;
-  if (!effect || typeof effect !== "object") {
-    return false;
-  }
-  const effectRecord = effect as unknown as Record<string, unknown>;
-
-  if (effectRecord.type !== "optional") {
-    return false;
-  }
-
-  const innerEffect = effectRecord.effect;
-  if (!innerEffect || typeof innerEffect !== "object") {
-    return false;
-  }
-  const innerRecord = innerEffect as Record<string, unknown>;
-  if (innerRecord.type !== "sequence") {
-    return false;
-  }
-
-  const steps = Array.isArray(innerRecord.steps) ? innerRecord.steps : [];
-  const firstStep = steps[0];
-  if (
-    !firstStep ||
-    typeof firstStep !== "object" ||
-    (firstStep as Record<string, unknown>).type !== "discard"
-  ) {
-    return false;
-  }
-
-  const discardStep = firstStep as Record<string, unknown>;
-  const filters = Array.isArray(discardStep.filters) ? discardStep.filters : [];
-  if (filters.length === 0) {
-    // No filters – always has valid targets (unless hand is empty)
-    return false;
-  }
-
-  const handCards = ctx.framework.zones.getCards({
-    zone: "hand",
-    playerId: candidate.controllerId,
-  }) as CardInstanceId[];
-
-  for (const cardId of handCards) {
-    const allPass = filters.every(
-      (f) =>
-        f &&
-        typeof f === "object" &&
-        passesFilter(
-          ctx as Parameters<typeof passesFilter>[0],
-          cardId,
-          f as Parameters<typeof passesFilter>[2],
-          candidate.controllerId,
-        ),
-    );
-    if (allPass) {
-      return false; // Found at least one valid discard target
-    }
-  }
-
-  return true; // No valid targets – suppress the optional
-}
-
-/**
- * Returns true when a triggered ability wraps an optional sequence whose first
- * step is a `mill` effect targeting the controller, but the controller's deck
- * contains fewer cards than the mill amount requires.
- *
- * In Lorcana, "put the top N cards of your deck into your discard" is a cost
- * that must be paid in full. If the deck has fewer than N cards, the cost
- * cannot be fully paid and the optional should not be presented.
- *
- * @example NUTS ABOUT PRANKS (Dale - Mischievous Ranger):
- *   optional → sequence → [mill 3 (CONTROLLER), modify-stat -3 (chosen)]
- *   If deck has fewer than 3 cards, skip.
- */
-function shouldSkipOptionalMillSequenceWithInsufficientDeck(
-  ctx: TriggerRuntimeContext,
-  candidate: TriggerMatchCandidate,
-): boolean {
-  const effect = candidate.ability.effect;
-  if (!effect || typeof effect !== "object") {
-    return false;
-  }
-  const effectRecord = effect as unknown as Record<string, unknown>;
-
-  if (effectRecord.type !== "optional") {
-    return false;
-  }
-
-  const innerEffect = effectRecord.effect;
-  if (!innerEffect || typeof innerEffect !== "object") {
-    return false;
-  }
-  const innerRecord = innerEffect as Record<string, unknown>;
-  if (innerRecord.type !== "sequence") {
-    return false;
-  }
-
-  const steps = Array.isArray(innerRecord.steps) ? innerRecord.steps : [];
-  const firstStep = steps[0];
-  if (
-    !firstStep ||
-    typeof firstStep !== "object" ||
-    (firstStep as Record<string, unknown>).type !== "mill"
-  ) {
-    return false;
-  }
-
-  const millStep = firstStep as Record<string, unknown>;
-  const millTarget = millStep.target ?? "CONTROLLER";
-  if (millTarget !== "CONTROLLER") {
-    // Only suppress when the controller must mill from their own deck
-    return false;
-  }
-
-  const millAmount =
-    typeof millStep.amount === "number" && Number.isFinite(millStep.amount)
-      ? Math.floor(millStep.amount)
-      : undefined;
-  if (!millAmount || millAmount <= 0) {
-    return false;
-  }
-
-  const deckCards = ctx.framework.zones.getCards({
-    zone: "deck",
-    playerId: candidate.controllerId,
-  }) as CardInstanceId[];
-
-  return deckCards.length < millAmount;
 }
 
 function challengeParticipantMatches(args: {
@@ -1586,14 +1306,15 @@ function evaluateTriggeredAbilityCondition(args: {
         zoneTypeCache,
       });
     case "during-turn":
-    case "turn":
-      return relationMatches(
-        ctx.framework.state.currentPlayer,
-        candidate.controllerId,
-        condition.whose,
-      );
+    case "turn": {
+      const activePlayer =
+        condition.whose === "your"
+          ? resolveTurnPlayerForTriggerRestrictions(ctx)
+          : ctx.framework.state.currentPlayer;
+      return relationMatches(activePlayer, candidate.controllerId, condition.whose);
+    }
     case "your-turn":
-      return ctx.framework.state.currentPlayer === candidate.controllerId;
+      return resolveTurnPlayerForTriggerRestrictions(ctx) === candidate.controllerId;
     case "is-exerted":
     case "exerted": {
       const selectedTargets = Array.isArray(resolutionInput.targets)
@@ -1804,14 +1525,11 @@ function triggerMatchesEvent(
     return false;
   }
 
-  return evaluateTriggeredAbilityCondition({
-    ctx,
-    candidate,
-    condition: candidate.ability.condition,
-    resolutionInput: resolvedResolutionInput,
-    triggerEvent,
-    zoneTypeCache,
-  });
+  // Per CRD 2.0 Rule 6.2.7: The secondary "intervening if" condition (ability.condition)
+  // is checked during RESOLUTION, not when the trigger fires. The trigger always fires
+  // when the trigger event occurs; the condition is re-evaluated at bag resolution time
+  // in resolve-bag.ts. Returning true here allows the ability to be enqueued correctly.
+  return true;
 }
 
 function shouldDeduplicateDiscardBatch(trigger: Trigger, event: PendingTriggeredEvent): boolean {
@@ -1981,6 +1699,7 @@ function enqueueMatchedTrigger(
     abilityIndex: candidate.abilityIndex,
     abilityKey,
     abilityName: candidate.ability.name,
+    ...(candidate.ability.autoResolve === true ? { autoResolve: true } : {}),
     controllerId: candidate.controllerId,
     chooserId: candidate.controllerId,
     sourceId: candidate.sourceId,
@@ -2030,6 +1749,7 @@ function enqueueDueDelayedRegistrations(
       abilityIndex: registration.abilityIndex,
       abilityKey,
       abilityName: registration.ability.name,
+      ...(registration.ability.autoResolve === true ? { autoResolve: true } : {}),
       controllerId: registration.controllerId,
       chooserId: registration.controllerId,
       sourceId: registration.sourceId,
@@ -2189,6 +1909,7 @@ export function registerAbility(
       sourceZones: params.ability.sourceZones,
       condition: params.ability.condition,
       effect: params.ability.effect,
+      ...(params.ability.autoResolve === true ? { autoResolve: true } : {}),
     },
     lifecycle,
     resolutionInput: cloneActionResolutionInput(params.resolutionInput),
@@ -2203,6 +1924,59 @@ export function pruneExpiredTriggerRegistrations(G: LorcanaG, currentTurn: numbe
   state.registrations = state.registrations.filter(
     (entry) => entry.lifecycle.kind === "delayed" || currentTurn <= entry.lifecycle.expiresAtTurn,
   );
+}
+
+/**
+ * CRD 6.2.7: Triggered abilities are enqueued unconditionally; conditions are checked at
+ * resolution. However, `turn-metric` conditions reference immutable turn history (e.g.
+ * "played a Princess character this turn") which cannot change during bag resolution. We
+ * auto-fizzle these so the player is not presented with a pointless optional prompt.
+ *
+ * Other condition types (target-query, etc.) are NOT fizzled here because another bag
+ * item resolving first could change the game state and make the condition true.
+ */
+function pruneFailedConditionBagEffects(ctx: TriggerRuntimeContext): void {
+  const state = getTriggeredAbilitiesState(ctx.G);
+  const bagItems = state.bag.items;
+  if (!bagItems || bagItems.length === 0) return;
+
+  const toRemove: string[] = [];
+  for (const item of bagItems) {
+    if (!item.condition) continue;
+    // Only auto-fizzle turn-metric conditions — they check historical facts that
+    // can't change during bag resolution.
+    if ((item.condition as { type?: string }).type !== "turn-metric") continue;
+
+    const condCtx: ConditionEvaluationContext = {
+      framework: ctx.framework as ConditionEvaluationContext["framework"],
+      cards: ctx.cards as ConditionEvaluationContext["cards"],
+      G: ctx.G,
+      playerId: item.controllerId,
+      sourceCardId: item.sourceId,
+      cardPlayed: item.cardPlayed,
+      resolutionInput: item.resolutionInput ?? {},
+    };
+
+    try {
+      if (!evaluateCondition(item.condition, condCtx)) {
+        toRemove.push(item.id);
+        traceLorcanaRuntimeStep({
+          kind: "bag.effect.skipped",
+          bagItemId: item.id,
+          cardId: item.sourceId,
+          cardName: item.abilityName,
+          message:
+            "Bag effect auto-fizzled: turn-metric condition already false at resolution boundary",
+        });
+      }
+    } catch {
+      // If condition evaluation fails (missing context), keep the item for resolution-time check.
+    }
+  }
+
+  if (toRemove.length > 0) {
+    state.bag.items = bagItems.filter((item) => !toRemove.includes(item.id));
+  }
 }
 
 export function finalizeResolutionBoundary(
@@ -2225,6 +1999,7 @@ export function finalizeResolutionBoundary(
     ];
     const deduplicatedDiscardBatches = new Set<string>();
     const deduplicatedSingBatches = new Set<string>();
+    const deduplicatedCompositeMatches = new Set<string>();
     const zoneTypeCache = buildPlayZoneCardTypeCache(ctx);
 
     for (const event of events) {
@@ -2246,6 +2021,19 @@ export function finalizeResolutionBoundary(
           continue;
         }
 
+        // Deduplicate across events for composite triggers (e.g., "leave-play"
+        // expands to ["banish", "banish-in-challenge", ...]).  When a challenge
+        // emits both "banish" and "banish-in-challenge", the same candidate
+        // should only fire once.
+        const rawTriggerEvent = candidate.ability.trigger.event;
+        if (rawTriggerEvent === "leave-play") {
+          const compositeKey = `${candidateKey}:${rawTriggerEvent}`;
+          if (deduplicatedCompositeMatches.has(compositeKey)) {
+            continue;
+          }
+          deduplicatedCompositeMatches.add(compositeKey);
+        }
+
         if (shouldDeduplicateDiscardBatch(candidate.ability.trigger, event)) {
           const dedupeKey = [
             candidate.sourceId,
@@ -2263,23 +2051,14 @@ export function finalizeResolutionBoundary(
           continue;
         }
 
-        if (shouldSkipOptionalReturnFromDiscardWithNoTargets(ctx, candidate)) {
-          continue;
-        }
-
-        if (shouldSkipOptionalPlayCardFromDiscardWithNoTargets(ctx, candidate)) {
-          continue;
-        }
-
-        if (shouldSkipOptionalReturnToHandFromDiscardWithNoTargets(ctx, candidate)) {
-          continue;
-        }
-
-        if (shouldSkipOptionalDiscardEffectWithNoHandTargets(ctx, candidate)) {
-          continue;
-        }
-
-        if (shouldSkipOptionalMillSequenceWithInsufficientDeck(ctx, candidate)) {
+        if (
+          shouldSkipEffectWithNoValidTargets(
+            candidate.ability.effect,
+            candidate.controllerId,
+            ctx,
+            candidate.sourceId,
+          )
+        ) {
           continue;
         }
 
@@ -2295,6 +2074,11 @@ export function finalizeResolutionBoundary(
       window: params.window,
     });
   }
+
+  // CRD 6.2.7: Conditions are checked at resolution time, not enqueue time. However,
+  // conditions that reference immutable turn history (turn-metric) can be safely evaluated
+  // here to auto-fizzle bag effects before the player is prompted with a pointless choice.
+  pruneFailedConditionBagEffects(ctx);
 
   const nextResolver = getNextBagResolver(ctx);
   if (nextResolver) {
@@ -2431,6 +2215,34 @@ export function removeBagEffect(
     bag.lastResolvedPlayerId = undefined;
   }
   return entry;
+}
+
+/**
+ * When a bag effect suspended into a pending action effect (target selection, etc.),
+ * the bag entry stays queued until {@link resolve-effect} finishes the pending work.
+ * Call this after the pending effect fully resolves so the bag does not show a stale
+ * duplicate of an already-completed triggered ability.
+ */
+export function removeBagItemMatchingPendingSource(
+  ctx: Pick<TriggerRuntimeContext, "G">,
+  pending: Pick<PendingActionEffect, "sourceCardId" | "abilityIndex">,
+): boolean {
+  const bag = getTriggeredAbilitiesState(ctx.G).bag;
+  const items = bag.items;
+  const index = items.findIndex(
+    (entry) =>
+      entry.sourceId === pending.sourceCardId &&
+      (pending.abilityIndex === undefined || entry.abilityIndex === pending.abilityIndex),
+  );
+  if (index < 0) {
+    return false;
+  }
+
+  items.splice(index, 1);
+  if (items.length === 0) {
+    bag.lastResolvedPlayerId = undefined;
+  }
+  return true;
 }
 
 export function updateBagEffectResolutionInput(

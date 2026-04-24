@@ -6,6 +6,7 @@ import {
   PLAYER_ONE,
   PLAYER_TWO,
   createMockCharacter,
+  createMockSong,
 } from "../../../testing";
 
 function createMockActionCard(params: {
@@ -73,6 +74,221 @@ const chipCharacter = createMockCharacter({
   strength: 2,
   willpower: 2,
   lore: 1,
+});
+
+const inkTestCharacter = createMockCharacter({
+  id: "ink-test-character",
+  name: "Ink Test Character",
+  cost: 5,
+  strength: 3,
+  willpower: 4,
+  lore: 1,
+});
+
+describe("ink validation", () => {
+  it("rejects playing a card with insufficient ink", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [inkTestCharacter],
+      inkwell: 2,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().playCard(inkTestCharacter)).toEqual(
+      expect.objectContaining({
+        success: false,
+        errorCode: "INSUFFICIENT_INK",
+      }),
+    );
+  });
+
+  it("rejects playing a card with zero ink", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [inkTestCharacter],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().playCard(inkTestCharacter)).toEqual(
+      expect.objectContaining({
+        success: false,
+        errorCode: "INSUFFICIENT_INK",
+      }),
+    );
+  });
+
+  it("allows playing a card with exact ink", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [inkTestCharacter],
+      inkwell: inkTestCharacter.cost,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().playCard(inkTestCharacter).success).toBe(true);
+  });
+
+  it("allows playing a card with excess ink", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [inkTestCharacter],
+      inkwell: 8,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().playCard(inkTestCharacter).success).toBe(true);
+  });
+
+  it("canPlayCard returns false with insufficient ink", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [inkTestCharacter],
+      inkwell: 2,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().canPlayCard(inkTestCharacter)).toBe(false);
+  });
+
+  it("excludes card from available moves when ink is insufficient", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [inkTestCharacter],
+      inkwell: 2,
+      deck: 2,
+    });
+
+    const moves = engine.asPlayerOne().getAvailableMoves();
+    const playMove = moves.find((move) => move.moveId === "playCard");
+
+    if (playMove) {
+      const cardId = engine.findCardInstanceId(inkTestCharacter, "hand", PLAYER_ONE);
+      expect(playMove.selectableCardIds).not.toContain(cardId);
+    }
+  });
+
+  it("rejects playing a second card after ink is spent on the first", () => {
+    const cheapCharacter = createMockCharacter({
+      id: "ink-test-cheap",
+      name: "Ink Test Cheap",
+      cost: 3,
+      strength: 2,
+      willpower: 2,
+      lore: 1,
+    });
+
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [cheapCharacter, inkTestCharacter],
+      inkwell: 5,
+      deck: 2,
+    });
+
+    // First play succeeds (3 ink spent, 2 remaining)
+    expect(engine.asPlayerOne().playCard(cheapCharacter).success).toBe(true);
+
+    // Second play should fail (need 5, have 2)
+    expect(engine.asPlayerOne().playCard(inkTestCharacter)).toEqual(
+      expect.objectContaining({
+        success: false,
+        errorCode: "INSUFFICIENT_INK",
+      }),
+    );
+  });
+});
+
+const songCard = createMockSong({
+  id: "ink-test-song",
+  name: "Ink Test Song",
+  cost: 4,
+  text: "Gain 1 lore.",
+  abilities: [
+    {
+      type: "action",
+      effect: {
+        amount: 1,
+        target: "CONTROLLER",
+        type: "gain-lore",
+      },
+    },
+  ],
+});
+
+const singerCharacter = createMockCharacter({
+  id: "ink-test-singer",
+  name: "Ink Test Singer",
+  cost: 5,
+  strength: 3,
+  willpower: 4,
+  lore: 1,
+});
+
+describe("drag-and-drop ink-only enforcement", () => {
+  it("rejects playing a song with standard cost when ink is insufficient even if a singer is available", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [songCard],
+      play: [singerCharacter],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    // Explicit standard cost must reject when ink is insufficient,
+    // even though the song could be sung by the singer.
+    expect(engine.asPlayerOne().playCard(songCard, { cost: "standard" })).toEqual(
+      expect.objectContaining({
+        success: false,
+        errorCode: "INSUFFICIENT_INK",
+      }),
+    );
+  });
+
+  it("auto-sings a song when playCard is called without explicit cost", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [songCard],
+      play: [singerCharacter],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    // Without explicit cost, the engine falls back to singing automatically.
+    // This is the behavior that drag-and-drop must avoid by passing explicit cost.
+    expect(engine.asPlayerOne().playCard(songCard).success).toBe(true);
+    expect(engine.asPlayerOne().isExerted(singerCharacter)).toBe(true);
+  });
+
+  it("does not include song in playCard available moves when ink is insufficient", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [songCard],
+      play: [singerCharacter],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    const moves = engine.asPlayerOne().getAvailableMoves();
+    const playCardMove = moves.find((m) => m.moveId === "playCard");
+    const singCardMove = moves.find((m) => m.moveId === "singCard");
+    const songInstanceId = engine.findCardInstanceId(songCard, "hand", PLAYER_ONE);
+
+    // Song must NOT appear in playCard (ink-based) moves
+    if (playCardMove) {
+      expect(playCardMove.selectableCardIds).not.toContain(songInstanceId);
+    }
+
+    // Song SHOULD appear in singCard moves (singer-based)
+    expect(singCardMove).toBeDefined();
+    expect(singCardMove!.selectableCardIds).toContain(songInstanceId);
+  });
+
+  it("includes song in playCard available moves when ink is sufficient", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [songCard],
+      play: [singerCharacter],
+      inkwell: songCard.cost,
+      deck: 2,
+    });
+
+    const moves = engine.asPlayerOne().getAvailableMoves();
+    const playCardMove = moves.find((m) => m.moveId === "playCard");
+    const songInstanceId = engine.findCardInstanceId(songCard, "hand", PLAYER_ONE);
+
+    // Song should appear in playCard moves when ink is available
+    expect(playCardMove).toBeDefined();
+    expect(playCardMove!.selectableCardIds).toContain(songInstanceId);
+  });
 });
 
 describe("playCard logging", () => {

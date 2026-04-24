@@ -55,4 +55,41 @@ describe("Eilonwy - Princess of Llyr", () => {
 
     expect(testEngine.asPlayerOne().getCardStrength(supportTarget)).toBe(targetStrengthBefore);
   });
+
+  it("can use Support to buff an opponent's character", () => {
+    const opposingCharacter = createMockCharacter({
+      id: "eilonwy-opposing-target",
+      name: "Opposing Target",
+      cost: 2,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: eilonwyPrincessOfLlyr, isDrying: false }],
+        deck: 1,
+      },
+      {
+        play: [opposingCharacter],
+      },
+    );
+
+    const strengthBefore = testEngine.asPlayerTwo().getCardStrength(opposingCharacter);
+
+    expect(testEngine.asPlayerOne().quest(eilonwyPrincessOfLlyr)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(eilonwyPrincessOfLlyr, {
+        resolveOptional: true,
+        targets: [opposingCharacter],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getCardStrength(opposingCharacter)).toBe(
+      strengthBefore + eilonwyPrincessOfLlyr.strength,
+    );
+  });
 });

@@ -119,7 +119,7 @@ export interface PutUnderEffect {
   source: "top-of-deck" | "hand" | "discard" | "this-card";
   under: CharacterTarget | LocationTarget | "self";
   cardType?: CardType;
-  facedown?: boolean;
+  faceup?: boolean;
 }
 
 /**
@@ -191,6 +191,10 @@ export interface PlayCardEffect {
   free?: boolean;
   /** Target for the play effect */
   target?: string;
+  /** How the card enters play — "shift" invokes the full Shift stacking mechanic */
+  playMethod?: "shift" | "standard";
+  /** Where to send the card after its effects resolve instead of the default discard */
+  afterPlay?: "bottom-of-deck";
 }
 
 /**

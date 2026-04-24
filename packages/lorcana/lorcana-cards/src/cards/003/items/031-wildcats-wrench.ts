@@ -30,7 +30,7 @@ export const wildcatsWrench: ItemCard = {
         exert: true,
       },
       effect: {
-        amount: 2,
+        amount: { type: "up-to", value: 2 },
         target: {
           cardTypes: ["location"],
           count: 1,
@@ -39,7 +39,6 @@ export const wildcatsWrench: ItemCard = {
           zones: ["play"],
         },
         type: "remove-damage",
-        upTo: true,
       },
       id: "1wk-1",
       name: "REBUILD",

@@ -56,7 +56,8 @@ export type SimpleKeywordType =
   | "Support"
   | "Reckless"
   | "Vanish"
-  | "Alert";
+  | "Alert"
+  | "QuestWhileDrying";
 
 /**
  * Parameterized keyword types (have numeric values, optionally conditional)
@@ -234,6 +235,14 @@ export interface TriggeredAbility {
 
   /** What happens when the ability resolves */
   effect: Effect;
+
+  /**
+   * When true, the engine may resolve this trigger from the bag immediately after
+   * it is queued (same as other deterministic bag auto-drain), without waiting for
+   * an explicit player resolveBag action when that would otherwise be required for
+   * ordering among unrelated triggers.
+   */
+  autoResolve?: boolean;
 }
 
 // ============================================================================

@@ -3,6 +3,7 @@ import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { todKnowsAllTheTricks } from "./092-tod-knows-all-the-tricks";
 import { distract } from "../../003/actions/159-distract";
 import { stolenScimitar } from "../../001/items/102-stolen-scimitar";
+import { educationOrElimination } from "../actions/097-education-or-elimination";
 
 describe("Tod - Knows All the Tricks", () => {
   describe("IMPRESSIVE LEAPS - Twice during your turn, whenever this character is chosen for an action or an item's ability, you may ready him.", () => {
@@ -139,6 +140,34 @@ describe("Tod - Knows All the Tricks", () => {
       expect(
         testEngine.asPlayerOne().resolvePendingByCard(todKnowsAllTheTricks),
       ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().isExerted(todKnowsAllTheTricks)).toBe(false);
+    });
+
+    it("regression: triggers when chosen via a choice-effect action (Education or Elimination)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: todKnowsAllTheTricks, exerted: true, isDrying: false }],
+        hand: [educationOrElimination],
+        inkwell: educationOrElimination.cost,
+        deck: 5,
+      });
+
+      expect(testEngine.asPlayerOne().isExerted(todKnowsAllTheTricks)).toBe(true);
+
+      // Play Education or Elimination, option 0: buff chosen character of yours (Tod)
+      expect(
+        testEngine.asPlayerOne().playCardWithChoice(educationOrElimination, 0, {
+          targets: [todKnowsAllTheTricks],
+        }).success,
+      ).toBe(true);
+
+      // IMPRESSIVE LEAPS must fire because Tod was chosen by an action
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(todKnowsAllTheTricks, {
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
       expect(testEngine.asPlayerOne().isExerted(todKnowsAllTheTricks)).toBe(false);
     });
 

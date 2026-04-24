@@ -6,7 +6,8 @@ import { getApiOrigin } from "$lib/config/public-url-config.js";
 import { createAutomatedMatchSeed } from "@/features/simulator-devtools/ai-match/config.js";
 import type { HumanVsAiMatchConfig } from "@/features/simulator-devtools/vs-ai/types.js";
 import type { PracticeMatchSession } from "@/features/practice-match/types.js";
-import { getServerApiOrigin, serverFetch } from "$lib/server/fetch-with-cf.js";
+import { getServerApiOrigin } from "$lib/server/fetch-with-cf.js";
+import { serverJsonOrNull } from "$lib/data/server/server-json.js";
 
 interface QuickMatchConfigResponse {
   object: "quick_match_config";
@@ -39,22 +40,15 @@ export async function load(event: ServerLoadEvent): Promise<QuickMatchPlayByIdDa
     const url = `${apiOrigin}/v1/play/quick-match/${gameId}`;
     trace("fetching config", { url, hasCookie: !!cookie });
 
-    const response = await serverFetch(url, {
+    const result = await serverJsonOrNull<QuickMatchConfigResponse>(url, {
       headers: cookie ? { cookie } : {},
     });
 
-    trace("config API response", { status: response.status, ok: response.ok });
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      trace("config API error", { body: body.slice(0, 200) });
-      if (response.status === 404) {
-        return { status: "error", message: "Match not found or expired." };
-      }
-      return { status: "error", message: `Failed to load match (${response.status}).` };
+    if (!result) {
+      return { status: "error", message: "Match not found or expired." };
     }
 
-    configResponse = (await response.json()) as QuickMatchConfigResponse;
+    configResponse = result;
     trace("config received", {
       matchId: configResponse.matchId,
       playerId: configResponse.playerId,
@@ -98,7 +92,7 @@ export async function load(event: ServerLoadEvent): Promise<QuickMatchPlayByIdDa
   const session: PracticeMatchSession = {
     matchId: configResponse.matchId,
     gameId,
-    playerId: configResponse.playerId,
+    gameProfileId: configResponse.playerId,
     botPlayerId: configResponse.botPlayerId,
     deckConfig,
     wsTicket: "quick-match",

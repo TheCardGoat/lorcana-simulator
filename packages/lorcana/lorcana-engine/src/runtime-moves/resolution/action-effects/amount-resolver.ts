@@ -1,5 +1,6 @@
 import type { CardInstanceId } from "#core";
 import type { Amount, AmountString } from "@tcg/lorcana-types";
+import { isUpToAmount, supportsUpTo } from "@tcg/lorcana-types";
 import type { DynamicAmountEventSnapshot } from "../../../types/domain-events";
 import type { CardPlayedPayload } from "../../../types";
 import type { PlayCardExecutionContext } from "./types";
@@ -78,6 +79,13 @@ function resolveDynamicField(
     return undefined;
   }
 
+  // Unwrap `{ type: "up-to", value: X }` — the up-to semantics are consumed by
+  // the resolver/UI layer via `isUpToAmount(effect.amount)`. The concrete
+  // amount computed here is always the (clamped) maximum.
+  if (isUpToAmount(rawValue as Amount)) {
+    return resolveDynamicField((rawValue as { value: unknown }).value, context);
+  }
+
   if (typeof rawValue === "number") {
     if (!Number.isFinite(rawValue)) {
       return undefined;
@@ -133,6 +141,22 @@ export function resolveEffectDynamicFields(
   const rawValue = getRawFieldValue(effect, "value");
 
   if (rawAmount !== undefined) {
+    // "Up to" is only meaningful for effect types that have registered a rule
+    // describing how to clamp the chooser prompt. A wrapped amount on any
+    // other effect is a silent bug waiting to produce the maximum value every
+    // time — surface it loudly so card authors notice.
+    if (isUpToAmount(rawAmount as Amount)) {
+      const effectType =
+        effect && typeof effect === "object" ? (effect as { type?: unknown }).type : undefined;
+      if (typeof effectType !== "string" || !supportsUpTo(effectType)) {
+        throw new Error(
+          `Effect type "${String(effectType ?? "<unknown>")}" is not registered ` +
+            `for up-to amount semantics. Either register it in up-to-rules.ts ` +
+            `or remove the { type: "up-to", value } wrapper.`,
+        );
+      }
+    }
+
     resolvedDynamic.amount = resolveDynamicField(rawAmount, resolutionContext);
   }
 

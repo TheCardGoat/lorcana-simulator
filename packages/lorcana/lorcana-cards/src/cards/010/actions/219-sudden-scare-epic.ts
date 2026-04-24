@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { suddenScare } from "..";
+import { suddenScare } from "./164-sudden-scare";
 
 export const suddenScareEpic: ActionCard = {
   ...suddenScare,

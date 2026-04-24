@@ -39,41 +39,38 @@ export const meekoSkittishScrounger: CharacterCard = {
     {
       id: "157-2",
       name: "BOTTOMLESS PIT",
-      effect: {
-        condition: {
-          type: "target-query",
-          query: {
-            selector: "all",
-            reference: "source",
-            filters: [
-              {
-                type: "exerted",
-              },
-            ],
-          },
-          comparison: {
-            operator: "gte",
-            value: 1,
-          },
-        },
-        then: {
-          type: "or",
-          optionLabels: ["choose and discard a card", "banish him"],
-          options: [
+      condition: {
+        type: "target-query",
+        query: {
+          selector: "all",
+          reference: "source",
+          filters: [
             {
-              amount: 1,
-              chosen: true,
-              from: "hand",
-              target: "CONTROLLER",
-              type: "discard",
-            },
-            {
-              target: "SELF",
-              type: "banish",
+              type: "exerted",
             },
           ],
         },
-        type: "conditional",
+        comparison: {
+          operator: "gte",
+          value: 1,
+        },
+      },
+      effect: {
+        type: "or",
+        optionLabels: ["choose and discard a card", "banish him"],
+        options: [
+          {
+            amount: 1,
+            chosen: true,
+            from: "hand",
+            target: "CONTROLLER",
+            type: "discard",
+          },
+          {
+            target: "SELF",
+            type: "banish",
+          },
+        ],
       },
       trigger: {
         event: "end-turn",

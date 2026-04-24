@@ -36,14 +36,14 @@
         <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">1. Save</h2>
         <p class="mt-2 text-sm leading-6 text-slate-300">
           Add a fixture under
-          <span class="font-mono text-slate-200">fixtures/regressions/&lt;slug&gt;.ts</span>.
+          <span class="font-mono text-slate-200">packages/lorcana/lorcana-simulator/src/lib/features/simulator-devtools/fixtures/regressions/&lt;slug&gt;.ts</span> and add it to regressionFixtureRegistry <span class="font-mono text-slate-200">packages/lorcana/lorcana-simulator/src/lib/features/simulator-devtools/fixtures/regressions/index.ts</span>.
         </p>
       </div>
       <div class="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
         <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">2. Test</h2>
         <p class="mt-2 text-sm leading-6 text-slate-300">
           Add a matching test under
-          <span class="font-mono text-slate-200">src/testing/regressions/&lt;slug&gt;.test.ts</span>.
+          <span class="font-mono text-slate-200">packages/lorcana/lorcana-simulator/src/testing/regressions/&lt;slug&gt;.test.ts</span>.
         </p>
       </div>
       <div class="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">

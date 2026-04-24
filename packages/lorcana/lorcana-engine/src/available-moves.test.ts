@@ -120,6 +120,29 @@ const playerTargetAction = createMockAction({
   ],
 });
 
+const opponentChoosesBanishAction = createMockAction({
+  id: "am-opponent-chooses-banish",
+  name: "Opponent Chooses Banish",
+  cost: 4,
+  text: "Each opponent chooses and banishes one of their characters.",
+  abilities: [
+    {
+      type: "action",
+      effect: {
+        type: "banish",
+        chosenBy: "opponent",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+    },
+  ],
+});
+
 const multiTargetAction = createMockAction({
   id: "am-multi-target-action",
   name: "Multi Target Action",
@@ -199,6 +222,32 @@ const voicelessSinger = createMockCharacter({
   ],
 });
 
+const discardCostAbilityCharacter = createMockCharacter({
+  id: "am-discard-cost-ability",
+  name: "Discard Cost Ability",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+  abilities: [
+    {
+      id: "am-discard-cost-ability-1",
+      name: "GOOD AIM",
+      text: "GOOD AIM Once during your turn, you may choose and discard a card to deal 2 damage to chosen character.",
+      type: "activated",
+      cost: {
+        discardCards: 1,
+        discardChosen: true,
+      },
+      effect: {
+        type: "deal-damage",
+        amount: 2,
+        target: "CHOSEN_CHARACTER",
+      },
+    },
+  ],
+});
+
 const singTogetherSong = createMockSong({
   id: "am-sing-together-song",
   name: "Big Chorus",
@@ -211,6 +260,60 @@ const singTogetherSong = createMockSong({
       text: "Sing Together 8",
       type: "keyword",
       value: 8,
+    },
+  ],
+});
+
+const shiftBaseCharacter = createMockCharacter({
+  id: "am-shift-base",
+  name: "Shift Hero",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  lore: 1,
+});
+
+const discardShiftCharacter = createMockCharacter({
+  id: "am-discard-shift",
+  name: "Shift Hero",
+  cost: 5,
+  strength: 4,
+  willpower: 4,
+  lore: 2,
+  abilities: [
+    {
+      id: "am-discard-shift-kw",
+      keyword: "Shift",
+      text: "Shift: Discard a song card",
+      type: "keyword",
+      shiftTarget: "Shift Hero",
+      cost: {
+        discardCards: 1,
+        discardChosen: true,
+        discardCardType: "song",
+      },
+    },
+  ],
+});
+
+const multiDiscardShiftCharacter = createMockCharacter({
+  id: "am-multi-discard-shift",
+  name: "Shift Hero",
+  cost: 6,
+  strength: 5,
+  willpower: 5,
+  lore: 2,
+  abilities: [
+    {
+      id: "am-multi-discard-shift-kw",
+      keyword: "Shift",
+      text: "Shift: Discard 2 cards",
+      type: "keyword",
+      shiftTarget: "Shift Hero",
+      cost: {
+        discardCards: 2,
+        discardChosen: true,
+      },
     },
   ],
 });
@@ -271,6 +374,300 @@ describe("LorcanaEngineBase.getAvailableMoves", () => {
 
     expect(challengeMove).toBeDefined();
     expect(challengeMove!.selectableCardIds.length).toBe(1);
+  });
+
+  it("surfaces activated abilities that need discard-cost selection before execution", () => {
+    const secondHandCard = createMockCharacter({
+      id: "am-second-hand-card",
+      name: "Second Hand Card",
+      cost: 1,
+      strength: 1,
+      willpower: 1,
+      lore: 1,
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: discardCostAbilityCharacter, isDrying: false }],
+        hand: [handCharacter, secondHandCard],
+        deck: 1,
+        inkwell: 3,
+      },
+      {
+        play: [opponentCharacter],
+        deck: 1,
+      },
+    );
+
+    const moves = testEngine.asPlayerOne().getAvailableMoves();
+    const activateMove = moves.find((move) => move.moveId === "activateAbility");
+
+    expect(activateMove).toBeDefined();
+    expect(activateMove?.selectableCardIds).toContain(
+      testEngine.asPlayerOne().getCard(discardCostAbilityCharacter).id,
+    );
+  });
+
+  it("lists activated abilities that need discard-cost selection in move options", () => {
+    const secondHandCard = createMockCharacter({
+      id: "am-third-hand-card",
+      name: "Third Hand Card",
+      cost: 1,
+      strength: 1,
+      willpower: 1,
+      lore: 1,
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: discardCostAbilityCharacter, isDrying: false }],
+        hand: [handCharacter, secondHandCard],
+        deck: 1,
+        inkwell: 3,
+      },
+      {
+        play: [opponentCharacter],
+        deck: 1,
+      },
+    );
+
+    const p1 = testEngine.asPlayerOne();
+    const activateMove = p1.getAvailableMoves().find((move) => move.moveId === "activateAbility");
+
+    expect(activateMove?.selectableCardIds).toHaveLength(1);
+
+    const [abilityCardId] = activateMove!.selectableCardIds;
+    const abilityOptions = p1.getMoveOptions("activateAbility", abilityCardId!);
+
+    expect(abilityOptions).toContainEqual({
+      kind: "ability",
+      abilityIndex: 0,
+      abilityLabel: "GOOD AIM",
+      selectableCosts: [
+        {
+          kind: "discardCards",
+          count: 1,
+          candidateCardIds: expect.any(Array),
+          zone: "hand",
+        },
+      ],
+    });
+  });
+
+  it("surfaces discard-cost Shift cards in available moves when payment and a legal target exist", () => {
+    const discardSong = createMockSong({
+      id: "am-shift-discard-song",
+      name: "Shift Song",
+      cost: 2,
+      text: "Sing this song.",
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [shiftBaseCharacter],
+        hand: [discardSong, discardShiftCharacter],
+        deck: 1,
+        inkwell: 0,
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    const shiftMove = testEngine
+      .asPlayerOne()
+      .getAvailableMoves()
+      .find((move) => move.moveId === "shiftCard");
+
+    expect(shiftMove).toBeDefined();
+    expect(shiftMove?.selectableCardIds).toContain(
+      testEngine.asPlayerOne().getCard(discardShiftCharacter).id,
+    );
+  });
+
+  it("lists typed discard-cost Shift targets with selectable discard costs", () => {
+    const discardSong = createMockSong({
+      id: "am-shift-discard-song-option",
+      name: "Shift Song Option",
+      cost: 2,
+      text: "Sing this song.",
+    });
+    const secondDiscardSong = createMockSong({
+      id: "am-shift-discard-song-option-2",
+      name: "Shift Song Option Two",
+      cost: 2,
+      text: "Sing this song too.",
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [shiftBaseCharacter],
+        hand: [discardSong, secondDiscardSong, discardShiftCharacter],
+        deck: 1,
+        inkwell: 0,
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    const player = testEngine.asPlayerOne();
+    const shiftCardId = testEngine.findCardInstanceId(discardShiftCharacter, "hand", "player_one");
+    const shiftTargetId = testEngine.findCardInstanceId(shiftBaseCharacter, "play", "player_one");
+    const discardSongId = testEngine.findCardInstanceId(discardSong, "hand", "player_one");
+    const secondDiscardSongId = testEngine.findCardInstanceId(
+      secondDiscardSong,
+      "hand",
+      "player_one",
+    );
+
+    expect(player.getMoveOptions("shiftCard", shiftCardId)).toContainEqual({
+      kind: "card",
+      cardId: shiftTargetId,
+      selectableCosts: [
+        {
+          kind: "discardCards",
+          count: 1,
+          candidateCardIds: [discardSongId, secondDiscardSongId],
+          zone: "hand",
+          cardType: "song",
+        },
+      ],
+    });
+  });
+
+  it("blocks playing a second card when ink is exhausted after paying for the first", () => {
+    const threeDropA = createMockCharacter({
+      id: "am-three-drop-a",
+      name: "Three Drop A",
+      cost: 3,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+    const threeDropB = createMockCharacter({
+      id: "am-three-drop-b",
+      name: "Three Drop B",
+      cost: 3,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [threeDropA, threeDropB],
+        deck: 1,
+        inkwell: 4,
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    const p1 = testEngine.asPlayerOne();
+
+    // Player should be able to play one 3-cost card with 4 ink
+    const movesBeforePlay = p1.getAvailableMoves();
+    const playMoveBefore = movesBeforePlay.find((m) => m.moveId === "playCard");
+    expect(playMoveBefore).toBeDefined();
+
+    // Play the first card
+    const cardAId = testEngine.findCardInstanceId(threeDropA, "hand", "player_one");
+    p1.playCard(cardAId);
+
+    // After playing a 3-cost card with 4 ink, only 1 ink remains
+    // The second 3-cost card should not be playable
+    const movesAfterPlay = p1.getAvailableMoves();
+    const playMoveAfter = movesAfterPlay.find((m) => m.moveId === "playCard");
+    const secondCardId = testEngine.findCardInstanceId(threeDropB, "hand", "player_one");
+    p1.playCard(secondCardId);
+
+    if (playMoveAfter) {
+      expect(playMoveAfter.selectableCardIds).not.toContain(secondCardId);
+    }
+  });
+
+  it("lists untyped multi-discard Shift targets with selectable discard costs", () => {
+    const firstDiscardCard = createMockCharacter({
+      id: "am-shift-discard-any-1",
+      name: "Any Shift Card One",
+      cost: 1,
+      strength: 1,
+      willpower: 1,
+      lore: 1,
+    });
+    const secondDiscardCard = createMockCharacter({
+      id: "am-shift-discard-any-2",
+      name: "Any Shift Card Two",
+      cost: 1,
+      strength: 1,
+      willpower: 1,
+      lore: 1,
+    });
+    const thirdDiscardCard = createMockAction({
+      id: "am-shift-discard-any-3",
+      name: "Any Shift Card Three",
+      cost: 1,
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [shiftBaseCharacter],
+        hand: [firstDiscardCard, secondDiscardCard, thirdDiscardCard, multiDiscardShiftCharacter],
+        deck: 1,
+        inkwell: 0,
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    const player = testEngine.asPlayerOne();
+    const shiftCardId = testEngine.findCardInstanceId(
+      multiDiscardShiftCharacter,
+      "hand",
+      "player_one",
+    );
+    const shiftTargetId = testEngine.findCardInstanceId(shiftBaseCharacter, "play", "player_one");
+    const firstDiscardId = testEngine.findCardInstanceId(firstDiscardCard, "hand", "player_one");
+    const secondDiscardId = testEngine.findCardInstanceId(secondDiscardCard, "hand", "player_one");
+    const thirdDiscardId = testEngine.findCardInstanceId(thirdDiscardCard, "hand", "player_one");
+    const shiftingCardId = shiftCardId;
+
+    expect(player.getMoveOptions("shiftCard", shiftCardId)).toContainEqual({
+      kind: "card",
+      cardId: shiftTargetId,
+      selectableCosts: [
+        {
+          kind: "discardCards",
+          count: 2,
+          candidateCardIds: [firstDiscardId, secondDiscardId, thirdDiscardId, shiftingCardId],
+          zone: "hand",
+        },
+      ],
+    });
+  });
+
+  it("does not surface discard-cost Shift when there are not enough valid discard candidates", () => {
+    const nonSongDiscard = createMockAction({
+      id: "am-shift-non-song-discard",
+      name: "Not A Song",
+      cost: 2,
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [shiftBaseCharacter],
+        hand: [nonSongDiscard, discardShiftCharacter],
+        deck: 1,
+        inkwell: 0,
+      },
+      {
+        deck: 1,
+      },
+    );
+
+    const shiftMove = testEngine
+      .asPlayerOne()
+      .getAvailableMoves()
+      .find((move) => move.moveId === "shiftCard");
+
+    expect(shiftMove).toBeUndefined();
   });
 
   it("reuses cached challenge availability for repeated calls in the same state", () => {
@@ -464,157 +861,6 @@ describe("LorcanaEngineBase.getAvailableMoves", () => {
       testEngine.findCardInstanceId(singTogetherSong, "hand", "player_one"),
     ]);
   });
-
-  // Regression tests for THE-879/THE-895: alternative cost checks (sing/shift) were dead code
-  // due to `!isHandCard || !isLimboCardWithPermission` always being true.
-  // The bug caused `available()` to skip all alternative cost checks, so playCard was
-  // reported as unavailable even when sing/shift could be used.
-  it("returns singCard when a song is in hand with no ink but a ready singer in play", () => {
-    const song = createMockSong({
-      id: "am-regression-sing-song",
-      name: "Regression Sing Song",
-      cost: 5,
-      text: "Draw a card.",
-    });
-    const singer = createMockCharacter({
-      id: "am-regression-sing-singer",
-      name: "Regression Singer",
-      cost: 3,
-      abilities: [
-        {
-          id: "am-regression-sing-singer-kw",
-          keyword: "Singer",
-          text: "Singer 5",
-          type: "keyword",
-          value: 5,
-        },
-      ],
-    });
-
-    // Player has 0 ink (cannot play song via standard) but has a ready Singer 5 in play
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-      {
-        hand: [song],
-        play: [singer],
-        inkwell: 0,
-        deck: 1,
-      },
-      { deck: 1 },
-    );
-
-    const moves = testEngine.asPlayerOne().getAvailableMoves();
-    const singMove = moves.find((m) => m.moveId === "singCard");
-
-    // Song should appear in singCard (regression: was missing because alternative cost check was dead code)
-    expect(singMove).toBeDefined();
-    expect(singMove?.selectableCardIds).toContain(
-      testEngine.findCardInstanceId(song, "hand", "player_one"),
-    );
-  });
-
-  it("returns shiftCard when a card is shiftable with less ink than standard cost", () => {
-    // Shiftable character: cost 6, Shift 4 (shift into same name)
-    const shiftableCharacter = createMockCharacter({
-      id: "am-regression-shift-stitch-rs",
-      name: "Stitch",
-      version: "Rock Star",
-      cost: 6,
-      strength: 3,
-      willpower: 5,
-      lore: 3,
-      classifications: ["Floodborn", "Hero", "Alien"],
-      abilities: [
-        {
-          cost: { ink: 4 },
-          id: "am-regression-shift-stitch-rs-kw",
-          keyword: "Shift",
-          text: "Shift 4 {I}",
-          type: "keyword",
-        },
-      ],
-    });
-    const shiftTarget = createMockCharacter({
-      id: "am-regression-shift-stitch-base",
-      name: "Stitch",
-      version: "Carefree Surfer",
-      cost: 3,
-      strength: 2,
-      willpower: 3,
-      lore: 1,
-      classifications: ["Storyborn", "Hero", "Alien"],
-    });
-
-    // Player has 4 ink (enough for Shift 4 but not for standard cost 6)
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-      {
-        hand: [shiftableCharacter],
-        play: [shiftTarget],
-        inkwell: 4,
-        deck: 1,
-      },
-      { deck: 1 },
-    );
-
-    const moves = testEngine.asPlayerOne().getAvailableMoves();
-    const shiftMove = moves.find((m) => m.moveId === "shiftCard");
-
-    // Shift should appear in shiftCard (regression: was missing because alternative cost check was dead code)
-    expect(shiftMove).toBeDefined();
-    expect(shiftMove?.selectableCardIds).toContain(
-      testEngine.findCardInstanceId(shiftableCharacter, "hand", "player_one"),
-    );
-  });
-
-  it("blocks playing a second card when ink is exhausted after paying for the first", () => {
-    const threeDropA = createMockCharacter({
-      id: "am-three-drop-a",
-      name: "Three Drop A",
-      cost: 3,
-      strength: 2,
-      willpower: 3,
-      lore: 1,
-    });
-    const threeDropB = createMockCharacter({
-      id: "am-three-drop-b",
-      name: "Three Drop B",
-      cost: 3,
-      strength: 2,
-      willpower: 3,
-      lore: 1,
-    });
-
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-      {
-        hand: [threeDropA, threeDropB],
-        deck: 1,
-        inkwell: 4,
-      },
-      {
-        deck: 1,
-      },
-    );
-
-    const p1 = testEngine.asPlayerOne();
-
-    // Player should be able to play one 3-cost card with 4 ink
-    const movesBeforePlay = p1.getAvailableMoves();
-    const playMoveBefore = movesBeforePlay.find((m) => m.moveId === "playCard");
-    expect(playMoveBefore).toBeDefined();
-
-    // Play the first card
-    const cardAId = testEngine.findCardInstanceId(threeDropA, "hand", "player_one");
-    p1.playCard(cardAId);
-
-    // After playing a 3-cost card with 4 ink, only 1 ink remains
-    // The second 3-cost card should not be playable
-    const movesAfterPlay = p1.getAvailableMoves();
-    const playMoveAfter = movesAfterPlay.find((m) => m.moveId === "playCard");
-    const secondCardId = testEngine.findCardInstanceId(threeDropB, "hand", "player_one");
-
-    if (playMoveAfter) {
-      expect(playMoveAfter.selectableCardIds).not.toContain(secondCardId);
-    }
-  });
 });
 
 describe("LorcanaEngineBase.getMoveOptions", () => {
@@ -746,6 +992,64 @@ describe("LorcanaEngineBase.getMoveOptions", () => {
     expect(options[0]?.kind).toBe("card");
   });
 
+  it("excludes opponents whose Ward was granted by a static ability (e.g. Goofy - Emerald Champion)", () => {
+    const wardGranter = createMockCharacter({
+      id: "am-ward-granter",
+      name: "Ward Granter",
+      cost: 5,
+      strength: 3,
+      willpower: 5,
+      lore: 2,
+      abilities: [
+        {
+          id: "am-ward-granter-provide-cover",
+          type: "static",
+          text: "Your other characters gain Ward.",
+          name: "PROVIDE COVER",
+          effect: {
+            type: "gain-keyword",
+            keyword: "Ward",
+            target: {
+              selector: "all",
+              owner: "you",
+              zones: ["play"],
+              cardTypes: ["character"],
+              count: "all",
+              excludeSelf: true,
+            },
+          },
+        },
+      ],
+    });
+    const unwardedAlly = createMockCharacter({
+      id: "am-unwarded-ally",
+      name: "Unwarded Ally",
+      cost: 2,
+      strength: 2,
+      willpower: 3,
+      lore: 1,
+    });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [targetedAction],
+        inkwell: targetedAction.cost,
+        deck: 1,
+      },
+      {
+        play: [wardGranter, unwardedAlly],
+        deck: 1,
+      },
+    );
+
+    const p1 = testEngine.asPlayerOne();
+    const playMove = p1.getAvailableMoves().find((move) => move.moveId === "playCard");
+    expect(playMove).toBeDefined();
+
+    const options = p1.getMoveOptions("playCard", playMove!.selectableCardIds[0]);
+    expect(options).toHaveLength(1);
+    expect(options[0]?.kind).toBe("card");
+  });
+
   it("falls back to no playCard shortcut targets when none are legal", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
@@ -786,6 +1090,32 @@ describe("LorcanaEngineBase.getMoveOptions", () => {
     expect(playMove).toBeDefined();
 
     expect(p1.getMoveOptions("playCard", playMove!.selectableCardIds[0])).toEqual([]);
+  });
+
+  it("does not expose playCard shortcut targets when the opponent picks the targets", () => {
+    // Regression: bug-04 (Be King Undisputed) — the action's effect carries
+    // `chosenBy: "opponent"`, so the controller must not be prompted to pre-pick
+    // a target. Playing the card moves it to limbo first; the opponent then
+    // picks from their own characters via the resolution prompt.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [opponentChoosesBanishAction],
+        inkwell: opponentChoosesBanishAction.cost,
+        deck: 1,
+      },
+      {
+        play: [opponentCharacter, wardedOpponent],
+        deck: 1,
+      },
+    );
+
+    const p1 = testEngine.asPlayerOne();
+    const playMove = p1.getAvailableMoves().find((move) => move.moveId === "playCard");
+    expect(playMove).toBeDefined();
+
+    const cardId = playMove!.selectableCardIds[0];
+    expect(p1.getMoveOptions("playCard", cardId)).toEqual([]);
+    expect(p1.hasTargetedPlayCardPreview(cardId)).toBe(false);
   });
 
   it("does not expose playCard shortcut targets for multi-target actions", () => {

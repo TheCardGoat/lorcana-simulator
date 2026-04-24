@@ -1,5 +1,5 @@
 import type { ItemCard } from "@tcg/lorcana-types";
-import { theSorcerersHat } from "..";
+import { theSorcerersHat } from "./065-the-sorcerers-hat";
 
 export const theSorcerersHatEnchanted: ItemCard = {
   ...theSorcerersHat,

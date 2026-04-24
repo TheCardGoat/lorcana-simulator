@@ -45,6 +45,32 @@ describe("Madam Mim - Elephant", () => {
   });
 
   describe("SNEAKY MOVE - At the start of your turn, you may move up to 2 damage counters from this character to chosen opposing character.", () => {
+    it("does not enter the bag when Madam Mim has no damage (phantom-trigger regression)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [goofyKnightForADay],
+        },
+        {
+          play: [{ card: madamMimElephant, damage: 0 }],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+    });
+
+    it("does not enter the bag when opponent has no characters (phantom-trigger regression)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {},
+        {
+          play: [{ card: madamMimElephant, damage: 1 }],
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+    });
+
     it("moves 1 damage counter from Madam Mim to opposing character", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
@@ -128,11 +154,8 @@ describe("Madam Mim - Elephant", () => {
 
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerTwo().getBagCount()).toBeGreaterThan(0);
-      expect(
-        testEngine.asPlayerTwo().resolvePendingByCard(madamMimElephant),
-      ).toBeSuccessfulCommand();
-
+      // Trigger-level condition prevents phantom prompts when there's no damage to move.
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
       expect(testEngine.asPlayerTwo().getDamage(madamMimElephant)).toBe(0);
       expect(testEngine.asPlayerOne().getDamage(goofyKnightForADay)).toBe(0);
     });
@@ -147,8 +170,8 @@ describe("Madam Mim - Elephant", () => {
 
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
+      // Trigger-level condition prevents phantom prompts when there's no legal destination.
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
-
       expect(testEngine.asPlayerTwo().getDamage(madamMimElephant)).toBe(2);
     });
   });

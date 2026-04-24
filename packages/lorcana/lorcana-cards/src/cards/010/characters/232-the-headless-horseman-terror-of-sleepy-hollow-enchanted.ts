@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { theHeadlessHorsemanTerrorOfSleepyHollow } from "..";
+import { theHeadlessHorsemanTerrorOfSleepyHollow } from "./125-the-headless-horseman-terror-of-sleepy-hollow";
 
 export const theHeadlessHorsemanTerrorOfSleepyHollowEnchanted: CharacterCard = {
   ...theHeadlessHorsemanTerrorOfSleepyHollow,

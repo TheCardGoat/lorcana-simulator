@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { createMockCharacter, LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { elsaSpiritOfWinter } from "../../001/characters/042-elsa-spirit-of-winter";
 import { monstroInfamousWhale } from "./064-monstro-infamous-whale";
+import { donaldDuckCoinCollector } from "./037-donald-duck-coin-collector";
 
 const discardFodder = createMockCharacter({
   id: "monstro-test-discard-fodder",
@@ -36,6 +37,7 @@ describe("Monstro - Infamous Whale", () => {
 
       expect(
         testEngine.asPlayerOne().activateAbility(monstroInfamousWhale, {
+          ability: "FULL BREACH",
           costs: {
             discardCards: [discardFodder],
           },
@@ -57,6 +59,7 @@ describe("Monstro - Infamous Whale", () => {
 
       expect(
         testEngine.asPlayerOne().activateAbility(monstroInfamousWhale, {
+          ability: "FULL BREACH",
           costs: {
             discardCards: [discardFodder],
           },
@@ -75,6 +78,7 @@ describe("Monstro - Infamous Whale", () => {
 
       expect(
         testEngine.asPlayerOne().activateAbility(monstroInfamousWhale, {
+          ability: "FULL BREACH",
           costs: {
             discardCards: [discardFodder],
           },
@@ -127,10 +131,88 @@ describe("Regression Tests", () => {
     // FULL BREACH should still be able to ready Monstro despite cant-ready restriction
     expect(
       testEngine.asPlayerTwo().activateAbility(monstroInfamousWhale, {
+        ability: "FULL BREACH",
         costs: { discardCards: [discardFodder] },
       }),
     ).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().isExerted(monstroInfamousWhale)).toBe(false);
+  });
+});
+
+describe("FULL BREACH + COMBO — Shortcut for Monstro + Donald Duck draw loop", () => {
+  const COMBO_ABILITY_INDEX = 1;
+
+  it("combo ability is NOT available without a granted exert-to-draw ability", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [monstroInfamousWhale],
+      deck: 5,
+    });
+
+    const result = testEngine
+      .asPlayerOne()
+      .activateAbility(monstroInfamousWhale, { abilityIndex: COMBO_ABILITY_INDEX });
+    expect(result.success).toBe(false);
+  });
+
+  it("combo ability IS available when MONEY EVERYWHERE is active", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [donaldDuckCoinCollector],
+      play: [monstroInfamousWhale],
+      inkwell: donaldDuckCoinCollector.cost,
+      deck: 5,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(donaldDuckCoinCollector)).toBeSuccessfulCommand();
+
+    // The combo ability should now be activatable on Monstro
+    const result = testEngine
+      .asPlayerOne()
+      .activateAbility(monstroInfamousWhale, { abilityIndex: COMBO_ABILITY_INDEX });
+    expect(result.success).toBe(true);
+  });
+
+  it("combo draws entire deck and creates a pending discard selection", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [donaldDuckCoinCollector],
+      play: [monstroInfamousWhale],
+      inkwell: donaldDuckCoinCollector.cost,
+      deck: 5,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(donaldDuckCoinCollector)).toBeSuccessfulCommand();
+    expect(
+      testEngine
+        .asPlayerOne()
+        .activateAbility(monstroInfamousWhale, { abilityIndex: COMBO_ABILITY_INDEX }),
+    ).toBeSuccessfulCommand();
+
+    // Deck should be empty after drawing all cards
+    expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(0);
+
+    // There should be a pending discard selection
+    const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
+    expect(pendingEffects.length).toBeGreaterThan(0);
+  });
+
+  it("combo disappears after the turn ends (MONEY EVERYWHERE is this-turn only)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [donaldDuckCoinCollector],
+      play: [monstroInfamousWhale],
+      inkwell: donaldDuckCoinCollector.cost,
+      deck: 5,
+    });
+
+    expect(testEngine.asPlayerOne().playCard(donaldDuckCoinCollector)).toBeSuccessfulCommand();
+
+    // Pass both turns
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    // Combo should no longer be available
+    const result = testEngine
+      .asPlayerOne()
+      .activateAbility(monstroInfamousWhale, { abilityIndex: COMBO_ABILITY_INDEX });
+    expect(result.success).toBe(false);
   });
 });

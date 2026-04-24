@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { kaaSecretiveSnake } from "..";
+import { kaaSecretiveSnake } from "./079-kaa-secretive-snake";
 
 export const kaaSecretiveSnakeEpic: CharacterCard = {
   ...kaaSecretiveSnake,

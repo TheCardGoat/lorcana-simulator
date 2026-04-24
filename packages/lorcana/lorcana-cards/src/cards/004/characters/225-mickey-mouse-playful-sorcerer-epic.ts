@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mickeyMousePlayfulSorcerer } from "..";
+import { mickeyMousePlayfulSorcerer } from "./187-mickey-mouse-playful-sorcerer";
 
 export const mickeyMousePlayfulSorcererEpic: CharacterCard = {
   ...mickeyMousePlayfulSorcerer,

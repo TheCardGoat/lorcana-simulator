@@ -65,6 +65,5 @@ export const rayaLeaderOfHeart: CharacterCard = {
       },
     },
   ],
-  missingTests: true,
   i18n: rayaLeaderOfHeartI18n,
 };

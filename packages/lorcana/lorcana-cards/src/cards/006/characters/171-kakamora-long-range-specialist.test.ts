@@ -102,7 +102,13 @@ describe("Kakamora - Long-Range Specialist", () => {
         testEngine.asPlayerOne().playCard(kakamoraLongrangeSpecialist),
       ).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(kakamoraLongrangeSpecialist, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().getDamage(opponentCharacter)).toBe(0);
     });
 

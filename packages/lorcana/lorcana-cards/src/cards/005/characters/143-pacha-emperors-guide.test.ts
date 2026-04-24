@@ -40,11 +40,11 @@ describe("Pacha - Emperor's Guide", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      // The HELPFUL SUPPLIES triggered ability should be in the bag — resolve it
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine.asPlayerOne().resolvePendingByCard(pachaEmperorsGuide),
-      ).toBeSuccessfulCommand();
+      // Per CRD 6.2.7: both abilities enqueue at trigger time; conditions checked at resolution
+      // HELPFUL SUPPLIES (item) and PERFECT DIRECTIONS (location) both enqueue, but only the item
+      // condition is met, so only 1 lore is gained after resolving both
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
+      testEngine.asPlayerOne().resolveAllBagEffects();
 
       // At start of player one's next turn, HELPFUL SUPPLIES should have fired
       expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore + 1);
@@ -90,11 +90,11 @@ describe("Pacha - Emperor's Guide", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      // The PERFECT DIRECTIONS triggered ability should be in the bag — resolve it
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine.asPlayerOne().resolvePendingByCard(pachaEmperorsGuide),
-      ).toBeSuccessfulCommand();
+      // Per CRD 6.2.7: both abilities enqueue at trigger time; conditions checked at resolution
+      // HELPFUL SUPPLIES (item) and PERFECT DIRECTIONS (location) both enqueue, but only the
+      // location condition is met, so only 1 lore is gained after resolving both
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
+      testEngine.asPlayerOne().resolveAllBagEffects();
 
       // At start of player one's next turn, PERFECT DIRECTIONS should have fired
       expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore + 1);

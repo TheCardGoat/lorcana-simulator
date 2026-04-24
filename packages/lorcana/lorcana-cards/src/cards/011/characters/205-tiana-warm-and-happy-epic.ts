@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { tianaWarmAndHappy } from "..";
+import { tianaWarmAndHappy } from "./005-tiana-warm-and-happy";
 
 export const tianaWarmAndHappyEpic: CharacterCard = {
   ...tianaWarmAndHappy,

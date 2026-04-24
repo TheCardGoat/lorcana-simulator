@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { morphSpaceGoo } from "..";
+import { morphSpaceGoo } from "./081-morph-space-goo";
 
 export const morphSpaceGooEnchanted: CharacterCard = {
   ...morphSpaceGoo,

@@ -24,8 +24,7 @@ export const repair: ActionCard = {
       type: "action",
       effect: {
         type: "remove-damage",
-        amount: 3,
-        upTo: true,
+        amount: { type: "up-to", value: 3 },
         target: {
           cardTypes: ["location", "character"],
           count: 1,

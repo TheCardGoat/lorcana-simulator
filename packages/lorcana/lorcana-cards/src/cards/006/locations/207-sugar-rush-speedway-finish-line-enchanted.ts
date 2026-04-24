@@ -1,5 +1,5 @@
 import type { LocationCard } from "@tcg/lorcana-types";
-import { sugarRushSpeedwayFinishLine } from "..";
+import { sugarRushSpeedwayFinishLine } from "./035-sugar-rush-speedway-finish-line";
 
 export const sugarRushSpeedwayFinishLineEnchanted: LocationCard = {
   ...sugarRushSpeedwayFinishLine,

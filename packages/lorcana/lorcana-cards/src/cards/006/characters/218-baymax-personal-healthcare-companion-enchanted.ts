@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { baymaxPersonalHealthcareCompanion } from "..";
+import { baymaxPersonalHealthcareCompanion } from "./156-baymax-personal-healthcare-companion";
 
 export const baymaxPersonalHealthcareCompanionEnchanted: CharacterCard = {
   ...baymaxPersonalHealthcareCompanion,

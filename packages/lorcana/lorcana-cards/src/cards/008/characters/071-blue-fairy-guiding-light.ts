@@ -33,27 +33,6 @@ export const blueFairyGuidingLight: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally", "Fairy"],
-  abilities: [
-    evasive,
-    support,
-    {
-      id: "1iq-3",
-      type: "triggered",
-      text: "Support (Whenever this character quests, you may add their {S} to another chosen character's {S} this turn.)",
-      trigger: {
-        event: "quest",
-        on: "SELF",
-        timing: "whenever",
-      },
-      effect: {
-        type: "optional",
-        chooser: "CONTROLLER",
-        effect: {
-          type: "support",
-          target: "ANOTHER_CHOSEN_CHARACTER_OF_YOURS",
-        },
-      },
-    },
-  ],
+  abilities: [evasive, support],
   i18n: blueFairyGuidingLightI18n,
 };

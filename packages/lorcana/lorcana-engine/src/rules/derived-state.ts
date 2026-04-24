@@ -27,14 +27,19 @@ import type {
   LorcanaG,
   LorcanaMatchState,
 } from "../types";
+import { resolveTurnOwnerId } from "../core/runtime/turn-owner";
 
 export type DerivedStateContext = {
   readonly ctx: {
     readonly priority?: {
       readonly holder?: string;
     };
+    /** Canonical player order for turn rotation (from framework snapshot / match ctx). */
+    readonly playerIds?: readonly PlayerId[];
     readonly status?: {
       readonly turn?: number;
+      readonly turnOwnerId?: string;
+      readonly otp?: string;
     };
     readonly zones?: {
       readonly private?: {
@@ -58,6 +63,7 @@ export type DerivedStateContext = {
         readonly continuousEffects?: LorcanaG["continuousEffects"];
         readonly turnMetadata?: Partial<LorcanaG["turnMetadata"]>;
         readonly challengeState?: LorcanaG["challengeState"];
+        readonly turnsCompletedByPlayer?: LorcanaG["turnsCompletedByPlayer"];
         readonly staticEffectsVersion?: LorcanaG["staticEffectsVersion"];
       }>
     | undefined;
@@ -71,6 +77,7 @@ export type FlatDerivedState = {
   priority: DerivedStateContext["ctx"]["priority"];
   status: DerivedStateContext["ctx"]["status"];
   _zonesPrivate: NonNullable<DerivedStateContext["ctx"]["zones"]>["private"];
+  playerIds: DerivedStateContext["ctx"]["playerIds"];
   G: DerivedStateContext["G"];
 };
 
@@ -87,6 +94,7 @@ export function createProjectionState(
       priority: snapshot.priority,
       status: snapshot.status,
       zones: { private: snapshot._zonesPrivate },
+      playerIds: snapshot.playerIds,
     },
     G,
   };
@@ -101,6 +109,7 @@ export function flattenDerivedState(state: DerivedStateContext): FlatDerivedStat
     priority: state.ctx.priority,
     status: state.ctx.status,
     _zonesPrivate: state.ctx.zones?.private,
+    playerIds: state.ctx.playerIds,
     G: state.G,
   };
 }
@@ -205,12 +214,13 @@ function getDerivedStrengthForStaticCondition(args: {
   state: DerivedStateContext;
   actorPlayerId?: PlayerId;
   getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  registry?: StaticEffectRegistry;
 }): (cardId: CardInstanceId) => number {
-  const { state, getDefinitionByInstanceId } = args;
+  const { state, getDefinitionByInstanceId, registry } = args;
 
   return (cardId: CardInstanceId) => {
     const definition = getDefinitionByInstanceId?.(cardId);
-    return deriveStrength(definition, state, cardId, getDefinitionByInstanceId, undefined);
+    return deriveStrength(definition, state, cardId, getDefinitionByInstanceId, registry);
   };
 }
 
@@ -236,7 +246,7 @@ function createProjectionAmountContext(args: {
         priority: state.ctx.priority,
         status: state.ctx.status,
         _zonesPrivate: state.ctx.zones?.private,
-        currentPlayer: state.ctx.priority?.holder as PlayerId | undefined,
+        currentPlayer: resolveTurnOwnerId(state.ctx, state.G),
         playerIds: getProjectionPlayerIds(state),
       },
       zones: {
@@ -301,7 +311,18 @@ export function resolveStaticStatModifierAmount(args: {
     return 0;
   }
 
-  const resolved = resolveVariableAmount(effect.modifier, {
+  // `modifier` cannot legitimately be an "up-to" amount — up-to only affects
+  // chooser-selectable amounts on effects like remove-damage. Unwrap defensively.
+  const modifier =
+    (effect.modifier as { type?: unknown }).type === "up-to"
+      ? (effect.modifier as { value: unknown }).value
+      : effect.modifier;
+
+  if (!modifier || typeof modifier !== "object") {
+    return typeof modifier === "number" && Number.isFinite(modifier) ? modifier : 0;
+  }
+
+  const resolved = resolveVariableAmount(modifier as Parameters<typeof resolveVariableAmount>[0], {
     ctx: createProjectionAmountContext({
       state,
       getDefinitionByInstanceId,
@@ -488,52 +509,6 @@ export function deriveLore(
       ? getStaticStatFloor({
           cardInstanceId,
           stat: "lore",
-          registry,
-        })
-      : undefined,
-  );
-}
-
-export function getEffectiveMoveCost(
-  definition: LorcanaCardDefinition | undefined,
-  state: DerivedStateContext,
-  cardInstanceId: CardInstanceId,
-  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
-  registry?: StaticEffectRegistry,
-): number {
-  return clampCharacteristicForRules(
-    deriveMoveCost(definition, state, cardInstanceId, getDefinitionByInstanceId, registry),
-  );
-}
-
-export function deriveMoveCost(
-  definition: LorcanaCardDefinition | undefined,
-  state: DerivedStateContext,
-  cardInstanceId: CardInstanceId | undefined,
-  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
-  registry?: StaticEffectRegistry,
-): number {
-  if (!definition || definition.cardType !== "location" || !cardInstanceId) {
-    return 0;
-  }
-
-  const baseMoveCost = normalizeNumber(definition.moveCost);
-  const modifier =
-    getActiveStatModifierTotal(state, cardInstanceId, "moveCost", getDefinitionByInstanceId) +
-    (registry
-      ? getStaticStatModifierTotal({
-          state,
-          cardInstanceId,
-          stat: "moveCost",
-          registry,
-        })
-      : 0);
-  return applyStaticStatFloor(
-    baseMoveCost + modifier,
-    registry
-      ? getStaticStatFloor({
-          cardInstanceId,
-          stat: "moveCost",
           registry,
         })
       : undefined,
@@ -777,6 +752,52 @@ export function deriveWillpower(
   return definition.cardType === "location" ? Math.max(0, derivedWillpower) : derivedWillpower;
 }
 
+export function getEffectiveMoveCost(
+  definition: LorcanaCardDefinition | undefined,
+  state: DerivedStateContext,
+  cardInstanceId: CardInstanceId,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
+): number {
+  return clampCharacteristicForRules(
+    deriveMoveCost(definition, state, cardInstanceId, getDefinitionByInstanceId, registry),
+  );
+}
+
+export function deriveMoveCost(
+  definition: LorcanaCardDefinition | undefined,
+  state: DerivedStateContext,
+  cardInstanceId: CardInstanceId | undefined,
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
+): number {
+  if (!definition || definition.cardType !== "location" || !cardInstanceId) {
+    return 0;
+  }
+
+  const baseMoveCost = normalizeNumber(definition.moveCost);
+  const modifier =
+    getActiveStatModifierTotal(state, cardInstanceId, "moveCost", getDefinitionByInstanceId) +
+    (registry
+      ? getStaticStatModifierTotal({
+          state,
+          cardInstanceId,
+          stat: "moveCost",
+          registry,
+        })
+      : 0);
+  return applyStaticStatFloor(
+    baseMoveCost + modifier,
+    registry
+      ? getStaticStatFloor({
+          cardInstanceId,
+          stat: "moveCost",
+          registry,
+        })
+      : undefined,
+  );
+}
+
 export type PendingCostReduction = {
   amount: number;
   sourceId?: CardInstanceId;
@@ -1001,7 +1022,8 @@ export function getAppliedCostReductions(args: {
   }
 
   const normalizedZone = zoneID?.split(":")[0];
-  if (!actorPlayerId || ownerID !== actorPlayerId || normalizedZone !== "hand") {
+  const isSupportedPlaySourceZone = normalizedZone === "hand" || normalizedZone === "discard";
+  if (!actorPlayerId || ownerID !== actorPlayerId || !isSupportedPlaySourceZone) {
     return { reductionAmount: 0, consumeIndexes: [] };
   }
 
@@ -1040,6 +1062,7 @@ export function getAppliedCostReductions(args: {
     state,
     actorPlayerId,
     getDefinitionByInstanceId,
+    registry,
   });
   const selfStaticReduction = getSelfStaticCostReductionAmount({
     state,

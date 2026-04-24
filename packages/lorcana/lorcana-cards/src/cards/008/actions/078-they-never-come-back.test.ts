@@ -32,4 +32,25 @@ describe("They Never Come Back", () => {
     expect(testEngine.asPlayerTwo().isExerted(simbaProtectiveCub)).toBe(true);
     expect(testEngine.asPlayerTwo().isExerted(mickeyMouseTrueFriend)).toBe(true);
   });
+
+  it("can target opponent's characters", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [theyNeverComeBack],
+        inkwell: theyNeverComeBack.cost,
+        deck: 1,
+      },
+      {
+        play: [{ card: simbaProtectiveCub, exerted: true }],
+      },
+    );
+
+    const simbaId = testEngine.findCardInstanceId(simbaProtectiveCub, "play", "p2");
+    expect(
+      testEngine.asPlayerOne().playCard(theyNeverComeBack, { targets: [simbaId] }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().isExerted(simbaProtectiveCub)).toBe(true);
+  });
 });

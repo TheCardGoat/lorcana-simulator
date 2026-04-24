@@ -1,8 +1,13 @@
 <script lang="ts">
+import CrosshairIcon from "@lucide/svelte/icons/crosshair";
 import GripIcon from "@lucide/svelte/icons/grip";
 import { onMount, tick } from "svelte";
 import { m } from "$lib/i18n/messages.js";
+import CardTextWithSymbols from "@/design-system/simulator/cards/CardTextWithSymbols.svelte";
+import CardImage from "@/design-system/simulator/cards/CardImage.svelte";
+import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
 import type { ResolutionChoiceAvailableMovesSelectionState } from "@/features/simulator/model/contracts.js";
+import { maybeUseSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
 
 interface ChoiceResolutionOverlayProps {
 	selectionState: ResolutionChoiceAvailableMovesSelectionState;
@@ -17,6 +22,12 @@ let {
 	onConfirm,
 	onDismiss,
 }: ChoiceResolutionOverlayProps = $props();
+
+const simulatorCardContext = maybeUseSimulatorCardContext();
+
+function handleOpenGlobalPreview(card: LorcanaCardSnapshot): void {
+	simulatorCardContext?.setExternalPreviewCard(card);
+}
 
 const OVERLAY_PADDING = 8;
 
@@ -159,6 +170,32 @@ onMount(() => {
     </div>
   </header>
 
+  {#if selectionState.targetCard}
+    <div class="choice-overlay__target">
+      <div
+        class="choice-overlay__target-art"
+        role="button"
+        tabindex="0"
+        onpointerenter={() => simulatorCardContext?.setExternalPreviewCard(selectionState.targetCard!)}
+        onpointerleave={() => simulatorCardContext?.setExternalPreviewCard(null)}
+        onclick={() => handleOpenGlobalPreview(selectionState.targetCard!)}
+        onkeydown={(e) => e.key === "Enter" && handleOpenGlobalPreview(selectionState.targetCard!)}
+        title={selectionState.targetCard.label}
+      >
+        <CardImage
+          set={selectionState.targetCard.set ?? ""}
+          number={selectionState.targetCard.cardNumber ?? 0}
+          crop="art_and_name"
+          alt={selectionState.targetCard.label}
+        />
+      </div>
+      <div class="choice-overlay__target-info">
+        <CrosshairIcon class="choice-overlay__target-icon" size={14} />
+        <span class="choice-overlay__target-label">{selectionState.targetCard.label}</span>
+      </div>
+    </div>
+  {/if}
+
   <div class="choice-overlay__body">
     {#each selectionState.entries as entry (entry.id)}
       <button
@@ -169,7 +206,7 @@ onMount(() => {
         title={entry.disabled ? (entry.disabledReason ?? undefined) : undefined}
         onclick={() => entry.moveId !== undefined && onSelectOption?.(entry.moveId)}
       >
-        {entry.label}
+        <CardTextWithSymbols text={entry.label} />
       </button>
     {/each}
   </div>
@@ -250,6 +287,50 @@ onMount(() => {
     line-height: 1.4;
   }
 
+  .choice-overlay__target {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.65rem;
+    align-items: center;
+    padding: 0.6rem;
+    border: 1px solid rgba(190, 225, 195, 0.15);
+    border-radius: 0.65rem;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .choice-overlay__target-art {
+    width: 3.2rem;
+    border-radius: 0.35rem;
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: box-shadow 0.12s ease;
+  }
+
+  .choice-overlay__target-art:hover {
+    box-shadow: 0 0 0 2px rgba(125, 180, 111, 0.5);
+  }
+
+  .choice-overlay__target-info {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: rgba(193, 228, 197, 0.7);
+    min-width: 0;
+  }
+
+  :global(.choice-overlay__target-icon) {
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  .choice-overlay__target-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .choice-overlay__drag-handle {
     display: inline-flex;
     align-items: center;
@@ -280,8 +361,7 @@ onMount(() => {
   }
 
   .choice-option {
-    display: flex;
-    align-items: center;
+    display: block;
     width: 100%;
     padding: 0.7rem 0.95rem;
     border: 1px solid rgba(190, 225, 195, 0.18);

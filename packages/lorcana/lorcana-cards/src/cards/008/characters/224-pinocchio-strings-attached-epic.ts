@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { pinocchioStringsAttached } from "..";
+import { pinocchioStringsAttached } from "./061-pinocchio-strings-attached";
 
 export const pinocchioStringsAttachedEpic: CharacterCard = {
   ...pinocchioStringsAttached,

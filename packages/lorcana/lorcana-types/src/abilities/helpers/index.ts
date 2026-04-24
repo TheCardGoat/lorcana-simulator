@@ -40,3 +40,11 @@ export { Costs } from "./Costs";
 export { Effects } from "./Effects";
 export { Targets } from "./Targets";
 export { Triggers } from "./Triggers";
+export {
+  getUpToRule,
+  listUpToRuleEffectTypes,
+  supportsUpTo,
+  type UpToCapContext,
+  type UpToRule,
+  type UpToRuleParams,
+} from "./up-to-rules";

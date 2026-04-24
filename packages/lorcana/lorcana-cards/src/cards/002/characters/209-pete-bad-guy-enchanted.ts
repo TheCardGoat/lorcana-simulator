@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { peteBadGuy } from "..";
+import { peteBadGuy } from "./088-pete-bad-guy";
 
 export const peteBadGuyEnchanted: CharacterCard = {
   ...peteBadGuy,

@@ -84,7 +84,7 @@ describe("Max Goof - Chart Topper", () => {
       expect(
         testEngine
           .asPlayerOne()
-          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: true }),
+          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: true, targets: [songCard] }),
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerOne().getCardZone(songCard)).toBe("deck");
@@ -118,7 +118,7 @@ describe("Max Goof - Chart Topper", () => {
       expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(1);
     });
 
-    it("does not play a song when no eligible song is in discard, even if the optional is accepted", () => {
+    it("does not show the optional prompt when no eligible song is in discard", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
           play: [{ card: maxGoofChartTopper, isDrying: false }],
@@ -131,15 +131,7 @@ describe("Max Goof - Chart Topper", () => {
 
       expect(testEngine.asPlayerOne().quest(maxGoofChartTopper)).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
-
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne().getCardZone(expensiveSongCard)).toBe("discard");
     });
 
@@ -158,12 +150,12 @@ describe("Max Goof - Chart Topper", () => {
 
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
-      // Accept the optional - the song should be played automatically
+      // Accept the optional and select the song — both must be provided together
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
         testEngine
           .asPlayerOne()
-          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: true }),
+          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: true, targets: [songCard] }),
       ).toBeSuccessfulCommand();
 
       // The song should have been played (moved from discard to deck via replacement effect)
@@ -192,7 +184,7 @@ describe("Max Goof - Chart Topper", () => {
       expect(
         testEngine
           .asPlayerOne()
-          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: true }),
+          .resolvePendingByCard(maxGoofChartTopper, { resolveOptional: true, targets: [songCard] }),
       ).toBeSuccessfulCommand();
 
       const loreAfter = testEngine.asPlayerOne().getLore("player_one");

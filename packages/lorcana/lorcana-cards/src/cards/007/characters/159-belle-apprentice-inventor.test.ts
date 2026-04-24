@@ -78,5 +78,33 @@ describe("Belle - Apprentice Inventor", () => {
         }),
       ).not.toBeSuccessfulCommand();
     });
+
+    it("appears in available moves when an item is in play and ink is 0", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [belleApprenticeInventor],
+        play: [testItem],
+        inkwell: 0,
+      });
+      const belleId = testEngine.findCardInstanceId(belleApprenticeInventor, "hand");
+
+      const availableMoves = testEngine.asPlayerOne().getAvailableMoves();
+      const playCardMove = availableMoves.find((m) => m.moveId === "playCard");
+      expect(playCardMove).toBeDefined();
+      expect(playCardMove!.selectableCardIds).toContain(belleId);
+    });
+
+    it("does not appear in available moves when no items are in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [belleApprenticeInventor],
+        inkwell: 0,
+      });
+
+      const availableMoves = testEngine.asPlayerOne().getAvailableMoves();
+      const playCardMove = availableMoves.find((m) => m.moveId === "playCard");
+      if (playCardMove) {
+        const belleId = testEngine.findCardInstanceId(belleApprenticeInventor, "hand");
+        expect(playCardMove.selectableCardIds).not.toContain(belleId);
+      }
+    });
   });
 });

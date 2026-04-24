@@ -4,6 +4,7 @@
     import {type ResolvedBoardMoveAnimation} from "@/features/simulator/animations/board-move-animations.js";
     import type {BoardAnimationPlaceholder} from "@/features/simulator/animations/animation-orchestrator.svelte.js";
     import {watchCssAnimation} from "@/features/simulator/animations/animation-shared.js";
+    import {ZONE_IMAGE_FORMATS, type ImageFormat} from "@/design-system/simulator/cards/card-image-format.js";
 
   const board = useLorcanaBoardPresenter();
   const animations = $derived(board.animations);
@@ -70,11 +71,10 @@
     ].join(";");
   }
 
-  function getAnimationImageFormat(animation: ResolvedBoardMoveAnimation): "art_and_name" | "full" {
-    if (animation.destinationZoneId === "inkwell") {
-      return "art_and_name";
-    }
-    return "full";
+  function getAnimationImageFormat(animation: ResolvedBoardMoveAnimation): ImageFormat {
+    // Use the source zone's image format so the in-flight card matches the
+    // container dimensions (which are derived from the source rect).
+    return ZONE_IMAGE_FORMATS[animation.sourceZoneId] ?? "art_and_name";
   }
 </script>
 
@@ -173,10 +173,11 @@
     animation-timing-function: cubic-bezier(0.3, 0.0, 0.5, 1);
   }
 
-  .board-animation-actor--draw {
+  /* TODO: draw animation disabled temporarily — feels clunky, needs rework */
+  /* .board-animation-actor--draw {
     animation-name: board-animation-draw;
     animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  }
+  } */
 
   .board-animation-actor--ink-faceDown,
   .board-animation-actor--ink-faceUp {
@@ -255,13 +256,14 @@
       inset 0 0 22px rgba(186, 230, 253, 0.12);
   }
 
-  .board-animation-impact--draw {
+  /* TODO: draw animation disabled temporarily — feels clunky, needs rework */
+  /* .board-animation-impact--draw {
     background:
       radial-gradient(circle, rgba(255, 228, 138, 0.34) 0%, rgba(255, 228, 138, 0.14) 38%, transparent 76%);
     box-shadow:
       0 0 26px rgba(255, 212, 92, 0.28),
       inset 0 0 20px rgba(255, 244, 196, 0.2);
-  }
+  } */
 
   .board-animation-card-shell--play-action-preview {
     filter: drop-shadow(0 26px 36px rgba(5, 10, 18, 0.68)) drop-shadow(0 0 28px rgba(104, 225, 255, 0.34));
@@ -287,7 +289,8 @@
     }
   }
 
-  @keyframes board-animation-draw {
+  /* TODO: draw animation disabled temporarily — feels clunky, needs rework */
+  /* @keyframes board-animation-draw {
     0% {
       opacity: 0;
       transform: translate(0px, 0px) scale(0.86) rotate(-5deg);
@@ -313,7 +316,7 @@
         rotate(0deg);
       filter: brightness(1) saturate(1);
     }
-  }
+  } */
 
   @keyframes board-animation-ink {
     0% {

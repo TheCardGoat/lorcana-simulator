@@ -24,6 +24,8 @@ export interface HumanVsAiMatchConfig {
   playerTwoFixtureId?: string;
   strategyId: string;
   seed: string;
+  /** Initial AI play mode. Defaults to `"auto"`. */
+  initialAiPlayMode?: AiPlayMode;
 }
 
 export interface HumanVsAiOrchestratorState {

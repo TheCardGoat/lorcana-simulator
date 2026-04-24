@@ -134,6 +134,7 @@ export interface RestrictionEffect {
     | "cant-sing"
     | "cant-move"
     | "enters-play-exerted"
+    | "may-enter-play-exerted" // Player may choose for the character to enter exerted on play
     | "skip-draw-step"
     | "must-quest" // Forces character to quest if able
     | "cant-play-actions" // Opponents can't play actions
@@ -336,6 +337,11 @@ export interface RevealHandEffect {
  */
 export interface SearchDeckEffect {
   type: "search-deck";
+  /**
+   * Optional explicit selector for UI-driven target prompts in hidden-zone searches.
+   * When omitted, the runtime falls back to filtering the deck with the fields below.
+   */
+  source?: CardTarget;
   cardType?: CardType | "song" | "floodborn";
   cardName?: string;
   classification?: string;

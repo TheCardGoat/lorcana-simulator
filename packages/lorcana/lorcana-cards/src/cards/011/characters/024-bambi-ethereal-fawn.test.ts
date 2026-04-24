@@ -4,6 +4,7 @@ import {
   LorcanaTestEngine,
   createMockCharacter,
   createMockAction,
+  createMockSong,
 } from "@tcg/lorcana-engine/testing";
 import { bambiEtherealFawn } from "./024-bambi-ethereal-fawn";
 
@@ -36,6 +37,14 @@ const deckCharacter2 = createMockCharacter({
   id: "bambi-deck-character-2",
   name: "Deck Character 2",
   cost: 3,
+});
+
+const testSong = createMockSong({
+  id: "bambi-test-song",
+  name: "Test Song",
+  cost: 3,
+  text: "A test song for Bambi.",
+  abilities: [],
 });
 
 describe("Bambi - Ethereal Fawn", () => {
@@ -109,6 +118,32 @@ describe("Bambi - Ethereal Fawn", () => {
       expect(testEngine.asPlayerOne().getCardZone(deckAction)).toBe("deck");
     });
 
+    it("triggers when singing a song with cards under", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: bambiEtherealFawn, cardsUnder: [underCard] }],
+        hand: [testSong],
+        deck: [deckCharacter],
+      });
+
+      expect(
+        testEngine.asPlayerOne().singSong(testSong, bambiEtherealFawn),
+      ).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(bambiEtherealFawn),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          destinations: [{ zone: "hand", cards: [deckCharacter] }],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(deckCharacter)).toBe("hand");
+    });
+
     it("does not trigger when there are no cards under Bambi", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [bambiEtherealFawn],
@@ -116,7 +151,11 @@ describe("Bambi - Ethereal Fawn", () => {
       });
 
       expect(testEngine.asPlayerOne().quest(bambiEtherealFawn)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(bambiEtherealFawn, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getCardZone(deckCharacter)).toBe("deck");
     });
   });

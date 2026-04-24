@@ -9,7 +9,8 @@ import type {
   PlayerId,
   RuntimeValidationResult,
 } from "#core";
-import { getLoreValue, hasKeyword, isLocation } from "../../../card-utils";
+import { hasKeyword, isLocation } from "../../../card-utils";
+import { deriveLore, createProjectionState } from "../../../rules/derived-state";
 import {
   createLorcanaLogProjection,
   type LorcanaCard,
@@ -39,12 +40,15 @@ import {
   pruneExpiredTemporaryEffects,
 } from "../../effects/temporary-effects";
 import { pruneExpiredReplacementEffects } from "../../effects/replacement-effects";
+import { pruneExpiredPlayFromUnderPermissions } from "../../effects/play-from-under-permissions";
 import {
   hasStaticCardRestriction,
   hasStaticPlayerRestriction,
 } from "../../rules/static-ability-utils";
 import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import { recordCardDrawnThisTurn } from "../../state/turn-metrics";
+import { resolveTurnOwnerId } from "../../../core/runtime/turn-owner";
+import { checkDeckEmptyForPlayer } from "../../state/game-state-check";
 
 type PassTurnExecutionContext = Pick<
   MoveExecutionContext<LorcanaRuntimeMoveInputs["passTurn"]>,
@@ -77,33 +81,7 @@ export type AdvanceTurnResult = {
 };
 
 function resolveTurnPlayer(ctx: PassTurnIntentContext): PlayerId | undefined {
-  // Keep this turn-owner derivation in sync with:
-  // - runtime-moves/resolution/resolve-bag.ts:resolveTurnPlayerFromCtx
-  // - runtime-moves/resolution/resolve-effect.ts:resolveTurnPlayerFromCtx
-  // - runtime-game/project-board.ts:resolveTurnPlayer
-  const otp = ctx.framework.state.status.otp as PlayerId | undefined;
-  if (!otp) {
-    return ctx.framework.state.currentPlayer as PlayerId | undefined;
-  }
-
-  const playerIds = ctx.framework.state.playerIds;
-  const turnsCompleted = (ctx.G.turnsCompletedByPlayer ?? {}) as Record<string, number>;
-  const totalCompletedTurns = Object.values(turnsCompleted).reduce(
-    (sum, count) => sum + (count ?? 0),
-    0,
-  );
-
-  if (totalCompletedTurns === 0) {
-    return otp;
-  }
-
-  const otpIndex = playerIds.findIndex((playerId) => playerId === otp);
-  if (otpIndex < 0 || playerIds.length === 0) {
-    return otp;
-  }
-
-  const offset = totalCompletedTurns % playerIds.length;
-  return playerIds[(otpIndex + offset) % playerIds.length] as PlayerId;
+  return resolveTurnOwnerId(ctx.framework.state, ctx.G);
 }
 
 function getCheapPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null {
@@ -150,6 +128,17 @@ function pruneExpiredTemporaryCardMeta(ctx: PassTurnExecutionContext, currentTur
     }
 
     ctx.cards.setMeta(cardId as CardInstanceId, prunedMeta as Record<string, unknown>);
+  }
+}
+
+function clearInkwellRevealsForAllPlayers(
+  ctx: PassTurnExecutionContext,
+  players: PlayerId[],
+): void {
+  for (const playerId of players) {
+    // respectExpiry: true keeps stateID-based reveals (e.g. freshly inked cards)
+    // alive until they naturally expire, so both players can see what was inked.
+    ctx.framework.zones.clearRevealsByZone({ zone: "inkwell", playerId }, { respectExpiry: true });
   }
 }
 
@@ -259,15 +248,26 @@ function drawForTurn(ctx: PassTurnExecutionContext, playerId: PlayerId, turnNumb
     return;
   }
 
-  const deckCards = ctx.framework.zones.getCards({ zone: "deck", playerId });
-  const deckHasCards = Array.isArray(deckCards) && deckCards.length > 0;
-  ctx.framework.zones.drawCards({
+  const drawnCards = ctx.framework.zones.drawCards({
     from: { zone: "deck", playerId },
     to: { zone: "hand", playerId },
     count: 1,
   });
-  if (deckHasCards) {
+  const drawnCardIds = Array.isArray(drawnCards) ? (drawnCards as CardInstanceId[]) : [];
+
+  if (drawnCardIds.length > 0) {
     recordCardDrawnThisTurn(ctx, playerId);
+  }
+
+  // Emit triggered events for each drawn card so "Whenever you draw" abilities fire.
+  // source: "mandatory-draw" routes these to TurnStartLog instead of the current move's outcomes.
+  for (const cardId of drawnCardIds) {
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "cardsDrawn",
+      { playerId, amount: 1, cardIds: [cardId], source: "mandatory-draw" },
+      { event: "draw", playerId, subjectCardId: cardId },
+    );
   }
 }
 
@@ -304,33 +304,38 @@ function shouldSkipDrawStepForPlayer(
 
 function gainLoreFromLocations(ctx: PassTurnExecutionContext, playerId: PlayerId): void {
   const cardsInPlay = ctx.framework.zones.getCards({ zone: "play", playerId }) as CardInstanceId[];
+  let locationCount = 0;
+  const registry = getOrBuildMoveRegistry(ctx);
+  const state = createProjectionState(ctx.framework.state, ctx.G);
+  const getDefinition = (id: CardInstanceId) => ctx.cards.getDefinition(id);
   const loreGain = cardsInPlay.reduce((total, cardId) => {
     const definition = ctx.cards.require(cardId).definition;
     if (!definition || !isLocation(definition)) {
       return total;
     }
 
-    return total + getLoreValue(definition);
+    locationCount++;
+    return total + deriveLore(definition, state, cardId, getDefinition, registry);
   }, 0);
 
   if (loreGain <= 0) {
     return;
   }
 
+  ctx.framework.log(
+    createLorcanaLogProjection(
+      "lorcana.outcome.locationLoreGained",
+      { playerId, amount: loreGain, locationCount },
+      { mode: "PUBLIC" },
+      "rules",
+    ),
+  );
+
   ctx.G.lore[playerId] = Number(ctx.G.lore[playerId] ?? 0) + loreGain;
 }
 
 function getOpponents(ctx: PassTurnExecutionContext, playerId: PlayerId): PlayerId[] {
   return (Object.keys(ctx.G.lore) as PlayerId[]).filter((candidate) => candidate !== playerId);
-}
-
-function playerHasNoCardsInDeck(ctx: PassTurnExecutionContext, playerId: PlayerId): boolean {
-  const remainingDeckCards = ctx.framework.zones.getCards({
-    zone: "deck",
-    playerId,
-  }) as CardInstanceId[];
-
-  return remainingDeckCards.length === 0;
 }
 
 export function advanceTurnToNextPlayer(ctx: PassTurnExecutionContext): AdvanceTurnResult {
@@ -340,12 +345,13 @@ export function advanceTurnToNextPlayer(ctx: PassTurnExecutionContext): AdvanceT
   // who ended their turn, so ctx.framework.state.currentPlayer (= priority.holder) is
   // unreliable here when the turn advance happens after bag resolution.
   const previousPlayer = (ctx.G.pendingTurnTransition?.previousPlayer ??
-    ctx.framework.state.currentPlayer) as PlayerId;
+    resolveTurnOwnerId(ctx.framework.state, ctx.G)) as PlayerId;
   const currentIndex = players.indexOf(previousPlayer as PlayerId);
   const nextIndex = (currentIndex + 1) % players.length;
   const nextPlayer = players[nextIndex];
 
   // Update turn and priority
+  ctx.framework.status.patch({ turnOwnerId: nextPlayer });
   ctx.framework.priority.setHolder(nextPlayer);
   const turnNumber = ctx.framework.status.incrementTurn();
 
@@ -361,6 +367,7 @@ export function advanceTurnToNextPlayer(ctx: PassTurnExecutionContext): AdvanceT
   pruneExpiredReplacementEffects(ctx.G, turnNumber);
   clearActivatedAbilityUsageMeta(ctx, previousPlayer as PlayerId);
   clearHandRevealsForPlayer(ctx, previousPlayer as PlayerId);
+  clearInkwellRevealsForAllPlayers(ctx, players);
   ctx.G.temporaryPlayerRestrictions = pruneExpiredTemporaryPlayerRestrictions(
     ctx.G.temporaryPlayerRestrictions,
     turnNumber,
@@ -368,6 +375,7 @@ export function advanceTurnToNextPlayer(ctx: PassTurnExecutionContext): AdvanceT
     restrictionsByPlayer: {},
     startsByPlayer: {},
   };
+  pruneExpiredPlayFromUnderPermissions(ctx.G.playFromUnderPermissions, turnNumber);
 
   const turnsCompletedByPlayer =
     ctx.G.turnsCompletedByPlayer ?? (ctx.G.turnsCompletedByPlayer = {} as Record<PlayerId, number>);
@@ -383,13 +391,14 @@ export function advanceTurnToNextPlayer(ctx: PassTurnExecutionContext): AdvanceT
     shiftPlayedThisTurn: [],
     challengesByPlayerThisTurn: {},
     damagedCharactersByOwnerThisTurn: {},
+    damageRemovedByPlayerThisTurn: {},
     challengedCharactersThisTurn: [],
     banishedCharactersThisTurn: [],
     banishedCharactersInChallengeByOwnerThisTurn: {},
     discardCardsLeftThisTurn: 0,
+    cardsPutIntoDiscardThisTurnByOwner: {},
     pendingCostReductionsByPlayer: {},
     cardsDrawnThisTurnByPlayer: {},
-    pendingPlayFromUnder: [],
   };
 
   gainLoreFromLocations(ctx, nextPlayer);
@@ -501,8 +510,9 @@ export function continuePendingTurnTransition(ctx: PassTurnExecutionContext): vo
         }
 
         const turnNumber = transitionState.turnNumber ?? ctx.framework.state.status.turn ?? 1;
-        const drawStepStarted = transitionState.drawStepStarted === true;
-        if (!drawStepStarted) {
+
+        // Sub-step 2: perform the draw and emit triggered events (only once)
+        if (!transitionState.drawStepStarted) {
           transitionState = {
             ...transitionState,
             drawStepStarted: true,
@@ -513,9 +523,25 @@ export function continuePendingTurnTransition(ctx: PassTurnExecutionContext): vo
             ctx.G.pendingTurnTransition = undefined;
             return;
           }
+
+          drawForTurn(ctx, nextPlayer, turnNumber);
+
+          // Finalize to flush any draw-triggered events (e.g. "Whenever you draw") into the bag
+          finalizeResolutionBoundary(ctx, {
+            playerId: nextPlayer,
+            window: "start-of-turn",
+          });
+          ctx.G.pendingTurnTransition = transitionState;
+          if (
+            hasPendingBagItems(ctx) ||
+            ctx.framework.state.priority.pendingChoice ||
+            (ctx.G.pendingEffects?.length ?? 0) > 0
+          ) {
+            return;
+          }
         }
 
-        drawForTurn(ctx, nextPlayer, turnNumber);
+        // All draw-triggered effects resolved; transition to main phase
         ctx.framework.status.setPhase("main");
         ctx.G.pendingTurnTransition = undefined;
         return;
@@ -594,7 +620,7 @@ export const passTurn: LorcanaMoveDefinition<"passTurn"> = {
         "action",
       ),
     );
-    if (playerHasNoCardsInDeck(ctx, currentPlayer)) {
+    if (checkDeckEmptyForPlayer(ctx, currentPlayer)) {
       const winner = getOpponents(ctx, currentPlayer)[0];
       ctx.framework.events.endGame({
         winner,

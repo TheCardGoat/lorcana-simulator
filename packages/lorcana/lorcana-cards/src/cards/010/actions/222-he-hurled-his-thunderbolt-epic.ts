@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { heHurledHisThunderbolt } from "..";
+import { heHurledHisThunderbolt } from "./197-he-hurled-his-thunderbolt";
 
 export const heHurledHisThunderboltEpic: ActionCard = {
   ...heHurledHisThunderbolt,

@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { theReturnOfHercules } from "..";
+import { theReturnOfHercules } from "./118-the-return-of-hercules";
 
 export const theReturnOfHerculesEnchanted: ActionCard = {
   ...theReturnOfHercules,

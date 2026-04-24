@@ -261,6 +261,11 @@ describe("#### 4. TURN ACTIONS", () => {
         testEngine.asPlayerTwo().resolvePendingByCard(bagEffect!.sourceId),
       ).toBeSuccessfulCommand();
 
+      const arielId = testEngine.findCardInstanceId(arielOnHumanLegs, "hand");
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [arielId] }),
+      ).toBeSuccessfulCommand();
+
       expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(2);
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });

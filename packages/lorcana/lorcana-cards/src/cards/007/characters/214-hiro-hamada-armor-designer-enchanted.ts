@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { hiroHamadaArmorDesigner } from "..";
+import { hiroHamadaArmorDesigner } from "./096-hiro-hamada-armor-designer";
 
 export const hiroHamadaArmorDesignerEnchanted: CharacterCard = {
   ...hiroHamadaArmorDesigner,

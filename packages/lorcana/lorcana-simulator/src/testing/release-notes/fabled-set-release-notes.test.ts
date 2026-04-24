@@ -617,16 +617,22 @@ describe("Fabled Set Release Notes — Card-Specific Rulings", () => {
       testEngine.asPlayerOne().passTurn();
       testEngine.asPlayerTwo().passTurn();
 
-      // At start of P1's turn, Allow Me triggers — P1 gets a bag effect (optional draw)
+      // At start of P1's turn, Allow Me fires two bag items: one for P1 (CONTROLLER), one for P2 (OPPONENT)
       const bagEffects = testEngine.asPlayerOne().getBagEffects();
-      expect(bagEffects.length).toBeGreaterThan(0);
+      expect(bagEffects.length).toBeGreaterThanOrEqual(2);
 
-      // P1 declines optional draw
+      // P1 declines their optional draw (bag item 0: CONTROLLER trigger)
       testEngine
         .asPlayerOne()
         .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+          bagIndex: 0,
           resolveOptional: false,
         });
+
+      // P1 resolves the opponent's bag item (bag item 1: OPPONENT trigger) — creates P2's pending
+      testEngine
+        .asPlayerOne()
+        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId);
 
       // P2's choice is a pending effect (optional-selection) — P2 chooses independently
       // Capture P2's deck size before their choice

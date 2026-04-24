@@ -37,6 +37,30 @@ type NumericLorcanaFilter =
   | Extract<LorcanaFilter, { type: "lore-value" }>
   | Extract<LorcanaFilter, { type: "move-cost" }>;
 
+/** Matches engine simple-keyword names that can appear in grantSources.grants as plain labels. */
+const GRANT_LABEL_SIMPLE_KEYWORDS = new Set([
+  "Alert",
+  "Bodyguard",
+  "Evasive",
+  "Reckless",
+  "Rush",
+  "Support",
+  "Vanish",
+  "Ward",
+]);
+
+function collectEffectiveKeywordsForTargetInspection(card: LorcanaCardSnapshot): Set<string> {
+  const keywords = new Set<string>(card.keywords ?? []);
+  for (const source of card.grantSources ?? []) {
+    for (const grant of source.grants) {
+      if (GRANT_LABEL_SIMPLE_KEYWORDS.has(grant)) {
+        keywords.add(grant);
+      }
+    }
+  }
+  return keywords;
+}
+
 function hasFilterType(
   filter: LorcanaFilter | CardSelectionFilter,
 ): filter is Extract<LorcanaFilter, { type: string }> {
@@ -356,11 +380,19 @@ function evaluateSingleFilter(
         supported: isFilterSupported(filter),
       };
 
-    case "has-keyword":
+    case "has-keyword": {
+      const keyword = String(filter.keyword ?? "");
+      if (keyword.length === 0) {
+        return {
+          matches: true,
+          supported: isFilterSupported(filter),
+        };
+      }
       return {
-        matches: (card.keywords ?? []).includes(filter.keyword),
+        matches: collectEffectiveKeywordsForTargetInspection(card).has(keyword),
         supported: isFilterSupported(filter),
       };
+    }
 
     case "has-classification":
       return {

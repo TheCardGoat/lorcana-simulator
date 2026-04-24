@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { aliceGrowingGirl } from "..";
+import { aliceGrowingGirl } from "./137-alice-growing-girl";
 
 export const aliceGrowingGirlEnchanted: CharacterCard = {
   ...aliceGrowingGirl,

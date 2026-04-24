@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { kuzcoImpulsiveLlama } from "..";
+import { kuzcoImpulsiveLlama } from "./067-kuzco-impulsive-llama";
 
 export const kuzcoImpulsiveLlamaEnchanted: CharacterCard = {
   ...kuzcoImpulsiveLlama,

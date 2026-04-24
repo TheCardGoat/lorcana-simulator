@@ -105,6 +105,52 @@ describe("Olaf - Helping Hand", () => {
       expect(testEngine.asPlayerOne().getCardZone(olafHelpingHand)).toBe("discard");
     });
 
+    it("should trigger only once when banished in a challenge (not double from banish + banish-in-challenge)", () => {
+      const opponentAttacker = createMockCharacter({
+        id: "olaf-test-opponent-attacker",
+        name: "Opponent Attacker",
+        cost: 2,
+        strength: 6,
+        willpower: 6,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: olafHelpingHand, exerted: true }, allyCharacterA],
+          deck: 5,
+        },
+        {
+          play: [opponentAttacker],
+          deck: 5,
+        },
+      );
+
+      // Pass turn to opponent so they can challenge exerted Olaf
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Opponent challenges Olaf (strength 6 vs willpower 4, Olaf dies)
+      expect(
+        testEngine.asPlayerTwo().challenge(opponentAttacker, olafHelpingHand),
+      ).toBeSuccessfulCommand();
+
+      // Olaf should be banished
+      expect(testEngine.asPlayerOne().getCardZone(olafHelpingHand)).toBe("discard");
+
+      // SECOND CHANCE should trigger exactly ONCE (not twice)
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
+
+      // Resolve the trigger
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(olafHelpingHand, {
+          resolveOptional: true,
+          targets: [allyCharacterA],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(allyCharacterA)).toBe("hand");
+    });
+
     it("should allow choosing which character to return when multiple are in play", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         inkwell: banishAction.cost,

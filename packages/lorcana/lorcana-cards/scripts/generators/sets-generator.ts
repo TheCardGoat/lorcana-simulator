@@ -22,6 +22,7 @@ const SET_ID_TO_CODE: Record<string, string> = {
   set9: "FAB",
   set10: "WIW",
   set11: "WSP",
+  set12: "WUN",
   quest1: "DT1",
   quest2: "PH1",
   gateway1: "GW1",

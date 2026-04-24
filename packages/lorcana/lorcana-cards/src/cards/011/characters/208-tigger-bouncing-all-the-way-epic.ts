@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { tiggerBouncingAllTheWay } from "..";
+import { tiggerBouncingAllTheWay } from "./037-tigger-bouncing-all-the-way";
 
 export const tiggerBouncingAllTheWayEpic: CharacterCard = {
   ...tiggerBouncingAllTheWay,

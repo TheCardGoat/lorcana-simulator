@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { ladyTremaineImperiousQueen } from "..";
+import { ladyTremaineImperiousQueen } from "./110-lady-tremaine-imperious-queen";
 
 export const ladyTremaineImperiousQueenEnchanted: CharacterCard = {
   ...ladyTremaineImperiousQueen,

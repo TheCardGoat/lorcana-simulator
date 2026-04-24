@@ -30,6 +30,7 @@ export interface GuidanceInlineReference {
 export interface ActivePlayerGuidanceItem {
   id: string;
   message: string;
+  abilityDescription?: string;
   inlineReference?: GuidanceInlineReference;
   actions: GuidanceAction[];
   mode: GuidanceMode;

@@ -5,7 +5,7 @@
  *
  * ## Data flow
  * - **Storage**: Persisted in `users.settings.visualSettings` JSONB column (user-level, shared across games).
- * - **Save**: `PUT /v1/users/me/visual-settings` (REST, uses authenticated userId).
+ * - **Save**: `PUT /v1/users/me/settings` with `{ visualSettings: ... }` (REST, uses authenticated userId).
  * - **Load**: Included in the `game_joined` WebSocket message as `playerVisualSettings` map.
  *
  * ## Player ID mapping
@@ -43,6 +43,7 @@ export interface LorcanaResolvedPlayerVisualSettings {
 }
 
 export const CARD_BACK_PRESETS = {
+  none: null,
   default: {
     src: buildSimulatorAssetUrl("card-back/back-cosmos.webp"),
     artOnlySrc: buildSimulatorAssetUrl("card-back/back-cosmos-square.webp"),
@@ -83,7 +84,7 @@ export const CARD_BACK_PRESETS = {
     src: buildSimulatorAssetUrl("card-back/sleevejasminewebp.webp"),
     artOnlySrc: buildSimulatorAssetUrl("card-back/sleevejasminewebp.webp"),
   },
-} as const satisfies Record<string, { src: string; artOnlySrc: string }>;
+} as const satisfies Record<string, { src: string; artOnlySrc: string } | null>;
 
 export const PLAYMAT_PRESETS = {
   default: null,
@@ -156,7 +157,7 @@ export function resolveLorcanaCardBack(selection?: string | null): LorcanaResolv
   }
 
   const preset = CARD_BACK_PRESETS[selection as keyof typeof CARD_BACK_PRESETS];
-  if (!preset) {
+  if (preset === undefined || preset === null) {
     return DEFAULT_LORCANA_PLAYER_VISUAL_SETTINGS.cardBack;
   }
 

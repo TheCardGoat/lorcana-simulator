@@ -197,6 +197,7 @@ import {
   withContextSelectionTargets,
   withCurrentSelectionTargets,
 } from "./selection-state";
+import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
 
 type SequenceLikeEffect = SequenceEffect & {
   steps?: unknown[];
@@ -721,6 +722,26 @@ function resolvePayCostEffect(
     return RESOLVED_ACTION_EFFECT;
   }
 
+  const nestedSelectionContext = buildResolutionSelectionContext({
+    origin: "pending-effect",
+    requestId: "pay-cost:preview",
+    sourceCardId: cardPlayed.cardId,
+    chooserId: actorId,
+    cardPlayed,
+    effect: effect.effect,
+    resolutionInput,
+    ctx,
+  });
+  if (
+    nestedSelectionContext &&
+    (nestedSelectionContext.kind === "target-selection" ||
+      nestedSelectionContext.kind === "discard-choice") &&
+    nestedSelectionContext.cardCandidateIds.length === 0 &&
+    nestedSelectionContext.playerCandidateIds.length === 0
+  ) {
+    return RESOLVED_ACTION_EFFECT;
+  }
+
   const payResult = payBasicCost(
     {
       framework: ctx.framework,
@@ -854,6 +875,13 @@ function maybeSuspendForChosenTargets(
     effectRecord.type === "name-a-card" ||
     effectRecord.type === "optional" ||
     effectRecord.type === "or" ||
+    // `pay-cost` must run its own resolver so the cost is paid in the
+    // first pass (by the player who chose to invoke it) before any inner
+    // target-selection suspension. Otherwise the inner effect's chooser
+    // resumes pay-cost and would be billed for the cost — which breaks
+    // effects like Basil - Disguised Detective's TWISTS AND TURNS where
+    // the opponent picks the discard target but the CONTROLLER pays the ink.
+    effectRecord.type === "pay-cost" ||
     effectRecord.type === "sequence" ||
     (effectRecord.type === "scry" && effectRecord.target !== "CHOSEN_PLAYER")
   ) {
@@ -878,11 +906,41 @@ function maybeSuspendForChosenTargets(
   }
 
   const hasNoCandidates =
-    selectionContext.kind === "target-selection" &&
+    (selectionContext.kind === "target-selection" || selectionContext.kind === "discard-choice") &&
     selectionContext.cardCandidateIds.length === 0 &&
     selectionContext.playerCandidateIds.length === 0;
-  if (hasNoCandidates && cardPlayed.cardType === "action") {
+  if (hasNoCandidates && options?.allowSuspendWithZeroTargetCandidates !== true) {
+    // No legal targets: do not suspend into an empty picker for bag / on-play
+    // resolution — the resolver no-ops and the bag entry can complete as fizzle.
+    // Activated abilities pass {@link allowSuspendWithZeroTargetCandidates}.
     return undefined;
+  }
+
+  // When the resolution input already carries enough targets to satisfy the
+  // minimum selection requirement, do not re-suspend.  This allows "up to N"
+  // effects to resolve with fewer than N targets when the player explicitly
+  // submits their selection.  The projection path (client-side) keeps the
+  // selection context open until maxSelections so the player can pick more.
+  //
+  // This applies to `discard-choice` too: when a pay-cost-wrapped discard
+  // (e.g. Basil - Disguised Detective) is resumed after the opponent picks
+  // their target, we must NOT re-suspend here — otherwise the pay-cost
+  // resolver never runs, the cost is never paid, and the discard never fires.
+  if (selectionContext.kind === "target-selection" || selectionContext.kind === "discard-choice") {
+    const currentTargetCount = getCurrentSelectionTargets(resolutionInput).length;
+    if (
+      currentTargetCount > 0 &&
+      currentTargetCount >= Math.max(selectionContext.minSelections, 1)
+    ) {
+      return undefined;
+    }
+    // The player already submitted an explicit 0-target selection upstream
+    // (e.g. step 0 of a staged "up to N" sequence). Without this short-circuit,
+    // later steps — or the sequence replay itself — re-suspend into an identical
+    // empty picker, producing an infinite chain of pending-actions.
+    if (resolutionInput.targetSelectionResolved === true && selectionContext.minSelections === 0) {
+      return undefined;
+    }
   }
 
   const pendingEffect = createPendingActionEffect(ctx, {
@@ -896,6 +954,9 @@ function maybeSuspendForChosenTargets(
     continuation: options?.continuation,
     resolutionInput,
     selectionContext,
+    ...(options?.allowSuspendWithZeroTargetCandidates === true
+      ? { allowSuspendWithZeroTargetCandidates: true as const }
+      : {}),
   });
   return suspendActionEffect(ctx, pendingEffect);
 }
@@ -1296,7 +1357,51 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
 
     for (const [index, nestedEffect] of nestedEffects.entries()) {
       const remainingSequenceSteps = nestedEffects.slice(index + 1);
+      // Execute a leading draw (or similar no-selection step) immediately when more steps follow.
+      // Otherwise the sequence can incorrectly stage target collection on step 0 (e.g. optional
+      // { sequence: [draw, discard] }) and skip the draw when replaying after discard selection
+      // (THE-981 Hudson — FINDING ANSWERS).
+      if (
+        !stagedSequence &&
+        remainingSequenceSteps.length > 0 &&
+        getEffectType(nestedEffect) === "draw"
+      ) {
+        const continuation = mergeContinuationEffects(
+          remainingSequenceSteps,
+          options?.continuation?.remainingEffects
+            ? { remainingEffects: options.continuation.remainingEffects }
+            : {},
+        );
+        const drawResult = resolveActionEffect(ctx, cardPlayed, nestedEffect, resolutionInput, {
+          ...options,
+          continuation,
+        });
+        if (drawResult.status === "suspended") {
+          return drawResult;
+        }
+        continue;
+      }
       const stagedTargetCount = stagedSequence?.collectedTargetCounts[index] ?? 0;
+      // If this step is a discard that the controller must pay from their own hand (chosen
+      // from hand, targeting CONTROLLER/SELF) but has no legal candidates (empty hand),
+      // the cost cannot be paid. Abort the entire sequence so that subsequent steps that
+      // depend on the discard (e.g. a stat-modification) do not execute.
+      // Note: opponent-targeted discards (e.g. "each opponent discards") are NOT costs —
+      // they should not abort the sequence even when the opponent has an empty hand.
+      if (!stagedSequence && isDiscardEffect(nestedEffect) && nestedEffect.chosen === true) {
+        const discardTarget = nestedEffect.target;
+        const isControllerDiscard =
+          discardTarget === "CONTROLLER" ||
+          discardTarget === "SELF" ||
+          discardTarget === "CURRENT_TURN" ||
+          discardTarget === undefined;
+        if (
+          isControllerDiscard &&
+          !isEffectCurrentlyLegal(ctx, cardPlayed, nestedEffect, resolutionInput)
+        ) {
+          return RESOLVED_ACTION_EFFECT;
+        }
+      }
       const explicitSelections = sequenceStepConsumesExplicitTargets(
         ctx,
         cardPlayed,
@@ -1524,6 +1629,9 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         effect,
         continuation: options?.continuation,
         resolutionInput,
+        ...(options?.allowSuspendWithZeroTargetCandidates === true
+          ? { allowSuspendWithZeroTargetCandidates: true as const }
+          : {}),
       });
       return suspendActionEffect(ctx, pendingEffect);
     }
@@ -1575,6 +1683,13 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       !Number.isInteger(rawChoiceIndex) ||
       rawChoiceIndex < 0
     ) {
+      // When the chooser is not the current actor (e.g. OPPONENT must choose), clear any
+      // choiceIndex from the automation strategy so that buildResolutionSelectionContext
+      // correctly builds the "choice-selection" context for the pending effect.
+      const pendingResolutionInput =
+        actorId !== chooserId && typeof rawChoiceIndex === "number"
+          ? { ...resolutionInput, choiceIndex: undefined }
+          : resolutionInput;
       const pendingEffect = createPendingActionEffect(ctx, {
         kind: "choice-selection",
         sourceCardId: cardPlayed.cardId,
@@ -1584,7 +1699,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         cardPlayed,
         effect,
         continuation: options?.continuation,
-        resolutionInput,
+        resolutionInput: pendingResolutionInput,
       });
       return suspendActionEffect(ctx, pendingEffect);
     }
@@ -1657,6 +1772,13 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       !Number.isInteger(rawChoiceIndex) ||
       rawChoiceIndex < 0
     ) {
+      // When the chooser is not the current actor (e.g. OPPONENT must choose), clear any
+      // choiceIndex from the automation strategy so that buildResolutionSelectionContext
+      // correctly builds the "choice-selection" context for the pending effect.
+      const pendingResolutionInput =
+        actorId !== chooserId && typeof rawChoiceIndex === "number"
+          ? { ...resolutionInput, choiceIndex: undefined }
+          : resolutionInput;
       const pendingEffect = createPendingActionEffect(ctx, {
         kind: "choice-selection",
         sourceCardId: cardPlayed.cardId,
@@ -1666,7 +1788,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         cardPlayed,
         effect,
         continuation: options?.continuation,
-        resolutionInput,
+        resolutionInput: pendingResolutionInput,
       });
       return suspendActionEffect(ctx, pendingEffect);
     }
@@ -1750,7 +1872,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     return RESOLVED_ACTION_EFFECT;
   },
 
-  "for-each-opponent": (ctx, cardPlayed, effect, resolutionInput) => {
+  "for-each-opponent": (ctx, cardPlayed, effect, resolutionInput, options) => {
     if (!isForEachOpponentEffect(effect)) {
       handleUnsupportedActionEffect(
         "for-each-opponent",
@@ -1764,6 +1886,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       cardPlayed,
       effect as ForEachOpponentEffect,
       resolutionInput,
+      options,
     );
   },
 
@@ -1974,7 +2097,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
           },
         };
         ctx.framework.log({
-          category: "action",
+          category: "rules",
           visibility: scryVisibility,
           defaultMessage: createLorcanaLogMessage("lorcana.scry.count", {
             playerId: chooserId,
@@ -1987,7 +2110,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
               count: lookedAtCards.length,
             },
             scryVisibility,
-            "action",
+            "rules",
           ),
         });
         const pendingEffect = createPendingActionEffect(ctx, {
@@ -2080,14 +2203,39 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       const playCardIds = Array.isArray(playSelection?.cards) ? playSelection.cards : [];
       for (const cardId of playCardIds) {
         const def = ctx.cards.getDefinition(cardId) as { cardType?: string } | undefined;
-        if (def?.cardType === "action") {
+        if (!def || !isCardType(def.cardType)) {
+          continue;
+        }
+
+        if (def.cardType === "action") {
           executeScryActionCardPlay(
             ctx,
             cardId as CardInstanceId,
             cardPlayed.playerId,
             resolutionInput,
           );
+          continue;
         }
+
+        const playedBy =
+          (ctx.framework.zones.getCardOwner(cardId as CardInstanceId) as PlayerId | undefined) ??
+          cardPlayed.playerId;
+
+        emitTriggeredLorcanaEvent(
+          ctx,
+          "cardPlayed",
+          {
+            playerId: playedBy,
+            cardId: cardId as CardInstanceId,
+            cardType: def.cardType,
+            costType: "free",
+          },
+          {
+            event: "play",
+            playerId: playedBy,
+            subjectCardId: cardId as CardInstanceId,
+          },
+        );
       }
     }
 
@@ -2566,12 +2714,37 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     const resolved = resolveEffectExecutionContext(ctx, cardPlayed, effect, resolutionInput);
+    const replacedAmounts: Record<CardInstanceId, number> = {};
+    const replacedTargetOrder: CardInstanceId[] = [];
+    const rawAmounts = resolvePerTargetFieldAmounts(
+      resolved.resolvedDynamic.amount,
+      resolved.resolvedTargets,
+    );
+    for (const targetId of resolved.resolvedTargets) {
+      const replacedEvent = applyReplacementEffects(
+        ctx,
+        {
+          kind: "put-damage",
+          eventId: `put-damage:${cardPlayed.cardId}:${targetId}`,
+          sourceId: cardPlayed.cardId,
+          controllerId: cardPlayed.playerId,
+          targetId,
+          amount: rawAmounts?.[targetId] ?? 0,
+        },
+        {
+          cardPlayed,
+          resolutionInput,
+        },
+      );
+      const finalTargetId = replacedEvent.targetId;
+      replacedAmounts[finalTargetId] = (replacedAmounts[finalTargetId] ?? 0) + replacedEvent.amount;
+      if (!replacedTargetOrder.includes(finalTargetId)) {
+        replacedTargetOrder.push(finalTargetId);
+      }
+    }
     resolvePutDamageEffect(ctx, cardPlayed, effect as PutDamageEffect, {
-      amountByTarget: resolvePerTargetFieldAmounts(
-        resolved.resolvedDynamic.amount,
-        resolved.resolvedTargets,
-      ),
-      targets: resolved.resolvedTargets,
+      amountByTarget: replacedAmounts,
+      targets: replacedTargetOrder,
     });
     return RESOLVED_ACTION_EFFECT;
   },
@@ -2891,6 +3064,25 @@ function isEffectCurrentlyLegal(
       : false;
   }
 
+  if ("type" in effect && effect.type === "pay-cost") {
+    const actorId = getCurrentActionActorId(ctx, cardPlayed);
+    const payCostEffect = effect as PayCostEffect;
+    const cost = payCostEffect.cost ?? {};
+    const costValidation = validateBasicCost(
+      {
+        framework: ctx.framework,
+        cards: ctx.cards,
+        playerId: actorId,
+      },
+      {
+        ink: cost.ink ?? 0,
+        exertCards: cost.exert ? [{ cardId: cardPlayed.cardId, subject: "source" }] : undefined,
+      },
+    );
+
+    return costValidation.valid;
+  }
+
   if (isDiscardEffect(effect)) {
     const targetPlayerIds = resolveTargetPlayerIds(
       ctx,
@@ -2976,11 +3168,23 @@ function isEffectCurrentlyLegal(
       return false;
     }
 
-    const selectedTargets = normalizeSelectedTargets(resolutionInput.targets);
+    const selectedTargets = normalizeSelectedTargets(resolutionInput.targets) ?? [];
     const candidates = resolveCandidateTargets(ctx, cardPlayed, descriptor, {
       selectedTargets,
       sourceCardId: cardPlayed.cardId,
     });
+
+    // If the player has already submitted targets for a "chosen" effect but none of them
+    // are valid candidates (e.g. targeting self when excludeSelf=true), treat this option
+    // as not currently legal. The "or" handler will then auto-force the other branch
+    // (e.g. banish self), preventing the exploit of playing the card with no cost.
+    if (descriptor.selector === "chosen" && selectedTargets.length > 0) {
+      const validSelections = selectedTargets.filter((t) => candidates.includes(t));
+      if (validSelections.length === 0) {
+        return false;
+      }
+    }
+
     return candidates.length >= countDescriptorMinimum(descriptor.count, descriptor.selector);
   }
 

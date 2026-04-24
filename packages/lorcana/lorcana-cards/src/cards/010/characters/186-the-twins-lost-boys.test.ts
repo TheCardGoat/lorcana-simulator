@@ -67,8 +67,12 @@ describe("The Twins - Lost Boys", () => {
 
       expect(testEngine.asPlayerOne().playCard(theTwinsLostBoys)).toBeSuccessfulCommand();
 
-      // No location in play, so no optional layer should be added
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theTwinsLostBoys, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      // Condition failed (no location in play), so no damage dealt
       expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(0);
     });
 

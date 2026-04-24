@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { tinkerBellGiantFairy } from "..";
+import { tinkerBellGiantFairy } from "./193-tinker-bell-giant-fairy";
 
 export const tinkerBellGiantFairyEnchanted: CharacterCard = {
   ...tinkerBellGiantFairy,

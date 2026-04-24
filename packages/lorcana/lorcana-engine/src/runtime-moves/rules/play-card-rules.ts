@@ -318,6 +318,18 @@ function resolveShiftTargetMode(
   shiftKeyword: KeywordAbilityDefinition | undefined,
   shiftLabel: string | undefined,
 ): ShiftTargetMode {
+  // Explicit shiftTarget from keyword data takes priority over text parsing.
+  // Text-based parsing can produce false positives (e.g., "gains Shift 0"
+  // misinterpreted as classification "gains"), so structured data wins.
+  if (
+    shiftKeyword &&
+    isShiftKeywordAbility(shiftKeyword) &&
+    typeof shiftKeyword.shiftTarget === "string" &&
+    shiftKeyword.shiftTarget.trim().length > 0
+  ) {
+    return { type: "name", name: shiftKeyword.shiftTarget.trim() };
+  }
+
   const fromLabel = parseShiftModeFromLabel(shiftLabel);
   if (fromLabel) {
     return fromLabel;
@@ -334,15 +346,6 @@ function resolveShiftTargetMode(
   );
   if (classificationFromText) {
     return { type: "classification", classification: classificationFromText };
-  }
-
-  if (
-    shiftKeyword &&
-    isShiftKeywordAbility(shiftKeyword) &&
-    typeof shiftKeyword.shiftTarget === "string" &&
-    shiftKeyword.shiftTarget.trim().length > 0
-  ) {
-    return { type: "name", name: shiftKeyword.shiftTarget.trim() };
   }
 
   const explicitName = parseShiftNameTargetFromText(cardDef, shiftKeyword, shiftLabel);

@@ -620,7 +620,10 @@ export function buildStaticEffectRegistry(
   };
 
   // ------------------------------------------------------------------
-  // Pass 2 — Everything else
+  // Pass 2a — Keywords (gain-keyword, lose-keyword)
+  // Evaluated before grants/restrictions so that keyword-dependent
+  // targets (e.g. YOUR_OTHER_EVASIVE_CHARACTERS) see conditionally
+  // granted keywords such as Wasabi's "During your turn, gains Evasive".
   // ------------------------------------------------------------------
   const allPlayerIds = getProjectionPlayerIds(state);
 
@@ -635,16 +638,8 @@ export function buildStaticEffectRegistry(
       const effect = ability.effect as unknown as Record<string, unknown>;
       const effectType = effect.type as string;
 
-      // Skip effects already handled in Pass 1
-      if (
-        effectType === "modify-stat" ||
-        effectType === "stat-floor" ||
-        (effectType === "conditional" &&
-          (effect.then as Record<string, unknown> | undefined)?.type === "modify-stat") ||
-        (effectType === "property-modification" && effect.property === "singer-threshold")
-      ) {
-        continue;
-      }
+      // Only handle keyword effects in this sub-pass
+      if (effectType !== "gain-keyword" && effectType !== "lose-keyword") continue;
 
       const condOk = evaluateStaticCondition({
         condition: ability.condition,
@@ -763,6 +758,110 @@ export function buildStaticEffectRegistry(
         }
         continue;
       }
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // After Pass 2a, keyword effects are materialized in byTarget.
+  // Build a keyword-augmented definition getter so that target matching
+  // in Pass 2b sees the derived keyword state from static effects
+  // (including both granted and removed keywords) when evaluating
+  // targets like YOUR_OTHER_EVASIVE_CHARACTERS.
+  // ------------------------------------------------------------------
+  const getDefinitionWithGrantedKeywords: GetDef = (id: CardInstanceId) => {
+    const baseDef = getDefinitionByInstanceId(id);
+    if (!baseDef) return undefined;
+
+    const keywordEffects = (byTarget.get(id) ?? []).filter(
+      (e) => e.kind === "gain-keyword" || e.kind === "lose-keyword",
+    );
+    if (keywordEffects.length === 0) return baseDef;
+
+    const removedKeywords = new Set(
+      keywordEffects
+        .filter((e) => e.kind === "lose-keyword")
+        .map((e) => e.payload.keyword as string),
+    );
+
+    const baseAbilities = baseDef.abilities ?? [];
+    const filteredBaseAbilities = baseAbilities.filter(
+      (ability) =>
+        !(
+          ability.type === "keyword" &&
+          "keyword" in ability &&
+          removedKeywords.has((ability as { keyword: string }).keyword)
+        ),
+    );
+
+    const existingKeywords = new Set(
+      filteredBaseAbilities
+        .filter((a) => a.type === "keyword" && "keyword" in a)
+        .map((a) => (a as { keyword: string }).keyword),
+    );
+
+    const gainedKeywords = new Set(
+      keywordEffects
+        .filter((e) => e.kind === "gain-keyword")
+        .map((e) => e.payload.keyword as string)
+        .filter((keyword) => !removedKeywords.has(keyword)),
+    );
+
+    const syntheticAbilities = [...gainedKeywords]
+      .filter((keyword) => !existingKeywords.has(keyword))
+      .map((keyword) => ({
+        type: "keyword" as const,
+        keyword,
+        id: `${id}-registry-keyword-${keyword}`,
+      }));
+
+    const abilitiesChanged =
+      filteredBaseAbilities.length !== baseAbilities.length || syntheticAbilities.length > 0;
+    if (!abilitiesChanged) return baseDef;
+
+    return {
+      ...baseDef,
+      abilities: [...filteredBaseAbilities, ...syntheticAbilities],
+    } as LorcanaCardDefinition;
+  };
+
+  // ------------------------------------------------------------------
+  // Pass 2b — Everything else (classifications, restrictions, cost
+  // modifiers, granted abilities). Uses keyword-augmented definitions
+  // so that grant targets depending on keywords work correctly.
+  // ------------------------------------------------------------------
+  for (const sourceId of inPlayIds) {
+    const sourceDef = getDefinitionByInstanceId(sourceId);
+    if (!sourceDef) continue;
+    const controllerId = cardIndex[sourceId]?.controllerID as PlayerId | undefined;
+
+    for (let abilityIdx = 0; abilityIdx < (sourceDef.abilities ?? []).length; abilityIdx++) {
+      const ability = (sourceDef.abilities ?? [])[abilityIdx];
+      if (ability.type !== "static") continue;
+      const effect = ability.effect as unknown as Record<string, unknown>;
+      const effectType = effect.type as string;
+
+      // Skip effects already handled in Pass 1 or Pass 2a
+      if (
+        effectType === "modify-stat" ||
+        effectType === "stat-floor" ||
+        effectType === "gain-keyword" ||
+        effectType === "lose-keyword" ||
+        (effectType === "conditional" &&
+          (effect.then as Record<string, unknown> | undefined)?.type === "modify-stat") ||
+        (effectType === "property-modification" && effect.property === "singer-threshold")
+      ) {
+        continue;
+      }
+
+      const condOk = evaluateStaticCondition({
+        condition: ability.condition,
+        state: flatState,
+        controllerId,
+        sourceId,
+        getDefinitionByInstanceId,
+        getCardStrengthByInstanceId: getRegistryStrength,
+      });
+      if (!condOk) continue;
 
       // ----- property-modification[classification] -----
       if (
@@ -813,6 +912,7 @@ export function buildStaticEffectRegistry(
           target: restrictionTarget,
           limit,
           challengerFilter,
+          effectCondition,
         } = restrictionEffect;
 
         if (isPlayerTarget(restrictionTarget)) {
@@ -878,6 +978,23 @@ export function buildStaticEffectRegistry(
 
             // Check suppression — the source ability name being suppressed on the target
             if (isSuppressed(suppressionIndex, targetId, ability.name)) continue;
+
+            // Evaluate per-target condition on the effect itself (e.g. "NOT being-challenged").
+            // The condition is evaluated with the TARGET card as sourceId, because conditions
+            // like "being-challenged" describe the state of the card receiving the restriction.
+            if (effectCondition !== undefined) {
+              const targetControllerId = cardIndex[targetId]?.controllerID as PlayerId | undefined;
+              const conditionPasses = evaluateStaticCondition({
+                condition: effectCondition as Parameters<
+                  typeof evaluateStaticCondition
+                >[0]["condition"],
+                state: flatState,
+                controllerId: targetControllerId ?? controllerId,
+                sourceId: targetId,
+                getDefinitionByInstanceId,
+              });
+              if (!conditionPasses) continue;
+            }
 
             addToTarget(byTarget, targetId, {
               sourceId,
@@ -961,13 +1078,15 @@ export function buildStaticEffectRegistry(
       if (effectType === "grant-abilities-while-here") {
         const grantTarget = effect.target ?? "CHARACTERS_HERE";
         for (const targetId of inPlayIds) {
+          // Use keyword-augmented definitions so that targets like
+          // YOUR_OTHER_EVASIVE_CHARACTERS see keywords granted in Pass 2a
           const matchesModern = matchesStaticAbilityTarget({
             state: flatState,
             target: grantTarget,
             sourceId,
             targetCardId: targetId,
             controllerId,
-            getDefinitionByInstanceId,
+            getDefinitionByInstanceId: getDefinitionWithGrantedKeywords,
           });
           const matchesLegacy =
             controllerId &&
@@ -977,7 +1096,7 @@ export function buildStaticEffectRegistry(
               sourceId,
               targetCardId: targetId,
               controllerId,
-              getDefinitionByInstanceId,
+              getDefinitionByInstanceId: getDefinitionWithGrantedKeywords,
             });
           if (!matchesModern && !matchesLegacy) continue;
 
@@ -1012,7 +1131,7 @@ export function buildStaticEffectRegistry(
               sourceId,
               targetCardId: targetId,
               controllerId,
-              getDefinitionByInstanceId,
+              getDefinitionByInstanceId: getDefinitionWithGrantedKeywords,
             })
           )
             continue;
@@ -1077,6 +1196,8 @@ type ExtractedRestriction = {
   target: unknown;
   limit?: number;
   challengerFilter?: unknown;
+  /** Per-target condition from the effect itself (e.g. "NOT being-challenged"). */
+  effectCondition?: unknown;
 };
 
 /**
@@ -1093,6 +1214,7 @@ function extractRestrictionEffect(
       target: effect.target,
       limit: effect.limit as number | undefined,
       challengerFilter: effect.challengerFilter,
+      effectCondition: effect.condition,
     };
   }
 
@@ -1104,6 +1226,7 @@ function extractRestrictionEffect(
         target: then.target,
         limit: then.limit as number | undefined,
         challengerFilter: then.challengerFilter,
+        effectCondition: then.condition,
       };
     }
   }

@@ -33,6 +33,7 @@ export interface MoveOutcomes {
   cardsMilled?: { playerId: PlayerId; amount: number; cardIds?: PrivateField<CardInstanceId[]> };
   cardsReturnedToHand?: CardInstanceId[];
   cardsMovedToZone?: Array<{ cardId: CardInstanceId; zone: string }>;
+  cardsInked?: Array<{ cardId: CardInstanceId; exerted: boolean; cardName?: string }>;
 }
 
 export interface DamageEntry {
@@ -57,6 +58,8 @@ export interface ShiftCardLog extends MoveLogBase {
   type: "shiftCard";
   cardId: CardInstanceId;
   shiftTargetId: CardInstanceId;
+  /** Stored when the move runs so UI text can name the target after it is in limbo (hidden in zone projection). */
+  shiftTargetName?: string;
   inkPaid?: number;
   outcomes?: MoveOutcomes;
 }
@@ -95,12 +98,15 @@ export interface QuestWithAllLog extends MoveLogBase {
 export interface InkCardLog extends MoveLogBase {
   type: "inkCard";
   cardId: CardInstanceId;
+  cardName?: string;
 }
 
 export interface ActivateAbilityLog extends MoveLogBase {
   type: "activateAbility";
   cardId: CardInstanceId;
   abilityName?: string;
+  /** Instance ids of cards discarded to pay activated ability costs, when applicable. */
+  discardCardIds?: CardInstanceId[];
   inkPaid?: number;
   outcomes?: MoveOutcomes;
 }
@@ -117,6 +123,12 @@ export interface PassTurnLog extends MoveLogBase {
 
 export interface ConcedeLog extends MoveLogBase {
   type: "concede";
+}
+
+export interface ForfeitGameLog extends MoveLogBase {
+  type: "forfeitGame";
+  winnerId: PlayerId;
+  reason: string;
 }
 
 // =============================================================================
@@ -196,6 +208,24 @@ export interface GameEndLog extends MoveLogBase {
   reason: string;
 }
 
+export interface TurnSkippedLog extends MoveLogBase {
+  type: "turnSkipped";
+  /** Player who triggered the skip (the caller / victim). */
+  skipperPlayerId: PlayerId;
+  /** Player whose turn decision window was skipped (the staller). */
+  stallerPlayerId: PlayerId;
+}
+
+export interface PlayerDroppedLog extends MoveLogBase {
+  type: "playerDropped";
+  /** Player who triggered the drop (the caller). */
+  dropperPlayerId: PlayerId;
+  /** Player who was dropped from the game. */
+  droppedPlayerId: PlayerId;
+  /** Why the drop was allowed, e.g. "Opponent disconnected" or "Opponent timed out". */
+  reason: string;
+}
+
 // =============================================================================
 // The Union
 // =============================================================================
@@ -213,6 +243,7 @@ export type MoveLog =
   | MoveToLocationLog
   | PassTurnLog
   | ConcedeLog
+  | ForfeitGameLog
   // Setup
   | AlterHandLog
   | ChooseFirstPlayerLog
@@ -221,6 +252,8 @@ export type MoveLog =
   | ResolveEffectLog
   // System
   | TurnStartLog
-  | GameEndLog;
+  | GameEndLog
+  | TurnSkippedLog
+  | PlayerDroppedLog;
 
 export type MoveLogType = MoveLog["type"];

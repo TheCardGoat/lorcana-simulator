@@ -37,6 +37,7 @@ export const beastsCastleWinterGardens: LocationCard = {
       },
       name: "SNOWBALL STANDOFF",
       trigger: {
+        defender: {},
         event: "challenge",
         on: "CHARACTERS_HERE",
         timing: "whenever",

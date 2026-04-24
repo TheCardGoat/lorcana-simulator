@@ -22,6 +22,7 @@ import {
 } from "@tcg/lorcana-cards/cards/003";
 import { amethystChromicon } from "@tcg/lorcana-cards/cards/005";
 import { createFixture } from "./fixture-factory";
+import { angelExperiment624 } from "@tcg/lorcana-cards/cards/011";
 
 export const discardEffectsFixture = createFixture({
   id: "discard-effects",
@@ -47,6 +48,7 @@ export const discardEffectsFixture = createFixture({
       { card: theWardrobePerceptiveFriend, isDrying: false },
       { card: jafarHighSultanOfLorcana, isDrying: false },
       { card: elsaFierceProtector, isDrying: false },
+      angelExperiment624,
     ],
     deck: [
       dragonFire,

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { nickWildePersistentInvestigator } from "..";
+import { nickWildePersistentInvestigator } from "./187-nick-wilde-persistent-investigator";
 
 export const nickWildePersistentInvestigatorEnchanted: CharacterCard = {
   ...nickWildePersistentInvestigator,

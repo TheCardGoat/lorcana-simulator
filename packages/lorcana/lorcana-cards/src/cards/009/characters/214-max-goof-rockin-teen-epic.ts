@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { maxGoofRockinTeen } from "..";
+import { maxGoofRockinTeen } from "./112-max-goof-rockin-teen";
 
 export const maxGoofRockinTeenEpic: CharacterCard = {
   ...maxGoofRockinTeen,

@@ -1,5 +1,5 @@
 import type { ActionCard } from "@tcg/lorcana-types";
-import { letsGetDangerous } from "..";
+import { letsGetDangerous } from "./198-lets-get-dangerous";
 
 export const letsGetDangerousEnchanted: ActionCard = {
   ...letsGetDangerous,

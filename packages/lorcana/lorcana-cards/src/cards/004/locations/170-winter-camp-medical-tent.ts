@@ -35,14 +35,13 @@ export const winterCampMedicalTent: LocationCard = {
         type: "sequence",
         steps: [
           {
-            amount: 2,
+            amount: { type: "up-to", value: 2 },
             target: {
               selector: "all",
               count: 1,
               reference: "trigger-subject",
             },
             type: "remove-damage",
-            upTo: true,
           },
           {
             type: "conditional",
@@ -65,14 +64,13 @@ export const winterCampMedicalTent: LocationCard = {
               },
             },
             then: {
-              amount: 2,
+              amount: { type: "up-to", value: 2 },
               target: {
                 selector: "all",
                 count: 1,
                 reference: "trigger-subject",
               },
               type: "remove-damage",
-              upTo: true,
             },
           },
         ],

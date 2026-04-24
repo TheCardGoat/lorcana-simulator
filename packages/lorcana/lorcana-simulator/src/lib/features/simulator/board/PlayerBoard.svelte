@@ -27,6 +27,7 @@
     playAreaDropState?: DropState;
     inkwellDropState?: DropState;
     onCardDragStart?: (cardId: string, event: DragEvent) => void;
+    showZoneCounters?: boolean;
     onDeckClick?: () => void;
     onDiscardClick?: () => void;
     onPlayAreaEnter?: () => void;
@@ -55,6 +56,7 @@
     challengeMode = false,
     playAreaDropState = "none",
     inkwellDropState = "none",
+    showZoneCounters = false,
     onCardDragStart,
     onDeckClick,
     onDiscardClick,
@@ -87,6 +89,7 @@
       {inkwellCount}
       {ownerId}
       {isOpponent}
+      {showZoneCounters}
       isMasked={isHandMasked}
       onDeckClick={onDeckClick}
       onDiscardClick={onDiscardClick}

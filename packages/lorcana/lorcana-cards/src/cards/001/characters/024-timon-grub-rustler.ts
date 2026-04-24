@@ -35,10 +35,9 @@ export const timonGrubRustler: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 1,
+          amount: { type: "up-to", value: 1 },
           target: "CHOSEN_CHARACTER",
           type: "remove-damage",
-          upTo: true,
         },
         type: "optional",
       },

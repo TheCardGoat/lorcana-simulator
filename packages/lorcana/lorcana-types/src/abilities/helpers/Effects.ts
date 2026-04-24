@@ -38,12 +38,14 @@ export const Effects = {
 
   /**
    * "Remove up to X damage from target"
+   *
+   * When `upTo` is true, emits `amount: { type: "up-to", value: X }` so the
+   * chooser can select any value in `[0, X]` at resolution time.
    */
   RemoveDamage: (params: { amount: number; target: CharacterTarget; upTo?: boolean }): Effect => ({
-    amount: params.amount,
+    amount: params.upTo ? { type: "up-to", value: params.amount } : params.amount,
     target: params.target,
     type: "remove-damage",
-    upTo: params.upTo,
   }),
 
   /**

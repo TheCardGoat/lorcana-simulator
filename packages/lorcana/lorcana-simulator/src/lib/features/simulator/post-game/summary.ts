@@ -17,7 +17,7 @@ import {
   getMoveCategoryId,
   getMoveCategoryLabel,
 } from "@/features/simulator/model/move-presentation.js";
-import type { PostGameCanonicalData } from "./notes-api.js";
+import type { GameAnalyticsSummary, PostGameCanonicalData } from "./notes-api.js";
 import type {
   PostGameActionCounters,
   PostGameActorTone,
@@ -65,6 +65,12 @@ export function buildPostGameSummaryFromCanonical(
   postGame: PostGameCanonicalData,
   viewerSide?: LorcanaPlayerSide | null,
 ): PostGameSummary {
+  // Analytics source: raw moves not available — use pre-computed analytics record
+  if (postGame.source === "analytics" && postGame.analytics) {
+    return buildPostGameSummaryFromAnalytics(postGame, viewerSide);
+  }
+
+  // Redis source: full raw moves available — build forensic summary
   return buildPostGameSummary({
     board: {
       ...postGame.board,
@@ -73,6 +79,164 @@ export function buildPostGameSummaryFromCanonical(
     entries: createPersistedMoveLogEntries(postGame),
     viewerSide,
   });
+}
+
+function buildPostGameSummaryFromAnalytics(
+  postGame: PostGameCanonicalData,
+  viewerSide?: LorcanaPlayerSide | null,
+): PostGameSummary {
+  const analytics = postGame.analytics!;
+  const board = { ...postGame.board, reason: postGame.reason ?? postGame.board.reason ?? null };
+  const resolvedViewerSide = viewerSide ?? null;
+  const outcome = buildOutcomeSummary(board, resolvedViewerSide);
+
+  // buildAnalyticsDerivedData consumes the same shape as AnalyticsPlayerData — the
+  // expanded PlayerAnalyticsSummary now includes cardEvents + full counters.
+  const derived = buildAnalyticsDerivedData({
+    players: analytics.players as [AnalyticsPlayerData, AnalyticsPlayerData],
+  });
+
+  const highlights = buildHighlightsFromAnalytics(
+    board,
+    analytics,
+    outcome,
+    derived,
+    resolvedViewerSide,
+  );
+  const turns = buildTurnSummariesFromAnalytics(analytics);
+
+  return {
+    board,
+    outcome,
+    players: {
+      playerOne: buildPlayerBoardSummary(board, "playerOne"),
+      playerTwo: buildPlayerBoardSummary(board, "playerTwo"),
+    },
+    countersBySide: derived.countersBySide,
+    topLoreContributors: derived.topLoreContributors,
+    mostPlayedCards: derived.mostPlayedCards,
+    mostInvolvedChallengeCards: derived.mostInvolvedChallengeCards,
+    mostTriggeredAbilities: [],
+    highlights: highlights.slice(0, 6),
+    timeline: [],
+    turns,
+    totalLogEntries: analytics.summary.totalMoves,
+    analytics,
+  };
+}
+
+function buildHighlightsFromAnalytics(
+  board: LorcanaProjectedBoardView,
+  analytics: GameAnalyticsSummary,
+  outcome: ReturnType<typeof buildOutcomeSummary>,
+  derived: ReturnType<typeof buildAnalyticsDerivedData>,
+  viewerSide: LorcanaPlayerSide | null,
+): PostGameHighlight[] {
+  const highlights: PostGameHighlight[] = [];
+
+  // First challenge milestone (whichever player challenged first)
+  const firstChallengePlayers = [...analytics.players].sort(
+    (a, b) =>
+      (a.metrics.firstChallengeTurn ?? Infinity) - (b.metrics.firstChallengeTurn ?? Infinity),
+  );
+  const firstChallengePlayer = firstChallengePlayers[0];
+  if (firstChallengePlayer?.metrics.firstChallengeTurn !== null) {
+    const side: LorcanaPlayerSide = firstChallengePlayer.seat === 1 ? "playerOne" : "playerTwo";
+    highlights.push({
+      id: `highlight:first-challenge`,
+      title: m["sim.postGame.highlight.challenge.title"]({}),
+      detail: m["sim.postGame.highlight.challenge.detail"]({}),
+      turnNumber: firstChallengePlayer.metrics.firstChallengeTurn ?? undefined,
+      actorSide: side,
+    });
+  }
+
+  // First quest milestone (whichever player quested first)
+  const firstQuestPlayers = [...analytics.players].sort(
+    (a, b) => (a.metrics.firstQuestTurn ?? Infinity) - (b.metrics.firstQuestTurn ?? Infinity),
+  );
+  const firstQuestPlayer = firstQuestPlayers[0];
+  if (firstQuestPlayer?.metrics.firstQuestTurn !== null) {
+    const side: LorcanaPlayerSide = firstQuestPlayer.seat === 1 ? "playerOne" : "playerTwo";
+    highlights.push({
+      id: `highlight:first-quest`,
+      title: m["sim.postGame.highlight.quest.title"]({}),
+      detail: m["sim.postGame.highlight.quest.detail"]({}),
+      turnNumber: firstQuestPlayer.metrics.firstQuestTurn ?? undefined,
+      actorSide: side,
+    });
+  }
+
+  // Game outcome
+  const outcomeTitle =
+    outcome.viewerResult === "victory"
+      ? m["sim.postGame.highlight.outcome.victory.title"]({})
+      : outcome.viewerResult === "defeat"
+        ? m["sim.postGame.highlight.outcome.defeat.title"]({})
+        : m["sim.postGame.highlight.outcome.complete.title"]({});
+  highlights.push({
+    id: "highlight:outcome",
+    title: outcomeTitle,
+    detail: buildOutcomeDetail(board, outcome.winnerSide, viewerSide),
+    emphasis: true,
+    turnNumber: analytics.summary.totalTurns,
+    actorSide: outcome.winnerSide,
+  });
+
+  // Top spotlight cards
+  if (derived.topLoreContributors[0]) {
+    highlights.push({
+      id: "highlight:top-lore-card",
+      title: m["sim.postGame.highlight.topLore.title"]({}),
+      detail: m["sim.postGame.highlight.topLore.detail"]({
+        card: derived.topLoreContributors[0].label,
+        value: derived.topLoreContributors[0].value,
+      }),
+      actorSide: derived.topLoreContributors[0].ownerSide,
+    });
+  }
+  if (derived.mostPlayedCards[0]) {
+    highlights.push({
+      id: "highlight:most-played-card",
+      title: m["sim.postGame.highlight.mostPlayed.title"]({}),
+      detail: m["sim.postGame.highlight.mostPlayed.detail"]({
+        card: derived.mostPlayedCards[0].label,
+        value: derived.mostPlayedCards[0].value,
+      }),
+      actorSide: derived.mostPlayedCards[0].ownerSide,
+    });
+  }
+
+  return highlights;
+}
+
+function buildTurnSummariesFromAnalytics(analytics: GameAnalyticsSummary): PostGameTurnSummary[] {
+  // Merge both players' perTurn arrays into a single list keyed by turn number
+  const turnMap = new Map<number, PostGameTurnSummary>();
+
+  for (const player of analytics.players) {
+    const side: LorcanaPlayerSide = player.seat === 1 ? "playerOne" : "playerTwo";
+    for (const t of player.perTurn) {
+      if (!turnMap.has(t.turn)) {
+        turnMap.set(t.turn, {
+          id: `turn:${t.turn}`,
+          turnNumber: t.turn,
+          actorSide: side,
+          startedAt: 0,
+          endedAt: t.durationMs,
+          durationMs: t.durationMs,
+          moveCount:
+            t.cardsPlayedThisTurn +
+            t.cardsInkedThisTurn +
+            t.questsMadeThisTurn +
+            t.challengesMadeThisTurn,
+          actions: [],
+        });
+      }
+    }
+  }
+
+  return Array.from(turnMap.values()).sort((a, b) => a.turnNumber - b.turnNumber);
 }
 
 export function buildPostGameSummary(input: BuildPostGameSummaryInput): PostGameSummary {
@@ -668,7 +832,7 @@ function applyLoreContribution(
       return;
     }
 
-    const loreGained = getNumericValueFromMessages(entry, "loreGained") ?? 0;
+    const loreGained = getMoveLogLoreGained(entry) ?? 0;
     incrementCardAggregate(
       store,
       resolveCardAggregate(cardReferenceMap, cardId, actorSide, ""),
@@ -681,12 +845,17 @@ function applyLoreContribution(
     return;
   }
 
-  const cardIds = getStringArrayValue(params, "cardIds");
+  // cardIds come from the MoveLog (typedLogEntry), not from move params
+  // (questWithAll takes Record<string, never> args — no cardIds in params)
+  const cardIds = getMoveLogCardIds(entry) ?? getStringArrayValue(params, "cardIds");
   if (cardIds.length === 0) {
     return;
   }
 
-  const totalLore = getNumericValueFromMessages(entry, "loreGained") ?? cardIds.length;
+  const totalLore =
+    getMoveLogTotalLore(entry) ??
+    getNumericValueFromMessages(entry, "loreGained") ??
+    cardIds.length;
   const knownLoreTotal = cardIds.reduce((sum, cardId) => {
     return sum + Math.max(0, cardReferenceMap.get(cardId)?.loreValue ?? 0);
   }, 0);
@@ -711,6 +880,36 @@ function applyLoreContribution(
       Math.max(1, contribution),
     );
   }
+}
+
+function getMoveLogLoreGained(entry: MoveLogEntrySnapshot): number | null {
+  const log = entry.typedLogEntry;
+  if (log && "loreGained" in log && typeof log.loreGained === "number") {
+    return log.loreGained;
+  }
+  return getNumericValueFromMessages(entry, "loreGained");
+}
+
+function getMoveLogCardIds(entry: MoveLogEntrySnapshot): string[] | null {
+  const log = entry.typedLogEntry;
+  if (
+    log &&
+    "type" in log &&
+    log.type === "questWithAll" &&
+    "cardIds" in log &&
+    Array.isArray(log.cardIds)
+  ) {
+    return (log.cardIds as unknown[]).filter((id): id is string => typeof id === "string");
+  }
+  return null;
+}
+
+function getMoveLogTotalLore(entry: MoveLogEntrySnapshot): number | null {
+  const log = entry.typedLogEntry;
+  if (log && "totalLore" in log && typeof log.totalLore === "number") {
+    return log.totalLore;
+  }
+  return null;
 }
 
 function applyAbilityContribution(
@@ -878,8 +1077,9 @@ function sideToLabel(side: LorcanaPlayerSide, viewerSide: LorcanaPlayerSide | nu
 }
 
 function createPersistedMoveLogEntries(postGame: PostGameCanonicalData): MoveLogEntrySnapshot[] {
+  if (!postGame.acceptedMoves || !postGame.engineLogs) return [];
   return postGame.acceptedMoves.flatMap((acceptedMove, index) => {
-    const matchingLog = postGame.engineLogs.find(
+    const matchingLog = postGame.engineLogs!.find(
       (record) => record.stateVersion === acceptedMove.stateVersion,
     );
     const actorSide = postGame.players.find((player) => player.id === acceptedMove.actorId)?.side;
@@ -905,9 +1105,7 @@ function createPersistedMoveLogEntries(postGame: PostGameCanonicalData): MoveLog
   });
 }
 
-function normalizePersistedMoveParams(
-  input?: PostGameCanonicalData["acceptedMoves"][number]["input"],
-): SimulatorSerializedObject | undefined {
+function normalizePersistedMoveParams(input?: unknown): SimulatorSerializedObject | undefined {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return undefined;
   }
@@ -1029,4 +1227,126 @@ function normalizeOutcomeReason(reason: string | null | undefined): string | nul
   }
 
   return reason;
+}
+
+// ─── Analytics-Derived Summary Data ──────────────────────────────────────────
+
+/**
+ * Input type for the analytics adapter — matches the shape from the API's
+ * GameAnalyticsRecord without importing the server-side type directly.
+ */
+export interface AnalyticsPlayerData {
+  playerId: string;
+  seat: 1 | 2;
+  counters: {
+    cardsPlayed: number;
+    cardsInked: number;
+    quests: number;
+    challenges: number;
+    movesToLocations: number;
+    abilitiesActivated: number;
+    effectsResolved: number;
+    turnsPassed: number;
+    conceded: boolean;
+  };
+  cardEvents: Record<
+    string,
+    {
+      cardPublicId: string;
+      fullName: string;
+      loreGenerated: number;
+      timesPlayed: number;
+      timesAttacked: number;
+      timesDefended: number;
+      timesAbilityActivated: number;
+    }
+  >;
+}
+
+export interface AnalyticsSummaryInput {
+  players: [AnalyticsPlayerData, AnalyticsPlayerData];
+}
+
+/**
+ * Extract PostGameActionCounters and spotlight cards from a GameAnalyticsRecord.
+ * Use this to enrich the post-game UI with analytics data without needing
+ * the full board or timeline.
+ */
+export function buildAnalyticsDerivedData(input: AnalyticsSummaryInput): {
+  countersBySide: Record<LorcanaPlayerSide, PostGameActionCounters>;
+  topLoreContributors: PostGameSpotlightCard[];
+  mostPlayedCards: PostGameSpotlightCard[];
+  mostInvolvedChallengeCards: PostGameSpotlightCard[];
+} {
+  const sideForSeat = (seat: 1 | 2): LorcanaPlayerSide => (seat === 1 ? "playerOne" : "playerTwo");
+
+  const countersBySide: Record<LorcanaPlayerSide, PostGameActionCounters> = {
+    playerOne: createEmptyCounters(),
+    playerTwo: createEmptyCounters(),
+  };
+
+  const loreAgg: PostGameSpotlightCard[] = [];
+  const playedAgg: PostGameSpotlightCard[] = [];
+  const challengeAgg: PostGameSpotlightCard[] = [];
+
+  for (const player of input.players) {
+    const side = sideForSeat(player.seat);
+    const c = player.counters;
+    countersBySide[side] = {
+      cardsPlayed: c.cardsPlayed,
+      inked: c.cardsInked,
+      quests: c.quests,
+      challengeInitiations: c.challenges,
+      movesToLocations: c.movesToLocations,
+      abilityActivations: c.abilitiesActivated,
+      effectResolutions: c.effectsResolved,
+      passes: c.turnsPassed,
+      concedes: c.conceded ? 1 : 0,
+    };
+
+    for (const [cardId, ev] of Object.entries(player.cardEvents)) {
+      if (ev.loreGenerated > 0) {
+        loreAgg.push({
+          id: `lore-${cardId}-${side}`,
+          cardId,
+          label: ev.fullName,
+          ownerSide: side,
+          value: ev.loreGenerated,
+          detail: m["sim.postGame.spotlight.detail.loreGenerated"]({
+            value: String(ev.loreGenerated),
+          }),
+        });
+      }
+      if (ev.timesPlayed > 0) {
+        playedAgg.push({
+          id: `played-${cardId}-${side}`,
+          cardId,
+          label: ev.fullName,
+          ownerSide: side,
+          value: ev.timesPlayed,
+          detail: m["sim.postGame.spotlight.detail.timesPlayed"]({ value: String(ev.timesPlayed) }),
+        });
+      }
+      const challengeCount = ev.timesAttacked + ev.timesDefended;
+      if (challengeCount > 0) {
+        challengeAgg.push({
+          id: `challenge-${cardId}-${side}`,
+          cardId,
+          label: ev.fullName,
+          ownerSide: side,
+          value: challengeCount,
+          detail: m["sim.postGame.spotlight.detail.challenges"]({ value: String(challengeCount) }),
+        });
+      }
+    }
+  }
+
+  const sortDesc = (a: PostGameSpotlightCard, b: PostGameSpotlightCard) => b.value - a.value;
+
+  return {
+    countersBySide,
+    topLoreContributors: loreAgg.sort(sortDesc).slice(0, 5),
+    mostPlayedCards: playedAgg.sort(sortDesc).slice(0, 5),
+    mostInvolvedChallengeCards: challengeAgg.sort(sortDesc).slice(0, 5),
+  };
 }

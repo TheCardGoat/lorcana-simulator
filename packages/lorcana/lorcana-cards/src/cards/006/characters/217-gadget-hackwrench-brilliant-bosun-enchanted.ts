@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { gadgetHackwrenchBrilliantBosun } from "..";
+import { gadgetHackwrenchBrilliantBosun } from "./140-gadget-hackwrench-brilliant-bosun";
 
 export const gadgetHackwrenchBrilliantBosunEnchanted: CharacterCard = {
   ...gadgetHackwrenchBrilliantBosun,

@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { basilDisguisedDetective } from "..";
+import { basilDisguisedDetective } from "./091-basil-disguised-detective";
 
 export const basilDisguisedDetectiveEnchanted: CharacterCard = {
   ...basilDisguisedDetective,

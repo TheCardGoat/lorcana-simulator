@@ -25,6 +25,10 @@ export function buildScryDragId(cardId: string): string {
   return `${SCRYPT_DRAG_ID_PREFIX}${cardId}`;
 }
 
+export function isScryDragSourceId(id: string | null | undefined): boolean {
+  return Boolean(id && id.startsWith(SCRYPT_DRAG_ID_PREFIX));
+}
+
 export function parseScryDragId(id: string | null | undefined): string | null {
   if (!id || !id.startsWith(SCRYPT_DRAG_ID_PREFIX)) {
     return null;
@@ -132,16 +136,28 @@ export function getScryTapDestination(
 ): string | null {
   const currentDestinationId = findScryCardDestinationId(selectionState, cardId);
   const remainderDestination = getScryRemainderDestination(selectionState);
-  if (!currentDestinationId || !remainderDestination) {
+
+  // If the card is currently unassigned (not in any destination):
+  // - With a remainder destination: assign to the first non-remainder destination that accepts it
+  // - Without a remainder destination: assign to the first destination that accepts it
+  if (!currentDestinationId) {
+    for (const destination of selectionState.destinations) {
+      if (canAssignScryCardToDestination(selectionState, cardId, destination.id)) {
+        return destination.id;
+      }
+    }
     return null;
   }
 
-  if (currentDestinationId !== remainderDestination.id) {
+  // Card is currently in a non-remainder destination — send it back to remainder (if any)
+  if (remainderDestination && currentDestinationId !== remainderDestination.id) {
     return canAssignScryCardToDestination(selectionState, cardId, remainderDestination.id)
       ? remainderDestination.id
       : null;
   }
 
+  // Card is in the remainder destination (or there's no remainder) — cycle to the next
+  // non-remainder destination that accepts it
   for (const destination of selectionState.destinations) {
     if (destination.rule.remainder) {
       continue;

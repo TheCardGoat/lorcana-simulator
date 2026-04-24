@@ -44,7 +44,7 @@ export const pepaMadrigalWeatherMaker: CharacterCard = {
         type: "optional",
         effect: {
           type: "sequence",
-          effects: [
+          steps: [
             {
               type: "exert",
               target: {
@@ -65,13 +65,7 @@ export const pepaMadrigalWeatherMaker: CharacterCard = {
                   type: "at-location",
                 },
               },
-              target: {
-                selector: "chosen",
-                count: 1,
-                owner: "opponent",
-                cardTypes: ["character"],
-                zones: ["play"],
-              },
+              target: { ref: "previous-target" },
             },
           ],
         },

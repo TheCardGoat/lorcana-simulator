@@ -32,10 +32,9 @@ describe("Timon - Grub Rustler", () => {
 
     // Verify nested effect is remove-damage
     expect(ability.effect?.effect).toMatchObject({
-      amount: 1,
+      amount: { type: "up-to", value: 1 },
       target: "CHOSEN_CHARACTER",
       type: "remove-damage",
-      upTo: true,
     });
 
     // Verify chooser is controller

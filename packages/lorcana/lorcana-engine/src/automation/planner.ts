@@ -27,6 +27,7 @@ import {
 import { buildRegistryFromMatchState } from "../runtime-moves/rules/move-registry-cache";
 import { cardHasName } from "../card-utils";
 import { analyzeEffectTargets } from "../targeting";
+import { classifyEffectPolarity, classifyTargetedStepPolarity } from "./effect-polarity";
 import type {
   ActivatedAbilityDefinition,
   BagEffectEntry,
@@ -301,6 +302,7 @@ function buildTargetPriorityContext(args: {
 }
 
 function prioritizeTargetIds(args: {
+  effect?: Effect;
   family: AutomatedActionFamily;
   priorityContext: AutomatedActionTargetPriorityContext;
   sourceCardId: CardInstanceId;
@@ -308,6 +310,7 @@ function prioritizeTargetIds(args: {
 }): AutomatedActionTargetId[] {
   const sourceDefinitionId = args.priorityContext.getCardDefinition(args.sourceCardId)?.id;
   const sourceRoles = args.priorityContext.getCardRoles(args.sourceCardId);
+  const polarity = classifyTargetedStepPolarity(args.effect).polarity;
   const scoreByTargetId = new Map<AutomatedActionTargetId, number>();
 
   const getScore = (targetId: AutomatedActionTargetId): number => {
@@ -318,6 +321,7 @@ function prioritizeTargetIds(args: {
 
     const score = scoreAutomatedActionTargets({
       context: args.priorityContext,
+      effectPolarity: polarity,
       family: args.family,
       sourceDefinitionId,
       sourceRoles,
@@ -338,6 +342,7 @@ function prioritizeTargetIds(args: {
 }
 
 function prioritizeTargetVariants(args: {
+  effect?: Effect;
   family: AutomatedActionFamily;
   priorityContext: AutomatedActionTargetPriorityContext;
   sourceCardId: CardInstanceId;
@@ -345,6 +350,7 @@ function prioritizeTargetVariants(args: {
 }): AutomatedActionTargetId[][] {
   const sourceDefinitionId = args.priorityContext.getCardDefinition(args.sourceCardId)?.id;
   const sourceRoles = args.priorityContext.getCardRoles(args.sourceCardId);
+  const polarity = classifyTargetedStepPolarity(args.effect).polarity;
   const scoreByVariantKey = new Map<string, number>();
 
   const getScore = (targets: readonly AutomatedActionTargetId[]): number => {
@@ -356,6 +362,7 @@ function prioritizeTargetVariants(args: {
 
     const score = scoreAutomatedActionTargets({
       context: args.priorityContext,
+      effectPolarity: polarity,
       family: args.family,
       sourceDefinitionId,
       sourceRoles,
@@ -843,7 +850,7 @@ function enumerateBoundedCombinations<T>(
 
   visit(0, []);
   return {
-    combinations: overflow ? [] : combinations,
+    combinations: combinations.slice(0, cap),
     overflow,
   };
 }
@@ -1248,6 +1255,7 @@ function buildTargetVariants(args: {
     const pool =
       rawPool.length > searchCaps.targetPool
         ? prioritizeTargetIds({
+            effect,
             family,
             priorityContext,
             sourceCardId,
@@ -1276,15 +1284,15 @@ function buildTargetVariants(args: {
       diagnostics.push({
         kind: "overflow-skip",
         family,
-        reason: "Target combinations exceed the configured automation search cap",
+        reason: "Target combinations exceeded the enumeration cap; some variants will be dropped",
         cap: searchCaps.targetCombinationsPerFamily,
-        actual: searchCaps.targetCombinationsPerFamily + 1,
+        actual: combinations.length + 1,
         sourceCardId,
       });
-      return null;
     }
 
     const prioritizedCombinations = prioritizeTargetVariants({
+      effect,
       family,
       priorityContext,
       sourceCardId,
@@ -1327,6 +1335,12 @@ function buildTargetVariants(args: {
     ...analysis.playerCandidates.map((playerId) => String(playerId) as AutomatedActionTargetId),
   ];
   if (analysis.requiresExplicitSelection && rawPool.length === 0) {
+    // For card play and ability activation, skip this candidate entirely — the AI should
+    // not play a card or activate an ability when there are no valid targets. For bag/pending
+    // resolution, an empty-target submission triggers the engine's auto-reject/fizzle path.
+    if (family === "playCard" || family === "activateAbility") {
+      return null;
+    }
     return [[]];
   }
   const priorityContext = buildTargetPriorityContext({
@@ -1336,6 +1350,7 @@ function buildTargetVariants(args: {
   const pool =
     rawPool.length > searchCaps.targetPool
       ? prioritizeTargetIds({
+          effect,
           family,
           priorityContext,
           sourceCardId,
@@ -1367,14 +1382,15 @@ function buildTargetVariants(args: {
     diagnostics.push({
       kind: "overflow-skip",
       family,
-      reason: "Target combinations exceed the configured automation search cap",
+      reason:
+        "Target combinations exceeded the enumeration cap; keeping the highest-priority variants",
       cap: searchCaps.targetCombinationsPerFamily,
       actual: searchCaps.targetCombinationsPerFamily + 1,
       sourceCardId,
     });
-    return null;
   }
   const prioritizedCombinations = prioritizeTargetVariants({
+    effect,
     family,
     priorityContext,
     sourceCardId,
@@ -1706,7 +1722,7 @@ function buildResolutionVariants(args: {
     diagnostics.push({
       kind: "overflow-skip",
       family,
-      reason: "Resolution variants exceed the configured automation search cap",
+      reason: "Resolution variants exceeded the search cap; keeping the first combinations",
       cap:
         searchCaps.targetCombinationsPerFamily *
         Math.max(1, choiceValues.length) *
@@ -1720,7 +1736,6 @@ function buildResolutionVariants(args: {
       bagId,
       effectId,
     });
-    return null;
   }
 
   const plannedScryDestinations =
@@ -2185,23 +2200,23 @@ function enumeratePlayCostModes(args: {
         diagnostics.push({
           kind: "overflow-skip",
           family: "playCard",
-          reason: "Singer combinations exceed the configured automation search cap",
+          reason:
+            "Singer combinations exceeded the automation search cap; keeping the first combinations",
           cap: searchCaps.singerCombinations,
           actual: searchCaps.singerCombinations + 1,
           sourceCardId: cardId,
         });
-      } else {
-        for (const combination of combinations) {
-          const totalThreshold = combination.reduce((sum, entry) => sum + entry.threshold, 0);
-          if (totalThreshold >= singTogetherThreshold) {
-            costModes.push({
-              cost: "singTogether",
-              singers: stableSortIds(
-                adapter.board,
-                combination.map((entry) => entry.singerId),
-              ),
-            });
-          }
+      }
+      for (const combination of combinations) {
+        const totalThreshold = combination.reduce((sum, entry) => sum + entry.threshold, 0);
+        if (totalThreshold >= singTogetherThreshold) {
+          costModes.push({
+            cost: "singTogether",
+            singers: stableSortIds(
+              adapter.board,
+              combination.map((entry) => entry.singerId),
+            ),
+          });
         }
       }
     }
@@ -2443,12 +2458,12 @@ function buildAbilityCostSelectionGroups(args: {
       diagnostics.push({
         kind: "overflow-skip",
         family,
-        reason: "Ability cost combinations exceed the configured automation search cap",
+        reason:
+          "Ability cost combinations exceeded the configured automation search cap; keeping the first combinations",
         cap: searchCaps.targetCombinationsPerFamily,
         actual: searchCaps.targetCombinationsPerFamily + 1,
         sourceCardId: cardId,
       });
-      return false;
     }
     selectionGroups.push(
       combinations.map((combination) => apply(stableSortIds(adapter.board, combination))),
@@ -2483,12 +2498,11 @@ function buildAbilityCostSelectionGroups(args: {
     diagnostics.push({
       kind: "overflow-skip",
       family: "activateAbility",
-      reason: "Ability cost selections exceed the configured automation search cap",
+      reason: "Ability cost selections exceeded the search cap; keeping the first combinations",
       cap: searchCaps.targetCombinationsPerFamily,
       actual: searchCaps.targetCombinationsPerFamily + 1,
       sourceCardId: cardId,
     });
-    return null;
   }
 
   return product.values.map((parts) =>

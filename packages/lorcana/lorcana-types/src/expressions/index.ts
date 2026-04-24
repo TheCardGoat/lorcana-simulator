@@ -326,6 +326,7 @@ export type AmountRef =
   | "OPPONENTS_DAMAGED_CHARACTER_COUNT"
   | "X"
   | "DAMAGE_REMOVED"
+  | "DRAWN_COUNT"
   | "HAND"
   | "TARGET_COST"
   | "TARGET_STRENGTH"
@@ -363,7 +364,7 @@ export type TriggerTargetAttributeKey =
 
 export type TargetLocationAttributeKey = "lore";
 
-export type CountController = "you" | "opponent" | "opponents" | "active";
+export type CountController = "you" | "opponent" | "opponents";
 
 export type VariableAmountOperand = number | VariableAmount;
 
@@ -454,12 +455,41 @@ export type VariableAmount =
   | { type: "lore-lost" }
   | { type: "stat"; stat?: string; target?: string };
 
-export type AmountExpr = number | AmountRef | VariableAmount;
+/**
+ * "Up to N" amount modifier. Wraps any underlying amount and signals that the
+ * chooser may pick any value in `[0, N]` at resolution time. Which effects are
+ * compatible with "up to" semantics is decided by each resolver — the engine
+ * currently honours it for `remove-damage` and `move-damage`.
+ */
+export type UpToAmount = { type: "up-to"; value: AmountExpr };
+
+export type AmountExpr = number | AmountRef | VariableAmount | UpToAmount;
 export type Amount = AmountExpr;
 export type AmountString = AmountRef;
 
+export function isUpToAmount(amount: AmountExpr | undefined): amount is UpToAmount {
+  return (
+    typeof amount === "object" && amount !== null && (amount as { type?: unknown }).type === "up-to"
+  );
+}
+
+/**
+ * If `amount` is wrapped as `{ type: "up-to", value }`, returns the inner value
+ * together with `isUpTo: true`. Otherwise returns the amount unchanged with
+ * `isUpTo: false`. Use this at any boundary that needs to reason about the
+ * concrete amount while preserving the up-to semantics separately.
+ */
+export function unwrapAmount(amount: AmountExpr): { isUpTo: boolean; inner: AmountExpr } {
+  return isUpToAmount(amount)
+    ? { isUpTo: true, inner: amount.value }
+    : { isUpTo: false, inner: amount };
+}
+
 export function isVariableAmount(amount: AmountExpr): amount is VariableAmount {
-  return typeof amount === "object";
+  if (typeof amount !== "object" || amount === null) {
+    return false;
+  }
+  return (amount as { type?: unknown }).type !== "up-to";
 }
 
 export type EffectDuration =

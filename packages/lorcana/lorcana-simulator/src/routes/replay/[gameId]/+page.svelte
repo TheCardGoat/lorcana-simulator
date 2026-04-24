@@ -13,26 +13,47 @@
   import {
     loadReplayData,
     isReplayStoreAvailable,
+    fetchReplayBlob,
   } from "@/features/replay/index.js";
   import { decompressReplayBlob } from "@/features/replay/fetch-replay.js";
   import { ReplayOrchestrator } from "@/features/replay/replay-orchestrator.svelte.js";
+  import ReplayForkPlayerPicker from "@/features/replay/ReplayForkPlayerPicker.svelte";
+  import { trackEvent } from "$lib/analytics/analytics.js";
   import {
     ArrowLeft,
     ChevronLeft,
     ChevronRight,
     ChevronsLeft,
     ChevronsRight,
+    GitFork,
+    NotebookPen,
     SkipBack,
     SkipForward,
     Play,
     Pause,
   } from "@lucide/svelte";
+  import { authSession } from "$lib/auth/session.svelte.js";
+  import ReplayNotesPanel from "@/features/replay/ReplayNotesPanel.svelte";
 
   let { data } = $props();
 
   let orchestrator = $state<ReplayOrchestrator | null>(null);
   let loading = $state(true);
   let loadError = $state<string | null>(null);
+  let showPlayerPicker = $state(false);
+  let notesOpen = $state(false);
+
+  const isAuthenticated = $derived(authSession.isAuthenticated);
+
+  const replayOwnerSide = $derived.by((): "playerOne" | "playerTwo" | null => {
+    if (!orchestrator) return null;
+    const userId = authSession.user?.id;
+    if (!userId) return null;
+    const [p1Id, p2Id] = orchestrator.playerIds;
+    if (userId === p1Id) return "playerOne";
+    if (userId === p2Id) return "playerTwo";
+    return null;
+  });
 
   const SPEEDS = [
     { label: "0.5×", ms: 1600 },
@@ -48,20 +69,65 @@
     orchestrator?.setSpeed(SPEEDS[speedIndex]?.ms ?? 800);
   }
 
+  // --- Fork helpers ---
+
+  function getPlayerLabel(side: "playerOne" | "playerTwo"): string {
+    if (!orchestrator) return side === "playerOne" ? "Player 1" : "Player 2";
+    const players = orchestrator.metadata.players;
+    const idx = side === "playerOne" ? 0 : 1;
+    const info = players?.[idx];
+    return info?.displayName ?? info?.username ?? (side === "playerOne" ? "Player 1" : "Player 2");
+  }
+
+  function getActivePlayerSide(): "playerOne" | "playerTwo" | undefined {
+    if (!orchestrator) return undefined;
+    const state = orchestrator.getStateAtStep(orchestrator.currentStep);
+    if (!state) return undefined;
+    const currentPlayer = (state.ctx as Record<string, unknown>).currentPlayer as string | undefined;
+    if (!currentPlayer) return undefined;
+    const [p1, p2] = orchestrator.playerIds;
+    if (currentPlayer === p1) return "playerOne";
+    if (currentPlayer === p2) return "playerTwo";
+    return undefined;
+  }
+
+  function handleForkRequest(): void {
+    if (!orchestrator) return;
+    orchestrator.pause();
+    showPlayerPicker = true;
+  }
+
+  function handleFork(humanSide: "playerOne" | "playerTwo"): void {
+    if (!orchestrator) return;
+    showPlayerPicker = false;
+
+    const step = orchestrator.currentStep;
+    const url = `/replay/${encodeURIComponent(data.gameId)}/fork?step=${step}&side=${humanSide}`;
+    window.open(url, "_blank");
+  }
+
   onMount(async () => {
-    if (!isReplayStoreAvailable()) {
-      loadError = "Your browser does not support IndexedDB. Cannot load saved replays.";
-      loading = false;
-      return;
-    }
+    trackEvent("replay_view");
 
     try {
       console.log("[ReplayPage] loading gameId:", data.gameId);
-      const blob = await loadReplayData(data.gameId);
-      console.log("[ReplayPage] blob from IndexedDB:", blob ? `${blob.byteLength} bytes` : "null");
+
+      // 1. Try IndexedDB first (local replays saved by the player)
+      let blob: ArrayBuffer | null = null;
+      if (isReplayStoreAvailable()) {
+        blob = await loadReplayData(data.gameId);
+        console.log("[ReplayPage] blob from IndexedDB:", blob ? `${blob.byteLength} bytes` : "null");
+      }
+
+      // 2. Fallback to API when local data is missing
+      if (!blob) {
+        console.log("[ReplayPage] IndexedDB miss, fetching from API");
+        blob = await fetchReplayBlob(data.gameId);
+        console.log("[ReplayPage] blob from API:", blob ? `${blob.byteLength} bytes` : "null");
+      }
 
       if (!blob) {
-        loadError = "Replay not found in local storage. It may have expired or not been saved.";
+        loadError = "Replay not available. The game may still be in progress.";
         loading = false;
         return;
       }
@@ -70,7 +136,7 @@
       console.log("[ReplayPage] decompressed replay", {
         gameId: replayData.gameId,
         playerIds: replayData.playerIds,
-        movesCount: (replayData.moves as unknown[]).length,
+        stepsCount: replayData.steps.length,
         hasInitialState: !!replayData.initialState,
         initialStateSnippet: replayData.initialState?.slice(0, 80),
       });
@@ -106,147 +172,195 @@
           <CardDescription class="text-rose-200">{loadError}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onclick={() => goto("/replays")}>Back to replays</Button>
+          <Button onclick={() => goto("/matchmaking/replays")}>Back to replays</Button>
         </CardContent>
       </Card>
     </div>
   {:else if orchestrator}
-    <!-- Playback bar -->
-    <div class="absolute left-0 right-0 top-3 z-20 flex items-center justify-center gap-2 px-4">
-      <!-- Back -->
-      <Button
-        variant="ghost"
-        size="sm"
-        class="size-8 shrink-0 rounded-full border border-white/10 bg-slate-950/80 p-0 text-slate-300 backdrop-blur-md hover:text-slate-100"
-        onclick={() => goto("/replays")}
-        title="Back to replays"
-      >
-        <ArrowLeft class="size-4" />
-      </Button>
-
-      <!-- Main controls pill — always visible, disabled when no patch data -->
-      <div class="flex items-center gap-0.5 rounded-full border border-white/10 bg-slate-950/85 px-1.5 py-1 backdrop-blur-md">
-        <!-- Go to start -->
+    {@const orch = orchestrator}
+    {#snippet replayControls()}
+      <div class="flex items-center justify-center gap-2">
+        <!-- Back -->
         <Button
           variant="ghost"
           size="sm"
-          class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
-          disabled={!orchestrator.hasPatchData || orchestrator.currentStep === 0}
-          onclick={() => orchestrator?.goToStep(0)}
-          title="Go to start"
+          class="size-8 shrink-0 rounded-full border border-white/10 bg-slate-950/80 p-0 text-slate-300 backdrop-blur-md hover:text-slate-100"
+          onclick={() => goto("/matchmaking/replays")}
+          title="Back to replays"
         >
-          <SkipBack class="size-3.5" />
+          <ArrowLeft class="size-4" />
         </Button>
 
-        <!-- Prev turn -->
-        <Button
-          variant="ghost"
-          size="sm"
-          class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
-          disabled={!orchestrator.hasPatchData || orchestrator.currentStep === 0}
-          onclick={() => orchestrator?.prevTurn()}
-          title="Previous turn"
-        >
-          <ChevronsLeft class="size-3.5" />
-        </Button>
+        <!-- Main controls pill — always visible, disabled when no patch data -->
+        <div class="flex items-center gap-0.5 rounded-full border border-white/10 bg-slate-950/85 px-1.5 py-1 backdrop-blur-md">
+          <!-- Go to start -->
+          <Button
+            variant="ghost"
+            size="sm"
+            class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
+            disabled={!orch.hasPatchData || orch.currentStep === 0}
+            onclick={() => orch.goToStep(0)}
+            title="Go to start"
+          >
+            <SkipBack class="size-3.5" />
+          </Button>
 
-        <!-- Prev move -->
-        <Button
-          variant="ghost"
-          size="sm"
-          class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
-          disabled={!orchestrator.hasPatchData || orchestrator.currentStep === 0}
-          onclick={() => orchestrator?.prevStep()}
-          title="Previous move"
-        >
-          <ChevronLeft class="size-3.5" />
-        </Button>
+          <!-- Prev turn -->
+          <Button
+            variant="ghost"
+            size="sm"
+            class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
+            disabled={!orch.hasPatchData || orch.currentStep === 0}
+            onclick={() => orch.prevTurn()}
+            title="Previous turn"
+          >
+            <ChevronsLeft class="size-3.5" />
+          </Button>
 
-        <!-- Play / Pause -->
-        <Button
-          variant="ghost"
-          size="sm"
-          class="size-8 rounded-full p-0 text-slate-100 hover:text-white disabled:opacity-25"
-          disabled={!orchestrator.hasPatchData}
-          onclick={() => orchestrator?.togglePlay()}
-          title={orchestrator.isPlaying ? "Pause" : "Play"}
-        >
-          {#if orchestrator.isPlaying}
-            <Pause class="size-4" />
-          {:else}
-            <Play class="size-4" />
-          {/if}
-        </Button>
+          <!-- Prev move -->
+          <Button
+            variant="ghost"
+            size="sm"
+            class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
+            disabled={!orch.hasPatchData || orch.currentStep === 0}
+            onclick={() => orch.prevStep()}
+            title="Previous move"
+          >
+            <ChevronLeft class="size-3.5" />
+          </Button>
 
-        <!-- Next move -->
-        <Button
-          variant="ghost"
-          size="sm"
-          class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
-          disabled={!orchestrator.hasPatchData || orchestrator.currentStep === orchestrator.totalSteps - 1}
-          onclick={() => orchestrator?.nextStep()}
-          title="Next move"
-        >
-          <ChevronRight class="size-3.5" />
-        </Button>
-
-        <!-- Next turn -->
-        <Button
-          variant="ghost"
-          size="sm"
-          class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
-          disabled={!orchestrator.hasPatchData || orchestrator.currentStep === orchestrator.totalSteps - 1}
-          onclick={() => orchestrator?.nextTurn()}
-          title="Next turn"
-        >
-          <ChevronsRight class="size-3.5" />
-        </Button>
-
-        <!-- Go to end -->
-        <Button
-          variant="ghost"
-          size="sm"
-          class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
-          disabled={!orchestrator.hasPatchData || orchestrator.currentStep === orchestrator.totalSteps - 1}
-          onclick={() => orchestrator?.goToStep(orchestrator.totalSteps - 1)}
-          title="Go to end"
-        >
-          <SkipForward class="size-3.5" />
-        </Button>
-      </div>
-
-      <!-- Position indicator / no-patch notice -->
-      <div class="rounded-full border border-white/10 bg-slate-950/80 px-3 py-1.5 backdrop-blur-md">
-        {#if orchestrator.hasPatchData}
-          <span class="text-xs tabular-nums text-slate-300">
-            {#if orchestrator.currentTurn > 0}
-              T{orchestrator.currentTurn}<span class="mx-1 text-slate-600">·</span>
+          <!-- Play / Pause -->
+          <Button
+            variant="ghost"
+            size="sm"
+            class="size-8 rounded-full p-0 text-slate-100 hover:text-white disabled:opacity-25"
+            disabled={!orch.hasPatchData}
+            onclick={() => orch.togglePlay()}
+            title={orch.isPlaying ? "Pause" : "Play"}
+          >
+            {#if orch.isPlaying}
+              <Pause class="size-4" />
+            {:else}
+              <Play class="size-4" />
             {/if}
-            <span class="text-slate-400">{orchestrator.currentStep}</span><span class="text-slate-600">/</span><span class="text-slate-500">{orchestrator.totalSteps - 1}</span>
-          </span>
-        {:else}
-          <span class="text-xs text-slate-500">Step-through not available for practice replays</span>
-        {/if}
-      </div>
+          </Button>
 
-      <!-- Speed control (only useful when patch data exists) -->
-      {#if orchestrator.hasPatchData}
+          <!-- Next move -->
+          <Button
+            variant="ghost"
+            size="sm"
+            class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
+            disabled={!orch.hasPatchData || orch.currentStep === orch.totalSteps - 1}
+            onclick={() => orch.nextStep()}
+            title="Next move"
+          >
+            <ChevronRight class="size-3.5" />
+          </Button>
+
+          <!-- Next turn -->
+          <Button
+            variant="ghost"
+            size="sm"
+            class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
+            disabled={!orch.hasPatchData || orch.currentStep === orch.totalSteps - 1}
+            onclick={() => orch.nextTurn()}
+            title="Next turn"
+          >
+            <ChevronsRight class="size-3.5" />
+          </Button>
+
+          <!-- Go to end -->
+          <Button
+            variant="ghost"
+            size="sm"
+            class="size-7 rounded-full p-0 text-slate-400 hover:text-slate-100 disabled:opacity-25"
+            disabled={!orch.hasPatchData || orch.currentStep === orch.totalSteps - 1}
+            onclick={() => orch.goToStep(orch.totalSteps - 1)}
+            title="Go to end"
+          >
+            <SkipForward class="size-3.5" />
+          </Button>
+        </div>
+
+        <!-- Position indicator / no-patch notice -->
+        <div class="rounded-full border border-white/10 bg-slate-950/80 px-3 py-1.5 backdrop-blur-md">
+          {#if orch.hasPatchData}
+            <span class="text-xs tabular-nums text-slate-300">
+              {#if orch.currentTurn > 0}
+                T{orch.currentTurn}<span class="mx-1 text-slate-600">·</span>
+              {/if}
+              <span class="text-slate-400">{orch.currentStep}</span><span class="text-slate-600">/</span><span class="text-slate-500">{orch.totalSteps - 1}</span>
+            </span>
+          {:else}
+            <span class="text-xs text-slate-500">Step-through not available for practice replays</span>
+          {/if}
+        </div>
+
+        <!-- Speed control (only useful when patch data exists) -->
+        {#if orch.hasPatchData}
+          <Button
+            variant="ghost"
+            size="sm"
+            class="rounded-full border border-white/10 bg-slate-950/80 px-3 py-1.5 text-xs font-medium tabular-nums text-slate-300 backdrop-blur-md hover:text-slate-100"
+            onclick={cycleSpeed}
+            title="Change playback speed"
+          >
+            {SPEEDS[speedIndex]?.label ?? "1×"}
+          </Button>
+        {/if}
+
+        <!-- Play from Here (fork) button -->
+        {#if orch.hasPatchData}
+          <Button
+            variant="ghost"
+            size="sm"
+            class="flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-slate-950/80 px-3 py-1.5 text-xs font-medium text-amber-400/90 backdrop-blur-md hover:border-amber-400/40 hover:text-amber-300"
+            disabled={orch.isAtEnd}
+            onclick={handleForkRequest}
+            title="Play from this position against the AI (opens new tab)"
+          >
+            <GitFork class="size-3.5" />
+            Play from Here
+          </Button>
+        {/if}
+
+        <!-- Notes button -->
         <Button
           variant="ghost"
           size="sm"
-          class="rounded-full border border-white/10 bg-slate-950/80 px-3 py-1.5 text-xs font-medium tabular-nums text-slate-300 backdrop-blur-md hover:text-slate-100"
-          onclick={cycleSpeed}
-          title="Change playback speed"
+          class="flex items-center gap-1.5 rounded-full border border-white/10 bg-slate-950/80 px-3 py-1.5 text-xs font-medium text-slate-300 backdrop-blur-md hover:text-slate-100"
+          onclick={() => { notesOpen = true; }}
+          title="Open match notes"
         >
-          {SPEEDS[speedIndex]?.label ?? "1×"}
+          <NotebookPen class="size-3.5" />
+          Notes
         </Button>
-      {/if}
-    </div>
+      </div>
+    {/snippet}
 
     <LorcanaTabletopSimulator
-      engine={orchestrator.currentEngine}
-      readModel={orchestrator.readModel}
+      engine={orch.currentEngine}
+      readModel={orch.readModel}
       viewerMode="spectator"
+      ownerSide={replayOwnerSide}
+      boardOverlay={replayControls}
+    />
+
+    <!-- Player picker dialog -->
+    <ReplayForkPlayerPicker
+      bind:open={showPlayerPicker}
+      player1Label={getPlayerLabel("playerOne")}
+      player2Label={getPlayerLabel("playerTwo")}
+      activePlayerSide={getActivePlayerSide()}
+      onfork={handleFork}
+      oncancel={() => { showPlayerPicker = false; }}
+    />
+
+    <!-- Notes panel -->
+    <ReplayNotesPanel
+      gameId={data.gameId}
+      {isAuthenticated}
+      bind:open={notesOpen}
     />
   {/if}
 </main>

@@ -44,7 +44,7 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       expect(noDrawEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
     });
 
-    it("6.2.4.1. Stitch's play trigger does NOT add a bag entry if condition is not met at trigger time.", () => {
+    it("6.2.4.1. Stitch's play trigger DOES add a bag entry even if condition is not met at trigger time; condition is checked at resolution.", () => {
       const noTriggerEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [stitchCarefreeSurfer],
         inkwell: stitchCarefreeSurfer.cost,
@@ -53,8 +53,20 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       });
 
       expect(noTriggerEngine.asPlayerOne().playCard(stitchCarefreeSurfer)).toBeSuccessfulCommand();
+      expect(noTriggerEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(noTriggerEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
+
+      // Resolve the pending triggered ability — condition (2+ other characters) is not met,
+      // so the effect does not occur (no cards drawn).
+      expect(
+        noTriggerEngine
+          .asPlayerOne()
+          .resolvePendingByCard(noTriggerEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: false,
+          }),
+      ).toBeSuccessfulCommand();
       expect(noTriggerEngine.asPlayerOne().getBagCount()).toBe(0);
-      expect(noTriggerEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+      expect(noTriggerEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
     });
 
     it("6.2.5. Scar's two sentences share one challenge-banish trigger, and without that trigger he can still quest normally.", () => {

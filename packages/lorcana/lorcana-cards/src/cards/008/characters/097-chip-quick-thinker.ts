@@ -35,7 +35,7 @@ export const chipQuickThinker: CharacterCard = {
         amount: 1,
         chosen: true,
         from: "hand",
-        target: "CHOSEN_PLAYER",
+        target: "OPPONENT",
         type: "discard",
       },
       id: "1aq-1",

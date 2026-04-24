@@ -34,7 +34,7 @@ export const plutoRescueDog: CharacterCard = {
       effect: {
         chooser: "CONTROLLER",
         effect: {
-          amount: 3,
+          amount: { type: "up-to", value: 3 },
           target: {
             selector: "chosen",
             count: 1,
@@ -43,7 +43,6 @@ export const plutoRescueDog: CharacterCard = {
             cardTypes: ["character"],
           },
           type: "remove-damage",
-          upTo: true,
         },
         type: "optional",
       },

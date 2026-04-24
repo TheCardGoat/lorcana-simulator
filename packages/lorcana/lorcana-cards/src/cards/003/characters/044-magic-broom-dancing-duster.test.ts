@@ -38,7 +38,15 @@ describe("Magic Broom - Dancing Duster", () => {
 
       expect(testEngine.asPlayerOne().playCard(magicBroomDancingDuster)).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued when trigger fires, Sorcerer condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(magicBroomDancingDuster, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      // No Sorcerer in play — no effect applied
+      expect(testEngine.isExerted(opponentCharacter)).toBe(false);
     });
 
     it("triggers when a Sorcerer character is in play", () => {
@@ -193,7 +201,15 @@ describe("Magic Broom - Dancing Duster", () => {
 
       expect(testEngine.asPlayerOne().playCard(magicBroomDancingDuster)).toBeSuccessfulCommand();
 
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued when trigger fires, Sorcerer condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(magicBroomDancingDuster, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      // No Sorcerer in play — no effect applied
+      expect(testEngine.isExerted(opponentCharacter)).toBe(false);
     });
   });
 });

@@ -42,24 +42,48 @@ export const heraQueenOfTheGods: CharacterCard = {
     {
       effect: {
         keyword: "Ward",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-name",
+              name: "Zeus",
+            },
+          ],
+        },
         type: "gain-keyword",
       },
       id: "149-2",
       name: "PROTECTIVE GODDESS",
       text: "PROTECTIVE GODDESS Your characters named Zeus gain Ward.",
-      type: "action",
+      type: "static",
     },
     {
       effect: {
         keyword: "Evasive",
-        target: "YOUR_CHARACTERS",
+        target: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-name",
+              name: "Hercules",
+            },
+          ],
+        },
         type: "gain-keyword",
       },
       id: "149-3",
       name: "YOU'RE A TRUE HERO",
       text: "YOU'RE A TRUE HERO Your characters named Hercules gain Evasive.",
-      type: "action",
+      type: "static",
     },
   ],
   i18n: heraQueenOfTheGodsI18n,

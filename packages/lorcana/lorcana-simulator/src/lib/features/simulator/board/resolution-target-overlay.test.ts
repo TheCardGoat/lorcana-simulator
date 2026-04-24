@@ -54,6 +54,47 @@ describe("shouldUseResolutionTargetOverlay", () => {
     expect(shouldUseResolutionTargetOverlay(state)).toBe(true);
   });
 
+  it("does not use the overlay for single-slot effects like deal-damage", () => {
+    const state: AvailableMovesSelectionState = {
+      mode: "resolution-target",
+      sessionKey: "resolution:deal-damage",
+      sourceCardId: "source",
+      categoryId: "unknown",
+      categoryLabel: "Resolve effect",
+      title: "Effect",
+      message: "Choose the character to deal damage to.",
+      canBack: false,
+      canCancel: true,
+      canConfirm: false,
+      entries: [],
+      effectType: "deal-damage",
+      target: null,
+      allowedZones: ["play"],
+      candidateCardIds: [],
+      candidatePlayerIds: [],
+      viewerSide: "playerOne",
+      candidateEntries: [],
+      activeSlotIndex: 0,
+      slots: [
+        {
+          id: "slot-1",
+          label: "Deal damage to",
+          cardType: "character",
+          targetId: null,
+          targetLabel: null,
+          targetCardId: null,
+          locked: false,
+        },
+      ],
+      amountSelection: null,
+      selectedTargetLabels: [],
+      minimumSelections: 0,
+      maximumSelections: 3,
+    };
+
+    expect(shouldUseResolutionTargetOverlay(state)).toBe(false);
+  });
+
   it("keeps generic target prompts on the legacy dialog", () => {
     const state: AvailableMovesSelectionState = {
       mode: "resolution-target",

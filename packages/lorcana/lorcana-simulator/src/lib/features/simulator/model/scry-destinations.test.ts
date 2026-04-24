@@ -1,4 +1,6 @@
 import { describe, expect, it } from "bun:test";
+import type { ResolutionSelectionDestinationRule } from "@tcg/lorcana-engine";
+import type { CardFilter } from "@tcg/lorcana-types";
 import {
   canAssignCardToScryDestination,
   getScryDestinationConstraintSummary,
@@ -43,6 +45,48 @@ describe("scry destination helpers", () => {
         filters: [{ type: "card-type", cardType: "character" }],
       }),
     ).toBe(false);
+
+    const downInNewOrleansPlayFilters: CardFilter = {
+      type: "and",
+      filters: [
+        {
+          type: "or",
+          filters: [
+            { type: "card-type", cardType: "character" },
+            { type: "card-type", cardType: "item" },
+            { type: "card-type", cardType: "location" },
+          ],
+        },
+        {
+          type: "cost-comparison",
+          comparison: "less-or-equal",
+          value: 6,
+        },
+      ],
+    };
+
+    const downInNewOrleansPlayRule: ResolutionSelectionDestinationRule = {
+      id: "play-eligible",
+      zone: "play",
+      min: 0,
+      max: 1,
+      remainder: false,
+      filters: [downInNewOrleansPlayFilters],
+    };
+
+    expect(
+      canAssignCardToScryDestination(
+        { ...baseCard, cardType: "action", actionSubtype: "song", cost: 3 },
+        downInNewOrleansPlayRule,
+      ),
+    ).toBe(false);
+
+    expect(
+      canAssignCardToScryDestination(
+        { ...baseCard, cardType: "character", cost: 3 },
+        downInNewOrleansPlayRule,
+      ),
+    ).toBe(true);
   });
 
   it("formats destination summaries for the overlay", () => {

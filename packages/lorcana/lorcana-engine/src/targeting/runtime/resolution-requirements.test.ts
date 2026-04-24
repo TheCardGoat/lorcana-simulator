@@ -83,8 +83,7 @@ describe("resolution-requirements", () => {
   it("classifies up-to remove-damage as amount-selectable but auto-resolvable", () => {
     const effect = {
       type: "remove-damage",
-      amount: 3,
-      upTo: true,
+      amount: { type: "up-to", value: 3 },
       target: "YOUR_CHARACTERS",
     };
 
@@ -95,8 +94,7 @@ describe("resolution-requirements", () => {
   it("classifies up-to move-damage as amount-selectable but not target-free", () => {
     const effect = {
       type: "move-damage",
-      amount: 2,
-      upTo: true,
+      amount: { type: "up-to", value: 2 },
       from: "CHOSEN_CHARACTER",
       to: "CHOSEN_OPPOSING_CHARACTER",
     };

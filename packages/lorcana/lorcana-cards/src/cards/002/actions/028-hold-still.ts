@@ -23,10 +23,9 @@ export const holdStill: ActionCard = {
     {
       type: "action",
       effect: {
-        amount: 4,
+        amount: { type: "up-to", value: 4 },
         target: "CHOSEN_CHARACTER",
         type: "remove-damage",
-        upTo: true,
       },
     },
   ],

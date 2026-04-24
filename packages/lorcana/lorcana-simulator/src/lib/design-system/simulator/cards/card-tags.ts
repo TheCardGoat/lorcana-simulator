@@ -58,20 +58,31 @@ export interface LorcanaCardTagGroups {
   statBadges: LorcanaCardStatBadge[];
 }
 
-const INTEGER_PATTERN = /(\d+)/;
-
 function parseNumericKeyword(card: LorcanaCardSnapshot, keyword: string): number | null {
-  const normalizedKeyword = keyword.toLowerCase();
+  const pattern =
+    keyword === "Shift"
+      ? /^(?:Puppy |Universal )?Shift (\d+)(?: \{I\})?$/i
+      : keyword === "Singer"
+        ? /^Singer (\d+)$/i
+        : keyword === "Sing Together"
+          ? /^Sing Together (\d+)$/i
+          : keyword === "Boost"
+            ? /^Boost (\d+)(?: \{I\})?$/i
+            : keyword === "Resist"
+              ? /^Resist \+(\d+)$/i
+              : keyword === "Challenger"
+                ? /^Challenger \+(\d+)$/i
+                : null;
 
   for (const entry of card.textEntries ?? []) {
-    const normalizedTitle = entry.title.trim().toLowerCase();
-    if (!normalizedTitle.startsWith(normalizedKeyword)) {
+    const normalizedTitle = entry.title.trim();
+    if (!normalizedTitle) {
       continue;
     }
 
-    const match = normalizedTitle.match(INTEGER_PATTERN);
+    const match = pattern ? normalizedTitle.match(pattern) : null;
     if (!match) {
-      return null;
+      continue;
     }
 
     const value = Number.parseInt(match[1], 10);

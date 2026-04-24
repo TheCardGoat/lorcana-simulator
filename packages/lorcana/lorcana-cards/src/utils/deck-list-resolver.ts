@@ -1,5 +1,5 @@
 import type { LorcanaCard } from "@tcg/lorcana-types";
-import { getFullName } from "@tcg/lorcana-types";
+import { getFullName, LANGUAGES } from "@tcg/lorcana-types";
 import { parseDeckListTextWithErrors } from "@tcg/shared/deck-list-parse";
 import type { DeckListInvalidEntry } from "@tcg/shared/deck-list-errors";
 import type { ParsedDeckListEntry } from "@tcg/shared/deck-list-parse";
@@ -59,10 +59,42 @@ export function displayNameMatchesLorcana(query: string, card: LorcanaCard): boo
     getLorcanaDisplayName(card),
   );
 
-  return (
+  if (
     normalizedQueryNoApostrophe === normalizedNameNoApostrophe ||
     normalizedQueryNoApostrophe === normalizedFullNameNoApostrophe
-  );
+  ) {
+    return true;
+  }
+
+  // Check localized names (i18n) for non-English deck lists
+  for (const lang of LANGUAGES) {
+    const i18nProps = card.i18n[lang];
+    if (!i18nProps) continue;
+
+    const localizedName = i18nProps.name;
+    const localizedFullName = i18nProps.version
+      ? `${i18nProps.name} - ${i18nProps.version}`
+      : i18nProps.name;
+
+    const normLocalName = normalizeDisplayNameForMatch(localizedName);
+    const normLocalFullName = normalizeDisplayNameForMatch(localizedFullName);
+
+    if (normalizedQuery === normLocalName || normalizedQuery === normLocalFullName) {
+      return true;
+    }
+
+    const normLocalNameNoApo = normalizeDisplayNameApostropheInsensitive(localizedName);
+    const normLocalFullNameNoApo = normalizeDisplayNameApostropheInsensitive(localizedFullName);
+
+    if (
+      normalizedQueryNoApostrophe === normLocalNameNoApo ||
+      normalizedQueryNoApostrophe === normLocalFullNameNoApo
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**

@@ -71,9 +71,13 @@ export type DeckAwareMatchupModifier = {
 export type AutomatedActionCardTargetPreference = {
   actorPlayerScore?: number;
   alliedRoleWeights?: RoleWeightMap;
+  beneficialAlliedScore?: number;
+  beneficialOpposingPenalty?: number;
   damagedAlliedScore?: number;
   damagedOpposingScore?: number;
   exertedOpposingScore?: number;
+  harmfulAlliedPenalty?: number;
+  harmfulOpposingScore?: number;
   highLoreOpposingMultiplier?: number;
   lowStrengthOpposingScore?: number;
   opposingRoleWeights?: RoleWeightMap;
@@ -131,6 +135,7 @@ export type AutomatedActionDeckPlanningMetadata = {
   opponentId?: PlayerId;
   resolveCandidateSourceCardId(candidate: AutomatedActionCandidate): CardInstanceId | undefined;
   resolveCandidateSourceDefinitionId(candidate: AutomatedActionCandidate): string | undefined;
+  resolveCandidateEffect(candidate: AutomatedActionCandidate): Effect | undefined;
   resolveCandidateSourceRoles(
     candidate: AutomatedActionCandidate,
   ): readonly AutomatedActionDeckRoleTag[];
@@ -1411,28 +1416,48 @@ function buildSourceLookups(args: {
   AutomatedActionDeckPlanningMetadata,
   | "resolveCandidateSourceCardId"
   | "resolveCandidateSourceDefinitionId"
+  | "resolveCandidateEffect"
   | "resolveCandidateSourceRoles"
 > {
   const bagSourceById = new Map<string, CardInstanceId>();
   const effectSourceById = new Map<string, CardInstanceId>();
+  const bagEffectById = new Map<string, Effect>();
+  const pendingEffectById = new Map<string, Effect>();
 
   for (const bagItem of args.authoritativeHints?.bagItems ?? []) {
     bagSourceById.set(bagItem.id, bagItem.sourceId);
+    if (bagItem.effect) {
+      bagEffectById.set(bagItem.id, bagItem.effect as Effect);
+    }
   }
 
   for (const effect of args.authoritativeHints?.pendingEffects ?? []) {
     effectSourceById.set(effect.id, effect.sourceCardId ?? effect.sourceId);
+    if (effect.effect) {
+      pendingEffectById.set(effect.id, effect.effect as Effect);
+    }
   }
 
   for (const bagEffect of args.board.bagEffects) {
     if (typeof bagEffect.sourceId === "string") {
       bagSourceById.set(bagEffect.id, bagEffect.sourceId as CardInstanceId);
     }
+    if (
+      bagEffect.payload &&
+      typeof bagEffect.payload === "object" &&
+      "effect" in bagEffect.payload
+    ) {
+      bagEffectById.set(bagEffect.id, bagEffect.payload.effect as Effect);
+    }
   }
 
   for (const pendingEffect of args.board.pendingEffects) {
     if (typeof pendingEffect.sourceId === "string") {
       effectSourceById.set(pendingEffect.id, pendingEffect.sourceId as CardInstanceId);
+    }
+    const payload = pendingEffect.payload;
+    if (payload && typeof payload === "object" && "effect" in payload) {
+      pendingEffectById.set(pendingEffect.id, (payload as { effect: Effect }).effect);
     }
   }
 
@@ -1478,9 +1503,21 @@ function buildSourceLookups(args: {
     return definitionId ? args.getDefinitionRoles(definitionId) : [];
   };
 
+  const resolveCandidateEffect = (candidate: AutomatedActionCandidate): Effect | undefined => {
+    switch (candidate.family) {
+      case "resolveBag":
+        return bagEffectById.get(candidate.bagId);
+      case "resolveEffect":
+        return pendingEffectById.get(candidate.effectId);
+      default:
+        return undefined;
+    }
+  };
+
   return {
     resolveCandidateSourceCardId,
     resolveCandidateSourceDefinitionId,
+    resolveCandidateEffect,
     resolveCandidateSourceRoles,
   };
 }

@@ -39,10 +39,19 @@ describe("Mrs. Potts - Enchanted Teapot", () => {
         deck: 5,
       });
 
+      const deckBefore = testEngine.asPlayerOne().getZonesCardCount("player_one").deck;
+
       expect(testEngine.asPlayerOne().playCard(mrsPottsEnchantedTeapot)).toBeSuccessfulCommand();
 
-      // Condition not met - no bag effect
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // Per CRD 6.2.7: ability IS enqueued when trigger fires, Lumiere/Cogsworth condition checked at resolution
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mrsPottsEnchantedTeapot, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      // Neither Lumiere nor Cogsworth in play — no card drawn
+      expect(testEngine.asPlayerOne().getZonesCardCount("player_one").deck).toBe(deckBefore);
     });
 
     it("should trigger when Lumiere is in play and draw a card", () => {

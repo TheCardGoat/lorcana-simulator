@@ -15,15 +15,12 @@ import { type LorcanaMoveDefinition } from "../../types";
 import {
   emitTriggeredLorcanaEvent,
   flushTriggeredEventsToBag,
-  snapshotTriggeredCandidatesForCard,
 } from "../effects/triggered-abilities";
 import { advanceTurnToNextPlayer } from "../moves/turn/pass-turn";
-import { createProjectionState, getEffectiveStrength } from "../../rules/derived-state";
-import { getOrBuildMoveRegistry } from "../rules/move-registry-cache";
 import { moveCardOutOfPlayWithStack } from "../state/shift-stack";
 import { isDiscardZoneKey, recordDiscardExitThisTurn } from "../state/turn-metrics";
 import { validateCardExists } from "../shared/validation-helpers";
-import { getKeywordsBeforeBanish } from "../shared/banish-snapshot";
+import { runGameStateCheck } from "../state/game-state-check";
 
 type ZoneRefLike = { zone: string; playerId?: string };
 
@@ -212,68 +209,10 @@ export const manualSetDamage: LorcanaMoveDefinition<"manualSetDamage"> = {
   execute: (ctx) => {
     const { cardId, damage } = ctx.args;
 
-    // Set card damage
     ctx.cards.patchMeta(cardId, { damage });
 
-    // Check if card should be banished (damage >= willpower)
-    const targetDefinition = ctx.cards.getDefinition(cardId) as
-      | ({ willpower?: number } & Record<string, unknown>)
-      | undefined;
-    const willpower = targetDefinition?.willpower;
-
-    if (typeof willpower === "number" && damage >= willpower) {
-      // Card should be banished
-      const ownerId = ctx.framework.state._zonesPrivate.cardIndex[cardId]?.ownerID;
-      const meta = ctx.cards.require(cardId).meta ?? {};
-      const subjectAtLocationId = meta.atLocationId as CardInstanceId | undefined;
-      const keywordsBeforeBanish = getKeywordsBeforeBanish(ctx, cardId, ctx.playerId);
-
-      if (ownerId) {
-        const derivedState = createProjectionState(ctx.framework.state, ctx.G);
-        const manualRegistry = getOrBuildMoveRegistry(ctx);
-        const strengthBeforeBanish = getEffectiveStrength(
-          ctx.cards.getDefinition(cardId),
-          derivedState,
-          cardId,
-          (id) => ctx.cards.getDefinition(id),
-          manualRegistry,
-        );
-        const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId);
-        moveCardOutOfPlayWithStack(ctx, cardId, {
-          zone: "discard",
-          playerId: ownerId,
-        });
-
-        emitTriggeredLorcanaEvent(
-          ctx,
-          "cardBanished",
-          {
-            cardId,
-            sourceId: cardId,
-            snapshot: {
-              damageDealt: damage,
-              keywordsBeforeBanish,
-              subjectAtLocationId,
-              strengthBeforeBanish,
-            },
-            reason: "lethal damage (manual)",
-          },
-          {
-            event: "banish",
-            happenedInChallenge: false,
-            playerId: ownerId,
-            subjectCardId: cardId,
-            triggerSourceCardId: cardId,
-            triggerCandidates,
-            eventSnapshot: {
-              keywordsBeforeBanish,
-              subjectAtLocationId,
-              strengthBeforeBanish,
-            },
-          },
-        );
-      }
-    }
+    // Use GSC sweep so lethal check uses effective (not printed) Willpower (§1.8.1.4).
+    runGameStateCheck(ctx);
 
     flushTriggeredEventsToBag(ctx);
   },

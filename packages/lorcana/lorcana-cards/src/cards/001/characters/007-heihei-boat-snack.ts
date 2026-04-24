@@ -25,26 +25,6 @@ export const heiheiBoatSnack: CharacterCard = {
   },
   text: "Support",
   classifications: ["Storyborn", "Ally"],
-  abilities: [
-    support,
-    {
-      id: "uio-2",
-      type: "triggered",
-      text: "Support (Whenever this character quests, you may add their {S} to another chosen character's {S} this turn.)",
-      trigger: {
-        event: "quest",
-        on: "SELF",
-        timing: "whenever",
-      },
-      effect: {
-        type: "optional",
-        chooser: "CONTROLLER",
-        effect: {
-          type: "support",
-          target: "ANOTHER_CHOSEN_CHARACTER_OF_YOURS",
-        },
-      },
-    },
-  ],
+  abilities: [support],
   i18n: heiheiBoatSnackI18n,
 };

@@ -164,28 +164,8 @@ describe("Finnick - Tiny Terror", () => {
 
       expect(testEngine.asPlayerOne().playCard(finnickTinyTerror)).toBeSuccessfulCommand();
 
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      if (bagEffect) {
-        // Accept the optional — pay 2 ink
-        expect(
-          testEngine.asPlayerOne().resolvePendingByCard(finnickTinyTerror, {
-            resolveOptional: true,
-          }),
-        ).toBeSuccessfulCommand();
-
-        const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
-        if (pendingEffects.length > 0) {
-          const opponentId = testEngine.findCardInstanceId(
-            strongOpposingCharacter,
-            "play",
-            "player_two",
-          );
-          // Even if the target is submitted, the strength filter means it has no effect
-          testEngine.asPlayerOne().resolveNextPending({
-            targets: [opponentId],
-          });
-        }
-      }
+      // Auto-skips — no ≤2 strength opponents, so no player decision needed
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       // Strong character should remain in play — strength filter prevents returning it
       expect(testEngine.asPlayerTwo().getCardZone(strongOpposingCharacter)).toBe("play");
@@ -228,7 +208,7 @@ describe("Finnick - Tiny Terror", () => {
       expect(inkAfterAbility).toBe(inkAfterPlay - 2);
     });
 
-    it("does not deal damage if controller cannot pay 2 ink", () => {
+    it("does not return character if controller cannot pay 2 ink", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
           hand: [finnickTinyTerror],
@@ -245,16 +225,31 @@ describe("Finnick - Tiny Terror", () => {
       expect(testEngine.asPlayerOne().playCard(finnickTinyTerror)).toBeSuccessfulCommand();
 
       const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      if (bagEffect) {
+      expect(bagEffect).toBeDefined();
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(finnickTinyTerror, {
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Target selection may still be offered; resolve it if present
+      const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
+      if (pendingEffects.length > 0) {
+        const opponentId = testEngine.findCardInstanceId(
+          weakOpposingCharacter,
+          "play",
+          "player_two",
+        );
         expect(
-          testEngine.asPlayerOne().resolvePendingByCard(finnickTinyTerror, {
-            resolveOptional: true,
-          }),
+          testEngine.asPlayerOne().resolveNextPending({ targets: [opponentId] }),
         ).toBeSuccessfulCommand();
       }
 
       // Cannot pay 2 ink, so no character is returned
       expect(testEngine.asPlayerTwo().getCardZone(weakOpposingCharacter)).toBe("play");
+      // Ink should not be charged (0 available after playing Finnick)
+      expect(testEngine.asPlayerOne().getAvailableInk("player_one")).toBe(0);
     });
   });
 });

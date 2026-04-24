@@ -12,37 +12,45 @@ import type {
   RuntimeActorRole,
   CommandFailure,
   ProjectedLogEntry,
+  UndoAPI,
+  UndoBarrierReason,
 } from "./match-runtime.types";
 import { resolveFlowTransitionsOnDraft, checkGameEndCondition } from "./match-runtime.flow";
+import { resolvePriorityPlayer } from "./match-runtime.priority";
 import { validateCommand } from "./match-runtime.validation";
 import {
   buildExecutionContext as buildExecutionContextFromUtils,
   buildLifecycleContext as buildLifecycleContextFromUtils,
 } from "./match-runtime.utils";
 import type { MatchStaticResources } from "./static-resources";
-import type { BaseCardDefinition } from "./card-contracts";
 import { createRuntimeState, createRuntimeStateWithPatches } from "./mutative";
 import { expireReveals } from "./zone-operations";
-import type { LorcanaG } from "../../types/runtime-state";
 
 interface InternalCommandSuccess {
   success: true;
   stateID: number;
   state: MatchState;
   patches: Patch[];
+  inversePatches?: Patch[];
   pendingGameEvents: GameEvent[];
   moveLogEntries: ProjectedLogEntry[];
   undoable: boolean;
 }
 
-const INFORMATION_REVEALING_EVENT_KINDS: ReadonlySet<string> = new Set([
-  "CARDS_DRAWN",
-  "CARDS_MILLED",
-  "MULLIGAN_PERFORMED",
-]);
+function createUndoCollector(): UndoAPI {
+  const reasons: UndoBarrierReason[] = [];
 
-function isInformationRevealed(events: GameEvent[]): boolean {
-  return events.some((event) => INFORMATION_REVEALING_EVENT_KINDS.has(event.kind));
+  return {
+    markBarrier(reason) {
+      reasons.push(reason);
+    },
+    hasBarrier() {
+      return reasons.length > 0;
+    },
+    getReasons() {
+      return reasons.slice();
+    },
+  };
 }
 
 export interface CommandExecutionContext {
@@ -114,6 +122,7 @@ export function executeCommand(
 
   // Execute move
   let patches: Patch[] = [];
+  let inversePatches: Patch[] = [];
   let newState = ctx.state;
   const pendingGameEvents: GameEvent[] = [];
   const moveLogEntries: ProjectedLogEntry[] = [];
@@ -121,6 +130,7 @@ export function executeCommand(
   const endGameTracker = { ended: false, result: undefined as GameEndResult | undefined };
 
   try {
+    const undo = createUndoCollector();
     const applyCommandToDraft = (draft: Draft<MatchState>) => {
       const emitGameEvent = (event: GameEvent) => {
         pendingGameEvents.push(event);
@@ -138,6 +148,7 @@ export function executeCommand(
         ctx.gameEnded,
         emitGameEvent,
         endGameTracker,
+        undo,
         moveLogSink,
       );
 
@@ -156,6 +167,7 @@ export function executeCommand(
             lifecycleGameEnded,
             emitGameEvent,
             endGameTracker,
+            undo,
             lifecyclePlayerId,
             moveLogSink,
             undefined, // runtimeCardCache
@@ -164,13 +176,50 @@ export function executeCommand(
       );
 
       // Step 8: Update clocks for new waiting state
+      // Clock follows the decision-maker: pendingChoice.playerID (e.g., opponent
+      // choosing targets) takes precedence over priority.holder (priority holder).
       if (draft.ctx.time.mode !== "none") {
-        const priorityHolder = draft.ctx.priority.holder;
-        if (priorityHolder) {
-          draft.ctx.time.activePlayerID = priorityHolder;
+        // Capture pre-command active player to detect priority hand-offs for
+        // the per-decision cap accumulator.
+        const prevTime = ctx.state.ctx.time;
+        const prevActivePlayerID = prevTime.mode !== "none" ? prevTime.activePlayerID : undefined;
+
+        const clockTarget = resolvePriorityPlayer(draft.ctx.priority);
+        if (clockTarget) {
+          draft.ctx.time.activePlayerID = clockTarget;
           draft.ctx.time.startedAtMs = timestamp;
           draft.ctx.time.running = true;
           draft.ctx.time.pausedReason = undefined;
+        } else {
+          // No decision-maker identified — still update startedAtMs
+          // so client interpolation stays consistent with settled reserve.
+          draft.ctx.time.startedAtMs = timestamp;
+        }
+
+        // Per-decision cap: reset the accumulator whenever the priority holder
+        // changes (e.g. turn pass, opponent pending-choice hand-off, etc.).
+        // settleClocks has already charged the outgoing player's elapsed time
+        // pre-command, so we can safely zero it here.
+        //
+        // Also clear negative-time state for the outgoing player. If they held
+        // priority while in negative time (e.g. they passed their turn naturally
+        // while their reserve was exhausted), treat it as a natural timeout:
+        // increment their timeoutCount, restore resetTimeOnSkipMs, and clear
+        // the flag — so the opponent cannot immediately skip them on their very
+        // next turn for the same overage.
+        if (draft.ctx.time.mode === "chess" || draft.ctx.time.mode === "dynamic") {
+          if (draft.ctx.time.activePlayerID !== prevActivePlayerID) {
+            draft.ctx.time.activePlayerAccumulatedMs = 0;
+
+            if (prevActivePlayerID) {
+              const outgoingState = draft.ctx.time.players[prevActivePlayerID];
+              if (outgoingState?.isInNegativeTime) {
+                outgoingState.isInNegativeTime = false;
+                outgoingState.timeoutCount++;
+                outgoingState.reserveMsRemaining = draft.ctx.time.config.resetTimeOnSkipMs;
+              }
+            }
+          }
         }
 
         // Dynamic clock bonuses
@@ -221,11 +270,15 @@ export function executeCommand(
     };
 
     if (ctx.capturePatches) {
-      const [nextState, capturedPatches] = createRuntimeStateWithPatches(ctx.state, (draft) => {
-        applyCommandToDraft(draft);
-      });
+      const [nextState, capturedPatches, capturedInversePatches] = createRuntimeStateWithPatches(
+        ctx.state,
+        (draft) => {
+          applyCommandToDraft(draft);
+        },
+      );
       newState = nextState;
       patches = capturedPatches;
+      inversePatches = capturedInversePatches;
     } else {
       newState = createRuntimeState(ctx.state, (draft) => {
         applyCommandToDraft(draft);
@@ -255,9 +308,10 @@ export function executeCommand(
         stateID: newState.ctx._stateID,
         state: newState,
         patches,
+        inversePatches,
         pendingGameEvents,
         moveLogEntries,
-        undoable: !isInformationRevealed(pendingGameEvents),
+        undoable: !undo.hasBarrier(),
       },
       newState,
       gameEnded: endGameTracker.ended,

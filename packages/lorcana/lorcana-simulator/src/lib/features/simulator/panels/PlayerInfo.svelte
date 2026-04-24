@@ -1,7 +1,7 @@
 <script lang="ts">
+import type { ClockSnapshot } from "@tcg/lorcana-engine";
 import type {
 	LorcanaPlayerSide,
-	LorcanaPlayerTimerSummary,
 	LorcanaTableSeat,
 } from "@/features/simulator/model/contracts.js";
 import { m } from "$lib/i18n/messages.js";
@@ -16,6 +16,8 @@ import {
 	Layers,
 	Hand,
 	PaintBucket,
+	EyeOff,
+	Smartphone,
 } from "@lucide/svelte";
 import type { Snippet } from "svelte";
 import PlayerTimer from "./PlayerTimer.svelte";
@@ -37,9 +39,16 @@ interface PlayerInfoProps {
 	showSupport?: boolean;
 	onSupportClick?: () => void;
 	supportReminderText?: string | null;
+	supportReminderOpen?: boolean;
 	onDismissSupportReminder?: () => void;
 	/** Timer state for this player. Omit if untimed. */
-	timer?: LorcanaPlayerTimerSummary;
+	timer?: ClockSnapshot;
+	/** Whether this player's clock is the local player's (enables low-time tick sound). */
+	isOwnClock?: boolean;
+	/** Whether the player is currently AFK (idle or tab hidden). */
+	isAfk?: boolean;
+	/** Whether the player joined on a mobile device. */
+	isMobile?: boolean;
 	children?: Snippet;
 }
 
@@ -60,8 +69,12 @@ let {
 	showSupport = false,
 	onSupportClick,
 	supportReminderText = null,
+	supportReminderOpen = $bindable(false),
 	onDismissSupportReminder,
 	timer,
+	isOwnClock = false,
+	isAfk = false,
+	isMobile = false,
 	children,
 }: PlayerInfoProps = $props();
 
@@ -164,90 +177,67 @@ function handleSupportClick() {
   <div class="player-header">
     <div class="lore-status">
       <LoreBadge value={displayLore} max={20} size="small" variant={isOpponent ? "losing" : "default"} />
-      {#if visibleEffectSourceCards.length > 0 || hasFallbackEffectLabel}
-        <div
-          class="player-effect-strip"
-          aria-label={playerEffectAriaLabel}
-        >
-          {#each visibleEffectSourceCards as effectCard, index (effectCard.cardId)}
-            <div
-              class="player-effect-card"
-              style={`--effect-card-offset:${index}`}
-              title={playerActiveEffects
-                .filter((effect) => effect.sourceCardId === effectCard.cardId)
-                .map((effect) => effect.description)
-                .join("; ") || effectCard.label}
-            >
-              <LorcanaCard
-                card={effectCard}
-                size="micro"
-                imageFormat="art_only"
-                isExerted={effectCard.readyState === "exerted"}
-                isMasked={effectCard.isMasked}
-              />
-            </div>
-          {/each}
-          {#if hiddenEffectSourceCount > 0}
-            <div
-              class="player-effect-overflow"
-              title={`${hiddenEffectSourceCount} additional active player effect source${hiddenEffectSourceCount === 1 ? "" : "s"}`}
-            >
-              +{hiddenEffectSourceCount}
-            </div>
-          {/if}
-          {#if hasFallbackEffectLabel}
-            <div class="player-effect-pill" title={playerActiveEffects.map((effect) => effect.description).join("; ")}>
-              <span>{fallbackEffectLabel}</span>
-              {#if hiddenFallbackEffectCount > 0}
-                <span class="player-effect-pill__count">+{hiddenFallbackEffectCount}</span>
-              {/if}
-            </div>
-          {/if}
-        </div>
-      {/if}
       <span
               class="status-indicator"
-              class:status-indicator--active={isActive}
-              title={isActive ? m["sim.player.active.title"]({}) : undefined}
+              class:status-indicator--active={isActive && !isAfk}
+              class:status-indicator--afk={isAfk}
+              title={isAfk ? m["sim.player.afk.title"]({}) : isActive ? m["sim.player.active.title"]({}) : undefined}
               aria-hidden="true"
       ></span>
     </div>
     {#if timer}
-      <PlayerTimer
-        reserveMsRemaining={timer.reserveMsRemaining}
-        isActive={timer.isActive}
-        isRunning={timer.isRunning}
-        startedAtMs={timer.startedAtMs}
-        timeoutCount={timer.timeoutCount}
-        isInNegativeTime={timer.isInNegativeTime}
-      />
+      <PlayerTimer snapshot={timer} {isOwnClock} />
     {/if}
     <div class="player-identity">
       <div class="player-details">
         <span class="player-name">{name}</span>
         <span class="player-side">{getSideLabel(side)}</span>
+        {#if isMobile}
+          <Smartphone size={10} class="shrink-0 opacity-60" />
+        {/if}
+        {#if isAfk}
+          <span class="player-afk-pill" role="status" aria-label={m["sim.player.afk.awayAria"]({})}>
+            <EyeOff size={9} />
+            {m["sim.player.afk.title"]({})}
+          </span>
+        {/if}
       </div>
     </div>
 
     {#if showSettings || showSupport}
       <div class="player-quick-actions">
-        {#if supportReminderText && showSupport}
-          <SimulatorSupportReminder
-            surface="sidebar"
-            text={supportReminderText}
-            onOpen={handleSupportClick}
-            onDismiss={onDismissSupportReminder}
-          />
-        {/if}
         {#if showSupport}
-          <button
-            type="button"
-            class="settings-trigger"
-            aria-label={m["sim.player.support.openAria"]({})}
-            onclick={handleSupportClick}
-          >
-            <Bug />
-          </button>
+          {#if supportReminderText}
+            <SimulatorSupportReminder
+              text={supportReminderText}
+              bind:open={supportReminderOpen}
+              side="left"
+              align="start"
+              onOpen={handleSupportClick}
+              onDismiss={onDismissSupportReminder}
+            >
+              {#snippet child({ props })}
+                <button
+                  type="button"
+                  class="settings-trigger"
+                  aria-label={m["sim.player.support.openAria"]({})}
+                  onclick={handleSupportClick}
+                  {...props}
+                >
+                  <Bug />
+                </button>
+              {/snippet}
+            </SimulatorSupportReminder>
+          {:else}
+            <button
+              type="button"
+              class="settings-trigger"
+              aria-label={m["sim.player.support.openAria"]({})}
+              onclick={handleSupportClick}
+            >
+              <Bug />
+            </button>
+          {/if}
         {/if}
         {#if showSettings}
           <button
@@ -353,6 +343,40 @@ function handleSupportClick() {
     white-space: nowrap;
   }
 
+  .player-afk-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.18rem;
+    min-height: 1rem;
+    padding: 0 0.32rem;
+    border-radius: 999px;
+    background: rgba(217, 119, 6, 0.18);
+    border: 1px solid rgba(217, 119, 6, 0.35);
+    font-size: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #fbbf24;
+    line-height: 1;
+    white-space: nowrap;
+    animation: afk-pill-in 0.3s ease-out both;
+  }
+
+  .player-afk-pill :global(svg) {
+    flex-shrink: 0;
+  }
+
+  @keyframes afk-pill-in {
+    from {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   .player-stats {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -372,11 +396,6 @@ function handleSupportClick() {
     flex-shrink: 0;
   }
 
-  .player-effect-strip {
-    display: flex;
-    align-items: center;
-    min-height: 1.35rem;
-  }
 
   .player-effect-card {
     position: relative;
@@ -448,6 +467,14 @@ function handleSupportClick() {
       0 0 0 1px rgba(16, 185, 129, 0.22),
       0 0 12px rgba(16, 185, 129, 0.35);
     animation: pulse 2s ease-in-out infinite;
+  }
+
+  .status-indicator--afk {
+    background: #d97706;
+    box-shadow:
+      0 0 0 1px rgba(217, 119, 6, 0.22),
+      0 0 10px rgba(217, 119, 6, 0.3);
+    animation: pulse 2.5s ease-in-out infinite;
   }
 
   @keyframes pulse {

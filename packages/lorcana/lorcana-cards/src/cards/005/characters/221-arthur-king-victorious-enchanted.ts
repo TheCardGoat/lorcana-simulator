@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { arthurKingVictorious } from "..";
+import { arthurKingVictorious } from "./194-arthur-king-victorious";
 
 export const arthurKingVictoriousEnchanted: CharacterCard = {
   ...arthurKingVictorious,

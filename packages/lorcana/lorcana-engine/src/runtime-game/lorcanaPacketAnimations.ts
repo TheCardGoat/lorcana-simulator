@@ -403,7 +403,7 @@ export function deriveLorcanaPacketAnimations(
     // back to the card's strength as the damage dealt.
     const defenderDamageDelta =
       (nextDefenderMeta?.damage ?? 0) - (previousDefenderMeta?.damage ?? 0);
-    const attackerDamageDealt =
+    let attackerDamageDealt =
       defenderDamageDelta > 0 ? defenderDamageDelta : (attackerDef?.strength ?? 0);
     const attackerDamageDelta =
       defenderKind === "character"
@@ -433,6 +433,23 @@ export function deriveLorcanaPacketAnimations(
 
     const attackerWouldBeBanished = isInDiscard(attackerId, attackerOwner);
     const defenderWouldBeBanished = isInDiscard(defenderId, defenderOwner);
+
+    if (
+      defenderKind === "location" &&
+      defenderWouldBeBanished &&
+      defenderDamageDelta <= 0 &&
+      defenderDef?.cardType === "location" &&
+      !nextDefenderMeta
+    ) {
+      const previousDamage = previousDefenderMeta?.damage ?? 0;
+      const locationWillpower = defenderDef.willpower ?? 0;
+      if (locationWillpower > 0 && previousDamage < locationWillpower) {
+        const finishingDamage = locationWillpower - previousDamage;
+        const strengthCap =
+          typeof attackerDef?.strength === "number" ? attackerDef.strength : finishingDamage;
+        attackerDamageDealt = Math.max(0, Math.min(finishingDamage, strengthCap));
+      }
+    }
 
     return [
       {

@@ -5,6 +5,7 @@ import type {
 } from "@/features/simulator/model/contracts.js";
 import CardBack from "@/design-system/simulator/cards/CardBack.svelte";
 import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+import {ZONE_IMAGE_FORMATS} from "@/design-system/simulator/cards/card-image-format.js";
 import InkwellReminder from "@/features/simulator/board/InkwellReminder.svelte";
 import {
 	createCardAnchorId,
@@ -94,6 +95,7 @@ const inferredHiddenReadyCount = $derived.by(() => {
 const inferredHiddenExertedCount = $derived.by(() =>
 	Math.max(0, hiddenPlaceholderCount - inferredHiddenReadyCount),
 );
+const showZoneCounters = $derived(board.showZoneCounters);
 const dropState = $derived(dnd.getZoneDropState("inkwell", playerSide));
 const showDropIndicator = $derived(
 	dropState === "valid" || dropState === "invalid",
@@ -107,6 +109,13 @@ const showInkwellReminder = $derived.by(() => {
 });
 
 const ART_ONLY_ASPECT_RATIO = 734 / 602;
+
+let inkwellCardsEl = $state<HTMLButtonElement | null>(null);
+
+$effect(() => {
+	cards.length;
+	inkwellCardsEl?.scrollTo({ left: 0 });
+});
 </script>
 
 <div
@@ -123,6 +132,7 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
   {@attach droppable.attach}
 >
   <!-- Ink Counter Badge -->
+  {#if showZoneCounters}
   <Tooltip.Root>
     <Tooltip.Trigger>
       {#snippet child({ props })}
@@ -144,12 +154,21 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
       {m["sim.inkwell.tooltip"]({})}
     </Tooltip.Content>
   </Tooltip.Root>
+  {/if}
+
+  <!-- Inline ink label (when zone counters are OFF) -->
+  {#if !showZoneCounters && effectiveTotal > 0}
+    <span class="ink-inline-label" class:ink-inline-label--top={seat === "top"}>
+      {inkCounterLabel}
+    </span>
+  {/if}
 
   <!-- Ink Cards Display -->
   {#if hasRevealedCards}
     <button
       type="button"
       class="inkwell-cards"
+      bind:this={inkwellCardsEl}
       data-board-anchor-id={createZoneAnchorId(playerSide, "inkwell")}
       data-board-scroll-sync
       onclick={onClick}
@@ -178,7 +197,7 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
               <LorcanaCard
                 {card}
                 useContainerSize
-                imageFormat="art_only"
+                imageFormat={ZONE_IMAGE_FORMATS.inkwell}
                 isMasked={isMasked}
                 isExerted={card.readyState === "exerted"}
               />
@@ -189,7 +208,7 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
                 displayHeight={36}
                 aspectRatio={ART_ONLY_ASPECT_RATIO}
                 useContainerSize={true}
-                imageFormat="art_only"
+                imageFormat={ZONE_IMAGE_FORMATS.inkwell}
               />
             {/if}
           </div>
@@ -207,6 +226,7 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
     <button
       type="button"
       class="inkwell-cards"
+      bind:this={inkwellCardsEl}
       data-board-anchor-id={createZoneAnchorId(playerSide, "inkwell")}
       data-board-scroll-sync
       onclick={onClick}
@@ -234,7 +254,7 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
               displayHeight={36}
               aspectRatio={ART_ONLY_ASPECT_RATIO}
               useContainerSize={true}
-              imageFormat="art_only"
+              imageFormat={ZONE_IMAGE_FORMATS.inkwell}
               isExerted={isInferredExerted}
             />
           </div>
@@ -379,22 +399,49 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
     font-variant-numeric: tabular-nums;
   }
 
+  /* Inline ink label (counters OFF fallback) */
+  .ink-inline-label {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #e2e8f0;
+    background: rgba(15, 23, 42, 0.88);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 6px;
+    padding: 2px 6px;
+    pointer-events: none;
+    z-index: 10;
+    line-height: 1;
+    user-select: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+
+  .ink-inline-label--top {
+    top: auto;
+    bottom: -4px;
+  }
+
   /* Ink Cards Stack - Horizontal layout */
   .inkwell-cards {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: flex-start;
     width: 100%;
     flex: 1 1 auto;
     min-width: 0;
-    min-height: calc(var(--ink-card-height) + 6px);
+    min-height: 0;
+    height: 100%;
     background: transparent;
     border: none;
     cursor: pointer;
     padding: 0;
     position: relative;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: visible;
     scrollbar-width: thin;
     scrollbar-color: rgba(180, 160, 220, 0.55) rgba(0, 0, 0, 0.18);
   }
@@ -402,11 +449,12 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
   .inkwell-entry-anchor {
     position: absolute;
     left: 0;
-    top: 6px;
+    top: 50%;
     width: var(--ink-card-width);
     height: var(--ink-card-height);
     pointer-events: none;
     opacity: 0;
+    transform: translateY(-50%);
   }
 
   .inkwell-cards::-webkit-scrollbar {
@@ -425,15 +473,14 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
 
   .ink-cards-stack {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: var(--ink-card-gap);
     justify-content: flex-start;
     position: relative;
     width: max-content;
     min-width: max-content;
-    height: auto;
+    height: 100%;
     min-height: var(--ink-stack-height);
-    padding-top: 6px;
     padding-left: var(--ink-stack-padding);
   }
 
@@ -452,6 +499,7 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
 
   .ink-card-back--exerted {
     filter: brightness(0.72) grayscale(0.25);
+    transform: rotate(20deg) scale(0.96);
   }
 
   .ink-count-more {
@@ -472,16 +520,17 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
     gap: var(--ink-card-gap);
     flex-wrap: nowrap;
     justify-content: flex-start;
-    align-items: flex-start;
+    align-items: center;
     width: max-content;
     min-width: max-content;
-    min-height: var(--ink-card-height);
-    padding: 6px 0 0;
+    min-height: 100%;
+    height: 100%;
+    padding: 0;
     overflow: visible;
   }
 
   .ink-card {
-    transition: filter 150ms ease;
+    transition: filter 150ms ease, transform 150ms ease;
     width: var(--zone-card-width, 28px);
     height: var(--zone-card-height, 40px);
     flex: 0 0 auto;
@@ -492,6 +541,7 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
 
   .ink-card--exerted {
     filter: brightness(0.6) grayscale(0.4);
+    transform: rotate(20deg) scale(0.96);
   }
 
   .more-ink {
@@ -501,7 +551,7 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
     padding: 4px 6px;
     background: rgba(0, 0, 0, 0.5);
     border-radius: 4px;
-    align-self: flex-start;
+    align-self: center;
     margin-left: 0.25rem;
   }
 
@@ -541,6 +591,11 @@ const ART_ONLY_ASPECT_RATIO = 734 / 602;
 
     .ink-counter-value {
       font-size: 0.6rem;
+    }
+
+    .ink-inline-label {
+      font-size: 0.7rem;
+      padding: 1px 5px;
     }
   }
 

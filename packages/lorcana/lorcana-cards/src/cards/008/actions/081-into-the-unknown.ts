@@ -28,12 +28,7 @@ export const intoTheUnknown: ActionCard = {
         exerted: true,
         facedown: true,
         source: "chosen-character",
-        target: "CHOSEN_CHARACTER",
-        filter: [
-          {
-            type: "exerted",
-          },
-        ],
+        target: "CHOSEN_EXERTED_CHARACTER",
         type: "put-into-inkwell",
       },
       type: "action",

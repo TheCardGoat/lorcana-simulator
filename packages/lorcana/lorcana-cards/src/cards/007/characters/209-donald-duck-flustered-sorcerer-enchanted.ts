@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { donaldDuckFlusteredSorcerer } from "..";
+import { donaldDuckFlusteredSorcerer } from "./073-donald-duck-flustered-sorcerer";
 
 export const donaldDuckFlusteredSorcererEnchanted: CharacterCard = {
   ...donaldDuckFlusteredSorcerer,

@@ -5,6 +5,7 @@ import type {
   LorcanaTargetDSL,
   ScryCardOrdering,
 } from "@tcg/lorcana-types";
+import type { SlottedTargetKind } from "../targeting/slotted-targets";
 
 export type ResolutionSelectionZone = "deck" | "hand" | "play" | "discard" | "inkwell" | "limbo";
 
@@ -96,8 +97,21 @@ export type TargetResolutionSelectionContext = ResolutionSelectionContextBase & 
   allowedZones: ResolutionSelectionZone[];
   minSelections: number;
   maxSelections: number;
+  /**
+   * The printed max from the card descriptor (e.g. "up to 2") before runtime
+   * clamping to the current candidate count. `maxSelections` is clamped so
+   * the engine doesn't accept more targets than candidates; UI copy should
+   * prefer `declaredMaxSelections` when showing the card's printed allowance.
+   */
+  declaredMaxSelections?: number;
   ordered: boolean;
   autoRejected: boolean;
+  /**
+   * When set, the UI must serialize selected targets into a
+   * `SlottedTargetInput` of this kind instead of a flat array. Absent for
+   * single-slot / non-slotted effects — flat-array path preserved.
+   */
+  expectedSlottedKind?: SlottedTargetKind;
 };
 
 export type ChoiceResolutionSelectionContext = ResolutionSelectionContextBase & {

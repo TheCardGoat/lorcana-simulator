@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { mickeyMouseBobCratchit } from "..";
+import { mickeyMouseBobCratchit } from "./159-mickey-mouse-bob-cratchit";
 
 export const mickeyMouseBobCratchitEpic: CharacterCard = {
   ...mickeyMouseBobCratchit,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import type { CardInstanceId, PlayerId } from "#core";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "../../testing";
-import { matchesStaticAbilityTarget } from "./static-ability-utils";
+import { evaluateStaticCondition, matchesStaticAbilityTarget } from "./static-ability-utils";
 
 describe("static ability utils", () => {
   it("applies generic character cost reductions to Shift alternate costs", () => {
@@ -343,5 +343,32 @@ describe("static ability utils", () => {
       true,
     );
     expect(testEngine.getLore("player_one")).toBe(1);
+  });
+});
+
+describe("THE-966: static during-turn vs priority.holder (Snow Fort BARRICADE)", () => {
+  it("uses canonical turn owner for during-turn(opponent), not priority.holder alone", () => {
+    const p1 = "player_one" as PlayerId;
+    const p2 = "player_two" as PlayerId;
+    const state = {
+      priority: { holder: p1 },
+      playerIds: [p1, p2] as const,
+      status: { turn: 2, turnOwnerId: p2, otp: p1 },
+      _zonesPrivate: { cardIndex: {}, zoneCards: {}, cardMeta: {} },
+      G: {
+        lore: { [p1]: 0, [p2]: 0 },
+        turnsCompletedByPlayer: { [p1]: 1 },
+      },
+    };
+
+    expect(
+      evaluateStaticCondition({
+        condition: { type: "during-turn", whose: "opponent" },
+        state,
+        controllerId: p1,
+        sourceId: "snow-fort" as CardInstanceId,
+        getDefinitionByInstanceId: () => undefined,
+      }),
+    ).toBe(true);
   });
 });

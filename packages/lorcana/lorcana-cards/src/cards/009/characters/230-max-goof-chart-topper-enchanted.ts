@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { maxGoofChartTopper } from "..";
+import { maxGoofChartTopper } from "./077-max-goof-chart-topper";
 
 export const maxGoofChartTopperEnchanted: CharacterCard = {
   ...maxGoofChartTopper,

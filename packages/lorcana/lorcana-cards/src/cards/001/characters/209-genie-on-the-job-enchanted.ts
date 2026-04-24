@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { genieOnTheJob } from "..";
+import { genieOnTheJob } from "./075-genie-on-the-job";
 
 export const genieOnTheJobEnchanted: CharacterCard = {
   ...genieOnTheJob,

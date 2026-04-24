@@ -33,7 +33,7 @@ export const jumboPop: ItemCard = {
       effect: {
         steps: [
           {
-            amount: 2,
+            amount: { type: "up-to", value: 2 },
             target: {
               selector: "all",
               count: "all",
@@ -42,7 +42,6 @@ export const jumboPop: ItemCard = {
               cardTypes: ["character"],
             },
             type: "remove-damage",
-            upTo: true,
           },
           {
             amount: 1,

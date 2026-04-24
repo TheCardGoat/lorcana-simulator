@@ -1,6 +1,7 @@
 import type { Amount } from "@tcg/lorcana-types";
 
 import type { DeepReadonly, CardInstanceId, CommandResult, PlayerId } from "#core";
+import type { Effect } from "@tcg/lorcana-types";
 import type { ChallengePreviewResult, PlayCardCostInput } from "../lorcana-engine-base";
 import type {
   BagEffectEntry,
@@ -267,6 +268,7 @@ export interface AutomatedActionPlanningContext {
   opponentId?: PlayerId;
   resolveCandidateSourceCardId(candidate: AutomatedActionCandidate): CardInstanceId | undefined;
   resolveCandidateSourceDefinitionId(candidate: AutomatedActionCandidate): string | undefined;
+  resolveCandidateEffect(candidate: AutomatedActionCandidate): Effect | undefined;
   resolveCandidateSourceRoles(
     candidate: AutomatedActionCandidate,
   ): readonly AutomatedActionDeckRoleTag[];

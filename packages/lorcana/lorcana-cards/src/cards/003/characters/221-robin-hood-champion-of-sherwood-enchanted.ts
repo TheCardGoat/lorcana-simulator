@@ -1,5 +1,5 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { robinHoodChampionOfSherwood } from "..";
+import { robinHoodChampionOfSherwood } from "./190-robin-hood-champion-of-sherwood";
 
 export const robinHoodChampionOfSherwoodEnchanted: CharacterCard = {
   ...robinHoodChampionOfSherwood,
