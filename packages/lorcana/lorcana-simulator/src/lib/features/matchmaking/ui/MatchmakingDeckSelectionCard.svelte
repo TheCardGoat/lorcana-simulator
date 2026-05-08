@@ -172,18 +172,29 @@
               {/if}
 
               {#if activeProfile && !selectedDeck && (!activeProfileDecksLoaded || activeProfileDecks.length === 0)}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  class="h-6 shrink-0 border-white/15 bg-transparent px-2 text-[0.65rem] text-slate-300 hover:bg-white/10 hover:text-slate-100"
-                  disabled={importLegacySubmitting}
-                  onclick={onImportLegacy}
-                >
-                  {importLegacySubmitting
-                    ? m["sim.matchmaking.selectedDeck.empty.importLegacyLoading"]({})
-                    : m["sim.matchmaking.selectedDeck.empty.importLegacy"]({})}
-                </Button>
+                <div class="flex shrink-0 items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="h-6 shrink-0 border-white/15 bg-transparent px-2 text-[0.65rem] text-slate-300 hover:bg-white/10 hover:text-slate-100"
+                    disabled={importLegacySubmitting}
+                    onclick={onImportLegacy}
+                  >
+                    {importLegacySubmitting
+                      ? m["sim.matchmaking.selectedDeck.empty.importLegacyLoading"]({})
+                      : m["sim.matchmaking.selectedDeck.empty.importLegacy"]({})}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="h-6 shrink-0 border-white/15 bg-transparent px-2 text-[0.65rem] text-slate-300 hover:bg-white/10 hover:text-slate-100"
+                    onclick={() => goto("/matchmaking/deck-vault")}
+                  >
+                    {m["sim.matchmaking.selectedDeck.empty.importDecklist"]({})}
+                  </Button>
+                </div>
               {/if}
 
             </div>

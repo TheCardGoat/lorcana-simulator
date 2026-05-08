@@ -121,6 +121,47 @@ describe("Cinderella - Dream Come True", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     });
 
+    it("does NOT draw when the player has no card to put into inkwell (empty hand)", () => {
+      // Reproduces 2026-05-06 player report (cluster C10): "Cinderella - Dream
+      // Come True allowed the opponent to draw a card even when they could not
+      // ink because they no cards in hand."
+      //
+      // Printed text: "you may put a card from your hand into your inkwell
+      // facedown TO draw a card." — the draw is the consequence of the put.
+      // If there is no card to put, you may not draw. The ability was
+      // structured as `optional → sequence → [put-into-inkwell, draw]`, so
+      // accepting the optional with an empty hand still ran the draw step.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [princessCharacter], // played below to satisfy the turn-metric
+        // condition; afterwards hand is empty.
+        play: [cinderellaDreamComeTrue],
+        inkwell: princessCharacter.cost,
+        deck: 3,
+      });
+
+      const deckBefore = testEngine.asPlayerOne().getZonesCardCount().deck;
+
+      expect(testEngine.asPlayerOne().playCard(princessCharacter)).toBeSuccessfulCommand();
+      // Hand is now empty (only princessCharacter was in it).
+      expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      // Cinderella's ability triggers — printed-text condition is satisfied.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      // Player accepts the optional, but there is no card in hand to put.
+      // The engine must NOT draw — the draw is the consequence of the put.
+      testEngine.asPlayerOne().resolvePendingByCard(cinderellaDreamComeTrue, {
+        resolveOptional: true,
+      });
+
+      // Both zone counts must be unchanged: nothing left the hand (it was
+      // empty), and nothing was drawn from the deck.
+      expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+      expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(deckBefore);
+    });
+
     it("triggers when Cinderella herself is played (she is a Princess)", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [cinderellaDreamComeTrue, inkFodder],

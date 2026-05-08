@@ -3,7 +3,7 @@ import { madamMimRivalOfMerlinI18n } from "./048-madam-mim-rival-of-merlin.i18n"
 import { shift } from "../../../helpers/abilities/shift";
 
 export const madamMimRivalOfMerlin: CharacterCard = {
-  id: "RM2",
+  id: "ozR",
   canonicalId: "ci_RM2",
   reprints: ["set2-048"],
   cardType: "character",

@@ -2,7 +2,7 @@ import type { ActionCard } from "@tcg/lorcana-types";
 import { findersKeepersI18n } from "./060-finders-keepers.i18n";
 
 export const findersKeepers: ActionCard = {
-  id: "t4e",
+  id: "J7L",
   canonicalId: "ci_LfA",
   reprints: ["set5-060"],
   cardType: "action",

@@ -6,47 +6,87 @@ import {
 } from "@tcg/lorcana-engine/testing";
 import { gadgetsGoggles } from "./168-gadgets-goggles";
 
+// Deck arrays are in bottom-to-top order: the LAST element is the top card.
+const deepDeckCard = createMockCharacter({
+  id: "gadgets-goggles-deep",
+  name: "Deep Deck Card",
+  cost: 3,
+});
+
+const secondFromTopCard = createMockCharacter({
+  id: "gadgets-goggles-second",
+  name: "Second From Top Card",
+  cost: 2,
+});
+
 const topDeckCard = createMockCharacter({
   id: "gadgets-goggles-top",
   name: "Top Deck Card",
   cost: 1,
 });
 
-const secondDeckCard = createMockCharacter({
-  id: "gadgets-goggles-second",
-  name: "Second Deck Card",
-  cost: 2,
-});
-
-const bottomDeckCard = createMockCharacter({
-  id: "gadgets-goggles-bottom",
-  name: "Bottom Deck Card",
-  cost: 3,
-});
-
 describe("Gadget's Goggles", () => {
-  it("ENHANCED VISION - looks at the top 2 cards and puts one on top and one on bottom", () => {
-    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
-      inkwell: 1,
-      play: [gadgetsGoggles],
-      deck: [topDeckCard, secondDeckCard, bottomDeckCard],
+  describe("ENHANCED VISION - {E}, 1 {I} — Look at the top 2 cards of your deck. Put one on the top of your deck and the other on the bottom.", () => {
+    it("puts the chosen card on top of the deck and the other on the bottom", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: 1,
+        play: [gadgetsGoggles],
+        deck: [deepDeckCard, secondFromTopCard, topDeckCard],
+      });
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(gadgetsGoggles, {
+          ability: "ENHANCED VISION",
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Scry looks at topDeckCard and secondFromTopCard.
+      // Keep secondFromTopCard on top; send topDeckCard to the bottom.
+      expect(
+        testEngine.asPlayerOne().resolvePendingEffect(gadgetsGoggles, {
+          destinations: [
+            { zone: "deck-top", cards: [secondFromTopCard] },
+            { zone: "deck-bottom", cards: [topDeckCard] },
+          ],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Deck (bottom-to-top): topDeckCard, deepDeckCard, secondFromTopCard
+      expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
+        topDeckCard.id,
+        deepDeckCard.id,
+        secondFromTopCard.id,
+      ]);
     });
 
-    expect(testEngine.asPlayerOne().activateAbility(gadgetsGoggles)).toBeSuccessfulCommand();
+    it("can keep the original top card on top of the deck", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: 1,
+        play: [gadgetsGoggles],
+        deck: [deepDeckCard, secondFromTopCard, topDeckCard],
+      });
 
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({
-        destinations: [
-          { zone: "deck-top", cards: [secondDeckCard] },
-          { zone: "deck-bottom", cards: [bottomDeckCard] },
-        ],
-      }),
-    ).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().activateAbility(gadgetsGoggles, {
+          ability: "ENHANCED VISION",
+        }),
+      ).toBeSuccessfulCommand();
 
-    expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
-      bottomDeckCard.id,
-      topDeckCard.id,
-      secondDeckCard.id,
-    ]);
+      expect(
+        testEngine.asPlayerOne().resolvePendingEffect(gadgetsGoggles, {
+          destinations: [
+            { zone: "deck-top", cards: [topDeckCard] },
+            { zone: "deck-bottom", cards: [secondFromTopCard] },
+          ],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Deck (bottom-to-top): secondFromTopCard, deepDeckCard, topDeckCard
+      expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([
+        secondFromTopCard.id,
+        deepDeckCard.id,
+        topDeckCard.id,
+      ]);
+    });
   });
 });

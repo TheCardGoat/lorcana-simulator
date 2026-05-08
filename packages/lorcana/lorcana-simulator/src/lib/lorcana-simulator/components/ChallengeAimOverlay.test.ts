@@ -34,6 +34,8 @@ const basePreview: ChallengePreviewResult = {
   defenderDamageDealt: 3,
   attackerWouldBeBanished: true,
   defenderWouldBeBanished: true,
+  attackerDamageIsReduced: false,
+  defenderDamageIsReduced: false,
 };
 
 describe("ChallengeAimOverlay", () => {

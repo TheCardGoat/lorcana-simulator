@@ -30,7 +30,7 @@ export const captainHookThePirateKing: CharacterCard = {
     {
       title: "GIVE 'EM ALL YOU GOT!",
       description:
-        "Once during your turn, whenever an opposing character is damaged, your Pirate characters get +2 {S} and gain Resist +2 this turn.",
+        "Once during your turn, whenever an opposing character takes damage, your Pirate characters get +2 {S} and gain Resist +2 this turn.",
     },
   ],
   classifications: ["Floodborn", "Villain", "King", "Pirate", "Captain"],
@@ -58,7 +58,7 @@ export const captainHookThePirateKing: CharacterCard = {
       },
       id: "1na-2",
       name: "GIVE ‘EM ALL YOU GOT!",
-      text: "GIVE ‘EM ALL YOU GOT! Once during your turn, whenever an opposing character is damaged, your Pirate characters get +2 {S} and gain Resist +2 this turn.",
+      text: "GIVE ‘EM ALL YOU GOT! Once during your turn, whenever an opposing character takes damage, your Pirate characters get +2 {S} and gain Resist +2 this turn.",
       trigger: {
         event: "damage",
         on: "OPPONENT_CHARACTERS",

@@ -35,8 +35,6 @@ export const littleJohnSirReginald: CharacterCard = {
     },
   ],
   classifications: ["Storyborn", "Ally"],
-  missingImplementation: false,
-  missingTests: false,
   abilities: [
     {
       id: "1mt-1",

@@ -307,11 +307,13 @@ describe("deal-damage-effect", () => {
       },
     );
 
-    expect(ctx.G.triggeredAbilities?.pendingEvents).toHaveLength(2);
+    expect(ctx.G.triggeredAbilities?.pendingEvents).toHaveLength(3);
     // First event: "damage" trigger for the lethal damage dealt
     expect(ctx.G.triggeredAbilities?.pendingEvents[0]?.event).toBe("damage");
-    // Second event: "banish" trigger for the card being banished
-    const banishEvent = ctx.G.triggeredAbilities?.pendingEvents[1];
+    // Second event: "deal-damage" trigger for the source dealing damage
+    expect(ctx.G.triggeredAbilities?.pendingEvents[1]?.event).toBe("deal-damage");
+    // Third event: "banish" trigger for the card being banished
+    const banishEvent = ctx.G.triggeredAbilities?.pendingEvents[2];
     expect(banishEvent?.event).toBe("banish");
     expect(banishEvent?.eventSnapshot?.subjectAtLocationId).toBe(locationId);
   });

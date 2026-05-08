@@ -10,26 +10,32 @@ const STORAGE_KEY = "analytics_consent";
 /**
  * null = not yet decided, true = granted, false = denied.
  *
- * All users accept our Terms of Service and Privacy Policy (which includes
- * consent to analytics for platform improvement) during onboarding, so
- * we default to `true` when no explicit preference is stored.
+ * In permissive jurisdictions, users accept analytics via TOS acceptance
+ * during onboarding, so we default to `true` when no explicit preference is
+ * stored. Under GDPR-strict mode (EU/EEA/UK visitors as detected by the
+ * server's `cf-ipcountry` lookup), we default to `false` and require explicit
+ * opt-in via the consent banner.
  */
 export const analyticsConsent = $state({
   consentGranted: null as boolean | null,
+  /** True when the visitor's jurisdiction requires explicit opt-in (EU/EEA/UK). */
+  gdprStrict: false,
   initialize,
   grant,
   deny,
   reset,
 });
 
-function loadFromStorage(): boolean | null {
+function loadFromStorage(gdprStrict: boolean): boolean | null {
   if (typeof window === "undefined") return null;
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === "true") return true;
   if (stored === "false") return false;
-  // Users consent to analytics via Terms of Service acceptance during onboarding.
-  // Default to granted when no explicit preference is stored.
-  return true;
+  // GDPR-strict: leave as null so the banner can prompt for explicit opt-in.
+  // gtag's default consent is already "denied" at script load, so no events
+  // will fire while we're waiting on the user. Permissive jurisdictions
+  // pre-grant via TOS acceptance.
+  return gdprStrict ? null : true;
 }
 
 function saveToStorage(value: boolean): void {
@@ -37,9 +43,14 @@ function saveToStorage(value: boolean): void {
   localStorage.setItem(STORAGE_KEY, String(value));
 }
 
-/** Initialize consent state from localStorage. Call once on mount. */
-function initialize(): void {
-  analyticsConsent.consentGranted = loadFromStorage();
+/**
+ * Initialize consent state from localStorage. Call once on mount.
+ * Pass `gdprStrict: true` for EU/EEA/UK visitors so the default is denied.
+ */
+function initialize(options: { gdprStrict?: boolean } = {}): void {
+  const gdprStrict = options.gdprStrict ?? false;
+  analyticsConsent.gdprStrict = gdprStrict;
+  analyticsConsent.consentGranted = loadFromStorage(gdprStrict);
 }
 
 function grant(): void {

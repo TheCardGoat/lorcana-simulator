@@ -12,6 +12,15 @@
 </svelte:head>
 
 <div class="px-4 sm:px-6 lg:px-8 min-h-0 flex-1 overflow-y-auto">
+  <div class="mb-2 flex justify-end">
+    <a
+      href="/matchmaking/atelier"
+      class="text-xs text-slate-400 underline-offset-2 hover:text-sky-300 hover:underline"
+      title="Atelier — earn and spend Inkmarks on alternate art"
+    >
+      Open Atelier →
+    </a>
+  </div>
   <DeckVaultContent
     playerContext={controller.playerContext}
     selectionDisabled={controller.deckSelection.selectionDisabled}

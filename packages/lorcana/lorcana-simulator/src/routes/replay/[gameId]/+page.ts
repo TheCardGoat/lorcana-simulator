@@ -1,5 +1,6 @@
 export const ssr = false;
 
-export function load({ params }: { params: { gameId: string } }) {
-  return { gameId: params.gameId };
+export function load({ params, url }: { params: { gameId: string }; url: URL }) {
+  const step = url.searchParams.get("step");
+  return { gameId: params.gameId, initialStep: step ? Number(step) : undefined };
 }

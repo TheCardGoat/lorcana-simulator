@@ -116,7 +116,7 @@ describe("Tinker Bell - Giant Fairy", () => {
         testEngine.asPlayerOne().challenge(tinkerBellGiantFairy, soloOpponent),
       ).toBeSuccessfulCommand();
 
-      // No opposing characters remain — PUNY PIRATE! should not fire
+      // No opposing characters remain, so the optional bag entry auto-drains as a no-op.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 

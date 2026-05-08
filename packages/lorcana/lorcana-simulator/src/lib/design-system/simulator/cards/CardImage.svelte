@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Image } from "@unpic/svelte";
   import {AspectRatio} from "$lib/design-system/primitives/aspect-ratio/index.js";
-  import { buildLorcanaAssetUrl } from "$lib/config/public-url-config.js";
+  import { buildLorcanaAssetUrl, getCdnFallbackUrl } from "$lib/config/public-url-config.js";
   import {
     CARD_IMAGE_DIMENSIONS,
     type ImageFormat,
@@ -49,9 +49,9 @@
     const paddedSet = getPaddedSet(set);
     const safeLang = lang.toUpperCase();
 
-    // https://r2.tcg.online/public/lorcana/EN/004/128.webp
-    // https://r2.tcg.online/public/lorcana/004/art_only/128.webp
-    // https://r2.tcg.online/public/lorcana/EN/004/art_and_name/128.webp
+    // https://new-cdn.lorcanito.com/public/lorcana/EN/004/128.webp
+    // https://new-cdn.lorcanito.com/public/lorcana/004/art_only/128.webp
+    // https://new-cdn.lorcanito.com/public/lorcana/EN/004/art_and_name/128.webp
 
     const paddedNumber = String(number).padStart(3, "0");
 
@@ -72,18 +72,33 @@
   const dimensions = $derived(CARD_IMAGE_DIMENSIONS[crop]);
 
   const aspectRatio = $derived(dimensions.width / dimensions.height);
+
+  let cdnFailed = $state(false);
+
+  $effect(() => {
+    imageUrl;
+    cdnFailed = false;
+  });
+
+  const activeSrc = $derived(cdnFailed ? (getCdnFallbackUrl(imageUrl) ?? imageUrl) : imageUrl);
 </script>
 
 <AspectRatio ratio={aspectRatio} class="w-full h-full">
   <Image
-    src={imageUrl}
+    src={activeSrc}
     {alt}
     width={dimensions.width}
     height={dimensions.height}
     layout="constrained"
     class="object-cover {className}"
     onload={onLoad}
-    onerror={onError}
+    onerror={() => {
+      if (!cdnFailed && getCdnFallbackUrl(imageUrl) !== null) {
+        cdnFailed = true;
+      } else {
+        onError?.();
+      }
+    }}
   />
 </AspectRatio>
 

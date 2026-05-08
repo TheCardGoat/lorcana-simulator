@@ -40,7 +40,12 @@ export const handintheboxSidsToy: CharacterCard = {
             owner: "you",
             zones: ["discard"],
             cardTypes: ["character"],
-            filters: [{ type: "has-classification", classification: "Toy" }],
+            filters: [
+              {
+                type: "has-classification",
+                classification: "Toy",
+              },
+            ],
           },
           type: "put-on-bottom",
         },

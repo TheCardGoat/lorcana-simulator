@@ -55,13 +55,8 @@ describe("Lady Tremaine - Sinister Socialite", () => {
 
       expect(testEngine.asPlayerOne().quest(ladyTremaineSinisterSocialite)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(ladyTremaineSinisterSocialite, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       // Action card should still be in discard (condition failed - no boost this turn)
       expect(testEngine.asPlayerOne().getCardZone(actionInDiscard)).toBe("discard");

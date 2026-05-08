@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { shift } from "../../../helpers/abilities/shift";
 import { almaMadrigalKeeperOfTheFlameI18n } from "./058-alma-madrigal-keeper-of-the-flame.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const almaMadrigalKeeperOfTheFlame: CharacterCard = {
   id: "HdV",
@@ -43,21 +43,17 @@ export const almaMadrigalKeeperOfTheFlame: CharacterCard = {
       trigger: {
         event: "remove-damage",
         on: "YOUR_CHARACTERS",
-        restrictions: [{ type: "during-turn", whose: "your" }],
         timing: "whenever",
+        sourceFilter: {
+          sourceController: "you",
+        },
       },
       effect: {
         type: "optional",
         chooser: "CONTROLLER",
         effect: {
           type: "exert",
-          target: {
-            selector: "chosen",
-            count: 1,
-            owner: "opponent",
-            cardTypes: ["character"],
-            zones: ["play"],
-          },
+          target: "CHOSEN_OPPOSING_CHARACTER",
         },
       },
     },

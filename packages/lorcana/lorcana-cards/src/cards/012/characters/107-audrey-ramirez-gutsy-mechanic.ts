@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { rush } from "../../../helpers/abilities/rush";
 import { audreyRamirezGutsyMechanicI18n } from "./107-audrey-ramirez-gutsy-mechanic.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const audreyRamirezGutsyMechanic: CharacterCard = {
   id: "XG0",

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { buildSimulatorAssetUrl } from "$lib/config/public-url-config.js";
+import { SYMBOL_BASE_URL, tokenizeTextWithSymbols } from "./symbol-tokenizer.js";
 
 interface Props {
   text: string;
@@ -7,48 +7,7 @@ interface Props {
 
 const { text }: Props = $props();
 
-const SYMBOL_BASE_URL = buildSimulatorAssetUrl("symbols");
-const SYMBOLS: Record<string, string> = {
-  E: "exert.svg",
-  W: "willpower-2.svg",
-  L: "lore-2.svg",
-  S: "strength-simple-2.svg",
-  I: "ink-simple-2.svg",
-};
-const SYMBOL_PATTERN = /\{([EWLSI])\}/gi;
-
-type Token = { type: "text"; value: string } | { type: "symbol"; file: string; code: string };
-
-function tokenize(raw: string): Token[] {
-  const tokens: Token[] = [];
-  let lastIndex = 0;
-
-  for (const match of raw.matchAll(SYMBOL_PATTERN)) {
-    const [fullMatch, code] = match;
-    const start = match.index ?? 0;
-    const file = SYMBOLS[code.toUpperCase()];
-
-    if (start > lastIndex) {
-      tokens.push({ type: "text", value: raw.slice(lastIndex, start) });
-    }
-
-    if (file) {
-      tokens.push({ type: "symbol", file, code: code.toUpperCase() });
-    } else {
-      tokens.push({ type: "text", value: fullMatch });
-    }
-
-    lastIndex = start + fullMatch.length;
-  }
-
-  if (lastIndex < raw.length) {
-    tokens.push({ type: "text", value: raw.slice(lastIndex) });
-  }
-
-  return tokens;
-}
-
-const tokens = $derived(tokenize(text));
+const tokens = $derived(tokenizeTextWithSymbols(text));
 </script>
 
 {#each tokens as token, i (i)}

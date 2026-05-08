@@ -137,6 +137,14 @@ export interface LorcanaFormat {
    * pure Core Constructed decks (with no WSP/WUN cards) are not considered valid.
    */
   requiresAnySet?: LorcanaSetCode[];
+  /**
+   * Set codes whose cards must be rejected even if they would otherwise pass via
+   * {@link requiredRotationState}. Used to keep early-access-only sets out of
+   * standard formats when Ravensburger pre-tags the new set as `"CoreConstructed"`.
+   *
+   * A card fails if every one of its printings is in `excludedSets`.
+   */
+  excludedSets?: LorcanaSetCode[];
 }
 
 // ---------------------------------------------------------------------------
@@ -155,31 +163,23 @@ const FORTISPHERE = "PSk";
 // ---------------------------------------------------------------------------
 
 export const LORCANA_FORMATS: Record<LorcanaFormatId, LorcanaFormat> = {
-  /** All sets legal; only Hiram Flaversham - Toymaker banned. */
+  /**
+   * All released sets legal; only Hiram Flaversham - Toymaker banned.
+   * Wilds Unknown (WUN) is intentionally excluded — it is early-access only.
+   */
   infinity: {
     id: "infinity",
     label: "Infinity",
-    description: "All sets are legal. One card is banned.",
-    allowedSets: [
-      "TFC",
-      "ROF",
-      "ITI",
-      "URR",
-      "SSK",
-      "AZS",
-      "ARC",
-      "ROJ",
-      "FAB",
-      "WIW",
-      "WSP",
-      "WUN",
-    ],
+    description: "All released sets are legal. One card is banned.",
+    allowedSets: ["TFC", "ROF", "ITI", "URR", "SSK", "AZS", "ARC", "ROJ", "FAB", "WIW", "WSP"],
     bannedCardIds: [HIRAM_FLAVERSHAM_TOYMAKER],
   },
 
   /**
    * Rotating constructed format. Includes the most recent six sets.
    * Both Hiram Flaversham - Toymaker and Fortisphere are banned.
+   * Wilds Unknown (WUN) is excluded even though Ravensburger tags it as
+   * `"CoreConstructed"` rotation — it remains early-access only here.
    */
   "core-constructed": {
     id: "core-constructed",
@@ -188,6 +188,7 @@ export const LORCANA_FORMATS: Record<LorcanaFormatId, LorcanaFormat> = {
     allowedSets: ["SSK", "AZS", "ARC", "ROJ", "FAB", "WIW"],
     bannedCardIds: [HIRAM_FLAVERSHAM_TOYMAKER, FORTISPHERE],
     requiredRotationState: "CoreConstructed",
+    excludedSets: ["WUN"],
   },
 
   /**
@@ -416,6 +417,9 @@ export function validateDeckForFormat(
 
   // CARD_SET — a card passes if any printing is in an allowed set,
   // OR if any printing's rotation state matches the format's required state.
+  // Cards whose printings live entirely in `excludedSets` are rejected even
+  // when rotation state would otherwise admit them (used to keep
+  // early-access-only sets out of standard formats).
   const setFailures: string[] = [];
   for (const card of cards) {
     if (format.specialAllowedCardIds?.includes(card.cardId)) continue;
@@ -425,7 +429,12 @@ export function validateDeckForFormat(
     const matchesRotation =
       format.requiredRotationState != null &&
       (data.rotationStates?.includes(format.requiredRotationState) ?? false);
-    if (!inAllowedSet && !matchesRotation) {
+    const allInExcluded =
+      (format.excludedSets?.length ?? 0) > 0 &&
+      data.sets.length > 0 &&
+      data.sets.every((s) => format.excludedSets!.includes(s));
+    const passes = !allInExcluded && (inAllowedSet || matchesRotation);
+    if (!passes) {
       setFailures.push(`${data.fullName} (sets: ${data.sets.join(", ") || "unknown"})`);
     }
   }

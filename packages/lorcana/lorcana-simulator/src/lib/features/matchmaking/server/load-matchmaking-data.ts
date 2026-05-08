@@ -1,5 +1,5 @@
-import { getApiOrigin, getGameServerOrigin } from "$lib/config/public-url-config.js";
-import { getServerApiOrigin, getServerGameServerOrigin } from "$lib/server/fetch-with-cf.js";
+import { getApiOrigin } from "$lib/config/public-url-config.js";
+import { getServerApiOrigin } from "$lib/server/fetch-with-cf.js";
 import { serverJsonOrNull } from "$lib/data/server/server-json.js";
 import type { MatchmakingContext } from "$lib/features/matchmaking/api/player-context-api.js";
 import type { MatchmakingDashboardResponse } from "$lib/features/matchmaking/api/matchmaking-dashboard-api.js";
@@ -18,8 +18,6 @@ const LEADERBOARD_TYPES: LeaderboardType[] = ["mmr", "weekly", "win-streak", "sp
 export async function loadMatchmakingData(request: Request) {
   const cookie = request.headers.get("cookie");
   const apiOrigin = getServerApiOrigin(getApiOrigin());
-  const publicGameOrigin = getGameServerOrigin();
-  const gameServerOrigin = getServerGameServerOrigin(publicGameOrigin);
 
   const [matchmakingContextResult, dashboardResult, gatewayAuthResult, leaderboardsResult] =
     await Promise.allSettled([
@@ -30,7 +28,7 @@ export async function loadMatchmakingData(request: Request) {
           )
         : Promise.resolve(null),
       serverJsonOrNull<MatchmakingDashboardResponse>(
-        `${gameServerOrigin}/v1/play/matchmaking/dashboard?limit=25`,
+        `${apiOrigin}/v1/games/lorcana/play/matchmaking/dashboard?limit=25`,
         cookie ? { headers: { cookie } } : {},
       ),
       cookie

@@ -85,13 +85,8 @@ describe("Clarabelle - Contented Wallflower", () => {
         testEngine.asPlayerOne().playCard(clarabelleContentedWallflower),
       ).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(clarabelleContentedWallflower, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
     });
 
@@ -112,13 +107,8 @@ describe("Clarabelle - Contented Wallflower", () => {
         testEngine.asPlayerOne().playCard(clarabelleContentedWallflower),
       ).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(clarabelleContentedWallflower, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
     });
   });

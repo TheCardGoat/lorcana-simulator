@@ -175,7 +175,7 @@ describe("zero-candidate auto-resolve (engine)", () => {
     expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
   });
 
-  it("optional move-damage auto-declines when the `to` slot has zero candidates", () => {
+  it("auto-drains optional move-damage when the `to` slot has zero candidates", () => {
     // Controller has a damaged character (valid `from`) but the opponent has
     // nothing in play (no valid `to`). This matches the reported Flit scenario.
     const ownDamagedChar = createMockCharacter({
@@ -205,7 +205,7 @@ describe("zero-candidate auto-resolve (engine)", () => {
     expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
   });
 
-  it("optional move-damage auto-declines when `from` slot has zero candidates (no damaged chars)", () => {
+  it("auto-drains optional move-damage when `from` slot has zero candidates", () => {
     // Mirrors Cheshire Cat: no damaged characters anywhere means the "from"
     // side of the move-damage cannot be filled.
     const ownUndamaged = createMockCharacter({
@@ -284,7 +284,7 @@ describe("zero-candidate auto-resolve (engine)", () => {
     expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
   });
 
-  it("optional triggered auto-declines when the inner target has zero candidates", () => {
+  it("auto-drains optional triggered effects when the inner target has zero candidates", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [optionalOpposingTargetOnPlay],
@@ -296,8 +296,6 @@ describe("zero-candidate auto-resolve (engine)", () => {
 
     expect(testEngine.asPlayerOne().playCard(optionalOpposingTargetOnPlay)).toBeSuccessfulCommand();
 
-    // With zero valid candidates the optional must auto-decline — accepting it
-    // would be incoherent, so the bag drains without stalling the UI.
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
     expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);

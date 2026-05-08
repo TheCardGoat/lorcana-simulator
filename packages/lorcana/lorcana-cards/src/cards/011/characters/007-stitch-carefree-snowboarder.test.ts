@@ -83,13 +83,8 @@ describe("Stitch - Carefree Snowboarder", () => {
       expect(testEngine.asPlayerOne().quest(stitchCarefreeSnowboarder)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getLore("player_one")).toBe(stitchCarefreeSnowboarder.lore);
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(stitchCarefreeSnowboarder, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       const handAfter = testEngine.asPlayerOne().getZonesCardCount().hand;
       const deckAfter = testEngine.asPlayerOne().getZonesCardCount().deck;
@@ -110,13 +105,8 @@ describe("Stitch - Carefree Snowboarder", () => {
       expect(testEngine.asPlayerOne().quest(stitchCarefreeSnowboarder)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getLore("player_one")).toBe(stitchCarefreeSnowboarder.lore);
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(stitchCarefreeSnowboarder, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       const handAfter = testEngine.asPlayerOne().getZonesCardCount().hand;
       const deckAfter = testEngine.asPlayerOne().getZonesCardCount().deck;

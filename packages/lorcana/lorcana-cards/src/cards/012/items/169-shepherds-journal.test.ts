@@ -90,6 +90,37 @@ describe("Shepherd's Journal", () => {
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE)).toEqual([deckTopCard.id]);
   });
 
+  describe("release notes ruling", () => {
+    it("declining the optional 'may look at top card' means the second part doesn't happen — top card is unchanged and stays on top", () => {
+      // Q&A: With "may", choosing not to look means there's no card to
+      // reference for the put-on-top/discard step, so nothing moves.
+      const secondDeckCard = createMockCharacter({
+        id: "shepherds-release-second",
+        name: "Second Card",
+        cost: 2,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [shepherdsJournal],
+        inkwell: shepherdsJournal.cost,
+        deck: [deckTopCard, secondDeckCard],
+      });
+
+      expect(testEngine.asPlayerOne().playCard(shepherdsJournal)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(shepherdsJournal, {
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Top card unchanged.
+      expect(testEngine.asPlayerOne().getCardZone(deckTopCard)).toBe("deck");
+      const deckIds = testEngine.getCardDefinitionIdsInZone("deck", PLAYER_ONE);
+      expect(deckIds[0]).toBe(deckTopCard.id);
+    });
+  });
+
   it("KEY TO THE PUZZLE 1 - banishes itself for 1 ink to return an item card from discard to hand", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       inkwell: 1,

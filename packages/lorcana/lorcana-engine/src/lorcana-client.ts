@@ -160,8 +160,12 @@ export class LorcanaClient extends LorcanaEngineBase {
     return this.createErrorResult("Manual Moves can Only be executed by the server");
   }
 
-  // Override manual methods to execute via the engine
-  // These methods directly call the engine with proper MoveInput format
+  // Manual / Board-State-Correction moves (`manualSetLore`,
+  // `manualSetDamage`, `manualMoveCard`) are sent server-direct via
+  // `gateway.send({ type: "execute_move", ... })` from the simulator UI
+  // when Manual Mode is enabled. The client-side overrides below remain
+  // because the engine path would either reject or apply optimistically
+  // without the server gate; both are wrong for Manual Mode.
   override manualSetLore(playerId: PlayerId, amount: number): CommandResult {
     void playerId;
     void amount;

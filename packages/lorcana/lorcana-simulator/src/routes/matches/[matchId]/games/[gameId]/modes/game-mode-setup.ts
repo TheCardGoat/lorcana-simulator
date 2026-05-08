@@ -3,6 +3,8 @@ import type { OpponentPresenceTracker } from "@/features/gateway/opponent-presen
 import type { GatewayClientStore } from "@/features/gateway/gateway-client.svelte.js";
 import type { LorcanaPlayerSettingsMap } from "$lib/features/simulator/model/player-visual-settings.js";
 import type { GameContextParticipant } from "../+page.server.js";
+import type { PlayerMatchMetadata } from "$lib/features/simulator/model/player-match-metadata.js";
+export type { PlayerMatchMetadata } from "$lib/features/simulator/model/player-match-metadata.js";
 
 export function buildVisualSettings(
   participants: GameContextParticipant[],
@@ -14,18 +16,17 @@ export function buildVisualSettings(
   return visuals;
 }
 
-export function buildDisplayNames(participants: GameContextParticipant[]): Record<string, string> {
-  const names: Record<string, string> = {};
+export function buildPlayerMetadataMap(
+  participants: GameContextParticipant[],
+): Record<string, PlayerMatchMetadata> {
+  const map: Record<string, PlayerMatchMetadata> = {};
   for (const p of participants) {
-    if (p.displayName) names[p.id] = p.displayName;
-  }
-  return names;
-}
-
-export function buildIsMobileMap(participants: GameContextParticipant[]): Record<string, boolean> {
-  const map: Record<string, boolean> = {};
-  for (const p of participants) {
-    if (p.isMobile !== undefined) map[p.id] = p.isMobile;
+    map[p.id] = {
+      displayName: p.displayName,
+      isMobile: p.isMobile,
+      mmr: p.mmrAtMatch,
+      subscriptionTier: p.subscriptionTier,
+    };
   }
   return map;
 }

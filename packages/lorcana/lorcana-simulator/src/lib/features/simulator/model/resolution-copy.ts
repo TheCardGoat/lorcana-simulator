@@ -273,6 +273,22 @@ function buildPromptContent(
     const displayMaxSelections = selectionContext?.declaredMaxSelections ?? maxSelections;
     const isOptional = minSelections === 0;
 
+    if (selectionContext?.expectedSlottedKind === "move-to-location") {
+      const prefix =
+        selectionContext.targetDsl.length === 1
+          ? "Choose a character to move for "
+          : "Choose characters to move, then choose a location for ";
+      return {
+        promptMessage: `${prefix}${referenceLabel} (optional).`,
+        promptInlineReference: buildInlineReference(
+          referenceLabel,
+          sourceCard,
+          prefix,
+          " (optional).",
+        ),
+      };
+    }
+
     // Single-target, required.
     if (!selectionContext || (displayMaxSelections <= 1 && !isOptional)) {
       return {

@@ -18,6 +18,7 @@ import type {
 } from "./match-runtime.types";
 import type { PlayerId } from "../types";
 import type { BaseCardMeta } from "./card-contracts";
+import { invalidateStaticEffects } from "../../runtime-moves/rules/static-effects-invalidation";
 
 export function createCardRuntimeAPI(
   draft: Draft<MatchState>,
@@ -37,7 +38,7 @@ export function createCardRuntimeAPI(
         STATIC_SIMPLE.some((k) => old[k] !== next[k]) ||
         [...allKeys].some((k) => k.startsWith("temporary") && old[k] !== next[k]);
       if (changed) {
-        draft.G.staticEffectsVersion = (draft.G.staticEffectsVersion ?? 0) + 1;
+        invalidateStaticEffects(draft);
       }
     },
     patchMeta: (cardId, patch) => {
@@ -58,13 +59,24 @@ export function createCardRuntimeAPI(
         "isDrying" in p ||
         Object.keys(p).some((k) => k.startsWith("temporary"))
       ) {
-        draft.G.staticEffectsVersion = (draft.G.staticEffectsVersion ?? 0) + 1;
+        invalidateStaticEffects(draft);
       }
 
       return next;
     },
     clearMeta: (cardId) => {
+      const old = (draft.ctx.zones.private.cardMeta[cardId] ?? {}) as Record<string, unknown>;
       delete draft.ctx.zones.private.cardMeta[cardId];
+
+      // Invalidate the static-effect registry if the cleared meta carried any
+      // static-ability-relevant fields. Mirrors the key list in setMeta/patchMeta.
+      const STATIC_SIMPLE = ["state", "damage", "atLocationId", "isDrying"];
+      const carriedStatic =
+        STATIC_SIMPLE.some((k) => k in old) ||
+        Object.keys(old).some((k) => k.startsWith("temporary"));
+      if (carriedStatic) {
+        invalidateStaticEffects(draft);
+      }
     },
     entriesMeta: () =>
       Object.entries(draft.ctx.zones.private.cardMeta).map(

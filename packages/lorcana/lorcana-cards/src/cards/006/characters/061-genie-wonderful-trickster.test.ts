@@ -62,9 +62,7 @@ describe("Genie - Wonderful Trickster", () => {
     expect(
       testEngine.asPlayerOne().resolvePendingByCard(genieWonderfulTrickster),
     ).toBeSuccessfulCommand();
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ targets: [handCardA, handCardB] }),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asServer().getState().G.pendingEffects).toHaveLength(0);
 
     expect(testEngine.asPlayerOne().getCardZone(handCardA)).toBe("deck");
     expect(testEngine.asPlayerOne().getCardZone(handCardB)).toBe("deck");

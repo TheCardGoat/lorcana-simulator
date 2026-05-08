@@ -3,6 +3,7 @@ import { describe, expect, it, mock } from "bun:test";
 import {
   handlePlayZoneLocationEntryDirectSelection,
   isPlayZoneLocationEntryDirectSelectionMode,
+  isPlayZoneLocationEntryResolutionSelectionMode,
 } from "./play-zone-location-entry-interactions.js";
 import { createCardSnapshot } from "@/features/simulator-devtools/test-data/factories.js";
 
@@ -31,6 +32,42 @@ describe("play zone location entry interactions", () => {
         categoryId: "challenge",
         phase: "confirm",
       }),
+    ).toBe(false);
+  });
+
+  it("enables direct selection for active resolution target candidates", () => {
+    expect(
+      isPlayZoneLocationEntryResolutionSelectionMode(
+        {
+          context: {
+            kind: "target-selection",
+            cardCandidateIds: ["location"],
+          },
+        },
+        "location",
+      ),
+    ).toBe(true);
+    expect(
+      isPlayZoneLocationEntryResolutionSelectionMode(
+        {
+          context: {
+            kind: "target-selection",
+            cardCandidateIds: ["other-location"],
+          },
+        },
+        "location",
+      ),
+    ).toBe(false);
+    expect(
+      isPlayZoneLocationEntryResolutionSelectionMode(
+        {
+          context: {
+            kind: "choice-selection",
+            cardCandidateIds: ["location"],
+          },
+        },
+        "location",
+      ),
     ).toBe(false);
   });
 

@@ -67,7 +67,10 @@ export const pedroMadrigalFamilyPatriarch: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           type: "remove-damage",
-          amount: { type: "up-to", value: 1 },
+          amount: {
+            type: "up-to",
+            value: 1,
+          },
           target: "SELF",
         },
       },

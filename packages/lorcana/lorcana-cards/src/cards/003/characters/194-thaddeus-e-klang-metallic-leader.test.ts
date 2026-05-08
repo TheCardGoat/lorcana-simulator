@@ -68,15 +68,8 @@ describe("Thaddeus E. Klang - Metallic Leader", () => {
 
       expect(testEngine.asPlayerOne().quest(thaddeusEKlangMetallicLeader).success).toBe(true);
 
-      // Per CRD 6.2.7, the intervening "if" (while at a location) is checked at resolution.
-      // The ability IS enqueued when Klang quests, but the condition fails at resolution —
-      // resulting in no effect (no damage dealt).
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(thaddeusEKlangMetallicLeader, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       expect(testEngine.asPlayerTwo().getCardByInstance(targetCharacter).damage).toBe(0);
     });

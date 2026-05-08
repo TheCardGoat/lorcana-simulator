@@ -1,7 +1,6 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type { PutIntoInkwellEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
-import { getLorcanaCardName } from "../../../runtime-trace";
 import {
   emitTriggeredLorcanaEvent,
   snapshotTriggeredCandidatesForCard,
@@ -68,6 +67,16 @@ function resolveCardOwnerId(
   return typeof ownerId === "string" ? (ownerId as PlayerId) : fallbackPlayerId;
 }
 
+function isPrivateSourceZone(sourceZoneKey: string | undefined): boolean {
+  if (typeof sourceZoneKey !== "string") return false;
+  return (
+    sourceZoneKey === "hand" ||
+    sourceZoneKey.startsWith("hand:") ||
+    sourceZoneKey === "deck" ||
+    sourceZoneKey.startsWith("deck:")
+  );
+}
+
 function moveCardIntoInkwell(
   ctx: PlayCardExecutionContext,
   cardId: CardInstanceId,
@@ -80,9 +89,7 @@ function moveCardIntoInkwell(
   const isFromPlay =
     typeof sourceZoneKey === "string" &&
     (sourceZoneKey === "play" || sourceZoneKey.startsWith("play:"));
-
-  // Capture the card name before moving (for log rendering after it's face-down)
-  const cardName = getLorcanaCardName(cardId, (id) => ctx.cards.getDefinition(id));
+  const isPrivateSource = isPrivateSourceZone(sourceZoneKey);
 
   if (isFromPlay) {
     const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId);
@@ -98,11 +105,13 @@ function moveCardIntoInkwell(
       ctx.cards.patchMeta(movedCardId, { state, publicFaceState });
     }
 
-    // Reveal the card (face-down in inkwell) to all players for the rest of the turn
-    // so both players understand what was put into the inkwell
-    if (movedCardIds.length > 0) {
+    // Reveal the moved card (face-down in inkwell) to all players for the rest
+    // of the turn so both players understand what was put into the inkwell.
+    // Only reveal the top card of a shift stack — cards previously under it
+    // were face-down in play and must remain hidden (THE-1029 F-14).
+    if (movedCardIds.includes(cardId)) {
       const revealUntilStateID = (ctx.framework.state.stateID ?? 0) + 3;
-      ctx.framework.zones.reveal(movedCardIds, "all", {
+      ctx.framework.zones.reveal([cardId], "all", {
         stateID: revealUntilStateID,
         affectsUndo: false,
       });
@@ -117,7 +126,7 @@ function moveCardIntoInkwell(
         from: sourceZoneKey,
         to: "inkwell",
         exerted: state === "exerted",
-        cardName,
+        private: isPrivateSource,
       },
       {
         event: "ink",
@@ -169,7 +178,7 @@ function moveCardIntoInkwell(
       from: sourceZoneKey ?? "unknown",
       to: `inkwell:${destinationPlayerId}`,
       exerted: state === "exerted",
-      cardName,
+      private: isPrivateSource,
     },
     {
       event: "ink",

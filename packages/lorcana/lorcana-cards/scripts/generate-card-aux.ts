@@ -40,6 +40,42 @@ const AUX_KV_PATH = path.join(DATA_DIR, "cards.aux.kv.json");
 const VALIDATION_REPORT_PATH = path.join(DATA_DIR, "cards.aux.validation-report.json");
 
 const SPECIAL_RARITY_ORDER: SpecialRarity[] = ["enchanted", "epic", "iconic", "promo", "challenge"];
+const REPRINT_SHARED_FIELDS = [
+  "cardType",
+  "name",
+  "version",
+  "inkType",
+  "franchise",
+  "cost",
+  "inkable",
+  "cardCopyLimit",
+  "strength",
+  "willpower",
+  "moveCost",
+  "lore",
+  "classifications",
+  "actionSubtype",
+  "vanilla",
+  "missingImplementation",
+  "missingTests",
+  "rulesText",
+  "text",
+  "abilities",
+  "i18n",
+  "externalIds",
+  "layout",
+  "language",
+] as const;
+
+type ComparableJson =
+  | string
+  | number
+  | boolean
+  | null
+  | ComparableJson[]
+  | { [key: string]: ComparableJson | undefined };
+
+type ComparableCard = { [key: string]: ComparableJson | undefined };
 
 /**
  * Write JSON file with deterministic formatting (sorted keys, 2 spaces)
@@ -170,6 +206,106 @@ function sortPrintingIds(ids: string[]): string[] {
 
     return collisionA - collisionB;
   });
+}
+
+function getPrintingSet(printingId: string): string | undefined {
+  return printingId.match(/^set\d+/i)?.[0]?.toLowerCase();
+}
+
+function normalizeTextValue(value: string): string {
+  return value
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/\\/g, "")
+    .replace(/<([^>]+)>/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeTextShape(value: ComparableJson | undefined): string {
+  if (value === undefined || value === null) return "";
+  if (typeof value === "string") return normalizeTextValue(value);
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+
+  if (Array.isArray(value)) {
+    return normalizeTextValue(value.map(normalizeTextShape).filter(Boolean).join(" "));
+  }
+
+  const parts: string[] = [];
+  for (const key of ["title", "description", "text"]) {
+    const part = normalizeTextShape(value[key]);
+    if (part) parts.push(part);
+  }
+  for (const key of Object.keys(value).sort()) {
+    if (key === "title" || key === "description" || key === "text") continue;
+    const part = normalizeTextShape(value[key]);
+    if (part) parts.push(part);
+  }
+  return normalizeTextValue(parts.join(" "));
+}
+
+function normalizeComparableValue(
+  value: ComparableJson | undefined,
+  textLike = false,
+): ComparableJson | undefined {
+  if (typeof value === "string") {
+    return textLike ? normalizeTextValue(value) : value.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => normalizeComparableValue(item, textLike))
+      .filter((item) => item !== undefined);
+  }
+
+  if (value && typeof value === "object") {
+    const normalized: { [key: string]: ComparableJson | undefined } = {};
+    for (const key of Object.keys(value).sort()) {
+      normalized[key] = normalizeComparableValue(value[key], textLike);
+    }
+    return normalized;
+  }
+
+  return value;
+}
+
+function comparableValueForField(
+  field: (typeof REPRINT_SHARED_FIELDS)[number],
+  value: ComparableJson | undefined,
+): ComparableJson | undefined {
+  if (field === "i18n" && value && typeof value === "object" && !Array.isArray(value)) {
+    const en = value.en;
+    if (!en || typeof en !== "object" || Array.isArray(en))
+      return normalizeComparableValue(en, true);
+    return {
+      name: normalizeComparableValue(en.name, true),
+      version: normalizeComparableValue(en.version, true),
+      text: normalizeTextShape(en.text),
+    };
+  }
+
+  if (field === "rulesText" || field === "text") {
+    return normalizeTextShape(value);
+  }
+
+  return normalizeComparableValue(value);
+}
+
+function stringifyComparableValue(
+  field: (typeof REPRINT_SHARED_FIELDS)[number],
+  value: ComparableJson | undefined,
+): string {
+  const normalized = comparableValueForField(field, value);
+  return normalized === undefined ? "<undefined>" : JSON.stringify(sortKeysDeep(normalized));
+}
+
+function summarizeComparableValue(
+  field: (typeof REPRINT_SHARED_FIELDS)[number],
+  value: ComparableJson | undefined,
+): string {
+  const serialized = stringifyComparableValue(field, value);
+  return serialized.length > 240 ? `${serialized.slice(0, 237)}...` : serialized;
 }
 
 /**
@@ -440,6 +576,87 @@ function validateReprints(
 }
 
 /**
+ * Validate same-set special printings against their base printing.
+ *
+ * Cross-set reprints can carry official wording/template changes, so this guardrail focuses on
+ * alternate art and promo drift within the same set: the bug class where a duplicated source file
+ * accidentally diverges from the canonical/base gameplay payload.
+ */
+export function validateReprintSharedFields(
+  canonicalCards: Record<string, CanonicalCard>,
+  printingMetadata: Record<string, CardPrintingMetadata>,
+): ValidationSection {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const counts: Record<string, number> = {
+    reprintGroupsChecked: 0,
+    reprintPrintingsCompared: 0,
+    sharedFieldComparisons: 0,
+  };
+
+  const cardsByCanonicalId = new Map<string, Array<{ printingId: string; card: CanonicalCard }>>();
+  for (const [printingId, card] of Object.entries(canonicalCards)) {
+    const group = cardsByCanonicalId.get(card.canonicalId) ?? [];
+    group.push({ printingId, card });
+    cardsByCanonicalId.set(card.canonicalId, group);
+  }
+
+  for (const [canonicalId, entries] of cardsByCanonicalId) {
+    if (entries.length < 2) continue;
+
+    let groupChecked = false;
+    for (const entry of entries) {
+      const meta = printingMetadata[entry.printingId];
+      if (!meta?.specialRarity) continue;
+
+      const printingSet = getPrintingSet(entry.printingId);
+      const representative = entries.find((candidate) => {
+        const candidateMeta = printingMetadata[candidate.printingId];
+        return (
+          !candidateMeta?.specialRarity &&
+          printingSet !== undefined &&
+          getPrintingSet(candidate.printingId) === printingSet
+        );
+      });
+
+      if (!representative) {
+        warnings.push(
+          `${canonicalId}: skipped ${entry.printingId}; no same-set base printing found`,
+        );
+        continue;
+      }
+
+      groupChecked = true;
+      counts.reprintPrintingsCompared += 1;
+      const expectedCard = representative.card as object as ComparableCard;
+      const actualCard = entry.card as object as ComparableCard;
+
+      for (const field of REPRINT_SHARED_FIELDS) {
+        counts.sharedFieldComparisons += 1;
+        const expected = expectedCard[field];
+        const actual = actualCard[field];
+        if (stringifyComparableValue(field, expected) === stringifyComparableValue(field, actual)) {
+          continue;
+        }
+
+        errors.push(
+          `${canonicalId}: ${representative.printingId} vs ${entry.printingId} at ${field}; expected ${summarizeComparableValue(field, expected)}, got ${summarizeComparableValue(field, actual)}`,
+        );
+      }
+    }
+
+    if (groupChecked) counts.reprintGroupsChecked += 1;
+  }
+
+  return {
+    status: errors.length === 0 ? "pass" : "fail",
+    errors,
+    warnings,
+    counts,
+  };
+}
+
+/**
  * Validate localization section (EN culture_invariant_id coverage)
  *
  * `localizationShortIdByCultureInvariantId` stores one shortId per culture_invariant_id.
@@ -578,6 +795,22 @@ async function main(): Promise<void> {
   const reprintsValidation = validateReprints(auxKv, printingMetadata);
   console.log(`  ${reprintsValidation.status === "pass" ? "✅" : "❌"} Reprints validation`);
 
+  const reprintSharedFieldsValidation = validateReprintSharedFields(
+    canonicalCards,
+    printingMetadata,
+  );
+  console.log(
+    `  ${reprintSharedFieldsValidation.status === "pass" ? "✅" : "❌"} Reprint shared fields validation`,
+  );
+  if (reprintSharedFieldsValidation.errors.length > 0) {
+    for (const error of reprintSharedFieldsValidation.errors.slice(0, 5)) {
+      console.log(`     ❌ ${error}`);
+    }
+    if (reprintSharedFieldsValidation.errors.length > 5) {
+      console.log(`     ... and ${reprintSharedFieldsValidation.errors.length - 5} more errors`);
+    }
+  }
+
   const localizationValidation = validateLocalization(auxKv, canonicalCards);
   console.log(
     `  ${localizationValidation.status === "pass" ? "✅" : "❌"} Localization validation`,
@@ -593,6 +826,7 @@ async function main(): Promise<void> {
     ids: idsValidation,
     canonicalIds: canonicalValidation,
     reprints: reprintsValidation,
+    reprintSharedFields: reprintSharedFieldsValidation,
     localization: localizationValidation,
   };
 
@@ -616,6 +850,7 @@ async function main(): Promise<void> {
     idsValidation.status === "fail" ||
     canonicalValidation.status === "fail" ||
     reprintsValidation.status === "fail" ||
+    reprintSharedFieldsValidation.status === "fail" ||
     localizationValidation.status === "fail";
 
   if (hasErrors) {
@@ -627,7 +862,9 @@ async function main(): Promise<void> {
 }
 
 // Run the script
-main().catch((err) => {
-  console.error("❌ Error generating auxiliary files:", err);
-  process.exit(1);
-});
+if (import.meta.main) {
+  main().catch((err) => {
+    console.error("❌ Error generating auxiliary files:", err);
+    process.exit(1);
+  });
+}

@@ -25,7 +25,7 @@ export const beastRelentless: CharacterCard = {
   text: [
     {
       title: "SECOND WIND",
-      description: "Whenever an opposing character is damaged, you may ready this character.",
+      description: "Whenever an opposing character takes damage, you may ready this character.",
     },
   ],
   classifications: ["Storyborn", "Hero", "Prince"],
@@ -33,7 +33,7 @@ export const beastRelentless: CharacterCard = {
     {
       id: "1iy-1",
       name: "SECOND WIND",
-      text: "SECOND WIND Whenever an opposing character is damaged, you may ready this character.",
+      text: "SECOND WIND Whenever an opposing character takes damage, you may ready this character.",
       effect: {
         chooser: "CONTROLLER",
         effect: {

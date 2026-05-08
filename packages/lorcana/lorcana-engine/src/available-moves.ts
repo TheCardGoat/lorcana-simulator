@@ -75,13 +75,14 @@ export type MoveOptionSelectableCostKind =
   | "exertCharacters"
   | "exertItems"
   | "banishCharacters"
-  | "banishItems";
+  | "banishItems"
+  | "putOnDeckBottom";
 
 export type MoveOptionSelectableCost = {
   kind: MoveOptionSelectableCostKind;
   count: number;
   candidateCardIds: CardInstanceId[];
-  zone: "hand" | "play";
+  zone: "hand" | "play" | "discard";
   cardType?: string;
   cardName?: string;
   classification?: string;

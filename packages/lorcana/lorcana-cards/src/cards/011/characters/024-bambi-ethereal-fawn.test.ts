@@ -151,12 +151,45 @@ describe("Bambi - Ethereal Fawn", () => {
       });
 
       expect(testEngine.asPlayerOne().quest(bambiEtherealFawn)).toBeSuccessfulCommand();
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine.asPlayerOne().resolvePendingByCard(bambiEtherealFawn, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne().getCardZone(deckCharacter)).toBe("deck");
+    });
+
+    it("when questing with 1 card under, non-character revealed - goes to deck-bottom", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: bambiEtherealFawn, cardsUnder: [underCard] }],
+        deck: [deckAction], // non-character — must go to deck-bottom remainder
+      });
+
+      expect(testEngine.asPlayerOne().quest(bambiEtherealFawn)).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffect).toBeDefined();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(bambiEtherealFawn),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          destinations: [{ zone: "deck-bottom", cards: [deckAction] }],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(deckAction)).toBe("deck");
+    });
+
+    it("resolves gracefully when triggered with cards under but empty deck", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: bambiEtherealFawn, cardsUnder: [underCard] }],
+        deck: [], // empty deck — engine auto-drains bag (no player decision needed)
+      });
+
+      expect(testEngine.asPlayerOne().quest(bambiEtherealFawn)).toBeSuccessfulCommand();
+
+      // Engine detects empty deck at bag-decision time and auto-drains the bag effect.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getPendingEffects().length).toBe(0);
     });
   });
 });

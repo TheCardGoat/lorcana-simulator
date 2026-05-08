@@ -26,7 +26,7 @@ export const maidMarianBadmintonAce: CharacterCard = {
     {
       title: "GOOD SHOT",
       description:
-        "During an opponent's turn, whenever one of your Ally characters is damaged, deal 1 damage to chosen opposing character.",
+        "During an opponent's turn, whenever one of your Ally characters takes damage, deal 1 damage to chosen opposing character.",
     },
     {
       title: "FAIR PLAY",
@@ -38,7 +38,7 @@ export const maidMarianBadmintonAce: CharacterCard = {
     {
       id: "6at-1",
       name: "GOOD SHOT",
-      text: "GOOD SHOT During an opponent's turn, whenever one of your Ally characters is damaged, deal 1 damage to chosen opposing character.",
+      text: "GOOD SHOT During an opponent's turn, whenever one of your Ally characters takes damage, deal 1 damage to chosen opposing character.",
       type: "triggered",
       trigger: {
         event: "damage",

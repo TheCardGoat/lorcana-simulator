@@ -26,6 +26,7 @@ import type { LorcanaInkName } from "@/features/simulator/model/lorcana-colors.j
 import { getCardActionCategoryIcon } from "@/features/simulator/model/action-icons.js";
 import { maybeUseLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
 import { maybeUseSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
+import { getManualModeContext } from "@/features/manual-mode/manual-mode-context.svelte.js";
 
 interface CardHoverCardContentProps {
 	card: LorcanaCardSnapshot;
@@ -34,6 +35,7 @@ interface CardHoverCardContentProps {
 	locationOccupants?: LorcanaCardSnapshot[];
 	onAction?: (action: CardActionView) => void;
 	headerActions?: Snippet;
+	footerActions?: Snippet;
 }
 
 let {
@@ -43,6 +45,7 @@ let {
 	locationOccupants,
 	onAction,
 	headerActions,
+	footerActions,
 }: CardHoverCardContentProps = $props();
 
 interface RenderableRulesEntry extends LorcanaCardTextEntrySnapshot {
@@ -360,6 +363,25 @@ const cardTextLines = $derived(
 const hasActions = $derived(
 	enabledNonAbilityActions.length > 0 || disabledNonAbilityActions.length > 0,
 );
+const manualMode = getManualModeContext();
+const manualModeEnabled = $derived(manualMode?.enabled ?? false);
+const manualMoveTargets = $derived.by(() => {
+	const currentZone = card.zoneId.split(":")[0] ?? "";
+	return (
+		[
+			{ zone: "hand", label: "Hand" },
+			{ zone: "play", label: "Play" },
+			{ zone: "inkwell", label: "Inkwell" },
+			{ zone: "discard", label: "Discard" },
+			{ zone: "deck", label: "Deck (top)", position: "top" as const },
+			{ zone: "deck", label: "Deck (bottom)", position: "bottom" as const },
+		] as Array<{ zone: string; label: string; position?: "top" | "bottom" }>
+	).filter((target) => !(target.zone === currentZone && target.position === undefined));
+});
+function handleManualMove(zone: string, position?: "top" | "bottom"): void {
+	if (!manualMode) return;
+	manualMode.moveCard(card.cardId, `${zone}:${card.ownerId}`, position);
+}
 const hasCollapsedActions = $derived(disabledNonAbilityActions.length > 0);
 const activeEffects = $derived(card.activeEffects ?? []);
 const collapsedActionLabel = $derived(
@@ -637,22 +659,24 @@ function handleFaceUpUnderCardLeave(card: LorcanaCardSnapshot): void {
               aria-label={entryAction.reason ? `${entryAction.label}: ${entryAction.reason}` : entryAction.label}
               title={entryAction.reason ?? entryAction.label}
             >
-              <span class="ability-title">
-                {#each tokenizeTextWithSymbols(entry.title) as token, tokenIndex (`${token.type}-${token.value}-${tokenIndex}`)}
-                  {#if token.type === "symbol"}
-                    <img
-                      src={`${TEXT_SYMBOL_BASE_URL}/${token.value}`}
-                      alt=""
-                      class="inline-symbol inline-symbol--ability-title"
-                    />
-                  {:else}
-                    {token.value}
-                  {/if}
-                {/each}
+              <span class="rules-entry__head">
+                <span class="ability-title">
+                  {#each tokenizeTextWithSymbols(entry.title) as token, tokenIndex (`${token.type}-${token.value}-${tokenIndex}`)}
+                    {#if token.type === "symbol"}
+                      <img
+                        src={`${TEXT_SYMBOL_BASE_URL}/${token.value}`}
+                        alt=""
+                        class="inline-symbol inline-symbol--ability-title"
+                      />
+                    {:else}
+                      {token.value}
+                    {/if}
+                  {/each}
+                </span>
+                {#if entryAction.enabled}
+                  <span class="ability-use-chip" aria-hidden="true">Use</span>
+                {/if}
               </span>
-              {#if entryAction.enabled}
-                <span class="ability-use-chip" aria-hidden="true">Use</span>
-              {/if}
               {#if entryAction.reason && !entryAction.enabled}
                 <span class="entry-description">{entryAction.reason}</span>
               {:else if entry.description}
@@ -905,6 +929,31 @@ function handleFaceUpUnderCardLeave(card: LorcanaCardSnapshot): void {
           {/each}
         </div>
       {/if}
+    </div>
+  {/if}
+
+  {#if manualModeEnabled}
+    <div class="manual-mode-section" data-testid="card-hover-manual-mode-section">
+      <div class="manual-mode-section__title">Manual: Move to…</div>
+      <div class="manual-mode-section__row">
+        {#each manualMoveTargets as target (target.zone + (target.position ?? ""))}
+          <button
+            type="button"
+            class="manual-mode-chip"
+            onclick={() => handleManualMove(target.zone, target.position)}
+            data-testid={`card-hover-manual-move-${target.zone}${target.position ? `-${target.position}` : ""}`}
+          >
+            {target.label}
+          </button>
+        {/each}
+      </div>
+    </div>
+  {/if}
+
+  {#if footerActions}
+    <!-- Optional footer actions slot for custom controls (e.g., mode switcher, additional buttons) -->
+    <div class="card-footer-slot">
+      {@render footerActions()}
     </div>
   {/if}
 </div>
@@ -1786,37 +1835,53 @@ function handleFaceUpUnderCardLeave(card: LorcanaCardSnapshot): void {
   .rules-entry--action {
     width: 100%;
     border: 0;
-    padding: 0.34rem 0.42rem;
+    padding: 0.6rem 0.55rem;
     background: transparent;
     text-align: left;
     cursor: pointer;
     display: block;
-    border-radius: 0.55rem;
+    border-radius: 0.6rem;
+    -webkit-tap-highlight-color: transparent;
     transition:
-      transform 140ms ease,
+      transform 120ms ease,
       background 140ms ease,
       box-shadow 140ms ease;
   }
 
-  /* Resting state: enabled abilities look like buttons before hover */
-  .rules-entry--action:not(:disabled) {
-    background: linear-gradient(180deg, rgba(123, 63, 27, 0.09) 0%, rgba(92, 46, 18, 0.05) 100%);
-    box-shadow:
-      0 0 0 1px rgba(123, 63, 27, 0.22),
-      0 2px 5px rgba(92, 46, 18, 0.1);
+  .rules-entry__head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 0.25rem;
   }
 
-  .rules-entry--action:not(:disabled) .ability-title {
-    background: #6e5231;
-    box-shadow: 0 1px 4px rgba(120, 72, 24, 0.3);
+  .rules-entry__head .ability-use-chip {
+    margin-left: auto;
+  }
+
+  /* Resting state: enabled abilities look like buttons before hover */
+  .rules-entry--action:not(:disabled) {
+    background: linear-gradient(180deg, rgba(var(--ink-rgb), 0.16) 0%, rgba(var(--ink-rgb), 0.08) 100%);
+    box-shadow:
+      0 0 0 1.5px rgba(var(--ink-rgb), 0.55),
+      0 3px 8px rgba(92, 46, 18, 0.15);
   }
 
   .rules-entry--action:hover:enabled {
-    background: linear-gradient(180deg, rgba(123, 63, 27, 0.18) 0%, rgba(92, 46, 18, 0.1) 100%);
+    background: linear-gradient(180deg, rgba(var(--ink-rgb), 0.24) 0%, rgba(var(--ink-rgb), 0.14) 100%);
     box-shadow:
-      0 0 0 1.5px rgba(123, 63, 27, 0.36),
-      0 6px 16px rgba(92, 46, 18, 0.2);
-    transform: translateX(2px) translateY(-1px);
+      0 0 0 1.5px rgba(var(--ink-rgb), 0.7),
+      0 6px 16px rgba(92, 46, 18, 0.22);
+    transform: translateY(-1px);
+  }
+
+  .rules-entry--action:active:enabled {
+    transform: translateY(0) scale(0.985);
+    background: linear-gradient(180deg, rgba(var(--ink-rgb), 0.3) 0%, rgba(var(--ink-rgb), 0.18) 100%);
+    box-shadow:
+      0 0 0 1.5px rgba(var(--ink-rgb), 0.8),
+      0 1px 3px rgba(92, 46, 18, 0.18);
   }
 
   .rules-entry--action:hover:enabled .entry-description {
@@ -1826,14 +1891,13 @@ function handleFaceUpUnderCardLeave(card: LorcanaCardSnapshot): void {
   .rules-entry--inline-ability {
     position: relative;
     margin-inline: -0.35rem;
-    padding-inline: 0.42rem;
   }
 
-  .rules-entry--action:hover:enabled .ability-title {
-    filter: brightness(1.12);
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.12),
-      0 4px 10px rgba(58, 20, 7, 0.2);
+  /* Tone down the keyword/title pill inside an action row so the CTA reads as the primary affordance */
+  .rules-entry--action:not(:disabled) .ability-title {
+    background: rgba(60, 40, 22, 0.78);
+    color: #f7efe0;
+    box-shadow: none;
   }
 
   .rules-entry--action-disabled {
@@ -1846,44 +1910,37 @@ function handleFaceUpUnderCardLeave(card: LorcanaCardSnapshot): void {
     color: rgba(247, 239, 224, 0.78);
   }
 
-  @keyframes ability-ready {
-    0% {
-      box-shadow: 0 0 0 0 rgba(123, 63, 27, 0);
-    }
-    40% {
-      box-shadow: 0 0 0 4px rgba(123, 63, 27, 0.25);
-    }
-    100% {
-      box-shadow: 0 0 0 0 rgba(123, 63, 27, 0);
-    }
-  }
-
-  .rules-entry--action:not(:disabled) .ability-title {
-    animation: ability-ready 0.9s ease-out 0.2s 1 both;
-  }
-
   .ability-use-chip {
-    display: inline-block;
-    margin-left: 0.4rem;
-    padding: 0.06rem 0.3rem;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 0.22rem 0.65rem;
     border-radius: 999px;
-    background: rgba(123, 63, 27, 0.18);
-    border: 1px solid rgba(123, 63, 27, 0.28);
-    color: rgba(89, 55, 22, 0.85);
-    font-size: 0.58rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
+    background: rgba(var(--ink-rgb), 0.95);
+    border: 1px solid rgba(var(--ink-rgb), 1);
+    color: #f8fbff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    vertical-align: middle;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.18) inset,
+      0 2px 6px rgba(0, 0, 0, 0.18);
     transition:
       background 140ms ease,
-      border-color 140ms ease;
+      box-shadow 140ms ease,
+      transform 120ms ease;
   }
 
   .rules-entry--action:hover:enabled .ability-use-chip {
-    background: rgba(123, 63, 27, 0.3);
-    border-color: rgba(123, 63, 27, 0.48);
-    color: rgba(89, 55, 22, 1);
+    background: rgba(var(--ink-rgb), 1);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.22) inset,
+      0 4px 10px rgba(0, 0, 0, 0.24);
+  }
+
+  .rules-entry--action:active:enabled .ability-use-chip {
+    transform: scale(0.96);
   }
 
   .keyword-title {
@@ -2102,6 +2159,58 @@ function handleFaceUpUnderCardLeave(card: LorcanaCardSnapshot): void {
   }
 
   .action-btn--play:active {
+    transform: translateY(0);
+  }
+
+  .card-footer-slot {
+    padding: 0.4rem 0.6rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(8, 12, 22, 0.55);
+    border-radius: 0 0 12px 12px;
+  }
+
+  .manual-mode-section {
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(8, 12, 22, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .manual-mode-section__title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(226, 232, 240, 0.7);
+  }
+
+  .manual-mode-section__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .manual-mode-chip {
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(30, 41, 59, 0.7);
+    color: #e2e8f0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+  }
+
+  .manual-mode-chip:hover {
+    background: rgba(56, 76, 110, 0.85);
+    border-color: rgba(180, 200, 230, 0.6);
+    transform: translateY(-1px);
+  }
+
+  .manual-mode-chip:active {
     transform: translateY(0);
   }
 </style>

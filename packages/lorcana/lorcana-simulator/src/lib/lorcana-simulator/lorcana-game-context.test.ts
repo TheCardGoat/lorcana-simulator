@@ -343,6 +343,8 @@ describe("lorcana game context", () => {
       defenderDamageDealt: 3,
       attackerWouldBeBanished: true,
       defenderWouldBeBanished: true,
+      attackerDamageIsReduced: false,
+      defenderDamageIsReduced: false,
     };
     const engine = createEngine({
       board: createBoard(5),

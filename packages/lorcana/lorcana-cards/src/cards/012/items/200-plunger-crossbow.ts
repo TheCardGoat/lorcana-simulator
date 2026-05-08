@@ -44,6 +44,7 @@ export const plungerCrossbow: ItemCard = {
             type: "discard",
             amount: 1,
             chosen: true,
+            from: "hand",
             target: "CONTROLLER",
           },
         ],

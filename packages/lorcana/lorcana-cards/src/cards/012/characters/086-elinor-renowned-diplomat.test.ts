@@ -81,7 +81,7 @@ describe("Elinor - Renowned Diplomat", () => {
       expect(playerOne.getCardZone(deckCard)).toBe("hand");
     });
 
-    it("does not apply effects when fewer than 3 characters are exerted", () => {
+    it("auto-drains bag and does not apply effects when fewer than 3 characters are exerted", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
           play: [
@@ -102,16 +102,43 @@ describe("Elinor - Renowned Diplomat", () => {
 
       expect(playerOne.passTurn()).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution.
-      if (playerOne.getBagCount() > 0) {
-        playerOne.resolvePendingByCard(elinorRenownedDiplomat, {
-          targets: [opposingCharacter],
-        });
-      }
+      // Condition fails — bag must auto-drain without requiring player input.
+      expect(playerOne.getBagCount()).toBe(0);
 
       expect(testEngine.asPlayerTwo().getDamage(opposingCharacter)).toBe(0);
       expect(playerOne.getLore("player_one")).toBe(loreBefore);
       expect(playerOne.getCardZone(deckCard)).toBe("deck");
+    });
+
+    it("auto-drains bag when 3 or more are exerted but there are no opposing characters", () => {
+      // The condition IS met (3+ exerted), so the sequence triggers. The deal-damage
+      // step fizzles (no opposing target), but gain-lore and draw still resolve
+      // because Lorcana comma-separated effects are independent.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: elinorRenownedDiplomat, exerted: true, isDrying: false },
+            { card: exertedAlly1, exerted: true, isDrying: false },
+            { card: exertedAlly2, exerted: true, isDrying: false },
+          ],
+          deck: [deckCard],
+        },
+        {
+          deck: 2,
+        },
+      );
+
+      const playerOne = testEngine.asPlayerOne();
+      const loreBefore = playerOne.getLore("player_one");
+
+      expect(playerOne.passTurn()).toBeSuccessfulCommand();
+
+      // No valid targets for the deal-damage step — bag must auto-drain without player input.
+      expect(playerOne.getBagCount()).toBe(0);
+
+      // gain-lore and draw still resolve even though deal-damage had no target.
+      expect(playerOne.getLore("player_one")).toBe(loreBefore + 1);
+      expect(playerOne.getCardZone(deckCard)).toBe("hand");
     });
 
     it("counts Elinor herself toward the 3 exerted characters threshold", () => {

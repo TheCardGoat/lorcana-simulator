@@ -133,6 +133,9 @@ function evaluateSingleFilter(
     | undefined,
   filter: Record<string, unknown>,
 ): boolean {
+  // Use ctx and cardId to satisfy reactive dependency tracking in callers
+  void ctx;
+  void cardId;
   const filterType = String(filter.type ?? "");
   const cardType = cardDefinition?.cardType;
   switch (filterType) {
@@ -513,6 +516,10 @@ export function resolveScryEffect(
   const selectedCards = new Set<CardInstanceId>();
   const validLookedCards = new Set<CardInstanceId>(lookedAtCards);
   const destinations = effect.destinations ?? [];
+  const resolvedDestinationMoves: Array<{
+    destination: ScryDestination;
+    cards: CardInstanceId[];
+  }> = [];
 
   for (const destination of destinations as ScryDestination[]) {
     const maxCards =
@@ -559,7 +566,19 @@ export function resolveScryEffect(
       }
     }
 
-    moveDestinationCards(cardsForDestination, destination, deckPlayerId, ctx);
+    resolvedDestinationMoves.push({ destination, cards: cardsForDestination });
+  }
+
+  for (const move of resolvedDestinationMoves.filter(
+    (entry) => entry.destination.zone !== "play",
+  )) {
+    moveDestinationCards(move.cards, move.destination, deckPlayerId, ctx);
+  }
+
+  for (const move of resolvedDestinationMoves.filter(
+    (entry) => entry.destination.zone === "play",
+  )) {
+    moveDestinationCards(move.cards, move.destination, deckPlayerId, ctx);
   }
 
   // Always clear the initial scry reveal windows (private "look" windows)

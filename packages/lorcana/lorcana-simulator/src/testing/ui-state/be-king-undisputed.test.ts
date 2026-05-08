@@ -85,9 +85,7 @@ describe("Be King Undisputed | UI prompt", () => {
     // resolution-target-overlay.ts:shouldUseResolutionTargetOverlay). Wiring
     // `banish` into the supported set unblocks Be King; assert the prompt
     // builds slots so the overlay actually renders.
-    expect(snapshot?.prompt?.slots.map((slot) => slot.label)).toEqual([
-      "Choose character to banish",
-    ]);
+    expect(snapshot?.prompt?.slots.map((slot) => slot.label)).toEqual(["Choose card to banish"]);
   });
 
   it("restricts candidate ids to the opponent's own characters", () => {

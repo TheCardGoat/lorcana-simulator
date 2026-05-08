@@ -1,9 +1,13 @@
 import { sequence } from "@sveltejs/kit/hooks";
 import type { Handle } from "@sveltejs/kit";
-import { paraglideMiddleware } from "$lib/paraglide/server.js";
+import { getLogger } from "@logtape/logtape";
+import { paraglideMiddleware } from "$lib/paraglide/server";
 import { getApiOrigin } from "$lib/config/public-url-config.js";
 import { getServerApiOrigin, serverFetch } from "$lib/server/fetch-with-cf.js";
+import { isGdprStrictCountry, normalizeCfCountry } from "$lib/geo/eu-countries.js";
 import type { AuthUser, AuthSession } from "@tcg/shared/auth";
+
+const sessionLogger = getLogger(["tcg", "core-simulator", "session"]);
 
 const handleParaglide: Handle = ({ event, resolve }) =>
   paraglideMiddleware(
@@ -47,12 +51,36 @@ const handleSession: Handle = async ({ event, resolve }) => {
         event.locals.user = data.user;
         event.locals.session = data.session;
       }
+    } else {
+      sessionLogger.warn("getSession request failed status={status} statusText={statusText}", {
+        status: res.status,
+        statusText: res.statusText,
+      });
     }
-  } catch {
-    // Session resolution failed — continue as anonymous
+  } catch (error) {
+    // Continue as anonymous, but surface the failure so API outages are visible
+    sessionLogger.warn("getSession request threw error={error}", {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   return resolve(event);
 };
 
-export const handle: Handle = sequence(handleParaglide, handleSession);
+/**
+ * Resolve visitor geolocation from Cloudflare's `cf-ipcountry` header so the
+ * client can apply GDPR-strict consent defaults for EU/EEA/UK visitors.
+ *
+ * Fail-closed posture: when the header is absent or unparseable (local dev,
+ * direct origin hits, Cloudflare sentinels like `XX`/`T1`), `country` is null
+ * AND `gdprStrict` is true. Treating unknowns as strict avoids leaking GA4
+ * events to a user whose jurisdiction we can't determine.
+ */
+const handleGeo: Handle = ({ event, resolve }) => {
+  const country = normalizeCfCountry(event.request.headers.get("cf-ipcountry"));
+  event.locals.country = country;
+  event.locals.gdprStrict = country == null ? true : isGdprStrictCountry(country);
+  return resolve(event);
+};
+
+export const handle: Handle = sequence(handleParaglide, handleGeo, handleSession);

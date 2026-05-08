@@ -91,6 +91,8 @@ export class LorcanaServer extends LorcanaEngineBase {
       },
       players: init.players,
       seed: init.seed,
+      gameID: init.gameID,
+      matchID: init.matchID,
       staticResources: staticResources,
       debugMode: false,
       choosingFirstPlayer: init.goingFirst,

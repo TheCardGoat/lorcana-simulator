@@ -4,6 +4,30 @@ import { heiheiBoatSnack, simbaProtectiveCub } from "../../001";
 import { educationOrElimination } from "./097-education-or-elimination";
 
 describe("Education or Elimination", () => {
+  it("exposes the printed mode text on the pending choice prompt", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [educationOrElimination],
+      inkwell: educationOrElimination.cost,
+      play: [simbaProtectiveCub],
+      deck: [heiheiBoatSnack],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(educationOrElimination).success).toBe(true);
+
+    const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
+    expect(pendingEffects).toHaveLength(1);
+    const selectionContext = pendingEffects[0]?.selectionContext;
+    expect(selectionContext?.kind).toBe("choice-selection");
+    if (selectionContext?.kind !== "choice-selection") {
+      throw new Error("expected choice-selection context");
+    }
+
+    expect(selectionContext.options.map((option) => option.label)).toEqual([
+      "Draw a card. Chosen character of yours gets +1 {L} and gains Evasive until the start of your next turn.",
+      "Banish chosen damaged character.",
+    ]);
+  });
+
   it("draws a card and buffs your chosen character when the first mode is chosen", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [educationOrElimination],

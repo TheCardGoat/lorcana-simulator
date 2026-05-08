@@ -18,9 +18,12 @@ export const docTakingNotes: CharacterCard = {
   willpower: 4,
   lore: 1,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_abfe55d7cdb441b7b03deed6aec8bc1d",
+  },
   text: [
     {
-      title: "Share Knowledge",
+      title: "SHARE KNOWLEDGE",
       description:
         "When you play this character, if you have another Seven Dwarfs character or a Princess character in play, draw a card.",
     },

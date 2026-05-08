@@ -6,6 +6,7 @@ import type {
 import CardBack from "@/design-system/simulator/cards/CardBack.svelte";
 import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import {ZONE_IMAGE_FORMATS} from "@/design-system/simulator/cards/card-image-format.js";
+import { getManualModeContext } from "@/features/manual-mode/manual-mode-context.svelte.js";
 import InkwellReminder from "@/features/simulator/board/InkwellReminder.svelte";
 import {
 	createCardAnchorId,
@@ -96,6 +97,8 @@ const inferredHiddenExertedCount = $derived.by(() =>
 	Math.max(0, hiddenPlaceholderCount - inferredHiddenReadyCount),
 );
 const showZoneCounters = $derived(board.showZoneCounters);
+const manualMode = getManualModeContext();
+const manualModeEnabled = $derived(manualMode?.enabled ?? false);
 const dropState = $derived(dnd.getZoneDropState("inkwell", playerSide));
 const showDropIndicator = $derived(
 	dropState === "valid" || dropState === "invalid",
@@ -192,14 +195,22 @@ $effect(() => {
             data-player-id={card.ownerId}
             data-zone-id={card.zoneId}
             data-board-anchor-id={createCardAnchorId(playerSide, "inkwell", card.cardId)}
+            role="presentation"
+            onclick={(e) => {
+              if (card.facePresentation === "faceUp" || manualModeEnabled) {
+                e.stopPropagation();
+              }
+            }}
           >
-            {#if card.facePresentation === "faceUp"}
+            {#if card.facePresentation === "faceUp" || manualModeEnabled}
               <LorcanaCard
                 {card}
                 useContainerSize
                 imageFormat={ZONE_IMAGE_FORMATS.inkwell}
                 isMasked={isMasked}
                 isExerted={card.readyState === "exerted"}
+                hideStatBadges
+                hideSupplementalBadges
               />
             {:else}
               <CardBack

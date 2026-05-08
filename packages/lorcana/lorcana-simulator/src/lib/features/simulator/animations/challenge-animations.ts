@@ -17,6 +17,8 @@ export interface ChallengeAnimationPreview {
   defenderKind: "character" | "location";
   attackerWouldBeBanished: boolean;
   defenderWouldBeBanished: boolean;
+  attackerDamageIsReduced: boolean;
+  defenderDamageIsReduced: boolean;
 }
 
 export interface QueuedChallengeAnimation {
@@ -50,6 +52,8 @@ type ChallengePacketPayload = {
   defenderDamageDealt: number;
   attackerWouldBeBanished: boolean;
   defenderWouldBeBanished: boolean;
+  attackerDamageIsReduced: boolean;
+  defenderDamageIsReduced: boolean;
 };
 
 function getOpponentSide(side: LorcanaPlayerSide): LorcanaPlayerSide {
@@ -101,6 +105,8 @@ export function deriveQueuedChallengeAnimationsFromPacket(
         defenderKind: payload.defenderKind,
         attackerWouldBeBanished: payload.attackerWouldBeBanished ?? false,
         defenderWouldBeBanished: payload.defenderWouldBeBanished ?? false,
+        attackerDamageIsReduced: payload.attackerDamageIsReduced ?? false,
+        defenderDamageIsReduced: payload.defenderDamageIsReduced ?? false,
       },
       durationMs,
     });

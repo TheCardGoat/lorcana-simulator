@@ -33,43 +33,30 @@ export const chiefBogoCommandingOfficer: CharacterCard = {
   abilities: [
     {
       effect: {
-        type: "sequence",
-        steps: [
-          {
-            type: "optional",
-            chooser: "CONTROLLER",
-            effect: {
-              type: "reveal-top-card",
-              target: "CONTROLLER",
-            },
-          },
-          {
-            type: "conditional",
-            condition: {
-              type: "if-you-do",
-            },
-            then: {
-              type: "scry",
-              amount: 1,
-              target: "CONTROLLER",
-              destinations: [
-                {
-                  zone: "play",
-                  min: 0,
-                  max: 1,
-                  cost: "free",
-                  entersExerted: true,
-                  reveal: true,
-                  filter: { type: "card-type", cardType: "character" },
-                },
-                {
-                  zone: "deck-top",
-                  remainder: true,
-                },
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "scry",
+          amount: 1,
+          target: "CONTROLLER",
+          revealAll: true,
+          destinations: [
+            {
+              zone: "play",
+              min: 0,
+              max: 1,
+              cost: "free",
+              filters: [
+                { type: "card-type", cardType: "character" },
+                { type: "cost", comparison: "lte", value: 5 },
               ],
             },
-          },
-        ],
+            {
+              zone: "deck-top",
+              remainder: true,
+            },
+          ],
+        },
       },
       id: "17e-1",
       name: "SENDING BACKUP",

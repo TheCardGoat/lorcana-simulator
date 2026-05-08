@@ -88,13 +88,8 @@ describe("Bernard - Over-Prepared", () => {
 
       expect(testEngine.asPlayerOne().playCard(bernardOverprepared)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(bernardOverprepared, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 3 });
     });
@@ -108,13 +103,8 @@ describe("Bernard - Over-Prepared", () => {
 
       expect(testEngine.asPlayerOne().playCard(bernardOverprepared)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(bernardOverprepared, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 3 });
     });

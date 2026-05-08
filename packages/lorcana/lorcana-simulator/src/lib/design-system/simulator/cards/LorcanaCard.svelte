@@ -6,6 +6,8 @@
   import CardBack from "@/design-system/simulator/cards/CardBack.svelte";
   import CardFace from "@/design-system/simulator/cards/CardFace.svelte";
   import CardHoverCardContent from "@/design-system/simulator/cards/CardHoverCardContent.svelte";
+  import CardQuickMenuContent from "@/design-system/simulator/cards/CardQuickMenuContent.svelte";
+  import { m } from "$lib/i18n/messages.js";
   import {
     CARD_IMAGE_ASPECT_RATIOS,
     CARD_IMAGE_DIMENSIONS,
@@ -69,6 +71,7 @@
     isGhost?: boolean;
     isDraggable?: boolean;
     isPlayable?: boolean;
+    isValidTarget?: boolean;
     isInvalidTarget?: boolean;
     isBanishedPreview?: boolean;
     isQuesting?: boolean;
@@ -109,6 +112,7 @@
     isGhost = false,
     isDraggable: _isDraggable = false,
     isPlayable = false,
+    isValidTarget = false,
     isInvalidTarget = false,
     isBanishedPreview = false,
     isQuesting = false,
@@ -154,16 +158,20 @@
     LorcanaSidebarPresenter,
     | "actionSelectionSession"
     | "cardPreviewMode"
+    | "cardInfoMode"
     | "getActionSessionCardReason"
     | "getCardActionViews"
     | "handleCardActionClick"
+    | "handleCardInfoModeChange"
     | "resolutionSelectionSession"
   > = {
     actionSelectionSession: null,
     cardPreviewMode: "immediate",
+    cardInfoMode: "detailed",
     getActionSessionCardReason: () => null,
     getCardActionViews: () => [],
     handleCardActionClick: () => false,
+    handleCardInfoModeChange: () => {},
     resolutionSelectionSession: null,
   };
   const sidebar = maybeUseLorcanaSidebarPresenter() ?? sidebarFallback;
@@ -393,6 +401,7 @@
         isExerted={isExertedState}
         {isGhost}
         {isPlayable}
+        {isValidTarget}
         {isInvalidTarget}
         {isBanishedPreview}
         {isQuesting}
@@ -423,42 +432,90 @@
         onInteractOutside={() => simulatorCardContext.closeCardInspect()}
       >
         <div class="max-h-[var(--hover-card-max-height)] overflow-visible p-[3px]">
-          <CardHoverCardContent
-            {card}
-            actions={hoverShowActions ? hoverActions : []}
-            contextMessage={hoverContextMessage}
-            onAction={(action) => {
-              const wasHandled = sidebar.handleCardActionClick(action, {
-                skipConfirmation: true,
-              });
-              if (wasHandled) {
-                simulatorCardContext.closeCardInspect();
-              }
-            }}
-          >
-            {#snippet headerActions()}
-              <div class="flex items-center gap-2">
+          {#if sidebar.cardInfoMode === "quick"}
+            <CardQuickMenuContent
+              {card}
+              actions={hoverShowActions ? hoverActions : []}
+              contextMessage={hoverContextMessage}
+              onAction={(action) => {
+                const wasHandled = sidebar.handleCardActionClick(action, {
+                  skipConfirmation: true,
+                });
+                if (wasHandled) {
+                  simulatorCardContext.closeCardInspect();
+                }
+              }}
+              onSwitchToDetailed={() => sidebar.handleCardInfoModeChange("detailed")}
+            >
+              {#snippet headerActions()}
                 <button
                   type="button"
-                  class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
+                  class="flex size-7 items-center justify-center rounded-full border border-white/15 bg-slate-900/80 text-slate-100 transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
                   onclick={handleOpenPreview}
                   aria-label={`Open full preview for ${card.label}`}
                   title="Open preview"
                 >
-                  <EyeIcon class="size-4" />
+                  <EyeIcon class="size-3.5" />
                 </button>
                 <button
                   type="button"
-                  class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
+                  class="flex size-7 items-center justify-center rounded-full border border-white/15 bg-slate-900/80 text-slate-100 transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
                   onclick={() => simulatorCardContext.closeCardInspect()}
                   aria-label={`Close ${card.label} details`}
                   title="Close"
                 >
-                  <XIcon class="size-4" />
+                  <XIcon class="size-3.5" />
                 </button>
-              </div>
-            {/snippet}
-          </CardHoverCardContent>
+              {/snippet}
+            </CardQuickMenuContent>
+          {:else}
+            <CardHoverCardContent
+              {card}
+              actions={hoverShowActions ? hoverActions : []}
+              contextMessage={hoverContextMessage}
+              onAction={(action) => {
+                const wasHandled = sidebar.handleCardActionClick(action, {
+                  skipConfirmation: true,
+                });
+                if (wasHandled) {
+                  simulatorCardContext.closeCardInspect();
+                }
+              }}
+            >
+              {#snippet headerActions()}
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
+                    onclick={handleOpenPreview}
+                    aria-label={`Open full preview for ${card.label}`}
+                    title="Open preview"
+                  >
+                    <EyeIcon class="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    class="flex size-8 items-center justify-center rounded-full border border-white/15 bg-slate-950/90 text-slate-100 shadow-lg transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-100"
+                    onclick={() => simulatorCardContext.closeCardInspect()}
+                    aria-label={`Close ${card.label} details`}
+                    title="Close"
+                  >
+                    <XIcon class="size-4" />
+                  </button>
+                </div>
+              {/snippet}
+              {#snippet footerActions()}
+                <button
+                  type="button"
+                  class="flex w-full items-center justify-center gap-1 text-xs text-slate-300 transition-colors hover:text-white"
+                  onclick={() => sidebar.handleCardInfoModeChange("quick")}
+                  data-testid="card-hover-switch-quick"
+                >
+                  {m["cardInfo.switchToQuick"]({})}
+                </button>
+              {/snippet}
+            </CardHoverCardContent>
+          {/if}
         </div>
       </Popover.Content>
     {/if}

@@ -31,6 +31,11 @@
   const simulatorCardContext = useSimulatorCardContext();
   const matchChatContext = maybeUseMatchChatControllerContext();
   const matchChatController = $derived(matchChatContext?.controller ?? null);
+  // Same merge the sidebar variant performs — feeds chat-system events
+  // (proposal lifecycle, free-text-enabled, Manual Mode) into the unified
+  // game log. Without this the compact/mobile log only shows engine
+  // moves and silently drops the proposal trail.
+  const chatMessages = $derived(matchChatController?.messages ?? []);
 
   function handleCardHover(card: LorcanaCardSnapshot): void {
     simulatorCardContext.setExternalPreviewCard(card);
@@ -212,6 +217,7 @@
         <EventLogPanel
           compact
           entries={moveLogEntries}
+          {chatMessages}
           viewerSide={ownerSide}
           {showRawLogRegistryJson}
         />

@@ -122,6 +122,10 @@ function getPlayActionDetail(
     return "Exert 4 Items";
   }
 
+  if (params.cost === "put-on-deck-bottom") {
+    return "Put Toy on Deck Bottom";
+  }
+
   if (typeof card.playCost === "number") {
     return `${card.playCost} ink`;
   }
@@ -139,7 +143,8 @@ function buildEnabledCategoryAction(
   moves: ExecutableMoveEntry[],
 ): CardActionView {
   const costType = (moves[0]?.params as { cost?: string })?.cost;
-  const isAlternativeCost = costType === "sacrifice" || costType === "exert-items";
+  const isAlternativeCost =
+    costType === "sacrifice" || costType === "exert-items" || costType === "put-on-deck-bottom";
   const label =
     categoryId === "quest" && typeof card.loreValue === "number"
       ? `${m["sim.actions.label.quest"]({})} for ${card.loreValue} lore`
@@ -304,11 +309,11 @@ export function buildCardActionViews(options: {
       if (categoryId === "play-card") {
         const standardMoves = moves.filter((move) => {
           const cost = (move.params as { cost?: unknown }).cost;
-          return cost !== "sacrifice" && cost !== "exert-items";
+          return cost !== "sacrifice" && cost !== "exert-items" && cost !== "put-on-deck-bottom";
         });
         const alternativeCostMoves = moves.filter((move) => {
           const cost = (move.params as { cost?: unknown }).cost;
-          return cost === "sacrifice" || cost === "exert-items";
+          return cost === "sacrifice" || cost === "exert-items" || cost === "put-on-deck-bottom";
         });
         if (standardMoves.length > 0) {
           actions.push(buildEnabledCategoryAction(card, categoryId, standardMoves));

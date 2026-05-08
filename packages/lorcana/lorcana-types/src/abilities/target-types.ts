@@ -387,6 +387,20 @@ export type CostComparisonFilter =
       type: "cost-comparison";
       comparison: ComparisonOperator;
       value: number;
+      /**
+       * Which cost to compare against. Defaults to `"printed"` (the card's
+       * printed ink cost) — used by abilities like Stitch — Rock Star
+       * "Whenever you play a character with cost 2 or less".
+       *
+       * Set to `"paid"` for abilities worded "Whenever you pay N {I} or less
+       * to play …" (e.g. Buzz Lightyear's Secret Mission, Jessie's
+       * YODEL-AY-HEE-HOO!, Babyhead's Tighten the Bolts) — these check the
+       * ink the player actually paid, so cost-reduction effects (Buzz's
+       * Arm) and increases land in the trigger band correctly. For Shift
+       * plays this distinction matters too: shifting a printed-4 character
+       * for {2} pays 2 ink but the printed cost is still 4.
+       */
+      costSource?: "paid" | "printed";
       compareWithParentsTarget?: never;
     }
   | {

@@ -54,6 +54,7 @@ type NormalizedPlayCardOptions = {
   amount?: number;
   namedCard?: string;
   resolveOptional?: boolean;
+  enterPlayExerted?: boolean;
   choiceIndex?: number;
   destinations?: PlayCardMoveParams["destinations"];
   preventAutoResolveTriggeredEffects?: boolean;
@@ -66,6 +67,7 @@ type NormalizedPlayCardFields = Pick<
   | "amount"
   | "namedCard"
   | "resolveOptional"
+  | "enterPlayExerted"
   | "choiceIndex"
   | "destinations"
   | "preventAutoResolveTriggeredEffects"
@@ -106,6 +108,9 @@ export function normalizePlayCardCost(
   }
   if (typeof options?.resolveOptional === "boolean") {
     actionResolutionFields.resolveOptional = options.resolveOptional;
+  }
+  if (typeof options?.enterPlayExerted === "boolean") {
+    actionResolutionFields.enterPlayExerted = options.enterPlayExerted;
   }
   if (typeof options?.choiceIndex === "number") {
     actionResolutionFields.choiceIndex = options.choiceIndex;

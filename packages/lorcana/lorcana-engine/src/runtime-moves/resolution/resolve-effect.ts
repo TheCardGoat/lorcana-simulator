@@ -5,7 +5,11 @@ import {
   createLorcanaLogProjection,
   type LorcanaMoveDefinition,
 } from "../../types";
-import type { PendingActionEffect, PendingActionResolutionInput } from "../../types";
+import type {
+  PendingActionEffect,
+  PendingActionResolutionInput,
+  TargetResolutionSelectionContext,
+} from "../../types";
 import type { LogTargetId, ScryDestinationEntry } from "../../types/log-messages";
 import { resolveActionEffect } from "./action-effects/composed-effect-resolver";
 import { isScryEffect, validateScrySelection } from "./action-effects/scry-effect";
@@ -34,10 +38,12 @@ import {
 } from "../../runtime-trace";
 import {
   clearCurrentSelectionTargets,
+  getContextSelectionTargets,
   getCurrentSelectionInput,
   getCurrentSelectionTargets,
   promoteCurrentSelectionTargetsToContext,
   withCurrentSelectionTargets,
+  type SelectionTarget,
 } from "./action-effects/selection-state";
 import {
   analyzeEffectTargets,
@@ -48,6 +54,14 @@ import {
 } from "../../targeting/runtime";
 import { resolveTurnOwnerId } from "../../core/runtime/turn-owner";
 import { flattenSlottedTargets, isSlottedTargetInput } from "../../targeting/slotted-targets";
+
+function effectContainsRequireDifferentTargets(effect: unknown): boolean {
+  if (!effect || typeof effect !== "object") return false;
+  if (Array.isArray(effect)) return effect.some(effectContainsRequireDifferentTargets);
+  const record = effect as Record<string, unknown>;
+  if (record.requireDifferentTargets === true) return true;
+  return Object.values(record).some(effectContainsRequireDifferentTargets);
+}
 
 type ResolveEffectValidationContext = Parameters<
   NonNullable<LorcanaMoveDefinition<"resolveEffect">["validate"]>
@@ -82,6 +96,22 @@ function normalizeResolveEffectTargets(
   }
 
   return [];
+}
+
+function resolvePendingEffectAbilityName(
+  ctx: ResolveEffectExecutionContext,
+  pendingEffect: PendingActionEffect,
+): string | undefined {
+  const abilityIndex = pendingEffect.abilityIndex;
+  if (typeof abilityIndex !== "number") {
+    return undefined;
+  }
+
+  const abilityName = ctx.cards.getDefinition(pendingEffect.sourceCardId)?.abilities?.[abilityIndex]
+    ?.name;
+  return typeof abilityName === "string" && abilityName.trim().length > 0
+    ? abilityName.trim()
+    : undefined;
 }
 
 function countResolvedTargets(
@@ -187,8 +217,23 @@ function getScryDestinationLogLabel(zone: string): string {
   }
 }
 
+function buildRevealedZoneSet(pendingEffect: PendingActionEffect): Set<string> {
+  const revealedZones = new Set<string>();
+  const effect = pendingEffect.effect as
+    | { destinations?: Array<{ zone?: unknown; reveal?: unknown }> }
+    | undefined;
+  const effectDestinations = Array.isArray(effect?.destinations) ? effect.destinations : [];
+  for (const dest of effectDestinations) {
+    if (dest && typeof dest === "object" && typeof dest.zone === "string" && dest.reveal === true) {
+      revealedZones.add(dest.zone);
+    }
+  }
+  return revealedZones;
+}
+
 function buildScrySelectionLogDetail(
   ctx: ResolveEffectExecutionContext,
+  pendingEffect: PendingActionEffect,
   resolutionInput: PendingActionResolutionInput,
 ): {
   selection: string[];
@@ -203,6 +248,8 @@ function buildScrySelectionLogDetail(
   if (!Array.isArray(resolutionInput.destinations)) {
     return { selection: [], destinations: [] };
   }
+
+  const revealedZones = buildRevealedZoneSet(pendingEffect);
 
   const detail: {
     selection: string[];
@@ -229,14 +276,16 @@ function buildScrySelectionLogDetail(
     const cardNames = cardIds.map(
       (cardId) => getLorcanaCardName(cardId, ctx.cards.getDefinition) ?? cardId,
     );
-    const inkTypes = cardIds.map(
-      (cardId) => ctx.cards.getDefinition(cardId)?.inkType as string[] | undefined,
-    );
 
     detail.selection.push(
       `${getScryDestinationLogLabel(destination.zone)}: ${cardNames.join(", ")}`,
     );
-    detail.destinations.push({ zone: destination.zone, cardIds, cardNames, inkTypes });
+    const isRevealed = revealedZones.has(destination.zone);
+    detail.destinations.push({
+      zone: destination.zone,
+      cardIds,
+      ...(isRevealed ? { revealed: true } : {}),
+    });
     switch (destination.zone) {
       case "deck-top":
         detail.deckTopCards = cardIds;
@@ -274,10 +323,32 @@ function logResolveEffectMessage(
 
   const visibility = { mode: "PUBLIC" as const };
   const category = "action" as const;
+  const selectedTargets = normalizeResolveEffectTargets(getCurrentSelectionInput(resolutionInput));
+  const abilityName = resolvePendingEffectAbilityName(ctx, pendingEffect);
 
   if (pendingEffect.kind === "scry-selection") {
-    const selection = buildScrySelectionLogDetail(ctx, resolutionInput);
+    const selection = buildScrySelectionLogDetail(ctx, pendingEffect, resolutionInput);
     const hasSelection = selection.selection.length > 0;
+
+    // Build a public-only view of the selection, scoped to destinations whose
+    // cards were revealed to all players (e.g. "reveal a Toy character and put
+    // it into your hand"). Non-chooser viewers still get the revealed cards in
+    // the log; non-revealed destinations (e.g. cards put on the bottom of the
+    // deck) remain hidden.
+    const publicDestinations = selection.destinations.filter((d) => d.revealed === true);
+    const publicSelection =
+      publicDestinations.length > 0
+        ? {
+            selection: publicDestinations.map((d) => {
+              const names = d.cardIds.map(
+                (cardId) => getLorcanaCardName(cardId, ctx.cards.getDefinition) ?? cardId,
+              );
+              return `${getScryDestinationLogLabel(d.zone)}: ${names.join(", ")}`;
+            }),
+            destinations: publicDestinations,
+          }
+        : undefined;
+
     const scryVisibility = hasSelection
       ? {
           mode: "PUBLIC_WITH_OVERRIDES" as const,
@@ -307,10 +378,17 @@ function logResolveEffectMessage(
           category,
         );
 
+    const defaultMessage = publicSelection
+      ? createLorcanaLogMessage("lorcana.effect.resolve.scrySelection.detail", {
+          ...common,
+          ...publicSelection,
+        })
+      : createLorcanaLogMessage("lorcana.effect.resolve.scrySelection", common);
+
     ctx.framework.log({
       category,
       visibility: scryVisibility,
-      defaultMessage: createLorcanaLogMessage("lorcana.effect.resolve.scrySelection", common),
+      defaultMessage,
       typedEntry,
     });
     return;
@@ -333,7 +411,8 @@ function logResolveEffectMessage(
           "lorcana.effect.resolve.targetSelection",
           {
             ...common,
-            targets: normalizeResolveEffectTargets(getCurrentSelectionInput(resolutionInput)),
+            targets: selectedTargets,
+            effectType: getPendingEffectLogEffectType(pendingEffect),
           },
           visibility,
           category,
@@ -363,19 +442,38 @@ function logResolveEffectMessage(
         );
       }
       case "optional-selection":
-        return resolutionInput.resolveOptional
-          ? createLorcanaLogProjection(
-              "lorcana.effect.resolve.optionalSelection.accepted",
-              common,
-              visibility,
-              category,
-            )
-          : createLorcanaLogProjection(
-              "lorcana.effect.resolve.optionalSelection.rejected",
-              common,
-              visibility,
-              category,
-            );
+        if (resolutionInput.resolveOptional && selectedTargets.length > 0) {
+          return abilityName
+            ? createLorcanaLogProjection(
+                "lorcana.effect.resolve.optionalSelection.accepted.targets.named",
+                {
+                  playerId: pendingEffect.chooserId,
+                  sourceCardId: pendingEffect.sourceCardId,
+                  abilityName,
+                  targets: selectedTargets,
+                },
+                visibility,
+                category,
+              )
+            : createLorcanaLogProjection(
+                "lorcana.effect.resolve.optionalSelection.accepted.targets",
+                {
+                  playerId: pendingEffect.chooserId,
+                  sourceCardId: pendingEffect.sourceCardId,
+                  targets: selectedTargets,
+                },
+                visibility,
+                category,
+              );
+        }
+        return createLorcanaLogProjection(
+          resolutionInput.resolveOptional
+            ? "lorcana.effect.resolve.optionalSelection.accepted"
+            : "lorcana.effect.resolve.optionalSelection.rejected",
+          common,
+          visibility,
+          category,
+        );
       case "name-card-selection":
         return createLorcanaLogProjection(
           "lorcana.effect.resolve.nameCardSelection",
@@ -392,6 +490,16 @@ function logResolveEffectMessage(
   })();
 
   ctx.framework.log(projection);
+}
+
+function getPendingEffectLogEffectType(pendingEffect: PendingActionEffect): string | undefined {
+  const effect = pendingEffect.effect;
+  if (!effect || typeof effect !== "object" || Array.isArray(effect)) {
+    return undefined;
+  }
+
+  const type = (effect as { type?: unknown }).type;
+  return typeof type === "string" ? type : undefined;
 }
 
 function isValidActionResolutionAmount(value: unknown): boolean {
@@ -478,6 +586,10 @@ function normalizeResolveEffectParams(params: unknown): PendingActionResolutionI
     normalized.resolveOptional = record.resolveOptional;
   }
 
+  if (typeof record.enterPlayExerted === "boolean") {
+    normalized.enterPlayExerted = record.enterPlayExerted;
+  }
+
   if (record.targets !== undefined && isValidTargetInput(record.targets)) {
     if (isSlottedTargetInput(record.targets)) {
       const flat = flattenSlottedTargets(record.targets);
@@ -494,6 +606,7 @@ function normalizeResolveEffectParams(params: unknown): PendingActionResolutionI
     normalized.resolveOptional === undefined &&
     (normalized.choiceIndex !== undefined ||
       normalized.namedCard !== undefined ||
+      normalized.enterPlayExerted !== undefined ||
       normalized.destinations !== undefined ||
       normalized.targets !== undefined ||
       normalized.currentTargets !== undefined ||
@@ -503,6 +616,32 @@ function normalizeResolveEffectParams(params: unknown): PendingActionResolutionI
   }
 
   return normalized;
+}
+
+function getTargetSelectionValidationInput(
+  normalizedParams: PendingActionResolutionInput,
+  targetSelectionContext: TargetResolutionSelectionContext | undefined,
+): PendingActionResolutionInput["targets"] {
+  const slottedTargets = normalizedParams.slottedTargets;
+  if (
+    targetSelectionContext?.kind === "target-selection" &&
+    targetSelectionContext.expectedSlottedKind === "move-to-location" &&
+    targetSelectionContext.targetDsl.length === 1 &&
+    slottedTargets?.kind === "move-to-location"
+  ) {
+    const [targetDsl] = targetSelectionContext.targetDsl;
+    const cardTypes =
+      targetDsl && typeof targetDsl === "object" && "cardTypes" in targetDsl
+        ? targetDsl.cardTypes
+        : undefined;
+    if (Array.isArray(cardTypes) && cardTypes.includes("location")) {
+      return [...slottedTargets.location] as PendingActionResolutionInput["targets"];
+    }
+
+    return [...slottedTargets.subject] as PendingActionResolutionInput["targets"];
+  }
+
+  return normalizedParams.targets;
 }
 
 function getPendingEffect(
@@ -563,6 +702,13 @@ function validatePendingEffectParams(
       errorCode: "INVALID_RESOLVE_EFFECT_OPTIONAL",
     };
   }
+  if (record.enterPlayExerted !== undefined && typeof record.enterPlayExerted !== "boolean") {
+    return {
+      valid: false,
+      error: "resolveEffect enterPlayExerted must be a boolean",
+      errorCode: "INVALID_RESOLVE_EFFECT_ENTER_PLAY_EXERTED",
+    };
+  }
   if (!isValidDestinations(record.destinations)) {
     return {
       valid: false,
@@ -575,18 +721,19 @@ function validatePendingEffectParams(
   const normalizedTargets = normalizedParams.targets;
   const hasExplicitTargets = hasExplicitTargetSelectionInput(normalizedTargets);
   const explicitTargetCount = countExplicitTargetSelections(normalizedTargets);
-  const selectionContext =
-    pendingEffect.selectionContext?.kind === pendingEffect.kind
-      ? pendingEffect.selectionContext
-      : undefined;
+  const selectionContext = pendingEffect.selectionContext;
   const targetSelectionContext =
     selectionContext?.kind === "discard-choice" || selectionContext?.kind === "target-selection"
       ? selectionContext
       : undefined;
   const allowsEmptyTargetResolution = (targetSelectionContext?.minSelections ?? 1) === 0;
+  const allowsOptionalDecline =
+    normalizedParams.resolveOptional === false &&
+    (targetSelectionContext?.originatesFromOptional === true ||
+      targetSelectionContext?.canDeclineSelection === true);
 
   if (pendingEffect.kind === "discard-choice" || pendingEffect.kind === "target-selection") {
-    if (!hasExplicitTargets && !allowsEmptyTargetResolution) {
+    if (!hasExplicitTargets && !allowsEmptyTargetResolution && !allowsOptionalDecline) {
       return {
         valid: false,
         error: buildMissingTargetSelectionError("resolveEffect", pendingEffect.effect),
@@ -594,7 +741,11 @@ function validatePendingEffectParams(
       };
     }
 
-    if ((targetSelectionContext?.minSelections ?? 1) > 0 && explicitTargetCount === 0) {
+    if (
+      (targetSelectionContext?.minSelections ?? 1) > 0 &&
+      explicitTargetCount === 0 &&
+      !allowsOptionalDecline
+    ) {
       return {
         valid: false,
         error: "resolveEffect requires at least 1 explicit target for this pending effect",
@@ -621,7 +772,7 @@ function validatePendingEffectParams(
           ? targetSelectionContext.playerCandidateIds
           : undefined;
       const targetValidation = validateAndNormalizeTargetSelection(
-        normalizedTargets,
+        getTargetSelectionValidationInput(normalizedParams, targetSelectionContext),
         {
           ...analysis,
           cardCandidates: scCardCandidates ?? analysis.cardCandidates,
@@ -657,6 +808,102 @@ function validatePendingEffectParams(
       error: "resolveEffect requires resolveOptional for this pending effect",
       errorCode: "RESOLVE_EFFECT_OPTIONAL_REQUIRED",
     };
+  }
+
+  if (
+    pendingEffect.kind === "optional-selection" &&
+    normalizedParams.resolveOptional === true &&
+    hasExplicitTargets
+  ) {
+    const optionalEffect = pendingEffect.effect as Record<string, unknown> | null | undefined;
+    const innerEffect = optionalEffect?.effect;
+    if (innerEffect) {
+      const innerAnalysis = analyzeEffectTargets(
+        innerEffect,
+        pendingEffect.controllerId,
+        ctx,
+        pendingEffect.sourceCardId,
+        {
+          includeDeferredChosenSelections: true,
+          eventSnapshot: pendingEffect.resolutionInput.eventSnapshot,
+        },
+      );
+      // When maxSelections is 0 the effect takes no card targets; any explicit
+      // targets provided are unconditionally illegal.
+      if (innerAnalysis.maxSelections === 0 && (normalizedTargets?.length ?? 0) > 0) {
+        return {
+          valid: false,
+          error: "Effect accepts no card targets",
+          errorCode: "INVALID_ACTION_TARGET" as const,
+        };
+      }
+      // Validate targets against candidates when candidates exist.  When there
+      // are no candidates the optional effect simply cannot fire; the resolution
+      // itself is still allowed so the action completes normally.
+      // When the inner effect requires a target different from prior-step selections,
+      // filter the context targets (previously selected cards) out of the candidate
+      // list so the same card cannot be chosen for both steps.
+      // Two sources of prior-step targets are checked:
+      //  1. contextTargets — set when targets flow inline through the sequence
+      //  2. previouslyTargetedCardIds — set in eventSnapshot when steps are staged
+      //     as separate pending effects (e.g. Three Arrows optional second shot)
+      const contextTargets = getContextSelectionTargets(pendingEffect.resolutionInput);
+      const previouslyTargetedCardIds =
+        pendingEffect.resolutionInput.eventSnapshot?.previouslyTargetedCardIds ?? [];
+      const allPriorTargets = [
+        ...contextTargets,
+        ...(previouslyTargetedCardIds as readonly string[]),
+      ];
+      const requiresDifferentTarget =
+        allPriorTargets.length > 0 && effectContainsRequireDifferentTargets(innerEffect);
+      const contextualInnerAnalysis =
+        targetSelectionContext?.kind === "target-selection" ||
+        targetSelectionContext?.kind === "discard-choice"
+          ? {
+              ...innerAnalysis,
+              targetDsl: [...targetSelectionContext.targetDsl],
+              cardCandidates: [...targetSelectionContext.cardCandidateIds],
+              playerCandidates: [...targetSelectionContext.playerCandidateIds],
+              allowedZones: [...targetSelectionContext.allowedZones],
+              minSelections: targetSelectionContext.minSelections,
+              maxSelections: targetSelectionContext.maxSelections,
+              declaredMaxSelections: targetSelectionContext.declaredMaxSelections,
+            }
+          : innerAnalysis;
+      const innerAnalysisForValidation = requiresDifferentTarget
+        ? {
+            ...contextualInnerAnalysis,
+            cardCandidates: contextualInnerAnalysis.cardCandidates.filter(
+              (id) => !allPriorTargets.includes(id as SelectionTarget),
+            ),
+          }
+        : contextualInnerAnalysis;
+      if (innerAnalysisForValidation.cardCandidates.length > 0) {
+        const innerTargetValidation = validateAndNormalizeTargetSelection(
+          normalizedTargets,
+          innerAnalysisForValidation,
+          {
+            currentPlayer: pendingEffect.chooserId,
+            ctx,
+          },
+        );
+        if (!innerTargetValidation.valid) {
+          return innerTargetValidation;
+        }
+      } else if (
+        requiresDifferentTarget &&
+        innerAnalysis.cardCandidates.length > 0 &&
+        (normalizedTargets?.length ?? 0) > 0
+      ) {
+        // All remaining candidates were filtered because they were already targeted.
+        // Explicit targets were still provided — reject them as invalid.
+        return {
+          valid: false,
+          error: "Target has already been chosen for a prior step",
+          errorCode: "INVALID_ACTION_TARGET" as const,
+        };
+      }
+    }
   }
 
   if (pendingEffect.kind === "scry-selection" && !Array.isArray(normalizedParams.destinations)) {

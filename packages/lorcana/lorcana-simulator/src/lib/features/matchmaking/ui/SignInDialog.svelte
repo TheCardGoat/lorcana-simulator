@@ -6,18 +6,23 @@
 
 	let { open = $bindable(false) }: { open: boolean } = $props();
 	let joinDiscordServer = $state(true);
+	let discordError = $state<string | null>(null);
 	let metafyError = $state<string | null>(null);
 	const showMetafySignIn = import.meta.env.DEV;
 
 	async function handleDiscordSignIn() {
+		discordError = null;
+		metafyError = null;
 		try {
 			await authSession.signInWithDiscord({ joinGuild: joinDiscordServer });
 		} catch (error) {
 			console.error("Discord sign-in failed:", error);
+			discordError = m["sim.auth.signIn.discordError"]({});
 		}
 	}
 
 	async function handleMetafySignIn() {
+		discordError = null;
 		metafyError = null;
 		try {
 			await authSession.signInWithMetafy();
@@ -60,6 +65,15 @@
 					</svg>
 					{m["sim.auth.signIn.discord"]({})}
 				</Button>
+				{#if discordError}
+					<p
+						class="rounded-md bg-destructive/10 px-3 py-2 text-center text-xs text-destructive"
+						role="alert"
+						aria-live="assertive"
+					>
+						{discordError}
+					</p>
+				{/if}
 
 				{#if showMetafySignIn}
 				<Button
@@ -100,6 +114,8 @@
 				{#if metafyError}
 					<p
 						class="rounded-md bg-destructive/10 px-3 py-2 text-center text-xs text-destructive"
+						role="alert"
+						aria-live="assertive"
 					>
 						{metafyError}
 					</p>
@@ -110,14 +126,14 @@
 					{m["sim.auth.signIn.termsIntro"]({})}
 					<a
 						href="/terms-of-service"
-						class="cursor-pointer text-muted-foreground underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+						class="cursor-pointer text-muted-foreground underline-offset-2 underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 					>
 						{m["sim.auth.signIn.termsOfService"]({})}
 					</a>
 					{m["sim.auth.signIn.termsConjunction"]({})}
 					<a
 						href="/privacy-policy"
-						class="cursor-pointer text-muted-foreground underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+						class="cursor-pointer text-muted-foreground underline-offset-2 underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 					>
 						{m["sim.auth.signIn.privacyPolicy"]({})}
 					</a>

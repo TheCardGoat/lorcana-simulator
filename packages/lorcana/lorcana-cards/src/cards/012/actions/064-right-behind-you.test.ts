@@ -35,6 +35,17 @@ const dwarfInHand = createMockCharacter({
   classifications: ["Storyborn", "Ally", "Seven Dwarfs"],
 });
 
+const secondDwarfInHand = createMockCharacter({
+  id: "rby-second-dwarf-in-hand",
+  name: "Happy",
+  version: "Joyful Adventurer",
+  cost: 3,
+  strength: 2,
+  willpower: 3,
+  lore: 1,
+  classifications: ["Storyborn", "Ally", "Seven Dwarfs"],
+});
+
 const nonDwarfInHand = createMockCharacter({
   id: "rby-non-dwarf-in-hand",
   name: "Generic Hero",
@@ -95,6 +106,50 @@ describe("Right Behind You", () => {
     // The Seven Dwarfs in hand should remain in hand because the conditional did not trigger
     expect(testEngine.asPlayerOne().getCardZone(dwarfInHand)).toBe("hand");
     expect(testEngine.asPlayerOne().getCardZone(rightBehindYou)).toBe("discard");
+  });
+
+  it("presents a card-selection prompt with all Seven Dwarfs candidates when multiple are in hand", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [rightBehindYou, dwarfInHand, secondDwarfInHand],
+      inkwell: rightBehindYou.cost,
+      play: [sevenDwarfCharacter, princessCharacter],
+      deck: [deckTopCard],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(rightBehindYou)).toBeSuccessfulCommand();
+
+    // Card was drawn
+    expect(testEngine.asPlayerOne().getCardZone(deckTopCard)).toBe("hand");
+
+    // A pending effect with a hand-selection prompt must be present
+    const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
+    expect(pendingEffects).toHaveLength(1);
+
+    const [pendingEffect] = pendingEffects;
+    expect(pendingEffect?.selectionContext?.kind).toBe("target-selection");
+    const selectionCtx = pendingEffect?.selectionContext as
+      | { allowedZones?: string[]; cardCandidateIds?: string[] }
+      | undefined;
+    expect(selectionCtx?.allowedZones).toContain("hand");
+
+    const dwarf1Id = testEngine.findCardInstanceId(dwarfInHand, "hand", "player_one");
+    const dwarf2Id = testEngine.findCardInstanceId(secondDwarfInHand, "hand", "player_one");
+
+    // Both Dwarfs must appear as candidates
+    const candidateIds = selectionCtx?.cardCandidateIds ?? [];
+    expect(candidateIds).toContain(dwarf1Id);
+    expect(candidateIds).toContain(dwarf2Id);
+
+    // Player selects the second Dwarf
+    expect(
+      testEngine.asPlayerOne().resolveEffect(pendingEffect!.id, {
+        resolveOptional: true,
+        targets: [dwarf2Id],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(secondDwarfInHand)).toBe("play");
+    expect(testEngine.asPlayerOne().getCardZone(dwarfInHand)).toBe("hand");
   });
 
   it("only lets the controller play a Seven Dwarfs character (not a non-Seven Dwarfs) when the conditional is met", () => {

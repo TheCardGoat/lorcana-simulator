@@ -25,8 +25,8 @@ describe("AutomatedMatchPlaybackController strategy loading", () => {
     controller = null;
   });
 
-  it("upgrades supported deck colors to the matching deck-aware strategy at game start", () => {
-    controller = new AutomatedMatchPlaybackController({
+  it("upgrades supported deck colors to the matching deck-aware strategy at game start", async () => {
+    controller = await AutomatedMatchPlaybackController.create({
       playerOneDeckText: steelSapphireMidrange.cards,
       playerTwoDeckText: steelSapphireMidrange.cards,
       playerOneStrategyId: DEFAULT_AUTOMATED_ACTION_STRATEGY_ID,
@@ -89,5 +89,84 @@ describe("createPersistedMoveLogEntries", () => {
     expect(entries).toHaveLength(1);
     expect(entries[0]?.typedLogEntry).toMatchObject({ type: "playCard", cardId: CARD_ONE_ID });
     expect(entries[0]?.title).not.toBe("playCard");
+  });
+
+  it("matches each move to its own log when a batch has multiple moves at different stateVersions", () => {
+    // Regression: previously all logs in a push batch got stateVersion = latestStateVersion,
+    // causing the first log (e.g. bot's playCard) to be matched to the last accepted move
+    // (the human's playCard), displaying the wrong card name in the game log.
+    const CARD_BOT_ID = "card-bot" as CardInstanceId;
+    const CARD_HUMAN_ID = "card-human" as CardInstanceId;
+
+    const acceptedMoves: AcceptedMoveRecord[] = [
+      {
+        actorId: "bot_player",
+        gameId: "game-1",
+        input: { args: { playerId: "player_two", cardId: CARD_BOT_ID } },
+        moveId: "playCard",
+        processedCommand: { commandID: "cmd-1", move: "playCard" },
+        sourceAuthority: "client",
+        stateVersion: 1,
+        timestamp: 100,
+        turnNumber: 1,
+      },
+      {
+        actorId: "human_player",
+        gameId: "game-1",
+        input: { args: { playerId: "player_one", cardId: CARD_HUMAN_ID } },
+        moveId: "playCard",
+        processedCommand: { commandID: "cmd-2", move: "playCard" },
+        sourceAuthority: "client",
+        stateVersion: 2,
+        timestamp: 200,
+        turnNumber: 1,
+      },
+    ];
+
+    const engineLogs: EngineLogRecord[] = [
+      {
+        gameId: "game-1",
+        stateVersion: 1,
+        timestamp: 100,
+        sourceAuthority: "client",
+        log: {
+          type: "playCard",
+          playerId: PLAYER_TWO_ID,
+          timestamp: 100,
+          cardId: CARD_BOT_ID,
+          inkPaid: 3,
+        },
+      },
+      {
+        gameId: "game-1",
+        stateVersion: 2,
+        timestamp: 200,
+        sourceAuthority: "client",
+        log: {
+          type: "playCard",
+          playerId: PLAYER_ONE_ID,
+          timestamp: 200,
+          cardId: CARD_HUMAN_ID,
+          inkPaid: 2,
+        },
+      },
+    ];
+
+    const entries = createPersistedMoveLogEntries({
+      acceptedMoves,
+      engineLogs,
+      resolveActorSide: (actorId) =>
+        actorId === "human_player"
+          ? "playerOne"
+          : actorId === "bot_player"
+            ? "playerTwo"
+            : undefined,
+    });
+
+    expect(entries).toHaveLength(2);
+    // Bot's move must show the bot's card, not the human's
+    expect(entries[0]?.typedLogEntry).toMatchObject({ type: "playCard", cardId: CARD_BOT_ID });
+    // Human's move must show the human's card
+    expect(entries[1]?.typedLogEntry).toMatchObject({ type: "playCard", cardId: CARD_HUMAN_ID });
   });
 });

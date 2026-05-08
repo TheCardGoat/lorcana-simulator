@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { violetParrAtWitsEndI18n } from "./178-violet-parr-at-wits-end.i18n";
 import { alert } from "../../../helpers/abilities/alert";
+import { violetParrAtWitsEndI18n } from "./178-violet-parr-at-wits-end.i18n";
 
 export const violetParrAtWitsEnd: CharacterCard = {
   id: "NsD",
@@ -19,7 +19,15 @@ export const violetParrAtWitsEnd: CharacterCard = {
   willpower: 1,
   lore: 1,
   inkable: true,
-  text: "<Alert> (This character can challenge as if they had Evasive.)",
+  externalIds: {
+    lorcast: "crd_92fe9e279ebd46b5922826303ea92d27",
+  },
+  text: [
+    {
+      title: "Alert",
+      description: "(This character can challenge as if they had Evasive.)",
+    },
+  ],
   classifications: ["Storyborn", "Super", "Hero"],
   abilities: [alert],
   i18n: violetParrAtWitsEndI18n,

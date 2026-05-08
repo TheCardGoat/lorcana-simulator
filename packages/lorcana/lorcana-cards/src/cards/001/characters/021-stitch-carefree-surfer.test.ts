@@ -16,15 +16,13 @@ describe("Stitch - Carefree Surfer", () => {
     expect(noDrawEngine.asPlayerOne().playCard(stitchCarefreeSurfer)).toBeSuccessfulCommand();
     expect(noDrawEngine.asPlayerOne().getBagCount()).toBe(1);
 
+    // Remove one character so the Ohana condition (2+ other chars) no longer holds.
+    // The engine auto-cancels the queued bag effect — no player input needed (CRD 6.2.7).
     const minnieId = noDrawEngine.findCardInstanceId(minnieMouseAlwaysClassy, "play", PLAYER_ONE);
     expect(
       noDrawEngine.asServer().manualMoveCard(minnieId, `discard:${PLAYER_ONE}` as ZoneId).success,
     ).toBe(true);
-    expect(
-      noDrawEngine.asPlayerOne().resolvePendingByCard(stitchCarefreeSurfer, {
-        resolveOptional: true,
-      }).success,
-    ).toBe(true);
+    expect(noDrawEngine.asPlayerOne().getBagCount()).toBe(0);
     expect(noDrawEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
 
     const noTriggerEngine = LorcanaMultiplayerTestEngine.createWithFixture({
@@ -35,13 +33,8 @@ describe("Stitch - Carefree Surfer", () => {
     });
 
     expect(noTriggerEngine.asPlayerOne().playCard(stitchCarefreeSurfer)).toBeSuccessfulCommand();
-    // Per CRD 6.2.7: ability IS enqueued when trigger fires, Ohana condition checked at resolution
-    expect(noTriggerEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      noTriggerEngine.asPlayerOne().resolvePendingByCard(stitchCarefreeSurfer, {
-        resolveOptional: true,
-      }),
-    ).toBeSuccessfulCommand();
+    // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+    expect(noTriggerEngine.asPlayerOne().getBagCount()).toBe(0);
     // No Ohana character in play — no card drawn
     expect(noTriggerEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
   });

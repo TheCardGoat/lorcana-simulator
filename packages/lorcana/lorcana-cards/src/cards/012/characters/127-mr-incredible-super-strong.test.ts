@@ -3,6 +3,7 @@ import {
   LorcanaMultiplayerTestEngine,
   PLAYER_ONE,
   createMockCharacter,
+  createMockLocation,
 } from "@tcg/lorcana-engine/testing";
 import { mrIncredibleSuperStrong } from "./127-mr-incredible-super-strong";
 
@@ -32,6 +33,14 @@ const exertedDefender = createMockCharacter({
   cost: 3,
   strength: 2,
   willpower: 4,
+  lore: 1,
+});
+
+const exertedLocationDefender = createMockLocation({
+  id: "mr-incredible-location-defender",
+  name: "Exerted Location Defender",
+  cost: 3,
+  willpower: 5,
   lore: 1,
 });
 
@@ -128,6 +137,63 @@ describe("Mr. Incredible - Super Strong", () => {
 
       const handAfter = testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length;
       expect(handAfter).toBe(handBefore + 1);
+    });
+
+    it("does not draw a card when a Super character challenges a location (THE-1029 F-01)", () => {
+      // Card text: "Whenever one of your Super characters challenges another
+      // character, draw a card." Locations are not characters, so challenging
+      // a location must not trigger the draw.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: mrIncredibleSuperStrong, isDrying: false }],
+          deck: 5,
+        },
+        {
+          play: [{ card: exertedLocationDefender, exerted: true }],
+          deck: 5,
+        },
+      );
+
+      const handBefore = testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length;
+
+      expect(
+        testEngine.asPlayerOne().challenge(mrIncredibleSuperStrong, exertedLocationDefender),
+      ).toBeSuccessfulCommand();
+
+      const handAfter = testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length;
+      expect(handAfter).toBe(handBefore);
+    });
+
+    it("release notes ruling: triggers when Mr. Incredible himself challenges (the ability is not restricted to 'other' Super characters)", () => {
+      // Q&A: Let's Do This! triggers when ANY of your Super characters
+      // challenges another character — including Mr. Incredible himself.
+      const defenderForRelease = createMockCharacter({
+        id: "mr-incredible-release-defender",
+        name: "Release Defender",
+        cost: 3,
+        strength: 2,
+        willpower: 4,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: mrIncredibleSuperStrong, isDrying: false }],
+          deck: 5,
+        },
+        {
+          play: [{ card: defenderForRelease, exerted: true }],
+          deck: 5,
+        },
+      );
+
+      const handBefore = testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length;
+
+      expect(
+        testEngine.asPlayerOne().challenge(mrIncredibleSuperStrong, defenderForRelease),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.getCardInstanceIdsInZone("hand", PLAYER_ONE).length).toBe(handBefore + 1);
     });
 
     it("does not draw a card when a non-Super character of yours challenges", () => {

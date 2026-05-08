@@ -88,26 +88,9 @@ export class HumanVsAiOrchestrator {
 
     if (options?.engine) {
       this.#testEngine = options.engine;
-    } else {
-      const fixture = createAutomatedMatchFixture({
-        playerOneDeckText: config.playerOneDeckText,
-        playerTwoDeckText: config.playerTwoDeckText,
-        playerOneFixtureId: config.playerOneFixtureId,
-        playerTwoFixtureId: config.playerTwoFixtureId,
-        playerOneStrategyId: config.strategyId,
-        playerTwoStrategyId: config.strategyId,
-        seed: config.seed,
-      });
-
-      this.#testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
-        fixture.playerOne,
-        fixture.playerTwo,
-        {
-          seed: fixture.seed,
-          skipPreGame: false,
-          validateSync: false,
-          timeControl: { mode: "dynamic", config: DEFAULT_DYNAMIC_CLOCK_CONFIG },
-        },
+    } else if (config.playerOneDeckText || config.playerTwoDeckText) {
+      throw new Error(
+        "Use HumanVsAiOrchestrator.create() for deck fixture creation, or pass a pre-built engine.",
       );
     }
 
@@ -115,6 +98,40 @@ export class HumanVsAiOrchestrator {
       config.initialAiPlayMode ?? "auto",
       options?.initialPerspective ?? "playerOne",
     );
+  }
+
+  static async create(
+    config: HumanVsAiMatchConfig,
+    options?: {
+      onStateChange?: HumanVsAiStateChangeCallback;
+      initialPerspective?: "playerOne" | "playerTwo";
+    },
+  ): Promise<HumanVsAiOrchestrator> {
+    const fixture = await createAutomatedMatchFixture({
+      playerOneDeckText: config.playerOneDeckText,
+      playerTwoDeckText: config.playerTwoDeckText,
+      playerOneFixtureId: config.playerOneFixtureId,
+      playerTwoFixtureId: config.playerTwoFixtureId,
+      playerOneStrategyId: config.strategyId,
+      playerTwoStrategyId: config.strategyId,
+      seed: config.seed,
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      fixture.playerOne,
+      fixture.playerTwo,
+      {
+        seed: fixture.seed,
+        skipPreGame: false,
+        validateSync: false,
+        timeControl: { mode: "dynamic", config: DEFAULT_DYNAMIC_CLOCK_CONFIG },
+      },
+    );
+
+    return new HumanVsAiOrchestrator(config, {
+      ...options,
+      engine: testEngine,
+    });
   }
 
   /** Shared initialization used by both the constructor and `fromEngine`. */

@@ -67,11 +67,8 @@ describe("The Twins - Lost Boys", () => {
 
       expect(testEngine.asPlayerOne().playCard(theTwinsLostBoys)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine.asPlayerOne().resolvePendingByCard(theTwinsLostBoys, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       // Condition failed (no location in play), so no damage dealt
       expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(0);
     });

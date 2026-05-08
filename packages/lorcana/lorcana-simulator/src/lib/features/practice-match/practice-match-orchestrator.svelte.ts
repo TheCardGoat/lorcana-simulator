@@ -48,18 +48,23 @@ export class PracticeMatchOrchestrator {
   #persistedMoveCount = 0;
   #hasHydratedRecentHistory = false;
 
-  constructor(options: PracticeMatchOrchestratorOptions) {
+  static async create(
+    options: PracticeMatchOrchestratorOptions,
+  ): Promise<PracticeMatchOrchestrator> {
+    const humanVsAi = await HumanVsAiOrchestrator.create(options.deckConfig, {
+      initialPerspective: options.humanSeat,
+    });
+    return new PracticeMatchOrchestrator(options, humanVsAi);
+  }
+
+  private constructor(options: PracticeMatchOrchestratorOptions, humanVsAi: HumanVsAiOrchestrator) {
     this.#gateway = options.gateway;
     this.#gameId = options.gameId;
     this.#botPlayerId = options.botPlayerId;
     this.#playerId = options.playerId;
     this.#humanSeat = options.humanSeat ?? "playerOne";
     this.#authority = options.authority ?? "client";
-
-    // Create orchestrator (builds the engine from deck config)
-    this.orchestrator = new HumanVsAiOrchestrator(options.deckConfig, {
-      initialPerspective: options.humanSeat,
-    });
+    this.orchestrator = humanVsAi;
 
     if (options.restoredSnapshot) {
       // Restore from snapshot (LorcanaServerAuthoritativeSnapshot)
@@ -146,20 +151,26 @@ export class PracticeMatchOrchestrator {
       }),
     );
     const latestStateVersion = acceptedMoveRecords.at(-1)?.stateVersion ?? this.#version;
-    const engineLogRecords = this.#getMoveLogHistory()
-      .slice(this.#persistedLogCount)
-      .map((entry) =>
-        createEngineLogRecord({
-          gameId: this.#gameId,
-          log: entry,
-          sourceAuthority: "client",
-          stateVersion: latestStateVersion,
-        }),
-      );
+    const newRawLogEntries = this.#getMoveLogHistory().slice(this.#persistedLogCount);
+    // Filter out system logs (turnStart, gameEnd) which have no corresponding accepted move,
+    // then pair each player-action log with its accepted move by index — same order, 1:1.
+    // Index pairing is more robust than timestamp matching since two moves can share a ms.
+    const playerActionLogs = newRawLogEntries.filter(
+      (entry) => entry.type !== "turnStart" && entry.type !== "gameEnd",
+    );
+    const engineLogRecords = playerActionLogs.map((entry, i) =>
+      createEngineLogRecord({
+        gameId: this.#gameId,
+        log: entry,
+        sourceAuthority: "client",
+        stateVersion: acceptedMoveRecords[i]?.stateVersion ?? latestStateVersion,
+      }),
+    );
     const actorId = acceptedMoveRecords.at(-1)?.actorId ?? this.#playerId;
     this.#version = latestStateVersion;
     this.#persistedMoveCount += nextMoveEntries.length;
-    this.#persistedLogCount += engineLogRecords.length;
+    // Track raw count (including filtered system logs) so the next slice window is correct.
+    this.#persistedLogCount += newRawLogEntries.length;
 
     if (import.meta.env.DEV) {
       console.log(

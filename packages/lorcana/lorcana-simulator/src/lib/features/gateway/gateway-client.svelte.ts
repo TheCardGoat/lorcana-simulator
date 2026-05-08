@@ -6,7 +6,7 @@
 
 import { GatewayClient } from "./gateway-client";
 import type { ConnectionStatus, GatewayClientState } from "./gateway-client";
-import { trackEvent } from "$lib/analytics/analytics.js";
+import { trackEvent, truncateForAnalytics } from "$lib/analytics/analytics.js";
 
 export type { ConnectionStatus, GatewayClientState };
 
@@ -22,10 +22,17 @@ export class GatewayClientStore {
   error: string | null = $state(null);
   /** True when the server announced shutdown (deploy) before the socket closed. */
   serverInitiatedClose: boolean = $state(false);
+  /** Epoch ms timestamp of the last status transition. */
+  statusChangedAt: number = $state(Date.now());
+  /** Auth method being attempted: ticket, token, or anonymous. */
+  readonly authMethod: "ticket" | "token" | "anonymous";
 
   private client: GatewayClient;
   #previousStatus: ConnectionStatus = "idle";
   #additionalListeners = new Set<(msg: GameMessage) => void>();
+  #statusListeners = new Set<(status: ConnectionStatus) => void>();
+  /** Throttle latency samples to one every 30s — GA4 quotas are limited. */
+  #lastLatencySampleAt = 0;
 
   constructor(
     url: string,
@@ -35,6 +42,7 @@ export class GatewayClientStore {
     token?: string,
     getToken?: () => string | undefined,
   ) {
+    this.authMethod = ticket ? "ticket" : (token ?? getToken?.()) ? "token" : "anonymous";
     this.client = new GatewayClient({
       url,
       ticket,
@@ -63,9 +71,24 @@ export class GatewayClientStore {
     };
   }
 
+  addStatusChangeListener(handler: (status: ConnectionStatus) => void): () => void {
+    this.#statusListeners.add(handler);
+    return () => {
+      this.#statusListeners.delete(handler);
+    };
+  }
+
   /** Send a JSON message over the WebSocket. */
   send(message: object): void {
     this.client.send(message);
+  }
+
+  /** Send a message and return a Promise that resolves with the correlated server response. */
+  sendWithAck<T extends { type: string; correlationId?: string; [key: string]: unknown }>(
+    message: object,
+    timeoutMs?: number,
+  ): Promise<T> {
+    return this.client.sendWithAck<T>(message, timeoutMs);
   }
 
   connect(): void {
@@ -84,6 +107,9 @@ export class GatewayClientStore {
   private sync(state: Readonly<GatewayClientState>): void {
     const prevStatus = this.#previousStatus;
     this.#previousStatus = state.status;
+    if (state.status !== prevStatus) {
+      this.statusChangedAt = Date.now();
+    }
 
     // Track connection transitions
     if (state.status === "connected" && prevStatus !== "connected") {
@@ -94,9 +120,34 @@ export class GatewayClientStore {
       }
     } else if (state.status === "disconnected" && prevStatus === "connected") {
       trackEvent("ws_disconnect", { reason: state.error ? "connection_error" : "closed" });
+    } else if (
+      state.status === "disconnected" &&
+      (prevStatus === "reconnecting" || prevStatus === "connecting") &&
+      state.reconnectAttempts > 0
+    ) {
+      // Reached terminal disconnect after reconnect attempts — funnel signal.
+      const lastError = truncateForAnalytics(state.error);
+      trackEvent("ws_reconnect_failed", {
+        attempts: state.reconnectAttempts,
+        ...(lastError ? { last_error: lastError } : {}),
+      });
+    }
+
+    // Sample latency once every 30 seconds while connected.
+    if (state.status === "connected" && state.latencyMs != null) {
+      const now = Date.now();
+      if (now - this.#lastLatencySampleAt >= 30_000) {
+        this.#lastLatencySampleAt = now;
+        trackEvent("ws_latency_sample", { latency_ms: state.latencyMs });
+      }
     }
 
     this.status = state.status;
+    if (state.status !== this.#previousStatus) {
+      for (const listener of this.#statusListeners) {
+        listener(state.status);
+      }
+    }
     this.authenticated = state.authenticated;
     this.connectionId = state.connectionId;
     this.latencyMs = state.latencyMs;

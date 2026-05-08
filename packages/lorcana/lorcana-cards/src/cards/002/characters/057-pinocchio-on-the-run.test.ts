@@ -68,7 +68,7 @@ describe("Pinocchio - On the Run", () => {
       expect(testEngine.asPlayerOne().getCardZone(theSorcerersSpellbook)).toBe("hand");
     });
 
-    it("still queues the trigger when no valid target exists", () => {
+    it("auto-drains the trigger when no valid target exists", () => {
       // arthurTrainedSwordsman has cost 4 — NOT a valid target
       // When no valid targets exist, the optional effect produces no bag and arthur stays in play
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
@@ -83,14 +83,8 @@ describe("Pinocchio - On the Run", () => {
 
       expect(testEngine.asPlayerOne().playCard(pinocchioOnTheRun)).toBeSuccessfulCommand();
 
-      // The trigger still goes to the bag. With no legal choices at resolution,
-      // declining or accepting it should produce no effect.
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(pinocchioOnTheRun, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
+      // With no legal choices, the optional bag entry resolves as a no-op without prompting.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       // arthur remains in play untouched
       expect(testEngine.asPlayerOne().getCardZone(arthurTrainedSwordsman)).toBe("play");

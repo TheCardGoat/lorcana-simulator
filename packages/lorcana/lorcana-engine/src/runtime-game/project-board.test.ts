@@ -7,6 +7,7 @@ import {
   CANONICAL_PLAYER_TWO,
   LorcanaMultiplayerTestEngine,
   createMockCharacter,
+  createMockLocation,
 } from "../testing";
 
 function createMockActionCard(params: {
@@ -65,6 +66,15 @@ const projectedFriendlyTarget = createMockCharacter({
   cost: 2,
   strength: 2,
   willpower: 3,
+  lore: 1,
+});
+
+const projectedLocation = createMockLocation({
+  id: "projected-location",
+  name: "Projected Location",
+  cost: 2,
+  moveCost: 1,
+  willpower: 6,
   lore: 1,
 });
 
@@ -355,6 +365,34 @@ const projectedPlayerEffectAction = createMockActionCard({
 });
 
 describe("projectLorcanaBoardView", () => {
+  it("projects visible card types for characters and locations", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [projectedFriendlyTarget, projectedLocation],
+      },
+      { deck: 10 },
+    );
+
+    try {
+      const board = testEngine.asPlayerOne().getBoard();
+      const characterId = testEngine.findCardInstanceId(
+        projectedFriendlyTarget,
+        "play",
+        CANONICAL_PLAYER_ONE,
+      );
+      const locationId = testEngine.findCardInstanceId(
+        projectedLocation,
+        "play",
+        CANONICAL_PLAYER_ONE,
+      );
+
+      expect(board.cards[characterId]?.cardType).toBe("character");
+      expect(board.cards[locationId]?.cardType).toBe("location");
+    } finally {
+      testEngine.dispose();
+    }
+  });
+
   it("uses otp-based turn calculation when skip-pre-game fixtures set otp to player one", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({ deck: 10 }, { deck: 10 });
 

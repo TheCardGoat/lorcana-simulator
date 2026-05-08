@@ -14,6 +14,7 @@ export const theGlassSlipper: ItemCard = {
   rarity: "rare",
   cost: 2,
   inkable: false,
+  cardCopyLimit: 2,
   externalIds: {
     lorcast: "crd_aa7db27471b142cfa97cd5ca3409669d",
     tcgPlayer: 619736,

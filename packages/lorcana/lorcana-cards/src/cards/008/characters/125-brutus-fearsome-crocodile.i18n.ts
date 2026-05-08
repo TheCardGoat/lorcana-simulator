@@ -8,7 +8,7 @@ export const brutusFearsomeCrocodileI18n: Record<Languages, I18nProperties> = {
       {
         title: "SPITEFUL",
         description:
-          "During your turn, when this character is banished, if one of your characters was damaged this turn, gain 2 lore.",
+          "During your turn, when this character is banished, if one of your characters took damage this turn, gain 2 lore.",
       },
     ],
   },

@@ -16,6 +16,7 @@ import { bug09CinderellaDreamComeTrue } from "./2026-04-22/bug-09-cinderella-dre
 import { bug11OhanaMeansFamily } from "./2026-04-22/bug-11-ohana-means-family.js";
 import { bug12ScroogeReformedEbenezer } from "./2026-04-22/bug-12-scrooge-reformed-ebenezer.js";
 import { bug13MeekoSkittishScrounger } from "./2026-04-22/bug-13-meeko-skittish-scrounger.js";
+import { bug14PlutoSteelBodyguard } from "./2026-04-22/bug-14-pluto-steel-bodyguard.js";
 import { bug15EmeraldChromicon } from "./2026-04-22/bug-15-emerald-chromicon.js";
 import { bug16AnastasiaBossyStepsister } from "./2026-04-22/bug-16-anastasia-bossy-stepsister.js";
 import { bug17AuroraDreamingGuardian } from "./2026-04-22/bug-17-aurora-dreaming-guardian.js";
@@ -23,7 +24,6 @@ import { bug18PowerlineMusicalSuperstar } from "./2026-04-22/bug-18-powerline-mu
 import { bug19MaxGoofChartTopper } from "./2026-04-22/bug-19-max-goof-chart-topper.js";
 import { bug20FaZhouWarHero } from "./2026-04-22/bug-20-fa-zhou-war-hero.js";
 import { bug21MulanReadyForBattle } from "./2026-04-22/bug-21-mulan-ready-for-battle.js";
-import { bug22JafarAspiringRuler } from "./2026-04-22/bug-22-jafar-aspiring-ruler.js";
 import { bug23SimbaPrideProtector } from "./2026-04-22/bug-23-simba-pride-protector.js";
 import { bug24MauiHalfShark } from "./2026-04-22/bug-24-maui-half-shark.js";
 import { bug25AnnaSoothingSisterShiftZero } from "./2026-04-22/bug-25-anna-soothing-sister-shift-zero.js";
@@ -47,6 +47,32 @@ import { bug42DemonaMatchLogFixture } from "./2026-04-22/bug-42-demona-match-log
 import { bug43KristoffIcyExplorerFixture } from "./2026-04-22/bug-43-kristoff-icy-explorer.js";
 import { bug43TianaRestaurantOwnerFixture } from "./2026-04-22/bug-43-tiana-restaurant-owner.js";
 import { bug44BroadwayBodyguardLocationFixture } from "./2026-04-22/bug-44-broadway-bodyguard-location.js";
+import { bug45MoanaKakamoraLeaderGatheringForcesFixture } from "./2026-04-22/bug-45-moana-kakamora-leader-gathering-forces.js";
+import { bug46WoodyJungleGuideOptionalPlay } from "./2026-04-22/bug-46-woody-jungle-guide-optional-play.js";
+import { bug47LeviathanStrengthBudget } from "./2026-05-04/bug-47-leviathan-strength-budget.js";
+import { bug48TouchTheSkySingThenMove } from "./2026-05-04/bug-48-touch-the-sky-sing-then-move.js";
+import { bug49TransportPodConfirm } from "./2026-05-04/bug-49-transport-pod-confirm.js";
+import { bug50GoofySetForAdventureConfirm } from "./2026-05-04/bug-50-goofy-set-for-adventure-confirm.js";
+import { bug51QueenOpponentDiscardOnly } from "./2026-05-04/bug-51-queen-opponent-discard-only.js";
+import { bug52KingCandyOpponentChooser } from "./2026-05-04/bug-52-king-candy-opponent-chooser.js";
+import { bug53HeiheiHornedKingDiscardMetric } from "./2026-05-04/bug-53-heihei-horned-king-discard-metric.js";
+import { bug54KidaBoostDiscardMetric } from "./2026-05-04/bug-54-kida-boost-discard-metric.js";
+import { bug55AnnaSoothingSisterWarmHeart } from "./2026-05-04/bug-55-anna-soothing-sister-warm-heart.js";
+import { bug56GadgetRangerPlaneSupport } from "./2026-05-04/bug-56-gadget-ranger-plane-support.js";
+import { bug57ThunderquackVillainClassification } from "./2026-05-04/bug-57-thunderquack-villain-classification.js";
+import { bug58GrandmotherFaThisTurnDuration } from "./2026-05-04/bug-58-grandmother-fa-this-turn-duration.js";
+import { bug59LadyDavidBodyguardExerted } from "./2026-05-04/bug-59-lady-david-bodyguard-exerted.js";
+import { bug60MickeyExpeditionMayEnterExerted } from "./2026-05-04/bug-60-mickey-expedition-may-enter-exerted.js";
+import { bug61SyndromeOutForRevengeRobotFilter } from "./2026-05-04/bug-61-syndrome-out-for-revenge-robot-filter.js";
+import { bug62JessieEmptyOpponentField } from "./2026-05-04/bug-62-jessie-empty-opponent-field.js";
+import { bug63RollerBobNoToys } from "./2026-05-04/bug-63-roller-bob-no-toys.js";
+import { bug64HeiheiExpandedClearYourMind } from "./2026-05-04/bug-64-heihei-expanded-clear-your-mind.js";
+import { bug65ThreeArrowsDifferentTargets } from "./2026-05-04/bug-65-three-arrows-different-targets.js";
+import { bug66DesperatePlanDiscardStep } from "./2026-05-04/bug-66-desperate-plan-discard-step.js";
+import { bug67LuisaMadrigalZeroDamage } from "./2026-05-04/bug-67-luisa-madrigal-zero-damage.js";
+import { bug68ScroogeShushOnChallenged } from "./2026-05-04/bug-68-scrooge-shush-on-challenged.js";
+import { bug69DonaldFredHoneywellDoubleTrigger } from "./2026-05-04/bug-69-donald-fred-honeywell-double-trigger.js";
+import { bug70WoodyEveryoneGatherRound } from "./2026-05-04/bug-70-woody-everyone-gather-round.js";
 
 const regressionFixtureRegistry = createFixtureRegistry(
   [
@@ -67,6 +93,7 @@ const regressionFixtureRegistry = createFixtureRegistry(
     bug11OhanaMeansFamily,
     bug12ScroogeReformedEbenezer,
     bug13MeekoSkittishScrounger,
+    bug14PlutoSteelBodyguard,
     bug15EmeraldChromicon,
     bug16AnastasiaBossyStepsister,
     bug17AuroraDreamingGuardian,
@@ -74,7 +101,6 @@ const regressionFixtureRegistry = createFixtureRegistry(
     bug19MaxGoofChartTopper,
     bug20FaZhouWarHero,
     bug21MulanReadyForBattle,
-    bug22JafarAspiringRuler,
     bug23SimbaPrideProtector,
     bug24MauiHalfShark,
     bug25AnnaSoothingSisterShiftZero,
@@ -98,6 +124,33 @@ const regressionFixtureRegistry = createFixtureRegistry(
     bug43KristoffIcyExplorerFixture,
     bug43TianaRestaurantOwnerFixture,
     bug44BroadwayBodyguardLocationFixture,
+    bug45MoanaKakamoraLeaderGatheringForcesFixture,
+    bug46WoodyJungleGuideOptionalPlay,
+    // --- 2026-05-04 QA validation batch ---
+    bug47LeviathanStrengthBudget,
+    bug48TouchTheSkySingThenMove,
+    bug49TransportPodConfirm,
+    bug50GoofySetForAdventureConfirm,
+    bug51QueenOpponentDiscardOnly,
+    bug52KingCandyOpponentChooser,
+    bug53HeiheiHornedKingDiscardMetric,
+    bug54KidaBoostDiscardMetric,
+    bug55AnnaSoothingSisterWarmHeart,
+    bug56GadgetRangerPlaneSupport,
+    bug57ThunderquackVillainClassification,
+    bug58GrandmotherFaThisTurnDuration,
+    bug59LadyDavidBodyguardExerted,
+    bug60MickeyExpeditionMayEnterExerted,
+    bug61SyndromeOutForRevengeRobotFilter,
+    bug62JessieEmptyOpponentField,
+    bug63RollerBobNoToys,
+    bug64HeiheiExpandedClearYourMind,
+    bug65ThreeArrowsDifferentTargets,
+    bug66DesperatePlanDiscardStep,
+    bug67LuisaMadrigalZeroDamage,
+    bug68ScroogeShushOnChallenged,
+    bug69DonaldFredHoneywellDoubleTrigger,
+    bug70WoodyEveryoneGatherRound,
   ] satisfies LorcanaSimulatorFixture[],
   "simulator regression fixtures",
 );

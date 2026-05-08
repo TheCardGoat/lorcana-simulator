@@ -248,13 +248,15 @@ export async function onboardPlayer(): Promise<MatchmakingContext> {
   );
 }
 
-export async function importLegacyDecksForProfile(): Promise<MatchmakingContext> {
+export async function importLegacyDecksForProfile(
+  gameProfileId: string,
+): Promise<MatchmakingContext> {
   return requestJson<MatchmakingContext>(
     `${getApiOrigin()}/v1/users/me/games/lorcana/onboard`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ termsAccepted: true, forceReimport: true }),
+      body: JSON.stringify({ termsAccepted: true, forceReimport: true, gameProfileId }),
     },
     "Failed to import legacy decks",
   );
@@ -418,6 +420,19 @@ export async function fetchHistoricDeckByDeckListId(
 // Client-side deck format validation
 // ---------------------------------------------------------------------------
 
+// Mirrors deriveCardCopyLimit in @tcg/lorcana-cards/scripts/generators/file-generator.
+// Kept here because canonical-cards.json doesn't carry cardCopyLimit; we derive
+// it from rulesText at lookup time so reprints/enchanted variants resolve identically.
+function deriveCardCopyLimit(rulesText?: string): number | "no-limit" | undefined {
+  if (!rulesText) return undefined;
+  if (/you may have any number of cards named\b/i.test(rulesText)) return "no-limit";
+  const upTo = rulesText.match(/you may have up to (\d+) copies of\b/i);
+  if (upTo) return Number.parseInt(upTo[1], 10);
+  const only = rulesText.match(/you may only have (\d+) cop(?:y|ies) of\b/i);
+  if (only) return Number.parseInt(only[1], 10);
+  return undefined;
+}
+
 let cachedLookup: ((shortId: string) => CardFormatData | undefined) | null = null;
 let lookupPromise: Promise<(shortId: string) => CardFormatData | undefined> | null = null;
 
@@ -497,6 +512,7 @@ async function buildClientCardFormatLookup(): Promise<
           inkTypes: Array.isArray(card.inkType) ? card.inkType : [card.inkType],
           sets: [...setCodes] as LorcanaSetCode[],
           rotationStates,
+          cardCopyLimit: deriveCardCopyLimit(card.rulesText),
         };
       };
 

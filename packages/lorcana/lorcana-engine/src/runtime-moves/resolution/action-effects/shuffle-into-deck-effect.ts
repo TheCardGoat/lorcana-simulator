@@ -6,6 +6,7 @@ import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import { resolveEffectTargets } from "../../../targeting/runtime";
 import { isDiscardZoneKey, recordDiscardExitThisTurn } from "../../state/turn-metrics";
+import { isCardInPlayZone } from "../../../operations/zones";
 
 export function isShuffleIntoDeckEffect(effect: unknown): effect is ShuffleIntoDeckEffect {
   return (
@@ -21,8 +22,7 @@ function moveCardIntoDeck(
   cardId: CardInstanceId,
   deckPlayerId: PlayerId,
 ): void {
-  const zoneKey = ctx.framework.zones.getCardZone(cardId);
-  if (typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"))) {
+  if (isCardInPlayZone(ctx, cardId)) {
     moveCardOutOfPlayWithStack(ctx, cardId, {
       zone: "deck",
       playerId: deckPlayerId,

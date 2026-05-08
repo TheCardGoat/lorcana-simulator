@@ -102,6 +102,5 @@ export const hiramFlavershamToymaker: CharacterCard = {
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: hiramFlavershamToymakerI18n,
 };

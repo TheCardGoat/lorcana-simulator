@@ -18,13 +18,16 @@ export const dopeyDrawnToMusic: CharacterCard = {
   willpower: 8,
   lore: 2,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_a0369f5ac4404d72aeebd384f99c92fe",
+  },
   text: [
     {
-      title: "Tongue-Tied",
+      title: "TONGUE-TIED",
       description: "This character can't {E} to sing songs.",
     },
     {
-      title: "Distant Melody",
+      title: "DISTANT MELODY",
       description:
         "Once during your turn, whenever you play a song, this character gets +1 {L} this turn.",
     },

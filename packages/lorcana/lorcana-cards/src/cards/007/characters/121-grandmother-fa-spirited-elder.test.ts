@@ -36,6 +36,39 @@ describe("Grandmother Fa - Spirited Elder", () => {
       );
     });
 
+    it("+2 strength expires at the end of the turn it was granted", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: grandmotherFaSpiritedElder, isDrying: false },
+            { card: friendlyTarget, isDrying: false },
+          ],
+          deck: 5,
+        },
+        { deck: 5 },
+      );
+
+      expect(testEngine.asPlayerOne().quest(grandmotherFaSpiritedElder)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(grandmotherFaSpiritedElder, {
+          resolveOptional: true,
+          targets: [friendlyTarget],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCard(friendlyTarget)?.strength).toBe(
+        friendlyTarget.strength + 2,
+      );
+
+      // Pass to opponent's turn, then back — the +2S is "this turn" only.
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCard(friendlyTarget)?.strength).toBe(
+        friendlyTarget.strength,
+      );
+    });
+
     it("does not change strength if you decline the optional trigger", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [

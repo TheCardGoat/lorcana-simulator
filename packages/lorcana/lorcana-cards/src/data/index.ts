@@ -96,6 +96,14 @@ export interface CardPrintingMetadata {
   cardNumber: number;
   rarity: Rarity;
   specialRarity?: SpecialRarity;
+  /**
+   * Promo sheet code from upstream Ravensburger card_identifier (e.g. "P1", "P2", "P3").
+   * Present when the printing is a promo from a Promo Set rather than a regular printing
+   * of the parent set. Used by image URL builders to resolve the promo image folder
+   * (e.g. P3 → EN/P03/<num>.webp) instead of the parent set folder where the promo
+   * would collide with the regular printing at the same cardNumber.
+   */
+  promoSheetCode?: string;
   author?: string;
   flavorText?: string;
   setRotationState?: string;

@@ -6,11 +6,13 @@ import type {
 } from "@/features/simulator/model/contracts.js";
 import {
   assignCardHotkeys,
-  FIXED_MOVE_CATEGORY_HOTKEYS,
   HAND_CARD_HOTKEYS,
-  OPPONENT_CARD_HOTKEYS,
+  OPPONENT_HAND_HOTKEYS,
+  OPPONENT_PLAY_HOTKEYS,
   PLAY_CARD_HOTKEYS,
+  type SimulatorHotkeyCardZone,
   type SimulatorHotkeyDescriptor,
+  type SimulatorHotkeyLayer,
 } from "@/features/simulator/hotkeys/hotkey-bindings.js";
 
 interface MoveCategorySummaryLike {
@@ -29,9 +31,21 @@ interface SimulatorHotkeyRegistryArgs {
   moveCategorySummaries: readonly MoveCategorySummaryLike[];
   selectionState: AvailableMovesSelectionState | null;
   pendingDirectMove: PendingDirectMove | null;
+  /**
+   * Set when a card has been "armed" — its quick-menu / context menu is open
+   * and presenting action choices. While armed, the idle row hotkeys must be
+   * suppressed so they don't double-fire alongside the menu's own bindings.
+   */
+  armedCardId: string | null;
   opponentPlayCards: readonly LorcanaCardSnapshot[];
   ownedPlayCards: readonly LorcanaCardSnapshot[];
   ownedHandCards: readonly LorcanaCardSnapshot[];
+  /**
+   * Cards in the opponent's hand that are currently selectable (e.g. a "look
+   * at opponent's hand and discard one" effect). Empty under normal play; the
+   * bottom row only activates when this list is populated.
+   */
+  opponentHandCards: readonly LorcanaCardSnapshot[];
   canBack: boolean;
   canCancel: boolean;
   canConfirm: boolean;
@@ -56,15 +70,31 @@ function isSelectableCardState(selectionState: AvailableMovesSelectionState | nu
   );
 }
 
+function resolveActiveLayer(
+  selectionState: AvailableMovesSelectionState | null,
+  armedCardId: string | null,
+): SimulatorHotkeyLayer {
+  if (isSelectableCardState(selectionState)) {
+    return "selecting";
+  }
+  if (armedCardId) {
+    return "action-menu";
+  }
+  return "idle-browse";
+}
+
 export function buildSimulatorHotkeyDescriptors(
   args: SimulatorHotkeyRegistryArgs,
 ): SimulatorHotkeyDescriptor[] {
+  const activeLayer = resolveActiveLayer(args.selectionState, args.armedCardId);
+
   const descriptors: SimulatorHotkeyDescriptor[] = [
     {
       id: "global-open-command-palette",
       hotkey: "Mod+K",
       label: m["sim.hotkeys.open"]({}),
       kind: "global",
+      layer: "global",
       enabled: true,
       execute: args.openCommandPalette,
     },
@@ -73,6 +103,7 @@ export function buildSimulatorHotkeyDescriptors(
       hotkey: "Escape",
       label: m["sim.actions.cancel"]({}),
       kind: "global",
+      layer: "global",
       enabled: args.canCancel || Boolean(args.pendingDirectMove),
       execute: args.cancel,
     },
@@ -81,6 +112,7 @@ export function buildSimulatorHotkeyDescriptors(
       hotkey: "Backspace",
       label: m["sim.actions.back"]({}),
       kind: "global",
+      layer: "global",
       enabled: args.canBack,
       execute: args.back,
     },
@@ -91,6 +123,7 @@ export function buildSimulatorHotkeyDescriptors(
         ? m["sim.actions.confirmMoveLabel"]({ label: args.pendingDirectMove.label })
         : m["sim.actions.confirm"]({}),
       kind: "global",
+      layer: "global",
       enabled: args.canConfirm || Boolean(args.pendingDirectMove),
       execute: args.confirm,
     },
@@ -103,87 +136,125 @@ export function buildSimulatorHotkeyDescriptors(
     (summary) => summary.categoryId === "pass-turn",
   );
 
+  // Pass turn keeps a global binding because passing should always be one keystroke
+  // away — there's no zone or selection layer it conflicts with.
   descriptors.push({
     id: "move:pass-turn",
     hotkey: "Space",
     label: passTurnSummary?.categoryLabel ?? m["sim.actions.label.passTurn"]({}),
     kind: "move",
+    layer: "global",
     categoryId: "pass-turn",
     enabled: availableCategoryIds.has("pass-turn"),
     execute: () => args.runMoveCategory("pass-turn"),
   });
 
-  for (const { categoryId, hotkey } of FIXED_MOVE_CATEGORY_HOTKEYS) {
-    const summary = args.moveCategorySummaries.find(
-      (candidate) => candidate.categoryId === categoryId,
-    );
-    descriptors.push({
-      id: `move:${categoryId}`,
-      hotkey,
-      label: summary?.categoryLabel ?? getFallbackMoveCategoryLabel(categoryId),
-      kind: "move",
-      categoryId,
-      enabled: availableCategoryIds.has(categoryId),
-      execute: () => args.runMoveCategory(categoryId),
-    });
-  }
+  const cardSelectionZone =
+    activeLayer === "selecting"
+      ? getSelectionZone(
+          args.selectionState,
+          args.opponentPlayCards,
+          args.ownedPlayCards,
+          args.ownedHandCards,
+          args.opponentHandCards,
+        )
+      : null;
 
-  const selectionActive = isSelectableCardState(args.selectionState);
-  const cardSelectionZone = selectionActive
-    ? getSelectionZone(
-        args.selectionState,
-        args.opponentPlayCards,
-        args.ownedPlayCards,
-        args.ownedHandCards,
-      )
-    : null;
+  pushCardDescriptors(descriptors, {
+    cards: args.ownedHandCards,
+    hotkeys: HAND_CARD_HOTKEYS,
+    zone: "your-hand",
+    idPrefix: "card:hand",
+    activeLayer,
+    cardSelectionZone,
+    selectCard: args.selectCard,
+    inspectCard: args.inspectCard,
+  });
 
-  for (const binding of assignCardHotkeys(args.opponentPlayCards, OPPONENT_CARD_HOTKEYS)) {
-    const enabled = selectionActive ? cardSelectionZone === "opponent-play" : true;
-    descriptors.push({
-      id: `card:opponent:${binding.card.cardId}`,
-      hotkey: binding.hotkey,
-      label: binding.card.label,
-      kind: "card",
-      cardId: binding.card.cardId,
-      cardZone: "opponent-play",
-      enabled,
-      execute: () =>
-        selectionActive ? args.selectCard(binding.card.cardId) : args.inspectCard(binding.card),
-    });
-  }
+  pushCardDescriptors(descriptors, {
+    cards: args.ownedPlayCards,
+    hotkeys: PLAY_CARD_HOTKEYS,
+    zone: "your-play",
+    idPrefix: "card:play",
+    activeLayer,
+    cardSelectionZone,
+    selectCard: args.selectCard,
+    inspectCard: args.inspectCard,
+  });
 
-  for (const binding of assignCardHotkeys(args.ownedPlayCards, PLAY_CARD_HOTKEYS)) {
-    const enabled = selectionActive ? cardSelectionZone === "your-play" : true;
-    descriptors.push({
-      id: `card:play:${binding.card.cardId}`,
-      hotkey: binding.hotkey,
-      label: binding.card.label,
-      kind: "card",
-      cardId: binding.card.cardId,
-      cardZone: "your-play",
-      enabled,
-      execute: () =>
-        selectionActive ? args.selectCard(binding.card.cardId) : args.inspectCard(binding.card),
-    });
-  }
+  pushCardDescriptors(descriptors, {
+    cards: args.opponentPlayCards,
+    hotkeys: OPPONENT_PLAY_HOTKEYS,
+    zone: "opponent-play",
+    idPrefix: "card:opponent",
+    activeLayer,
+    cardSelectionZone,
+    selectCard: args.selectCard,
+    inspectCard: args.inspectCard,
+  });
 
-  for (const binding of assignCardHotkeys(args.ownedHandCards, HAND_CARD_HOTKEYS)) {
-    const enabled = selectionActive ? cardSelectionZone === "your-hand" : true;
-    descriptors.push({
-      id: `card:hand:${binding.card.cardId}`,
-      hotkey: binding.hotkey,
-      label: binding.card.label,
-      kind: "card",
-      cardId: binding.card.cardId,
-      cardZone: "your-hand",
-      enabled,
-      execute: () =>
-        selectionActive ? args.selectCard(binding.card.cardId) : args.inspectCard(binding.card),
+  // Opponent's hand only gets keys when we actually have selectable cards there
+  // (e.g. an effect that lets you peek at the opponent's hand). Otherwise the
+  // row stays dark, which matches the strict-visibility rule.
+  if (args.opponentHandCards.length > 0) {
+    pushCardDescriptors(descriptors, {
+      cards: args.opponentHandCards,
+      hotkeys: OPPONENT_HAND_HOTKEYS,
+      zone: "opponent-hand",
+      idPrefix: "card:opponent-hand",
+      activeLayer,
+      cardSelectionZone,
+      selectCard: args.selectCard,
+      inspectCard: args.inspectCard,
     });
   }
 
   return descriptors;
+}
+
+interface PushCardDescriptorsArgs {
+  cards: readonly LorcanaCardSnapshot[];
+  hotkeys: readonly string[];
+  zone: SimulatorHotkeyCardZone;
+  idPrefix: string;
+  activeLayer: SimulatorHotkeyLayer;
+  cardSelectionZone: SimulatorHotkeyCardZone | null;
+  selectCard: (cardId: string) => void;
+  inspectCard: (card: LorcanaCardSnapshot) => void;
+}
+
+function pushCardDescriptors(
+  descriptors: SimulatorHotkeyDescriptor[],
+  args: PushCardDescriptorsArgs,
+): void {
+  const { activeLayer, cardSelectionZone, zone } = args;
+  const layerForZone: SimulatorHotkeyLayer =
+    activeLayer === "selecting" ? "selecting" : "idle-browse";
+
+  // Strict layering:
+  //  - selecting → only the active selection zone is hot
+  //  - action-menu (a card is armed) → all card hotkeys go quiet so the
+  //    quick-menu can own 1-9 without double-firing
+  //  - idle-browse → every zone's row is hot for inspect/preview
+  const enabled =
+    activeLayer === "selecting" ? cardSelectionZone === zone : activeLayer === "idle-browse";
+
+  for (const binding of assignCardHotkeys(args.cards, args.hotkeys)) {
+    descriptors.push({
+      id: `${args.idPrefix}:${binding.card.cardId}`,
+      hotkey: binding.hotkey,
+      label: binding.card.label,
+      kind: "card",
+      layer: layerForZone,
+      cardId: binding.card.cardId,
+      cardZone: zone,
+      enabled,
+      execute: () =>
+        activeLayer === "selecting"
+          ? args.selectCard(binding.card.cardId)
+          : args.inspectCard(binding.card),
+    });
+  }
 }
 
 function getSelectionZone(
@@ -191,57 +262,31 @@ function getSelectionZone(
   opponentPlayCards: readonly LorcanaCardSnapshot[],
   ownedPlayCards: readonly LorcanaCardSnapshot[],
   ownedHandCards: readonly LorcanaCardSnapshot[],
-): "opponent-play" | "your-play" | "your-hand" | null {
+  opponentHandCards: readonly LorcanaCardSnapshot[],
+): SimulatorHotkeyCardZone | null {
   if (!selectionState) {
     return null;
   }
 
-  const selectedEntry = selectionState.entries.find(
-    (entry) => entry.kind === "card" && typeof entry.cardId === "string" && entry.disabled !== true,
-  );
+  // Walk every selectable card entry and pick the first one that intersects
+  // a hotkey-bound zone. The shell slices each zone array to the row length
+  // (max 10), so the selection's first entry might point to a card outside
+  // those slices — we must keep scanning instead of giving up after one miss
+  // or every card hotkey gets disabled.
+  const ownedHandIds = new Set(ownedHandCards.map((card) => card.cardId));
+  const ownedPlayIds = new Set(ownedPlayCards.map((card) => card.cardId));
+  const opponentPlayIds = new Set(opponentPlayCards.map((card) => card.cardId));
+  const opponentHandIds = new Set(opponentHandCards.map((card) => card.cardId));
 
-  if (!selectedEntry || selectedEntry.kind !== "card") {
-    return null;
-  }
-
-  if (ownedHandCards.some((card) => card.cardId === selectedEntry.cardId)) {
-    return "your-hand";
-  }
-
-  if (ownedPlayCards.some((card) => card.cardId === selectedEntry.cardId)) {
-    return "your-play";
-  }
-
-  if (opponentPlayCards.some((card) => card.cardId === selectedEntry.cardId)) {
-    return "opponent-play";
+  for (const entry of selectionState.entries) {
+    if (entry.kind !== "card" || typeof entry.cardId !== "string" || entry.disabled === true) {
+      continue;
+    }
+    if (ownedHandIds.has(entry.cardId)) return "your-hand";
+    if (ownedPlayIds.has(entry.cardId)) return "your-play";
+    if (opponentPlayIds.has(entry.cardId)) return "opponent-play";
+    if (opponentHandIds.has(entry.cardId)) return "opponent-hand";
   }
 
   return null;
-}
-
-function getFallbackMoveCategoryLabel(categoryId: ExecutableMovePresentationCategoryId): string {
-  switch (categoryId) {
-    case "activate-ability":
-      return m["sim.actions.label.activateAbility"]({});
-    case "challenge":
-      return m["sim.actions.label.challenge"]({});
-    case "ink-card":
-      return m["sim.actions.label.inkCard"]({});
-    case "move-to-location":
-      return m["sim.actions.label.moveToLocation"]({});
-    case "play-card":
-      return m["sim.actions.label.playCard"]({});
-    case "quest":
-      return m["sim.actions.label.quest"]({});
-    case "quest-all":
-      return m["sim.actions.label.questAll"]({});
-    case "shift-card":
-      return m["sim.actions.label.shiftCard"]({});
-    case "sing-card":
-      return m["sim.actions.label.singCard"]({});
-    case "undo":
-      return m["sim.actions.label.undo"]({});
-    default:
-      return categoryId;
-  }
 }

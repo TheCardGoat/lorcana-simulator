@@ -26,7 +26,7 @@ export const hydraDeadlySerpent: CharacterCard = {
     {
       title: "WATCH THE TEETH",
       description:
-        "Whenever this character is dealt damage, deal that much damage to chosen opposing character.",
+        "Whenever this character takes damage, deal that much damage to chosen opposing character.",
     },
   ],
   classifications: ["Storyborn"],
@@ -34,7 +34,7 @@ export const hydraDeadlySerpent: CharacterCard = {
     {
       id: "dZ8-1",
       name: "WATCH THE TEETH",
-      text: "WATCH THE TEETH Whenever this character is dealt damage, deal that much damage to chosen opposing character.",
+      text: "WATCH THE TEETH Whenever this character takes damage, deal that much damage to chosen opposing character.",
       trigger: {
         event: "damage",
         on: "SELF",

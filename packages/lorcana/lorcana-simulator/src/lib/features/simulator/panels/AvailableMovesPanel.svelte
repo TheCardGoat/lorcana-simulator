@@ -21,7 +21,6 @@ import NamedCardSearchInput from "@/features/simulator/panels/NamedCardSearchInp
 import CardTextToken from "@/features/simulator/panels/CardTextToken.svelte";
 import ResolutionAmountControls from "@/features/simulator/panels/ResolutionAmountControls.svelte";
 import HotkeyDisplay from "@/features/simulator/hotkeys/HotkeyDisplay.svelte";
-import { getFixedMoveCategoryHotkey } from "@/features/simulator/hotkeys/hotkey-bindings.js";
 
 const PANEL_TITLE_ID = "available-moves-panel-title";
 
@@ -218,7 +217,7 @@ const hasMoves = $derived(summaries.length > 0);
 // Reading selectedCategoryId inside untrack avoids re-triggering
 // when the user opens a drill-down.
 $effect(() => {
-	summaries;
+	void summaries;
 	untrack(() => {
 		selectedCategoryId = null;
 		expandedCategoryMoves = [];
@@ -505,11 +504,10 @@ function getMoveCategoryHotkey(
 		return "Space";
 	}
 
-	if (hotkeyMode === "confirm-only") {
-		return null;
-	}
-
-	return getFixedMoveCategoryHotkey(categoryId);
+	// Top-level categories no longer claim digit hotkeys — number row 1-0 is
+	// now reserved for hand cards. Per-card action shortcuts are surfaced via
+	// the card quick-menu (action-menu layer) instead.
+	return null;
 }
 
 onDestroy(() => {

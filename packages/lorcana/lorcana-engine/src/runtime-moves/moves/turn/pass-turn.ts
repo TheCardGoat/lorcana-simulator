@@ -46,9 +46,11 @@ import {
   hasStaticPlayerRestriction,
 } from "../../rules/static-ability-utils";
 import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
+import { invalidateStaticEffects } from "../../rules/static-effects-invalidation";
 import { recordCardDrawnThisTurn } from "../../state/turn-metrics";
 import { resolveTurnOwnerId } from "../../../core/runtime/turn-owner";
 import { checkDeckEmptyForPlayer } from "../../state/game-state-check";
+import { gainLore, isCardInPlayZone } from "../../../operations";
 
 type PassTurnExecutionContext = Pick<
   MoveExecutionContext<LorcanaRuntimeMoveInputs["passTurn"]>,
@@ -62,11 +64,6 @@ type PassTurnEnumerationContext = MoveEnumerationContext;
 type PassTurnIntentContext = PassTurnValidationContext | PassTurnEnumerationContext;
 
 type PassTurnFailure = Extract<RuntimeValidationResult, { valid: false }>;
-
-function isCardStillInPlay(ctx: PassTurnExecutionContext, sourceId: string): boolean {
-  const zoneKey = ctx.framework.zones.getCardZone(sourceId);
-  return typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"));
-}
 
 export const PASS_TURN_STACK_PENDING_ERROR_CODE = "PASS_TURN_STACK_PENDING";
 export const PASS_TURN_DECISION_PENDING_ERROR_CODE = "PASS_TURN_DECISION_PENDING";
@@ -194,10 +191,10 @@ function readyCardsForPlayer(
       const currentMeta = (ctx.cards.require(cardId).meta ?? {}) as LorcanaCardMeta;
       const nextMeta = { ...currentMeta } as Record<string, unknown>;
       const atLocationId = currentMeta.atLocationId;
-      const isCardAtLocation = !!atLocationId && isCardStillInPlay(ctx, atLocationId as string);
+      const isCardAtLocation = !!atLocationId && isCardInPlayZone(ctx, atLocationId as string);
       const cantReady =
         hasTemporaryRestriction(currentMeta, currentTurn, "cant-ready", {
-          isSourceInPlay: (sourceId) => isCardStillInPlay(ctx, sourceId),
+          isSourceInPlay: (sourceId) => isCardInPlayZone(ctx, sourceId),
           isCardAtLocation,
         }) ||
         hasStaticCardRestriction({
@@ -207,7 +204,7 @@ function readyCardsForPlayer(
           registry,
         }) ||
         hasTemporaryRestriction(currentMeta, currentTurn, "doesnt-ready", {
-          isSourceInPlay: (sourceId) => isCardStillInPlay(ctx, sourceId),
+          isSourceInPlay: (sourceId) => isCardInPlayZone(ctx, sourceId),
           isCardAtLocation,
         }) ||
         hasStaticCardRestriction({
@@ -255,18 +252,24 @@ function drawForTurn(ctx: PassTurnExecutionContext, playerId: PlayerId, turnNumb
   });
   const drawnCardIds = Array.isArray(drawnCards) ? (drawnCards as CardInstanceId[]) : [];
 
-  if (drawnCardIds.length > 0) {
-    recordCardDrawnThisTurn(ctx, playerId);
-  }
-
   // Emit triggered events for each drawn card so "Whenever you draw" abilities fire.
   // source: "mandatory-draw" routes these to TurnStartLog instead of the current move's outcomes.
   for (const cardId of drawnCardIds) {
+    recordCardDrawnThisTurn(ctx, playerId);
+    const drawCount =
+      (ctx.G.turnMetadata?.cardsDrawnThisTurnByPlayer as Record<string, number> | undefined)?.[
+        playerId
+      ] ?? 1;
     emitTriggeredLorcanaEvent(
       ctx,
       "cardsDrawn",
       { playerId, amount: 1, cardIds: [cardId], source: "mandatory-draw" },
-      { event: "draw", playerId, subjectCardId: cardId },
+      {
+        event: "draw",
+        playerId,
+        subjectCardId: cardId,
+        eventSnapshot: { drawCountForPlayerThisTurn: drawCount },
+      },
     );
   }
 }
@@ -331,7 +334,7 @@ function gainLoreFromLocations(ctx: PassTurnExecutionContext, playerId: PlayerId
     ),
   );
 
-  ctx.G.lore[playerId] = Number(ctx.G.lore[playerId] ?? 0) + loreGain;
+  gainLore(ctx, playerId, loreGain);
 }
 
 function getOpponents(ctx: PassTurnExecutionContext, playerId: PlayerId): PlayerId[] {
@@ -352,6 +355,10 @@ export function advanceTurnToNextPlayer(ctx: PassTurnExecutionContext): AdvanceT
 
   // Update turn and priority
   ctx.framework.status.patch({ turnOwnerId: nextPlayer });
+  // Invalidate the static-effect registry: turn-conditional abilities (e.g. "during your turn")
+  // depend on turnOwnerId, which just changed. The cache keys on staticEffectsVersion, so we must
+  // bump it here or the previous player's turn-conditional keywords will bleed into the next turn.
+  invalidateStaticEffects(ctx);
   ctx.framework.priority.setHolder(nextPlayer);
   const turnNumber = ctx.framework.status.incrementTurn();
 
@@ -513,6 +520,14 @@ export function continuePendingTurnTransition(ctx: PassTurnExecutionContext): vo
 
         // Sub-step 2: perform the draw and emit triggered events (only once)
         if (!transitionState.drawStepStarted) {
+          // Ensure nextPlayer holds priority for the draw step. The start-of-turn
+          // trigger window (finalizeResolutionBoundary above) can transfer priority
+          // to a bag resolver, leaving priority.holder pointing at the previous
+          // player when the draw event is evaluated. "during-turn, whose: opponent"
+          // restrictions in triggerMatchesEvent read ctx.framework.state.currentPlayer
+          // (== priority.holder), so they would see the wrong active player and
+          // fail to fire abilities like Diablo's CIRCLE FAR AND WIDE.
+          ctx.framework.priority.setHolder(nextPlayer);
           transitionState = {
             ...transitionState,
             drawStepStarted: true,
@@ -541,7 +556,11 @@ export function continuePendingTurnTransition(ctx: PassTurnExecutionContext): vo
           }
         }
 
-        // All draw-triggered effects resolved; transition to main phase
+        // All draw-triggered effects resolved; transition to main phase.
+        // Restore priority to the turn player in case bag-effect resolution
+        // handed it to an opponent-controlled bag resolver (e.g. Diablo drawing
+        // a card for themselves while P2 draws during their start-of-turn).
+        ctx.framework.priority.setHolder(nextPlayer);
         ctx.framework.status.setPhase("main");
         ctx.G.pendingTurnTransition = undefined;
         return;

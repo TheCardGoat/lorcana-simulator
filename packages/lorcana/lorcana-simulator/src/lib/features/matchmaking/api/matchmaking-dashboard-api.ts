@@ -1,4 +1,4 @@
-import { getGameServerOrigin } from "$lib/config/public-url-config.js";
+import { getApiOrigin } from "$lib/config/public-url-config.js";
 import { requestJson } from "$lib/data/transport/http-client.js";
 import type { LiveMatchListResponse } from "./live-matches-api.js";
 import type { QueueStatsResponse } from "./queue-stats-api.js";
@@ -15,7 +15,7 @@ export interface MatchmakingDashboardResponse {
 }
 
 export async function fetchMatchmakingDashboard(limit = 25): Promise<MatchmakingDashboardResponse> {
-  const url = new URL(`${getGameServerOrigin()}/v1/play/matchmaking/dashboard`);
+  const url = new URL(`${getApiOrigin()}/v1/games/lorcana/play/matchmaking/dashboard`);
   url.searchParams.set("limit", String(limit));
 
   return requestJson<MatchmakingDashboardResponse>(

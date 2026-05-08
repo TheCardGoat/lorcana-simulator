@@ -23,8 +23,9 @@ export const daleExcitedFriend: CharacterCard = {
   },
   text: [
     {
-      title: "LOOK WHAT I FOUND",
-      description: "While you have a character named Chip in play, this character gets +1 {L}.",
+      title: "LOOK WHAT",
+      description:
+        "I FOUND While you have a character named Chip in play, this character gets +1 {L}.",
     },
   ],
   classifications: ["Storyborn", "Hero"],

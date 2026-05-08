@@ -4,48 +4,20 @@
  * Uses Svelte 5 runes for reactive state management.
  * Call `fetchSession()` on mount to check for an existing session cookie.
  *
- * TWO-SOURCE SYNC PROBLEM
- * -----------------------
- * We have two sources of user data that must stay in sync:
- *
- *   1. Better Auth session  (/api/auth/get-session)
- *      - Managed by Better Auth; does NOT include custom DB fields like `displayUsername`.
- *      - Used by: authSession.user (this module), nav bar, presence, etc.
- *
- *   2. Our API             (GET /v1/users/me)
- *      - Full user record from our DB, including `displayUsername`.
- *      - Used by: AccountSettingsDialog form.
- *
- * Sync strategy:
- *   - On ready:  fetchSession() calls enrichUserFromApi() to merge custom fields into
- *                the Better Auth user object after every session fetch.
- *   - On save:   AccountSettingsDialog calls authSession.patchUser() immediately after
- *                a successful save for an optimistic update, so the nav bar reflects the
- *                change without waiting for the next fetchSession() round-trip.
+ * The Better Auth session is the single source of truth for the current user.
+ * Custom columns such as `displayUsername` ride on the session payload via
+ * `user.additionalFields` configured in apps/api/src/auth/auth.ts. After a
+ * profile save, `AccountSettingsDialog` calls `patchUser()` for an optimistic
+ * update; the next `fetchSession()` round-trip returns the canonical value.
  */
 
 import type { AuthUser, AuthSession } from "@tcg/shared/auth";
 import { authClient } from "./client.js";
 import { trackEvent, setUserProperties } from "$lib/analytics/analytics.js";
-import { fetchAccountProfile } from "$lib/features/matchmaking/api/account-settings-api.js";
 
 let user = $state<AuthUser | null>(null);
 let session = $state<AuthSession | null>(null);
 let isLoading = $state(true);
-
-/**
- * Merge custom DB fields (e.g. displayUsername) from GET /v1/users/me into the
- * Better Auth user object. Better Auth does not return these fields natively.
- * If the request fails we fall back to the base user rather than breaking the session.
- */
-async function enrichUserFromApi(baseUser: AuthUser): Promise<AuthUser> {
-  try {
-    const data = await fetchAccountProfile();
-    return { ...baseUser, displayUsername: data.displayUsername ?? baseUser.displayUsername };
-  } catch {
-    return baseUser;
-  }
-}
 
 async function fetchSession(): Promise<void> {
   const wasAuthenticated = user !== null;
@@ -53,8 +25,10 @@ async function fetchSession(): Promise<void> {
   try {
     const result = await authClient.getSession();
     if (result.data?.user && result.data?.session) {
-      user = await enrichUserFromApi(result.data.user as AuthUser);
-      session = result.data.session as AuthSession;
+      // The client can't infer API-side `user.additionalFields`; the server
+      // adds displayUsername/username/subscriptionTier/subscriptionExpiresAt.
+      user = result.data.user as unknown as AuthUser;
+      session = result.data.session as unknown as AuthSession;
 
       if (!wasAuthenticated) {
         trackEvent("auth_sign_in_complete", { method: "discord" });
@@ -77,8 +51,7 @@ async function fetchSession(): Promise<void> {
 /**
  * Optimistically patch specific fields on the current user without a full session refresh.
  * Call this immediately after a successful profile save so the UI reflects the change
- * right away, without waiting for the next fetchSession() + enrichUserFromApi() round-trip.
- * See the sync strategy note at the top of this file.
+ * right away, without waiting for the next fetchSession() round-trip.
  */
 function patchUser(updates: Partial<AuthUser>): void {
   if (user) {
@@ -129,23 +102,7 @@ async function signInWithDiscord(options: DiscordSignInOptions = {}): Promise<vo
 /**
  * Sign in with Metafy OAuth (generic OAuth2 provider configured on the API).
  * Redirects the user to Metafy for authentication.
- *
- * The `signIn.oauth2` method is injected at runtime by the genericOAuthClient
- * plugin but the simulator's `authClient` is declared with the default
- * `ReturnType<typeof createAuthClient>` (kept for compatibility with existing
- * casts). A narrow local type surfaces the plugin method without `any`.
  */
-type OAuth2SignInResult = {
-  data: { url?: string; redirect?: boolean } | null;
-  error: { message?: string; status?: number; statusText?: string } | null;
-};
-type OAuth2SignIn = (opts: {
-  providerId: string;
-  callbackURL: string;
-  errorCallbackURL?: string;
-}) => Promise<OAuth2SignInResult>;
-type SignInWithOAuth2 = typeof authClient.signIn & { oauth2: OAuth2SignIn };
-
 async function signInWithMetafy(callbackPath = "/matchmaking"): Promise<void> {
   trackEvent("auth_sign_in_start", { method: "metafy" });
   const path = callbackPath.startsWith("/") ? callbackPath : `/${callbackPath}`;
@@ -157,7 +114,7 @@ async function signInWithMetafy(callbackPath = "/matchmaking"): Promise<void> {
   const callbackURL = new URL(path, window.location.origin).toString();
   const errorCallbackURL = new URL("/sign-in", window.location.origin).toString();
 
-  const result = await (authClient.signIn as SignInWithOAuth2).oauth2({
+  const result = await authClient.signIn.oauth2({
     providerId: "metafy",
     callbackURL,
     errorCallbackURL,

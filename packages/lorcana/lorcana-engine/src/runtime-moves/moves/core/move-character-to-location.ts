@@ -10,14 +10,14 @@ import {
   type LorcanaMoveDefinition,
 } from "../../../types";
 import {
-  EFFECT_PENDING_ERROR_CODE,
-  hasPendingActionEffectResolution,
-} from "../../resolution/action-effects/pending-action-effects";
+  getCardDefinition,
+  hasAnyPendingEffects,
+  validateNoPendingEffects,
+} from "../../../operations";
 import { getAvailableInk, spendInk } from "../../rules/play-card-rules";
 import {
   emitTriggeredLorcanaEvent,
   flushTriggeredEventsToBag,
-  hasPendingBagItems,
 } from "../../effects/triggered-abilities";
 import {
   evaluateStaticCondition,
@@ -67,13 +67,6 @@ function getCardOwnerId(ctx: MoveReadableContext, cardId: CardInstanceId): Playe
 
 function getCurrentPlayerId(ctx: MoveReadableContext): PlayerId | undefined {
   return ctx.framework.state.currentPlayer;
-}
-
-function getCardDefinition(
-  ctx: MoveReadableContext,
-  cardId: CardInstanceId,
-): LorcanaCard | undefined {
-  return ctx.cards.getDefinition(cardId) as LorcanaCard | undefined;
 }
 
 function isCharacterExerted(ctx: MoveReadableContext, characterId: CardInstanceId): boolean {
@@ -346,20 +339,9 @@ export const moveCharacterToLocation: LorcanaMoveDefinition<"moveCharacterToLoca
       return { valid: true };
     }
 
-    if (hasPendingActionEffectResolution(ctx)) {
-      return {
-        valid: false,
-        error: "Cannot move a character while an action effect is pending",
-        errorCode: EFFECT_PENDING_ERROR_CODE,
-      };
-    }
-
-    if (hasPendingBagItems(ctx)) {
-      return {
-        valid: false,
-        error: "Cannot move a character while bag effects are pending",
-        errorCode: "BAG_PENDING",
-      };
+    const pendingFailure = validateNoPendingEffects(ctx, { actionLabel: "move a character" });
+    if (pendingFailure) {
+      return pendingFailure;
     }
 
     return validateMoveCharacterToLocation(
@@ -434,11 +416,7 @@ export const moveCharacterToLocation: LorcanaMoveDefinition<"moveCharacterToLoca
   },
 
   available: (ctx) => {
-    if (hasPendingActionEffectResolution(ctx)) {
-      return false;
-    }
-
-    if (hasPendingBagItems(ctx)) {
+    if (hasAnyPendingEffects(ctx)) {
       return false;
     }
 

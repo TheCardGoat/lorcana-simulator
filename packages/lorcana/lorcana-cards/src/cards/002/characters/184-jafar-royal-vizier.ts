@@ -47,6 +47,5 @@ export const jafarRoyalVizier: CharacterCard = {
       type: "static",
     },
   ],
-  missingTests: true,
   i18n: jafarRoyalVizierI18n,
 };

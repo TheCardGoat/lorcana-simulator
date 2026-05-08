@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockCharacter,
+  createMockLocation,
+} from "@tcg/lorcana-engine/testing";
 import { bagheeraGuardianJaguar } from "./198-bagheera-guardian-jaguar";
 import { dragonFire } from "../../001/actions/130-dragon-fire";
 
@@ -156,6 +160,44 @@ describe("Bagheera - Guardian Jaguar", () => {
         card: allyCharacter,
         value: 0,
       });
+    });
+
+    it("regression: does not damage opposing Locations (cardTypes: ['character'] excludes locations)", () => {
+      const opponentLocation = createMockLocation({
+        id: "bagheera-test-location",
+        name: "Library",
+        cost: 3,
+        willpower: 6,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [bagheeraGuardianJaguar],
+          deck: 2,
+        },
+        {
+          play: [opponentCharA, opponentLocation],
+          hand: [dragonFire],
+          inkwell: dragonFire.cost,
+          deck: 2,
+        },
+      );
+
+      testEngine.asPlayerOne().passTurn();
+
+      expect(
+        testEngine.asPlayerTwo().playCard(dragonFire, { targets: [bagheeraGuardianJaguar] }),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(bagheeraGuardianJaguar, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo()).toHaveDamage({ card: opponentCharA, value: 2 });
+      // Library is a Location, not a character — must not take damage.
+      expect(testEngine.asPlayerTwo()).toHaveDamage({ card: opponentLocation, value: 0 });
     });
 
     it("deals 2 damage when banished in a challenge on opponent's turn", () => {

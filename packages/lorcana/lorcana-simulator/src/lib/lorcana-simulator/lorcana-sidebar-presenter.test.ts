@@ -66,6 +66,8 @@ function createGameContextStub(
     resolveCardSnapshot:
       overrides.resolveCardSnapshot ??
       ((cardId: string) => (cardSnapshotsByIdFn() as CardSnapshotMap)[cardId] ?? null),
+    resolveCardName: overrides.resolveCardName ?? (() => null),
+    resolveCardInkable: overrides.resolveCardInkable ?? (() => null),
     resolvePlayerName: () => null,
     isPlayerMobile: () => false,
     getPlayerSummary: () => null,
@@ -97,6 +99,7 @@ function createGameContextStub(
     pendingErrorReason: () => null,
     pendingMoveError: () => null,
     pendingResolutionAutoOpenStateId: () => null,
+    isOptimisticMovePending: () => false,
     challengeSourceCardId: () => null,
     challengeMode: () => false,
     animations: () => [],
@@ -300,7 +303,7 @@ describe("LorcanaSidebarPresenter", () => {
     const presenter = new LorcanaSidebarPresenter(createGameContextStub());
     presenter.initializeLocale();
 
-    expect(presenter.skipActionConfirmation).toBe(false);
+    expect(presenter.skipActionConfirmation).toBe(true);
   });
 
   it("persists raw-log toggle changes back to localStorage", () => {
@@ -643,6 +646,7 @@ describe("LorcanaSidebarPresenter", () => {
         },
       }),
     );
+    presenter.skipActionConfirmation = false;
 
     const [item] = presenter.pendingEffectsPopoverItems;
     item?.onResolve?.();
@@ -651,7 +655,7 @@ describe("LorcanaSidebarPresenter", () => {
     expect(presenter.resolutionSelectionSession?.context.kind).toBe("target-selection");
     expect(presenter.availableMovesSelectionState).toMatchObject({
       mode: "resolution-target",
-      entries: [
+      candidateEntries: [
         {
           cardId: targetCard.cardId,
           label: targetCard.label,
@@ -664,7 +668,7 @@ describe("LorcanaSidebarPresenter", () => {
     expect(presenter.handleActionSessionCardSelection(targetCard)).toBe(true);
     expect(presenter.availableMovesSelectionState).toMatchObject({
       mode: "resolution-target",
-      entries: [
+      candidateEntries: [
         {
           cardId: targetCard.cardId,
           selected: true,
@@ -1127,6 +1131,7 @@ describe("LorcanaSidebarPresenter", () => {
         },
       }),
     );
+    presenter.skipActionConfirmation = false;
 
     presenter.syncAutoOpenPendingResolution();
 
@@ -1892,6 +1897,7 @@ describe("LorcanaSidebarPresenter", () => {
         ],
       }),
     );
+    presenter.skipActionConfirmation = false;
 
     presenter.handleResolveBag({
       id: "resolveBag:bag-1",
@@ -2530,15 +2536,14 @@ describe("LorcanaSidebarPresenter", () => {
         },
       }),
     );
+    presenter.skipActionConfirmation = false;
 
     expect(presenter.startManualCardActionSelection("ink-card", [inkMove])).toBe(true);
     expect(presenter.activePlayerGuidance[0]?.message).toBe("Select a card to ink.");
     expect(presenter.isCardSelectableForManualAction(inkCard)).toBe(true);
 
     expect(presenter.handleManualCardActionSelection(inkCard)).toBe(true);
-    expect(presenter.activePlayerGuidance[0]?.message).toBe(
-      "Confirm Ink. You can skip confirmations in Player Settings.",
-    );
+    expect(presenter.activePlayerGuidance[0]?.message).toBe("Confirm Ink.");
 
     expect(presenter.confirmManualCardActionSelection()).toBe(true);
     expect(selectedCardIds.at(-1)).toBeNull();
@@ -2606,6 +2611,7 @@ describe("LorcanaSidebarPresenter", () => {
         },
       }),
     );
+    presenter.skipActionConfirmation = false;
 
     expect(presenter.startActionSelectionSession("challenge", [challengeMove])).toBe(true);
     expect(presenter.activePlayerGuidance[0]?.message).toBe(
@@ -2651,7 +2657,7 @@ describe("LorcanaSidebarPresenter", () => {
 
     expect(presenter.handleActionSessionCardSelection(defender)).toBe(true);
     expect(presenter.activePlayerGuidance[0]?.message).toBe(
-      `Confirm Challenge. You can skip confirmations in Player Settings.\nChallenge ${attacker.label} -> ${defender.label}`,
+      `Confirm Challenge.\nChallenge ${attacker.label} -> ${defender.label}`,
     );
     expect(presenter.availableMovesSelectionState).toMatchObject({
       categoryId: "challenge",
@@ -2728,9 +2734,12 @@ describe("LorcanaSidebarPresenter", () => {
           defenderDamageDealt: 5,
           attackerWouldBeBanished: true,
           defenderWouldBeBanished: true,
+          attackerDamageIsReduced: false,
+          defenderDamageIsReduced: false,
         }),
       }),
     );
+    presenter.skipActionConfirmation = false;
 
     expect(presenter.startActionSelectionSession("challenge", [challengeMove])).toBe(true);
     expect(presenter.handleActionSessionCardSelection(attacker)).toBe(true);
@@ -2918,7 +2927,7 @@ describe("LorcanaSidebarPresenter", () => {
 
     presenter.handleSkipActionConfirmationToggle(true);
 
-    expect(storage.getItem("lorcana.simulator.skipActionConfirmation")).toBe("true");
+    expect(presenter.skipActionConfirmation).toBe(true);
     expect(presenter.startActionSelectionSession("ink-card", [inkMove])).toBe(true);
     expect(presenter.handleActionSessionCardSelection(inkCard)).toBe(true);
     expect(executedMoves).toEqual([{ cardId: inkCard.cardId }]);
@@ -3412,6 +3421,7 @@ describe("LorcanaSidebarPresenter", () => {
         },
       }),
     );
+    presenter.skipActionConfirmation = false;
 
     expect(
       presenter.startActionSelectionSession("activate-ability", [
@@ -3466,7 +3476,7 @@ describe("LorcanaSidebarPresenter", () => {
 
     expect(presenter.handleAvailableMovesSelectionOption(secondAbilityMove.id)).toBe(true);
     expect(presenter.activePlayerGuidance[0]?.message).toBe(
-      "Confirm Goofy - Musketeer: {E} Second Ability. You can skip confirmations in Player Settings.",
+      "Confirm Goofy - Musketeer: {E} Second Ability.",
     );
     expect(presenter.availableMovesSelectionState).toMatchObject({
       categoryId: "activate-ability",
@@ -3628,6 +3638,7 @@ describe("LorcanaSidebarPresenter", () => {
         ],
       }),
     );
+    presenter.skipActionConfirmation = false;
 
     // Before session: item should be resolvable
     const itemBefore = presenter.pendingEffectsPopoverItems[0];
@@ -3851,6 +3862,7 @@ describe("LorcanaSidebarPresenter", () => {
         },
       }),
     );
+    presenter.skipActionConfirmation = false;
 
     expect(presenter.startActionSelectionSession("shift-card", [shiftMove])).toBe(true);
     expect(presenter.handleAvailableMovesSelectionCard(shiftCard.cardId)).toBe(true);

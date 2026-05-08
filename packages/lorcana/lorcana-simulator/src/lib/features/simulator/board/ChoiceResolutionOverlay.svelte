@@ -6,19 +6,33 @@ import { m } from "$lib/i18n/messages.js";
 import CardTextWithSymbols from "@/design-system/simulator/cards/CardTextWithSymbols.svelte";
 import CardImage from "@/design-system/simulator/cards/CardImage.svelte";
 import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
-import type { ResolutionChoiceAvailableMovesSelectionState } from "@/features/simulator/model/contracts.js";
 import { maybeUseSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
+import type {
+	Interaction,
+	InteractionSelectChoice,
+	PlayerInteractionView,
+} from "@tcg/lorcana-interaction";
 
 interface ChoiceResolutionOverlayProps {
-	selectionState: ResolutionChoiceAvailableMovesSelectionState;
-	onSelectOption?: (moveId: string) => boolean;
-	onConfirm?: () => boolean;
+	/** Renderer-agnostic view derived from the engine's projected board. */
+	view: PlayerInteractionView;
+	/** Source card snapshot for the prompt header art. Resolved by the caller from `view.activePrompt.sourceCardId`. */
+	targetCard?: LorcanaCardSnapshot | null;
+	/** Index of the option currently highlighted in the UI session, or `null` if none picked yet. */
+	selectedChoiceIndex: number | null;
+	/** Called when the chooser picks an option. The renderer holds this in session state until confirm. */
+	onSelectChoice?: (interaction: InteractionSelectChoice) => void;
+	/** Called when the chooser confirms their pick. */
+	onConfirm?: () => void;
+	/** Called when the chooser dismisses the overlay (cancel / close). */
 	onDismiss?: () => void;
 }
 
 let {
-	selectionState,
-	onSelectOption,
+	view,
+	targetCard = null,
+	selectedChoiceIndex,
+	onSelectChoice,
 	onConfirm,
 	onDismiss,
 }: ChoiceResolutionOverlayProps = $props();
@@ -28,6 +42,15 @@ const simulatorCardContext = maybeUseSimulatorCardContext();
 function handleOpenGlobalPreview(card: LorcanaCardSnapshot): void {
 	simulatorCardContext?.setExternalPreviewCard(card);
 }
+
+const choiceInteractions = $derived(
+	view.interactions.filter(
+		(interaction): interaction is InteractionSelectChoice =>
+			interaction.kind === "select-choice",
+	),
+);
+const canConfirm = $derived(selectedChoiceIndex !== null);
+const targetCardText = $derived(targetCard?.text?.trim() ?? "");
 
 const OVERLAY_PADDING = 8;
 
@@ -125,18 +148,32 @@ function handleOverlayPointerDown(event: PointerEvent): void {
 	event.preventDefault();
 }
 
+function handleSelect(interaction: InteractionSelectChoice): void {
+	if (!interaction.legal) return;
+	onSelectChoice?.(interaction);
+	onConfirm?.();
+}
+
+function handlePointerUp(e: PointerEvent): void {
+	stopOverlayDrag(e.pointerId);
+}
+
+function handlePointerCancel(e: PointerEvent): void {
+	stopOverlayDrag(e.pointerId);
+}
+
 onMount(() => {
 	void centerOverlay();
 
 	window.addEventListener("pointermove", handleOverlayPointerMove);
-	window.addEventListener("pointerup", (e) => stopOverlayDrag(e.pointerId));
-	window.addEventListener("pointercancel", (e) => stopOverlayDrag(e.pointerId));
+	window.addEventListener("pointerup", handlePointerUp);
+	window.addEventListener("pointercancel", handlePointerCancel);
 	window.addEventListener("resize", handleWindowResize);
 
 	return () => {
 		window.removeEventListener("pointermove", handleOverlayPointerMove);
-		window.removeEventListener("pointerup", (e) => stopOverlayDrag(e.pointerId));
-		window.removeEventListener("pointercancel", (e) => stopOverlayDrag(e.pointerId));
+		window.removeEventListener("pointerup", handlePointerUp);
+		window.removeEventListener("pointercancel", handlePointerCancel);
 		window.removeEventListener("resize", handleWindowResize);
 	};
 });
@@ -145,7 +182,6 @@ onMount(() => {
 <section
   class="choice-overlay"
   class:choice-overlay--dragging={isDraggingOverlay}
-  aria-label={selectionState.title}
   data-testid="choice-resolution-overlay"
   bind:this={overlayElement}
   style={`left: ${overlayPosition.x}px; top: ${overlayPosition.y}px;`}
@@ -153,10 +189,7 @@ onMount(() => {
   <header class="choice-overlay__header">
     <div class="choice-overlay__header-main">
       <div class="choice-overlay__header-text">
-        <h2 class="choice-overlay__title">{selectionState.title}</h2>
-        {#if selectionState.message}
-          <p class="choice-overlay__message">{selectionState.message}</p>
-        {/if}
+        <h2 class="choice-overlay__title">{m["sim.actions.confirm"]({})}</h2>
       </div>
 
       <button
@@ -170,43 +203,49 @@ onMount(() => {
     </div>
   </header>
 
-  {#if selectionState.targetCard}
+  {#if targetCard}
     <div class="choice-overlay__target">
       <div
         class="choice-overlay__target-art"
         role="button"
         tabindex="0"
-        onpointerenter={() => simulatorCardContext?.setExternalPreviewCard(selectionState.targetCard!)}
+        onpointerenter={() => simulatorCardContext?.setExternalPreviewCard(targetCard!)}
         onpointerleave={() => simulatorCardContext?.setExternalPreviewCard(null)}
-        onclick={() => handleOpenGlobalPreview(selectionState.targetCard!)}
-        onkeydown={(e) => e.key === "Enter" && handleOpenGlobalPreview(selectionState.targetCard!)}
-        title={selectionState.targetCard.label}
+        onclick={() => handleOpenGlobalPreview(targetCard!)}
+        onkeydown={(e) => e.key === "Enter" && handleOpenGlobalPreview(targetCard!)}
+        title={targetCard.label}
       >
         <CardImage
-          set={selectionState.targetCard.set ?? ""}
-          number={selectionState.targetCard.cardNumber ?? 0}
+          set={targetCard.set ?? ""}
+          number={targetCard.cardNumber ?? 0}
           crop="art_and_name"
-          alt={selectionState.targetCard.label}
+          alt={targetCard.label}
         />
       </div>
       <div class="choice-overlay__target-info">
-        <CrosshairIcon class="choice-overlay__target-icon" size={14} />
-        <span class="choice-overlay__target-label">{selectionState.targetCard.label}</span>
+        <span class="choice-overlay__target-icon">
+          <CrosshairIcon size={14} />
+        </span>
+        <span class="choice-overlay__target-label">{targetCard.label}</span>
       </div>
+      {#if targetCardText}
+        <div class="choice-overlay__target-text">
+          <CardTextWithSymbols text={targetCardText} />
+        </div>
+      {/if}
     </div>
   {/if}
 
   <div class="choice-overlay__body">
-    {#each selectionState.entries as entry (entry.id)}
+    {#each choiceInteractions as interaction (interaction.index)}
       <button
         type="button"
         class="choice-option"
-        class:choice-option--selected={entry.selected}
-        disabled={entry.disabled}
-        title={entry.disabled ? (entry.disabledReason ?? undefined) : undefined}
-        onclick={() => entry.moveId !== undefined && onSelectOption?.(entry.moveId)}
+        class:choice-option--selected={selectedChoiceIndex === interaction.index}
+        disabled={!interaction.legal}
+        onclick={() => handleSelect(interaction)}
       >
-        <CardTextWithSymbols text={entry.label} />
+        <CardTextWithSymbols text={interaction.label} />
       </button>
     {/each}
   </div>
@@ -222,7 +261,7 @@ onMount(() => {
     <button
       type="button"
       class="choice-footer-button choice-footer-button--primary"
-      disabled={!selectionState.canConfirm}
+      disabled={!canConfirm}
       data-testid="choice-confirm-button"
       onclick={onConfirm}
     >
@@ -280,13 +319,6 @@ onMount(() => {
     margin: 0;
   }
 
-  .choice-overlay__message {
-    font-size: 0.75rem;
-    color: rgba(193, 228, 197, 0.75);
-    margin: 0;
-    line-height: 1.4;
-  }
-
   .choice-overlay__target {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -320,7 +352,7 @@ onMount(() => {
     min-width: 0;
   }
 
-  :global(.choice-overlay__target-icon) {
+  .choice-overlay__target-icon {
     flex-shrink: 0;
     opacity: 0.6;
   }
@@ -329,6 +361,17 @@ onMount(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .choice-overlay__target-text {
+    grid-column: 1 / -1;
+    max-height: 5.75rem;
+    overflow: auto;
+    padding-top: 0.55rem;
+    border-top: 1px solid rgba(190, 225, 195, 0.12);
+    color: rgba(237, 247, 239, 0.82);
+    font-size: 0.76rem;
+    line-height: 1.35;
   }
 
   .choice-overlay__drag-handle {

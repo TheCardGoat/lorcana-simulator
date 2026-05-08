@@ -59,6 +59,7 @@ export const fireflySwarm: ActionCard = {
               type: "turn-metric",
               metric: "discard-cards-entered",
               ownerScope: "you",
+              excludeSource: true,
               comparison: {
                 operator: "gte",
                 value: 2,

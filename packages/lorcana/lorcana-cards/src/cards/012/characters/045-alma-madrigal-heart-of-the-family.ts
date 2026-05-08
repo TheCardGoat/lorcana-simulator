@@ -23,9 +23,9 @@ export const almaMadrigalHeartOfTheFamily: CharacterCard = {
   },
   text: [
     {
-      title: "FIND A WAY",
+      title: "FIND",
       description:
-        "Whenever this character quests, move up to 1 damage from chosen character of yours to chosen opposing character.",
+        "A WAY Whenever this character quests, move up to 1 damage from chosen character of yours to chosen opposing character.",
     },
   ],
   classifications: ["Storyborn", "Mentor", "Madrigal"],
@@ -42,7 +42,10 @@ export const almaMadrigalHeartOfTheFamily: CharacterCard = {
       },
       effect: {
         type: "move-damage",
-        amount: { type: "up-to", value: 1 },
+        amount: {
+          type: "up-to",
+          value: 1,
+        },
         from: "CHOSEN_CHARACTER_OF_YOURS",
         to: "CHOSEN_OPPOSING_CHARACTER",
       },

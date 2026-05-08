@@ -49,6 +49,5 @@ export const liShangArcheryInstructor: CharacterCard = {
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: liShangArcheryInstructorI18n,
 };

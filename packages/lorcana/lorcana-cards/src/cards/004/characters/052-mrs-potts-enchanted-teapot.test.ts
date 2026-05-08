@@ -43,13 +43,8 @@ describe("Mrs. Potts - Enchanted Teapot", () => {
 
       expect(testEngine.asPlayerOne().playCard(mrsPottsEnchantedTeapot)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued when trigger fires, Lumiere/Cogsworth condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(mrsPottsEnchantedTeapot, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       // Neither Lumiere nor Cogsworth in play — no card drawn
       expect(testEngine.asPlayerOne().getZonesCardCount("player_one").deck).toBe(deckBefore);
     });

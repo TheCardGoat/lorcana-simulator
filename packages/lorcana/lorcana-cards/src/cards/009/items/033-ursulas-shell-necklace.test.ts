@@ -48,12 +48,8 @@ describe("Ursula's Shell Necklace", () => {
     });
 
     expect(testEngine.asPlayerOne().playCard(oneJumpAhead)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-    const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-    expect(
-      testEngine.asPlayerOne().resolvePendingByCard(ursulasShellNecklace),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(testEngine.asPlayerOne().getPendingEffects()).toEqual([]);
 
     expect(testEngine.asPlayerOne().getCardZone(inkedCard)).toBe("inkwell");
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");

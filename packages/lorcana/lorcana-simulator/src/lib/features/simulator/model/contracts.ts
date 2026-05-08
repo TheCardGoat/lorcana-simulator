@@ -21,6 +21,8 @@ export type LorcanaPlayerSide = (typeof LORCANA_PLAYER_SIDES)[number];
 export interface MatchNavigationContext {
   nextGameId: string | undefined;
   matchCompleted: boolean;
+  winnerId?: string;
+  endReason?: string;
   format: string;
   player1Score: number;
   player2Score: number;
@@ -312,6 +314,9 @@ export interface ResolutionTargetAvailableMovesSelectionState extends AvailableM
   candidatePlayerIds: string[];
   viewerSide: LorcanaPlayerSide | null;
   candidateEntries: AvailableMovesSelectionEntry[];
+  playCardEntryModeChoice?: {
+    selected: boolean | null;
+  };
   activeSlotIndex: number | null;
   slots: ResolutionTargetSelectionSlotState[];
   amountSelection: ResolutionAmountSelectionState | null;
@@ -591,6 +596,7 @@ export type LorcanaSimulatorMoveParams = ExactMoveParamMap<{
     discardCards?: string[];
     shiftTarget?: string;
     sacrificeTarget?: string;
+    deckBottomTarget?: string;
     exertTargets?: string[];
     singer?: string;
     singers?: string[];
@@ -599,6 +605,7 @@ export type LorcanaSimulatorMoveParams = ExactMoveParamMap<{
     amount?: number;
     namedCard?: string;
     resolveOptional?: boolean;
+    enterPlayExerted?: boolean;
     choiceIndex?: number;
     preventAutoResolveTriggeredEffects?: boolean;
     destinations?: Array<{ zone: string; cards: string[] }>;

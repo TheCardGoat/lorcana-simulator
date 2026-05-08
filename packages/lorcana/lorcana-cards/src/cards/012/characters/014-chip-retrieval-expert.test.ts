@@ -218,4 +218,37 @@ describe("Chip - Retrieval Expert", () => {
       );
     });
   });
+
+  describe("release notes ruling", () => {
+    it("Friendly Assist's +1 W applies only to Dales in play, NOT to a Dale in discard — cannot return Dale-Bumbler (3 W base) via There You Are", () => {
+      // Release-notes Q&A: Dale – Bumbler has 3 W. Chip's Friendly Assist
+      // (+1 W to your Dales) only applies in play, not in discard.
+      // Therefore, There You Are! cannot return Dale-Bumbler from discard
+      // (it sees a 3-W card, not 4).
+      const daleBumblerInDiscard = createMockCharacter({
+        id: "chip-release-dale-bumbler",
+        name: "Dale",
+        version: "Bumbler",
+        cost: 1,
+        strength: 1,
+        willpower: 3,
+        lore: 1,
+        classifications: ["Storyborn", "Hero"],
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [chipRetrievalExpert],
+        inkwell: chipRetrievalExpert.cost,
+        discard: [daleBumblerInDiscard],
+        deck: 2,
+      });
+
+      expect(testEngine.asPlayerOne().playCard(chipRetrievalExpert)).toBeSuccessfulCommand();
+
+      // No valid target — only the 3-W Dale is in discard, and Friendly
+      // Assist does NOT add +1 W in the discard zone.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getCardZone(daleBumblerInDiscard)).toBe("discard");
+    });
+  });
 });

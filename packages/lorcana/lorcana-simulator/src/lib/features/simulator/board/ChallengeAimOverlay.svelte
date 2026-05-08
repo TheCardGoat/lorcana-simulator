@@ -143,18 +143,28 @@
 
     {#if preview}
       <div
-        class="absolute rounded-full border border-emerald-200/50 bg-emerald-500/92 px-2.5 py-1 text-[0.65rem] font-black uppercase tracking-[0.18em] text-white shadow-[0_10px_24px_rgba(16,185,129,0.35)]"
+        class={[
+          "absolute rounded-full border px-2.5 py-1 text-[0.65rem] font-black uppercase tracking-[0.18em] text-white",
+          preview.defenderDamageIsReduced
+            ? "border-sky-200/50 bg-sky-500/92 shadow-[0_10px_24px_rgba(14,165,233,0.35)]"
+            : "border-emerald-200/50 bg-emerald-500/92 shadow-[0_10px_24px_rgba(16,185,129,0.35)]",
+        ].join(" ")}
         style={badgeStyle(geometry.targetBadgePoint)}
       >
-        {m["sim.challengePreview.deal"]({})} {preview.attackerDamageDealt}
+        {m["sim.challengePreview.deal"]({})} {preview.attackerDamageDealt}{preview.defenderDamageIsReduced ? " 🛡" : ""}
       </div>
 
       {#if preview.defenderKind === "character"}
         <div
-          class="absolute rounded-full border border-rose-200/45 bg-rose-500/92 px-2.5 py-1 text-[0.65rem] font-black uppercase tracking-[0.18em] text-white shadow-[0_10px_24px_rgba(244,63,94,0.32)]"
+          class={[
+            "absolute rounded-full border px-2.5 py-1 text-[0.65rem] font-black uppercase tracking-[0.18em] text-white",
+            preview.attackerDamageIsReduced
+              ? "border-sky-200/50 bg-sky-500/92 shadow-[0_10px_24px_rgba(14,165,233,0.35)]"
+              : "border-rose-200/45 bg-rose-500/92 shadow-[0_10px_24px_rgba(244,63,94,0.32)]",
+          ].join(" ")}
           style={badgeStyle(geometry.sourceBadgePoint)}
         >
-          {m["sim.challengePreview.take"]({})} {preview.defenderDamageDealt}
+          {m["sim.challengePreview.take"]({})} {preview.defenderDamageDealt}{preview.attackerDamageIsReduced ? " 🛡" : ""}
         </div>
       {/if}
 

@@ -168,15 +168,17 @@ export class ClientEngine implements GameEngine {
     this.setupTransportHandlers();
   }
 
-  // TODO: Replace by BoardProjection
   private setupTransportHandlers(): void {
     this.transport?.onMessage((message) => {
       const typedMessage = message as ServerMessage;
 
       if (this.debug) {
-        logger.debug(`[${this.identifier}] Received ${message.type} message from server.`, {
-          message,
-        });
+        logger.debug(
+          `[${this.identifier}] Received ${message.type} message from server: {message.stateID}.`,
+          {
+            message,
+          },
+        );
       }
 
       if (isUpdatePatchMessage(typedMessage)) {
@@ -463,6 +465,10 @@ export class ClientEngine implements GameEngine {
       "player",
       { logInvalid: false },
     );
+  }
+
+  get isOptimisticMovePending(): boolean {
+    return this.optimisticState !== null;
   }
 
   executeMove(moveId: string, input: MoveInput): EngineMoveExecutionResult {

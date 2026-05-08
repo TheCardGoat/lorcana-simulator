@@ -37,7 +37,7 @@ export async function load(event: ServerLoadEvent): Promise<QuickMatchPlayByIdDa
   let configResponse: QuickMatchConfigResponse;
   try {
     const apiOrigin = getServerApiOrigin(getApiOrigin());
-    const url = `${apiOrigin}/v1/play/quick-match/${gameId}`;
+    const url = `${apiOrigin}/v1/games/lorcana/play/quick-match/${gameId}`;
     trace("fetching config", { url, hasCookie: !!cookie });
 
     const result = await serverJsonOrNull<QuickMatchConfigResponse>(url, {
@@ -64,7 +64,7 @@ export async function load(event: ServerLoadEvent): Promise<QuickMatchPlayByIdDa
   // as a quick-match session and fetches a fresh ticket client-side.
   // We don't fetch the ticket here because it's single-use and would expire
   // before the client navigates to /match/[gameId].
-  const { sanitizedText, unknownCards } = sanitizeDeckText(configResponse.playerDeckText);
+  const { sanitizedText, unknownCards } = await sanitizeDeckText(configResponse.playerDeckText);
   if (!sanitizedText) {
     trace("sanitize produced empty text");
     return { status: "error", message: "The stored deck could not be resolved." };

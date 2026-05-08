@@ -18,11 +18,14 @@ export const casaMadrigalCourtyard: LocationCard = {
   moveCost: 1,
   lore: 2,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_69c16dd8004b4fbf8051c91ac50bc6cb",
+  },
   text: [
     {
-      title: "Healing Home",
+      title: "HEALING HOME",
       description:
-        "Whenever a character quests while here, you may remove up to 2 damage from them. Then, you may remove up to 2 damage from this location.",
+        "Whenever a character quests while here, you may remove up to 2 damage from the. Then, you may remove up to 2 damage from this location.",
     },
   ],
   abilities: [
@@ -44,7 +47,10 @@ export const casaMadrigalCourtyard: LocationCard = {
             chooser: "CONTROLLER",
             effect: {
               type: "remove-damage",
-              amount: { type: "up-to", value: 2 },
+              amount: {
+                type: "up-to",
+                value: 2,
+              },
               target: {
                 selector: "all",
                 count: 1,
@@ -57,8 +63,15 @@ export const casaMadrigalCourtyard: LocationCard = {
             chooser: "CONTROLLER",
             effect: {
               type: "remove-damage",
-              amount: { type: "up-to", value: 2 },
-              target: "SELF",
+              amount: {
+                type: "up-to",
+                value: 2,
+              },
+              target: {
+                selector: "all",
+                count: 1,
+                reference: "source",
+              },
             },
           },
         ],

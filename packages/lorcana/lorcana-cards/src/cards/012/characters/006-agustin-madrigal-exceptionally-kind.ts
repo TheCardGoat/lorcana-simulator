@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { support } from "../../../helpers/abilities/support";
 import { agustinMadrigalExceptionallyKindI18n } from "./006-agustin-madrigal-exceptionally-kind.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const agustinMadrigalExceptionallyKind: CharacterCard = {
   id: "xWz",

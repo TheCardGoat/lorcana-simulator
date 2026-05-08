@@ -12,7 +12,7 @@ export async function fetchQuickMatchTicket(
 ): Promise<QuickMatchTicketResult | null> {
   try {
     return await requestJson<QuickMatchTicketResult>(
-      `${getApiOrigin()}/v1/play/quick-match/ticket`,
+      `${getApiOrigin()}/v1/games/lorcana/play/quick-match/ticket`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

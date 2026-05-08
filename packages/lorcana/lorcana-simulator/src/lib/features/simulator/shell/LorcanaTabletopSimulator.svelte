@@ -10,7 +10,8 @@
   import { buildSimulatorHotkeyDescriptors } from "@/features/simulator/hotkeys/simulator-hotkey-registry.js";
   import {
     HAND_CARD_HOTKEYS,
-    OPPONENT_CARD_HOTKEYS,
+    OPPONENT_HAND_HOTKEYS,
+    OPPONENT_PLAY_HOTKEYS,
     PLAY_CARD_HOTKEYS,
   } from "@/features/simulator/hotkeys/hotkey-bindings.js";
   import { getOrderedPlayZoneCards } from "@/features/simulator/hotkeys/board-order.js";
@@ -18,7 +19,8 @@
   import { toast } from "svelte-sonner";
   import { DragDropProvider } from "@dnd-kit/svelte";
   import { Feedback, PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
-  import type { LorcanaEngineBase } from "@tcg/lorcana-engine";
+  import type { LorcanaEngineBase, LorcanaProjectedBoardView } from "@tcg/lorcana-engine";
+  import type { PlayerInteractionView } from "@tcg/lorcana-interaction";
   import type {
     ExecutableMovePresentationCategoryId,
     LorcanaPlayerSide,
@@ -27,6 +29,7 @@
   } from "@/features/simulator/model/contracts.js";
   import type { PendingEffectsPopoverItem } from "@/features/simulator/context/game-context.svelte.js";
   import type { LorcanaPlayerSettingsMap } from "@/features/simulator/model/player-visual-settings.js";
+  import type { PlayerMatchMetadata } from "@/features/simulator/model/player-match-metadata.js";
   import type { MatchChatController } from "@/features/match-chat/match-chat-controller.svelte.js";
 
   import LorcanaSimulatorSidebar from "./LorcanaSimulatorSidebar.svelte";
@@ -35,6 +38,7 @@
   import SimulatorSupportDialog from "@/features/simulator/dialogs/SimulatorSupportDialog.svelte";
   import SimulatorFeedbackDialog from "@/features/simulator/support/SimulatorFeedbackDialog.svelte";
   import SimulatorBugReportDialog from "@/features/simulator/support/SimulatorBugReportDialog.svelte";
+  import SimulatorPlayerReportDialog from "@/features/simulator/support/SimulatorPlayerReportDialog.svelte";
   import {
     dismissSupportReminderForAWeek,
     resolveSupportReminderState,
@@ -84,10 +88,10 @@
     readModel?: Pick<LorcanaSimulatorReadModel, "getMoveLog"> &
       Partial<Pick<LorcanaSimulatorReadModel, "subscribeStateUpdates">>;
     playerSettings?: LorcanaPlayerSettingsMap;
-    playerDisplayNames?: Record<string, string>;
-    playerIsMobileMap?: Record<string, boolean>;
+    playerMetadataMap?: Record<string, PlayerMatchMetadata>;
     serverGameplaySettings?: ServerGameplaySettings;
     gameContext?: LorcanaGameContext | null;
+    interactionView?: PlayerInteractionView | null;
     postGameGameId?: string | null;
     onReturnToMatchmaking?: (() => void | Promise<void>) | null;
     viewerMode?: "player" | "spectator";
@@ -102,6 +106,11 @@
     serverInitiatedClose?: boolean;
     matchContext?: MatchNavigationContext | null;
     onNextGame?: (() => void) | null;
+    /** Identity of the opponent for moderation actions (player reports). */
+    opponentGameProfileId?: string | null;
+    opponentDisplayName?: string | null;
+    /** Match ID associated with the current game, used for report context. */
+    moderationMatchId?: string | null;
     /** Optional overlay rendered between the two player lanes (e.g. replay controls). */
     boardOverlay?: Snippet;
     /** Override which side appears at the bottom (e.g. replay viewer perspective). */
@@ -112,10 +121,10 @@
     engine,
     readModel,
     playerSettings = {},
-    playerDisplayNames = {},
-    playerIsMobileMap = {},
+    playerMetadataMap = {},
     serverGameplaySettings,
     gameContext = $bindable(null),
+    interactionView = $bindable(null),
     postGameGameId = null,
     onReturnToMatchmaking = null,
     viewerMode = "player",
@@ -129,6 +138,9 @@
     serverInitiatedClose = false,
     matchContext = null,
     onNextGame = null,
+    opponentGameProfileId = null,
+    opponentDisplayName = null,
+    moderationMatchId = null,
     boardOverlay,
     ownerSide: ownerSideOverride = null,
   }: LorcanaTabletopSimulatorProps = $props();
@@ -144,16 +156,16 @@
     get playerSettings() {
       return playerSettings;
     },
-    get playerDisplayNames() {
-      return playerDisplayNames;
-    },
-    get playerIsMobileMap() {
-      return playerIsMobileMap;
+    get playerMetadataMap() {
+      return playerMetadataMap;
     },
   });
   gameContext = game;
 
   const sidebar = useLorcanaSidebarPresenter();
+  $effect(() => {
+    interactionView = sidebar.interactionView;
+  });
   $effect(() => {
     if (serverGameplaySettings) {
       sidebar.initializeFromServer(serverGameplaySettings);
@@ -184,6 +196,26 @@
   const isCompactLayout = $derived(layout.isCompact);
   const isEngineFinished = $derived(boardSnapshot?.status === "finished");
   const isPostGame = $derived(isEngineFinished || (matchContext?.matchCompleted ?? false));
+  const postGameBoardSnapshot = $derived.by((): LorcanaProjectedBoardView | null => {
+    if (!boardSnapshot) {
+      return null;
+    }
+
+    if (isEngineFinished) {
+      return boardSnapshot;
+    }
+
+    if (matchContext?.matchCompleted) {
+      return {
+        ...boardSnapshot,
+        status: "finished",
+        winner: matchContext.winnerId ?? boardSnapshot.winner,
+        reason: matchContext.endReason ?? boardSnapshot.reason ?? "Match completed",
+      };
+    }
+
+    return null;
+  });
   const isSpectator = $derived(viewerMode === "spectator");
   const readOnlyMode = $derived(isPostGame || isSpectator);
   const compactActionCount = $derived(isPostGame ? 0 : sidebar.moveCategoryCount);
@@ -202,7 +234,7 @@
     getOrderedPlayZoneCards(
       board.getZoneCards(topSide, "play").filter((card) => card.cardType !== "item"),
       "top",
-    ).slice(0, OPPONENT_CARD_HOTKEYS.length),
+    ).slice(0, OPPONENT_PLAY_HOTKEYS.length),
   );
   const ownedPlayHotkeyCards = $derived.by(() =>
     ownerSide
@@ -215,18 +247,47 @@
   const ownedHandHotkeyCards = $derived.by(() =>
     ownerSide ? board.getZoneCards(bottomSide, "hand").slice(0, HAND_CARD_HOTKEYS.length) : [],
   );
+  // Opponent hand cards are normally face-down with no addressable IDs. They
+  // only become hotkey-targetable when an effect surfaces them in the active
+  // selection state (e.g. "look at opponent's hand").
+  const opponentHandHotkeyCards = $derived.by(() => {
+    const selection = availableMovesSelectionState;
+    if (!selection) return [];
+
+    const opponentHand = board.getZoneCards(topSide, "hand");
+    if (opponentHand.length === 0) return [];
+
+    const opponentHandById = new Map(opponentHand.map((card) => [card.cardId, card]));
+    const surfaced: typeof opponentHand = [];
+    for (const entry of selection.entries) {
+      if (entry.kind !== "card" || !entry.cardId || entry.disabled === true) continue;
+      const card = opponentHandById.get(entry.cardId);
+      if (card) surfaced.push(card);
+      if (surfaced.length >= OPPONENT_HAND_HOTKEYS.length) break;
+    }
+    return surfaced;
+  });
+  // A card is "armed" when the quick-menu (with action hotkeys) is open. The
+  // detailed-inspect popover doesn't bind 1-9 to actions, so it must NOT enter
+  // the action-menu layer — otherwise the card row hotkeys would silently
+  // disable for every detailed inspect, which is a regression from browse.
+  const armedCardId = $derived(
+    simulatorCardContext.isInspectOpen && sidebar.cardInfoMode === "quick"
+      ? simulatorCardContext.inspectedCard?.cardId ?? null
+      : null,
+  );
   const finishedGameKey = $derived.by(() =>
-    isEngineFinished && boardSnapshot && postGameGameId
-      ? `${postGameGameId}:${boardSnapshot.stateID ?? boardSnapshot.turnNumber}`
+    postGameBoardSnapshot && postGameGameId
+      ? `${postGameGameId}:${postGameBoardSnapshot.stateID ?? postGameBoardSnapshot.turnNumber}:${postGameBoardSnapshot.winner ?? "draw"}`
       : null,
   );
   const postGameSummary = $derived.by(() => {
-    if (!boardSnapshot || !isEngineFinished || !postGameGameId) {
+    if (!postGameBoardSnapshot || !postGameGameId) {
       return null;
     }
 
     return buildPostGameSummary({
-      board: boardSnapshot,
+      board: postGameBoardSnapshot,
       entries: moveLogEntries,
       viewerSide: ownerSide,
     });
@@ -257,6 +318,7 @@
   let supportDialogOpen = $state(false);
   let feedbackDialogOpen = $state(false);
   let bugReportDialogOpen = $state(false);
+  let playerReportDialogOpen = $state(false);
   let supportReminderVisible = $state(false);
   let supportReminderOpen = $state(false);
   let supportReminderVariantIndex = $state<number | null>(null);
@@ -374,9 +436,11 @@
       moveCategorySummaries,
       selectionState: availableMovesSelectionState,
       pendingDirectMove,
+      armedCardId,
       opponentPlayCards: opponentPlayHotkeyCards,
       ownedPlayCards: ownedPlayHotkeyCards,
       ownedHandCards: ownedHandHotkeyCards,
+      opponentHandCards: opponentHandHotkeyCards,
       canBack: availableMovesSelectionState?.canBack ?? false,
       canCancel:
         Boolean(pendingDirectMove) ||
@@ -402,19 +466,23 @@
       },
     }),
   );
+  // Confirm/cancel/back must always work to prevent miss-clicks regardless
+  // of HotkeyMode. Everything else respects the user's mode choice — `off`
+  // really means off (no Mod+K palette, no Space pass-turn), `confirm-only`
+  // adds Space, `on` enables every binding. The library's
+  // `ignoreInputs: true` silences these while typing in chat.
+  const ALWAYS_ON_HOTKEY_IDS = new Set(["global-cancel", "global-back", "global-confirm"]);
   function getVisibleHotkeyDescriptors(
     descriptors: typeof hotkeyDescriptors,
     hotkeyMode: HotkeyMode,
   ) {
     switch (hotkeyMode) {
       case "off":
-        return [];
+        return descriptors.filter((descriptor) => ALWAYS_ON_HOTKEY_IDS.has(descriptor.id));
       case "confirm-only":
         return descriptors.filter(
           (descriptor) =>
-            descriptor.id === "global-cancel" ||
-            descriptor.id === "global-back" ||
-            descriptor.id === "global-confirm" ||
+            ALWAYS_ON_HOTKEY_IDS.has(descriptor.id) ||
             (descriptor.kind === "move" && descriptor.categoryId === "pass-turn"),
         );
       case "on":
@@ -424,6 +492,17 @@
   }
   const visibleHotkeyDescriptors = $derived(
     getVisibleHotkeyDescriptors(hotkeyDescriptors, sidebar.hotkeyMode),
+  );
+  // The three navigation keys (Escape/Enter/Backspace) live in their own
+  // layer so they survive when card hotkeys are off. They DO pause while
+  // Player Settings is open — the dialog's own native Escape handler closes
+  // it, and pausing here prevents Enter from confirming a queued game move
+  // through the modal.
+  const alwaysOnHotkeyDescriptors = $derived(
+    visibleHotkeyDescriptors.filter((descriptor) => ALWAYS_ON_HOTKEY_IDS.has(descriptor.id)),
+  );
+  const gameplayHotkeyDescriptors = $derived(
+    visibleHotkeyDescriptors.filter((descriptor) => !ALWAYS_ON_HOTKEY_IDS.has(descriptor.id)),
   );
   const gameplayHotkeysPaused = $derived(sidebar.isPlayerSettingsOpen);
 
@@ -560,6 +639,23 @@
     postGameDialogOpen = false;
     bugReportDialogOpen = true;
   }
+
+  function openPlayerReportDialog(): void {
+    if (!opponentGameProfileId) return;
+    postGameDialogOpen = false;
+    playerReportDialogOpen = true;
+  }
+
+  const moderationGameId = $derived(boardSnapshot?.gameID ?? null);
+  const canReportOpponent = $derived(
+    isAuthenticated && !!opponentGameProfileId && viewerMode === "player",
+  );
+  // Post-game modal shows the entry whenever there's a real opponent — auth
+  // errors at submit time are surfaced by the dialog. We don't want to hide
+  // the action from guest/quick-match players who hit the timeout screen.
+  const canShowPostGameReport = $derived(
+    !!opponentGameProfileId && viewerMode === "player",
+  );
 </script>
 
 <DragDropProvider
@@ -571,7 +667,8 @@
 >
   <Sidebar.Provider bind:open={sidebarOpen}>
     <div class="simulator-dark simulator-v2">
-      <SimulatorHotkeyLayer descriptors={visibleHotkeyDescriptors} paused={gameplayHotkeysPaused} />
+      <SimulatorHotkeyLayer descriptors={alwaysOnHotkeyDescriptors} paused={gameplayHotkeysPaused} />
+      <SimulatorHotkeyLayer descriptors={gameplayHotkeyDescriptors} paused={gameplayHotkeysPaused} />
       <Toaster theme="dark"/>
       {#if !isCompactLayout}
         <LorcanaSimulatorSidebar
@@ -594,7 +691,9 @@
           onOpenHotkeys={() => {
             hotkeysDialogOpen = true;
           }}
-          onOpenSupport={openSupportDialog}
+          onOpenSupport={openBugReportDialog}
+          {canReportOpponent}
+          onReportOpponent={openPlayerReportDialog}
           {matchContext}
           onNextGame={onNextGame ?? undefined}
           onReturnToMatchmaking={handleReturnToMatchmaking}
@@ -616,6 +715,8 @@
               {opponentPresence}
               {onSkipOpponent}
               {onDropOpponent}
+              onReportOpponent={openPlayerReportDialog}
+              {canReportOpponent}
               {gatewayStatus}
               {serverInitiatedClose}
               {viewerMode}
@@ -650,6 +751,8 @@
               {opponentPresence}
               {onSkipOpponent}
               {onDropOpponent}
+              onReportOpponent={openPlayerReportDialog}
+              {canReportOpponent}
               {gatewayStatus}
               {serverInitiatedClose}
               {viewerMode}
@@ -717,14 +820,14 @@
         bind:open={sidebar.isPlayerSettingsOpen}
         selectedLocale={sidebar.selectedLocale}
         {showRawLogRegistryJson}
-        skipActionConfirmation={sidebar.skipActionConfirmation}
         hotkeyMode={sidebar.hotkeyMode}
         cardPreviewMode={sidebar.cardPreviewMode}
+        cardInfoMode={sidebar.cardInfoMode}
         onLocaleSelection={sidebar.handleLocaleSelection}
         onToggleRawLogRegistryJson={sidebar.handleRawLogRegistryToggle}
-        onToggleSkipActionConfirmation={sidebar.handleSkipActionConfirmationToggle}
         onHotkeyModeChange={sidebar.handleHotkeyModeChange}
         onCardPreviewModeChange={sidebar.handleCardPreviewModeChange}
+        onCardInfoModeChange={sidebar.handleCardInfoModeChange}
         primaryClickAction={sidebar.primaryClickAction}
         onPrimaryClickActionChange={sidebar.handlePrimaryClickActionChange}
         animationSpeed={sidebar.animationSpeed}
@@ -752,6 +855,13 @@
       />
       <SimulatorFeedbackDialog bind:open={feedbackDialogOpen} />
       <SimulatorBugReportDialog bind:open={bugReportDialogOpen} gameContext={bugReportContext} />
+      <SimulatorPlayerReportDialog
+        bind:open={playerReportDialogOpen}
+        reportedDisplayName={opponentDisplayName}
+        reportedGameProfileId={opponentGameProfileId}
+        matchId={moderationMatchId}
+        gameId={moderationGameId}
+      />
       {#if isCompactLayout}
       <LorcanaCompactPanels
         bind:open={compactPanelsOpen}
@@ -772,6 +882,7 @@
           onNextGame={onNextGame ?? undefined}
           onOpenBugReport={openBugReportDialog}
           onOpenFeedback={openFeedbackDialog}
+          onOpenPlayerReport={canShowPostGameReport ? openPlayerReportDialog : undefined}
         />
 
         {#if !postGameDialogOpen}

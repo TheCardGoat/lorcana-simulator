@@ -14,10 +14,18 @@ export const touchTheSky: ActionCard = {
   rarity: "rare",
   cost: 2,
   inkable: true,
+
   externalIds: {
-    lorcast: "crd_0b20b27507194e779b1e9d043d19e5de",
+    lorcast: "crd_baeb30c2d1dd4756b259daeb2833fad4",
   },
-  text: "Move a character of yours to a location for free. Then, draw cards equal to that location's {L}.",
+  text: [
+    {
+      title: "Move a character of yours to a location for free.",
+    },
+    {
+      title: "Then, draw cards equal to that location's {L}.",
+    },
+  ],
   actionSubtype: "song",
   abilities: [
     {

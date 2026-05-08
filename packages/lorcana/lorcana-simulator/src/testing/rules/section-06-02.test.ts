@@ -28,23 +28,21 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       expect(noDrawEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
       expect(noDrawEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
 
+      // Remove one character so the Ohana condition (2+ other chars) no longer holds.
+      // The 6.2.7 optimization auto-resolves the bag entry immediately (no player input needed)
+      // because bagEffectNeedsPlayerDecision() returns false when the condition has already failed.
       const minnieId = noDrawEngine.findCardInstanceId(minnieMouseAlwaysClassy, "play", PLAYER_ONE);
       expect(
         noDrawEngine.asServer().manualMoveCard(minnieId, `discard:${PLAYER_ONE}` as ZoneId).success,
       ).toBe(true);
-      expect(noDrawEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        noDrawEngine
-          .asPlayerOne()
-          .resolvePendingByCard(noDrawEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
-            resolveOptional: true,
-          }),
-      ).toBeSuccessfulCommand();
       expect(noDrawEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(noDrawEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
     });
 
-    it("6.2.4.1. Stitch's play trigger DOES add a bag entry even if condition is not met at trigger time; condition is checked at resolution.", () => {
+    // it("6.2.4.1. Stitch's play trigger DOES add a bag entry even if condition is not met at trigger time; condition is checked at resolution.", () => {
+    // The correct is to add the trigger to the bag, but to improve UX we're skipping it. As adding a single trigger that we know it fails will result in an additional click.
+    // When multiple triggers are being added, we must not skip as the resolution order may influence.
+    it("6.2.4.1. Stitch's play trigger does NOT add a bag entry when its board-state condition is not met at trigger time.", () => {
       const noTriggerEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [stitchCarefreeSurfer],
         inkwell: stitchCarefreeSurfer.cost,
@@ -53,19 +51,8 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       });
 
       expect(noTriggerEngine.asPlayerOne().playCard(stitchCarefreeSurfer)).toBeSuccessfulCommand();
-      expect(noTriggerEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(noTriggerEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
-
-      // Resolve the pending triggered ability — condition (2+ other characters) is not met,
-      // so the effect does not occur (no cards drawn).
-      expect(
-        noTriggerEngine
-          .asPlayerOne()
-          .resolvePendingByCard(noTriggerEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
-            resolveOptional: false,
-          }),
-      ).toBeSuccessfulCommand();
       expect(noTriggerEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(noTriggerEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
       expect(noTriggerEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
     });
 

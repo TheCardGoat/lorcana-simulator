@@ -8,7 +8,7 @@ export const nathanielFlintNotoriousPirateI18n: Record<Languages, I18nProperties
       {
         title: "PREDATORY INSTINCT",
         description:
-          "You can't play this character unless an opposing character was damaged this turn.",
+          "You can't play this character unless an opposing character took damage this turn.",
       },
     ],
   },

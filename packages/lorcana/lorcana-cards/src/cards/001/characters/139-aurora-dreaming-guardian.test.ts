@@ -51,6 +51,24 @@ describe("Aurora - Dreaming Guardian (Set 1)", () => {
       expect(testEngine.hasKeyword(auroraDreamingGuardian, "Ward")).toBe(true);
     });
 
+    // Player bug report: after playing Aurora, allied characters did not gain
+    // Ward. PROTECTIVE EMBRACE is a continuous static ability so it must apply
+    // immediately when Aurora enters play, even on the same turn while drying.
+    it("grants Ward to other characters immediately when played from hand", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        inkwell: auroraDreamingGuardian.cost,
+        hand: [auroraDreamingGuardian],
+        play: [{ card: ally, isDrying: false }],
+        deck: 3,
+      });
+
+      expect(testEngine.hasKeyword(ally, "Ward")).toBe(false);
+
+      expect(testEngine.asPlayerOne().playCard(auroraDreamingGuardian)).toBeSuccessfulCommand();
+
+      expect(testEngine.hasKeyword(ally, "Ward")).toBe(true);
+    });
+
     it("does not grant Ward to opponent's characters", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

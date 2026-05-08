@@ -70,6 +70,7 @@ export const sidPhillipsToySurgeon: CharacterCard = {
                 type: "for-each-opponent",
                 effect: {
                   type: "banish",
+                  chosenBy: "opponent",
                   target: {
                     selector: "chosen",
                     count: 1,
@@ -94,12 +95,7 @@ export const sidPhillipsToySurgeon: CharacterCard = {
         on: {
           controller: "any",
           cardType: "character",
-          filters: [
-            {
-              type: "has-classification",
-              classification: "Toy",
-            },
-          ],
+          classification: "Toy",
         },
         timing: "whenever",
         restrictions: [

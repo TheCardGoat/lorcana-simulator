@@ -148,7 +148,14 @@ export interface TurnMetadata {
 export interface PendingCostReduction {
   amount: number;
   sourceId?: CardInstanceId;
-  cardType?: "character" | "item" | "location" | "action" | "song";
+  cardType?:
+    | "character"
+    | "item"
+    | "location"
+    | "action"
+    | "song"
+    | ("character" | "item" | "location" | "action" | "song")[]
+    | readonly ("character" | "item" | "location" | "action" | "song")[];
   classification?: Classification | Classification[] | readonly Classification[];
   expiresAtTurn: number;
   consumeOnUse: boolean;
@@ -452,6 +459,7 @@ export interface PendingActionResolutionInput {
   amount?: Amount;
   namedCard?: string;
   resolveOptional?: boolean;
+  enterPlayExerted?: boolean;
   choiceIndex?: number;
   preventAutoResolveTriggeredEffects?: boolean;
   destinations?: {

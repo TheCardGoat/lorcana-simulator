@@ -15,8 +15,8 @@ export const LANE_SCROLL_CLASS =
 export const HERO_NAV_CAPSULE_CLASS =
   "inline-flex max-w-full items-center overflow-x-auto overflow-y-hidden rounded-full border border-white/10 bg-black/50 py-1 shadow-none backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-w-none";
 export const HERO_NAV_SEGMENT_BTN =
-  "h-11 min-h-11 shrink-0 rounded-none border-0 bg-transparent px-4 text-sm font-semibold text-slate-100 shadow-none hover:bg-white/10 hover:text-white sm:px-5";
-export const HERO_NAV_DIVIDER_CLASS = "mx-1 h-7 w-px shrink-0 self-center bg-white/25";
+  "h-11 min-h-11 shrink-0 rounded-none border-0 bg-transparent px-3 text-sm font-semibold text-slate-100 shadow-none hover:bg-white/10 hover:text-white sm:px-4";
+export const HERO_NAV_DIVIDER_CLASS = "h-7 w-px shrink-0 self-center bg-white/20";
 export const HERO_NAV_MOBILE_TAB_BTN =
   "h-11 min-h-11 shrink-0 rounded-full border border-transparent px-4 text-sm font-semibold text-slate-300 shadow-none transition-colors hover:bg-white/8 hover:text-white";
 export const HERO_NAV_MOBILE_TAB_BTN_ACTIVE =

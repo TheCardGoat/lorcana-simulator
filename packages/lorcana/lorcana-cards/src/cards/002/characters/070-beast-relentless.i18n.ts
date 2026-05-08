@@ -7,7 +7,7 @@ export const beastRelentlessI18n: Record<Languages, I18nProperties> = {
     text: [
       {
         title: "SECOND WIND",
-        description: "Whenever an opposing character is damaged, you may ready this character.",
+        description: "Whenever an opposing character takes damage, you may ready this character.",
       },
     ],
   },

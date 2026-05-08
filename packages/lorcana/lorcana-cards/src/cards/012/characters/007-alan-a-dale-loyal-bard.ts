@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { singer } from "../../../helpers/abilities/singer";
 import { alanadaleLoyalBardI18n } from "./007-alan-a-dale-loyal-bard.i18n";
+import { singer } from "../../../helpers/abilities/singer";
 
 export const alanadaleLoyalBard: CharacterCard = {
   id: "BxQ",

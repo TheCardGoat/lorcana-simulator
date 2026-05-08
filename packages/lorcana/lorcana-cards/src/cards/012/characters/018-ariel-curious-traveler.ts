@@ -31,7 +31,7 @@ export const arielCuriousTraveler: CharacterCard = {
   classifications: ["Dreamborn", "Hero", "Princess"],
   abilities: [
     {
-      id: "2wZ-1",
+      id: "BW6-1",
       name: "FAMILIAR GROUND",
       type: "triggered",
       text: "FAMILIAR GROUND Whenever this character quests, if you played another character this turn, chosen opposing character can't challenge and must quest during their next turn if able.",

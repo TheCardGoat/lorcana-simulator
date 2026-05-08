@@ -120,21 +120,6 @@ describe("LorcanaCard", () => {
     openGlobalPreview.mockClear();
   });
 
-  it("does not render a mobile preview when the card is not inspected", async () => {
-    mockLayoutMode = "mobile";
-    mockInspectedCard = null;
-
-    const { default: LorcanaCard } = await import("./LorcanaCard.svelte");
-    const { body } = render(LorcanaCard, {
-      props: {
-        card: createCardSnapshot(),
-      },
-    });
-
-    expect(body).not.toContain('data-slot="popover-content"');
-    expect(body).toContain('data-card-id="card-1"');
-  });
-
   it("renders desktop cards without the legacy hover-card trigger wrapper", async () => {
     mockLayoutMode = "desktop";
     mockInspectedCard = createCardSnapshot();

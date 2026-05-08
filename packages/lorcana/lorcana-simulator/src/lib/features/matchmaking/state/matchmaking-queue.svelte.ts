@@ -1,4 +1,5 @@
 import { goto } from "$app/navigation";
+import { m } from "$lib/i18n/messages.js";
 import {
   joinMatchmakingQueue,
   leaveMatchmakingQueue,
@@ -7,8 +8,10 @@ import {
   type MatchmakingJoinParams,
   type MatchmakingStatusResponse,
 } from "../api/matchmaking-api.js";
-import { trackEvent } from "$lib/analytics/analytics.js";
+import { analyticsErrorFields, trackEvent } from "$lib/analytics/analytics.js";
 import { saveRankedMatchSession } from "$lib/features/practice-match/practice-match-storage.js";
+
+const DEFAULT_ACCEPT_WINDOW_MS = 15_000;
 
 function detectMobile(): boolean {
   if (typeof window === "undefined") return false;
@@ -85,6 +88,7 @@ export class MatchmakingQueueStore {
         this.applyPendingMatchFromStatus({
           pendingMatchId: result.pendingMatchId,
           acceptDeadline: result.pendingMatchDeadline,
+          serverNow: result.pendingMatchServerNow,
           selfAccepted: result.pendingSelfAccepted ?? false,
           opponentAccepted: result.pendingOpponentAccepted ?? false,
         });
@@ -116,6 +120,7 @@ export class MatchmakingQueueStore {
       this.applyPendingMatchFromStatus({
         pendingMatchId: result.pendingMatchId,
         acceptDeadline: result.pendingMatchDeadline,
+        serverNow: result.pendingMatchServerNow,
         selfAccepted: result.pendingSelfAccepted ?? false,
         opponentAccepted: result.pendingOpponentAccepted ?? false,
       });
@@ -181,7 +186,10 @@ export class MatchmakingQueueStore {
       } else {
         this.status = "idle";
         this.error = message;
-        trackEvent("queue_join_error", { error: "api_error" });
+        trackEvent("queue_join_error", {
+          error: "api_error",
+          ...analyticsErrorFields(err),
+        });
       }
     }
   }
@@ -268,6 +276,7 @@ export class MatchmakingQueueStore {
     position?: number;
     pendingMatchId?: string;
     pendingMatchDeadline?: number;
+    pendingMatchServerNow?: number;
     pendingSelfAccepted?: boolean;
     pendingOpponentAccepted?: boolean;
   }): void {
@@ -275,6 +284,7 @@ export class MatchmakingQueueStore {
       this.applyPendingMatchFromStatus({
         pendingMatchId: msg.pendingMatchId,
         acceptDeadline: msg.pendingMatchDeadline,
+        serverNow: msg.pendingMatchServerNow,
         selfAccepted: msg.pendingSelfAccepted ?? false,
         opponentAccepted: msg.pendingOpponentAccepted ?? false,
       });
@@ -311,7 +321,7 @@ export class MatchmakingQueueStore {
     if (reason === "timeout") {
       this.error = "Matchmaking timed out. Please try again.";
     } else if (reason === "match_creation_error") {
-      this.error = "Match could not be created. Please check your deck and try again.";
+      this.error = m["sim.matchmaking.queue.error.creationFailed"]();
     }
   }
 
@@ -325,11 +335,13 @@ export class MatchmakingQueueStore {
     pendingMatchId: string;
     opponentDisplayName: string;
     acceptDeadline: number;
+    serverNow?: number;
   }): void {
     console.log("[matchmaking-queue] match_ready", msg);
     this.applyPendingMatchFromStatus({
       pendingMatchId: msg.pendingMatchId,
       acceptDeadline: msg.acceptDeadline,
+      serverNow: msg.serverNow,
       selfAccepted: false,
       opponentAccepted: false,
       opponentDisplayName: msg.opponentDisplayName,
@@ -342,18 +354,33 @@ export class MatchmakingQueueStore {
   private applyPendingMatchFromStatus(params: {
     pendingMatchId: string;
     acceptDeadline: number;
+    serverNow?: number;
     selfAccepted: boolean;
     opponentAccepted: boolean;
     opponentDisplayName?: string;
   }): void {
     this.status = "match_ready";
     this.pendingMatchId = params.pendingMatchId;
-    this.acceptDeadline = params.acceptDeadline;
+    this.acceptDeadline = this.normalizeAcceptDeadline(params.acceptDeadline, params.serverNow);
     this.opponentDisplayName = params.opponentDisplayName ?? this.opponentDisplayName ?? "";
     this.selfAccepted = params.selfAccepted;
     this.opponentAccepted = params.opponentAccepted;
     this.stopTimer();
     this.startAcceptTimer();
+  }
+
+  private normalizeAcceptDeadline(serverDeadline: number, serverNow?: number): number {
+    const clientNow = Date.now();
+    if (serverNow !== undefined) {
+      const remainingMs = serverDeadline - serverNow;
+      return clientNow + Math.max(0, remainingMs);
+    }
+
+    if (serverDeadline <= clientNow) {
+      return clientNow + DEFAULT_ACCEPT_WINDOW_MS;
+    }
+
+    return serverDeadline;
   }
 
   /**

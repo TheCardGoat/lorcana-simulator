@@ -18,13 +18,16 @@ export const ringOfStonesPlaceOfLegends: LocationCard = {
   moveCost: 3,
   lore: 1,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_7a5bbd2bed1b4b109511ea5bcd384252",
+  },
   text: [
     {
-      title: "Follow Your Fate",
+      title: "FOLLOW YOUR FATE",
       description: "Your exerted characters can move here for free.",
     },
     {
-      title: "Part the Veil",
+      title: "PART THE VEIL",
       description: "Once during your turn, whenever a character moves here, gain 1 lore.",
     },
   ],
@@ -38,7 +41,11 @@ export const ringOfStonesPlaceOfLegends: LocationCard = {
         type: "move-cost-reduction",
         reduction: "free",
         location: "here",
-        filters: [{ type: "exerted" }],
+        filters: [
+          {
+            type: "exerted",
+          },
+        ],
       },
     },
     {

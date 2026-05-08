@@ -18,9 +18,12 @@ export const leviathansLairDangerousGround: LocationCard = {
   moveCost: 1,
   lore: 2,
   inkable: false,
+  externalIds: {
+    lorcast: "crd_6390182da0394996b7ea68dee5b0de54",
+  },
   text: [
     {
-      title: "Lost to the Dunes",
+      title: "LOST TO THE DUNES",
       description:
         "When this location is banished, each opponent chooses and banishes one of their characters.",
     },

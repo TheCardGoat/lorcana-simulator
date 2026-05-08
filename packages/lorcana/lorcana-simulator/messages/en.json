@@ -136,6 +136,7 @@
   "sim.tabletop.eventLog.aria": "Event log",
   "sim.tabletop.eventLog.title": "Event Log",
   "sim.tabletop.eventLog.empty": "No moves recorded yet.",
+  "sim.tabletop.eventLog.manual": "Manual",
   "sim.tabletop.empty": "Empty",
   "sim.actions.panel.aria": "Available moves",
   "sim.actions.panel.title": "Available Moves",
@@ -638,7 +639,10 @@
   "sim.target.cards": "Cards",
   "sim.target.players": "Players",
   "sim.target.selectedCount": "{selectedCount} selected",
+  "sim.target.entryMode.ready": "Play Ready",
+  "sim.target.entryMode.exerted": "Play Exerted",
   "sim.postGame.sidebar.navigationAria": "Post-game navigation",
   "sim.postGame.sidebar.gameOf": "Game {current} of {total}",
-  "sim.postGame.sidebar.goToNextGame": "Go to Next Game →"
+  "sim.postGame.sidebar.goToNextGame": "Go to Next Game →",
+  "sim.player.report.openAria": "Report player"
 }

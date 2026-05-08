@@ -8,9 +8,9 @@
     type SimulatorDebugAnimationRequest,
   } from '$lib';
   import type { LorcanaGameContext } from '@/features/simulator/context/game-context.svelte.js';
+  import type { PlayerInteractionView } from '@tcg/lorcana-interaction';
   import { getLorcanaFixture } from '@/features/simulator-devtools/fixtures';
   import { LorcanaMultiplayerSimulatorAdapter } from '@/features/simulator-devtools/harness';
-  import { getLocale, setLocale } from '$lib/paraglide/runtime.js';
   import { buildSimulatorAssetUrl } from '$lib/config/public-url-config.js';
 
   import LorcanaDebugControls from './LorcanaDebugControls.svelte';
@@ -41,10 +41,6 @@
   const TEST_PLAYER_TWO_CARD_BACK_URL = buildSimulatorAssetUrl(
     'card-back/back-yellow.webp',
   );
-  // const TEST_PLAYER_ONE_PLAYMAT_URL =
-  // 	"https://r2.tcg.online/public/lorcana/simulator/playmats/005.webp";
-  // const TEST_PLAYER_TWO_PLAYMAT_URL =
-  // 	"https://r2.tcg.online/public/lorcana/simulator/playmats/pooh-001.webp";
 
   let {
     browserTransport = { mode: 'sync' },
@@ -61,6 +57,9 @@
   let serializedState = $state<string>('No state available.');
   let serializedBoardProjection = $state<string>(
     'No board projection available.',
+  );
+  let serializedInteractionPrompt = $state<string>(
+    'No interaction prompt available.',
   );
   let currentViewOverride = $state<LorcanaSimulatorView | null>(null);
   let debugStateId = $state<number | null>(null);
@@ -140,6 +139,11 @@
       null,
       2,
     );
+    serializedInteractionPrompt = JSON.stringify(
+      interactionViewRef ?? gameContextRef?.interactionView ?? null,
+      null,
+      2,
+    );
   }
 
   $effect(() => {
@@ -186,6 +190,7 @@
   }
 
   let gameContextRef = $state<LorcanaGameContext | null>(null);
+  let interactionViewRef = $state<PlayerInteractionView | null>(null);
 
   function runAnimation(animation: SimulatorDebugAnimationRequest): boolean {
     if (!gameContextRef) {
@@ -217,6 +222,8 @@
       defenderKind: 'character' | 'location';
       attackerWouldBeBanished: boolean;
       defenderWouldBeBanished: boolean;
+      attackerDamageIsReduced: boolean;
+      defenderDamageIsReduced: boolean;
     },
   ): boolean {
     if (!gameContextRef) {
@@ -244,6 +251,7 @@
       {readModel}
       {playerSettings}
       bind:gameContext={gameContextRef}
+      bind:interactionView={interactionViewRef}
     />
 
     <LorcanaDebugControls
@@ -253,6 +261,7 @@
       stateId={debugStateId}
       {serializedState}
       {serializedBoardProjection}
+      {serializedInteractionPrompt}
       onViewChange={setCurrentView}
       {onFixtureChange}
       onSwapPlayers={swapPlayers}

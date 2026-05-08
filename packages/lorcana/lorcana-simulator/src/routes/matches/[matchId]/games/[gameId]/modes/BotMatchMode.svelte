@@ -14,10 +14,10 @@
   import { createMessageRouter } from './game-mode-message-router.js';
   import {
     buildVisualSettings,
-    buildDisplayNames,
-    buildIsMobileMap,
+    buildPlayerMetadataMap,
     mergeWsVisuals,
     createMatchChat,
+    type PlayerMatchMetadata,
   } from './game-mode-setup.js';
   import type { GamePageData } from '../+page.server.js';
   import type { CardsMaps, LorcanaServerAuthoritativeSnapshot } from '@tcg/lorcana-engine';
@@ -36,8 +36,7 @@
   let practiceOrchestrator = $state<PracticeMatchOrchestrator | null>(null);
   let matchChatController = $state<MatchChatController | null>(null);
   let playerVisualSettings = $state<LorcanaPlayerSettingsMap>({});
-  let playerDisplayNames = $state<Record<string, string>>({});
-  let playerIsMobileMap = $state<Record<string, boolean>>({});
+  let playerMetadataMap = $state<Record<string, PlayerMatchMetadata>>({});
 
   let gateway = $state<GatewayClientStore | null>(null);
   let gatewayStatus = $derived(gateway?.status ?? null);
@@ -110,8 +109,7 @@
       const { matchId, gameId, match, game } = data;
 
       playerVisualSettings = buildVisualSettings(match.participants);
-      playerDisplayNames = buildDisplayNames(match.participants);
-      playerIsMobileMap = buildIsMobileMap(match.participants);
+      playerMetadataMap = buildPlayerMetadataMap(match.participants);
 
       let session = loadPracticeSession(gameId);
       if (!session) {
@@ -185,7 +183,7 @@
           state: joinedMsg.state as LorcanaServerAuthoritativeSnapshot['state'],
           cardsMaps,
         };
-        practiceOrchestrator = new PracticeMatchOrchestrator({
+        practiceOrchestrator = await PracticeMatchOrchestrator.create({
           gameId,
           playerId: session.gameProfileId,
           botPlayerId: session.botPlayerId,
@@ -199,7 +197,7 @@
         });
         pendingRecentHistory = null;
       } else {
-        practiceOrchestrator = new PracticeMatchOrchestrator({
+        practiceOrchestrator = await PracticeMatchOrchestrator.create({
           gameId,
           playerId: session.gameProfileId,
           botPlayerId: session.botPlayerId,
@@ -239,8 +237,7 @@
       engine={practiceOrchestrator.currentEngine}
       readModel={practiceOrchestrator.readModel}
       playerSettings={playerVisualSettings}
-      {playerDisplayNames}
-      {playerIsMobileMap}
+      {playerMetadataMap}
       serverGameplaySettings={data.userSettings?.gameplaySettings}
       postGameGameId={data.gameId}
       isAuthenticated={authSession.isAuthenticated}

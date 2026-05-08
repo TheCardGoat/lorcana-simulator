@@ -171,7 +171,13 @@ export function createLiveEntry(args: {
   const strippedLog = matchingLog?.log ? stripPrivateFields(matchingLog.log, viewerId) : undefined;
 
   const entry: MoveLogEntrySnapshot = {
-    id: `spectator-live-${args.acceptedMove.turnNumber}-${args.acceptedMove.timestamp}-${moveId}`,
+    // stateVersion is stable across move_accepted (unicast to issuer) and
+    // state_update (broadcast to everyone) for the same move; using it for
+    // the dedup id prevents duplicate entries on the dispatcher's screen.
+    // Manual moves emit no engine logs, so buildAcceptedMove falls back to
+    // Date.now() per packet — that wall-clock differs between the two
+    // arrivals and would otherwise sneak past pushEntries' Set-based dedup.
+    id: `spectator-live-${args.acceptedMove.stateVersion}-${moveId}`,
     timestamp: args.acceptedMove.timestamp,
     turnNumber: args.acceptedMove.turnNumber,
     moveId,

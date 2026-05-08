@@ -8,27 +8,28 @@
 
 import type { CardInstanceId, LogProjectionContext, PlayerId, PublishedGameEvent } from "#core";
 import { privateField } from "../core/runtime/private-field";
-import type { DamageEntry, MoveOutcomes } from "../types/move-log";
+import type { DamageEntry, MovedDamageEntry, MoveOutcomes } from "../types/move-log";
 import type {
   CardBanishedPayload,
   CardExertedPayload,
   CardInkedPayload,
+  CardMovedPayload,
   CardReadiedPayload,
   CardReturnedToHandPayload,
   CardsDrawnPayload,
+  DamageDealtPayload,
+  DamageMovedPayload,
   LoreChangedPayload,
+  LorcanaDomainEventType,
 } from "../types/domain-events";
 
-function findCardOwner(state: LogProjectionContext["state"], cardId: string): PlayerId | undefined {
-  const cardIndex = state.ctx?.zones?.private?.cardIndex;
-  if (!cardIndex) return undefined;
-
-  const entry = cardIndex[cardId as CardInstanceId];
-  return entry?.ownerID as PlayerId | undefined;
+function assertNever(value: never): never {
+  throw new Error(`Unhandled customType: ${String(value)}`);
 }
 
 export class MoveOutcomeAccumulator {
   private damageDealt: DamageEntry[] = [];
+  private damageMoved: MovedDamageEntry[] = [];
   private cardsBanished: CardInstanceId[] = [];
   private cardsDrawnAmount = 0;
   private cardsDrawnDetail: CardInstanceId[] = [];
@@ -39,7 +40,8 @@ export class MoveOutcomeAccumulator {
   private cardsMilled: { playerId: PlayerId; amount: number; cardIds: CardInstanceId[] } | null =
     null;
   private cardsReturnedToHand: CardInstanceId[] = [];
-  private cardsInked: Array<{ cardId: CardInstanceId; exerted: boolean; cardName?: string }> = [];
+  private cardsMovedToZone: Array<{ cardId: CardInstanceId; zone: string }> = [];
+  private cardsInked: NonNullable<MoveOutcomes["cardsInked"]> = [];
 
   accumulate(event: PublishedGameEvent, context: LogProjectionContext): void {
     const gameEvent = event.event;
@@ -56,7 +58,9 @@ export class MoveOutcomeAccumulator {
 
     if (gameEvent.kind !== "CUSTOM") return;
 
-    switch (gameEvent.customType) {
+    const customType = gameEvent.customType as LorcanaDomainEventType;
+
+    switch (customType) {
       case "challenged":
         this.accumulateChallenged(
           gameEvent.data as {
@@ -67,6 +71,12 @@ export class MoveOutcomeAccumulator {
           },
         );
         break;
+      case "damageDealt":
+        this.accumulateLorcanaDamageDealt(gameEvent.data as DamageDealtPayload);
+        break;
+      case "damageMoved":
+        this.accumulateDamageMoved(gameEvent.data as DamageMovedPayload);
+        break;
       case "cardBanished":
         this.accumulateCardBanished(gameEvent.data as CardBanishedPayload);
         break;
@@ -75,6 +85,9 @@ export class MoveOutcomeAccumulator {
         break;
       case "cardReturnedToHand":
         this.accumulateCardReturnedToHand(gameEvent.data as CardReturnedToHandPayload);
+        break;
+      case "cardMoved":
+        this.accumulateCardMoved(gameEvent.data as CardMovedPayload);
         break;
       case "loreChanged":
         this.accumulateLoreChanged(gameEvent.data as LoreChangedPayload);
@@ -88,6 +101,26 @@ export class MoveOutcomeAccumulator {
       case "cardInked":
         this.accumulateCardInked(gameEvent.data as CardInkedPayload);
         break;
+      // Domain events that do not contribute to MoveOutcomes — listed
+      // explicitly so the exhaustiveness check in `default` catches any
+      // newly-added LorcanaDomainEventType.
+      case "allCardsReadied":
+      case "inkChanged":
+      case "questCompleted":
+      case "turnPassed":
+      case "cardPlayed":
+      case "quested":
+      case "firstPlayerChosen":
+      case "handAltered":
+      case "deckShuffled":
+      case "zoneBottomShuffled":
+      case "challengeCleared":
+      case "abilityActivated":
+      case "putCardUnder":
+      case "cardLeftDiscard":
+        break;
+      default:
+        assertNever(customType);
     }
   }
 
@@ -97,6 +130,11 @@ export class MoveOutcomeAccumulator {
 
     if (this.damageDealt.length > 0) {
       outcomes.damageDealt = [...this.damageDealt];
+      hasAny = true;
+    }
+
+    if (this.damageMoved.length > 0) {
+      outcomes.damageMoved = [...this.damageMoved];
       hasAny = true;
     }
 
@@ -157,12 +195,18 @@ export class MoveOutcomeAccumulator {
       hasAny = true;
     }
 
+    if (this.cardsMovedToZone.length > 0) {
+      outcomes.cardsMovedToZone = [...this.cardsMovedToZone];
+      hasAny = true;
+    }
+
     this.reset();
     return hasAny ? outcomes : undefined;
   }
 
   private reset(): void {
     this.damageDealt = [];
+    this.damageMoved = [];
     this.cardsBanished = [];
     this.cardsDrawnAmount = 0;
     this.cardsDrawnDetail = [];
@@ -172,6 +216,7 @@ export class MoveOutcomeAccumulator {
     this.cardsReadied = [];
     this.cardsMilled = null;
     this.cardsReturnedToHand = [];
+    this.cardsMovedToZone = [];
     this.cardsInked = [];
   }
 
@@ -183,17 +228,20 @@ export class MoveOutcomeAccumulator {
     attackerDamage: number;
     defenderDamage: number;
   }): void {
+    // attackerDamage = defenderToAttackerDamage (damage the attacker RECEIVES from the defender)
+    // defenderDamage = attackerToDefenderDamage (damage the defender RECEIVES from the attacker)
+    // So: attacker deals defenderDamage to the defender, and defender deals attackerDamage to the attacker.
     this.damageDealt.push(
       {
         sourceId: data.attackerId as CardInstanceId,
         targetId: data.defenderId as CardInstanceId,
-        amount: data.attackerDamage,
+        amount: data.defenderDamage,
         kind: "combat",
       },
       {
         sourceId: data.defenderId as CardInstanceId,
         targetId: data.attackerId as CardInstanceId,
-        amount: data.defenderDamage,
+        amount: data.attackerDamage,
         kind: "combat",
       },
     );
@@ -219,6 +267,20 @@ export class MoveOutcomeAccumulator {
     });
   }
 
+  private accumulateLorcanaDamageDealt(payload: DamageDealtPayload): void {
+    if (!("damageType" in payload)) return;
+    if (payload.damageType === "combat") return;
+    if (!payload.sourceId) return;
+    if (payload.amount <= 0) return;
+
+    this.damageDealt.push({
+      sourceId: payload.sourceId,
+      targetId: payload.targetId,
+      amount: payload.amount,
+      kind: "effect",
+    });
+  }
+
   private accumulateCardBanished(data: CardBanishedPayload): void {
     this.cardsBanished.push(data.cardId as CardInstanceId);
   }
@@ -239,6 +301,17 @@ export class MoveOutcomeAccumulator {
 
   private accumulateCardReturnedToHand(data: CardReturnedToHandPayload): void {
     this.cardsReturnedToHand.push(data.cardId as CardInstanceId);
+  }
+
+  private accumulateCardMoved(data: CardMovedPayload): void {
+    if ("isManual" in data && data.isManual) {
+      return;
+    }
+
+    this.cardsMovedToZone.push({
+      cardId: data.cardId as CardInstanceId,
+      zone: data.toZone,
+    });
   }
 
   private accumulateLoreChanged(data: LoreChangedPayload): void {
@@ -298,10 +371,26 @@ export class MoveOutcomeAccumulator {
   }
 
   private accumulateCardInked(data: CardInkedPayload): void {
+    const cardId = data.cardId as CardInstanceId;
+    if (data.private) {
+      this.cardsInked.push({
+        cardId: privateField(cardId, [data.playerId]),
+        exerted: data.exerted ?? true,
+      });
+      return;
+    }
     this.cardsInked.push({
-      cardId: data.cardId as CardInstanceId,
+      cardId,
       exerted: data.exerted ?? true,
-      ...(data.cardName ? { cardName: data.cardName } : {}),
+    });
+  }
+
+  private accumulateDamageMoved(data: DamageMovedPayload): void {
+    if (data.amount <= 0) return;
+    this.damageMoved.push({
+      sourceCharacterId: data.sourceCharacterId,
+      targetId: data.targetId,
+      amount: data.amount,
     });
   }
 }

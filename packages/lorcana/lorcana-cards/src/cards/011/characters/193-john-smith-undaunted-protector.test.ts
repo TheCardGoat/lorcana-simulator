@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import type { CommandFailure } from "@tcg/lorcana-engine";
 import type { CharacterCard } from "@tcg/lorcana-types";
 import {
+  createMockAction,
   LorcanaMultiplayerTestEngine,
   LorcanaTestEngine,
   PLAYER_TWO,
@@ -9,6 +10,7 @@ import {
 import { mickeyMouseTrueFriend } from "../../001";
 import { plasmaBlaster } from "../../001/items/204-plasma-blaster";
 import { dragonFire } from "../../010/actions/133-dragon-fire";
+import { begone } from "../../010/actions/061-begone";
 import { ragingStorm } from "../actions/028-raging-storm";
 import { strengthOfARagingFire } from "../../002/actions/201-strength-of-a-raging-fire";
 import { goliathClanLeader } from "../../010/characters/173-goliath-clan-leader";
@@ -198,5 +200,122 @@ describe("John Smith - Undaunted Protector", () => {
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().getDamage(mickeyMouseTrueFriend)).toBe(1);
     expect(testEngine.asPlayerTwo().getDamage(johnSmithWithWard)).toBe(0);
+  });
+
+  // Wilds Unknown release notes — rules 6.1.3 and 6.7.3:
+  //   The "choose" instruction in an ability's text is the requirement.
+  //   Anything that restricts the choice pool (e.g. "with X strength or less") is a limiter.
+  //   DO YOUR WORST forces opponents to choose John Smith *if able* — i.e., only when
+  //   he satisfies both the requirement AND any limiter.
+  describe("release notes ruling — requirement vs limiter", () => {
+    it("satisfies an unrestricted 'chosen character' requirement: opponent is forced to target John Smith", () => {
+      // dragonFire: "Banish chosen character." — no limiter, both characters legal.
+      // John Smith must be chosen due to DO YOUR WORST.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [dragonFire],
+          inkwell: dragonFire.cost,
+        },
+        {
+          play: [johnSmithUndauntedProtector, mickeyMouseTrueFriend],
+        },
+      );
+
+      const rejected = testEngine.asPlayerOne().playCard(dragonFire, {
+        targets: [mickeyMouseTrueFriend],
+      }) as CommandFailure;
+      expect(rejected.success).toBe(false);
+      expect(rejected.errorCode).toBe("TARGET_DO_YOUR_WORST_RESTRICTION");
+
+      expect(
+        testEngine.asPlayerOne().playCard(dragonFire, {
+          targets: [johnSmithUndauntedProtector],
+        }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardZone(johnSmithUndauntedProtector)).toBe("discard");
+      expect(testEngine.asPlayerTwo().getCardZone(mickeyMouseTrueFriend)).toBe("play");
+    });
+
+    it("limiter excludes John Smith (cost 5 vs cost 3 or less): opponent freely chooses another character", () => {
+      // Begone!: "Return chosen character, item, or location with cost 3 or less to their player's hand."
+      // John Smith costs 5 — not a legal target. The "if able" clause means John Smith is NOT able,
+      // so DO YOUR WORST does not constrain the choice. Opponent may target Mickey freely.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [begone],
+          inkwell: begone.cost,
+        },
+        {
+          play: [johnSmithUndauntedProtector, mickeyMouseTrueFriend],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(begone, {
+          targets: [mickeyMouseTrueFriend],
+        }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardZone(mickeyMouseTrueFriend)).toBe("hand");
+      expect(testEngine.asPlayerTwo().getCardZone(johnSmithUndauntedProtector)).toBe("play");
+    });
+
+    it("limiter includes John Smith (strength 3 vs strength 3 or less): opponent must choose John Smith", () => {
+      // Mock action: "Banish chosen character with 3 strength or less."
+      // John Smith (strength 3) and Mickey True Friend (strength 3) both satisfy the limiter.
+      // DO YOUR WORST applies because John Smith is "able", so opponent must choose him.
+      const banishStrengthThreeOrLess = createMockAction({
+        id: "do-your-worst-strength-limiter-action",
+        name: "Test Strength Limiter",
+        cost: 3,
+        text: "Banish chosen character with 3 {S} or less.",
+        abilities: [
+          {
+            id: "do-your-worst-strength-limiter-action-1",
+            type: "action",
+            text: "Banish chosen character with 3 {S} or less.",
+            effect: {
+              type: "banish",
+              target: {
+                cardTypes: ["character"],
+                count: 1,
+                filter: [
+                  {
+                    type: "strength-comparison",
+                    comparison: "less-or-equal",
+                    value: 3,
+                  },
+                ],
+                owner: "any",
+                selector: "chosen",
+                zones: ["play"],
+              },
+            },
+          },
+        ],
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [banishStrengthThreeOrLess],
+          inkwell: banishStrengthThreeOrLess.cost,
+        },
+        {
+          play: [johnSmithUndauntedProtector, mickeyMouseTrueFriend],
+        },
+      );
+
+      const rejected = testEngine.asPlayerOne().playCard(banishStrengthThreeOrLess, {
+        targets: [mickeyMouseTrueFriend],
+      }) as CommandFailure;
+      expect(rejected.success).toBe(false);
+      expect(rejected.errorCode).toBe("TARGET_DO_YOUR_WORST_RESTRICTION");
+
+      expect(
+        testEngine.asPlayerOne().playCard(banishStrengthThreeOrLess, {
+          targets: [johnSmithUndauntedProtector],
+        }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardZone(johnSmithUndauntedProtector)).toBe("discard");
+    });
   });
 });

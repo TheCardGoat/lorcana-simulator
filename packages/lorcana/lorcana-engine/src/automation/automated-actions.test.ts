@@ -2140,6 +2140,77 @@ describe("automated actions", () => {
     expect(engine.asPlayerOne().getLore(PLAYER_ONE)).toBe(20);
   });
 
+  it("plays a board enabler before questing with a conditionally-buffed character", () => {
+    // Models the Piglet (Pooh Pirate Captain) pattern: Piglet has +2 lore
+    // while you have 2+ other characters in play. With one other character
+    // already in play and a third in hand, the bot should play the enabler
+    // first (boosting Piglet from 1 to 3 lore) before questing.
+    const piglet = createMockCharacter({
+      id: "play-before-quest-piglet",
+      name: "Piglet",
+      version: "Pooh Pirate Captain",
+      cost: 2,
+      strength: 2,
+      willpower: 2,
+      lore: 1,
+      abilities: [
+        {
+          condition: {
+            type: "has-character-count",
+            comparison: "greater-or-equal",
+            controller: "you",
+            count: 3,
+          },
+          effect: {
+            modifier: 2,
+            stat: "lore",
+            target: "SELF",
+            type: "modify-stat",
+          },
+          id: "play-before-quest-piglet-static",
+          name: "AND I'M THE CAPTAIN!",
+          text: "AND I'M THE CAPTAIN! While you have 2 or more other characters in play, this character gets +2 {L}.",
+          type: "static",
+        },
+      ],
+    });
+    const enablerInPlay = createMockCharacter({
+      id: "play-before-quest-enabler-in-play",
+      name: "Enabler In Play",
+      cost: 1,
+      strength: 1,
+      willpower: 2,
+      lore: 1,
+    });
+    const enablerInHand = createMockCharacter({
+      id: "play-before-quest-enabler-in-hand",
+      name: "Enabler In Hand",
+      cost: 2,
+      strength: 1,
+      willpower: 2,
+      lore: 1,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [
+        { card: piglet, isDrying: false },
+        { card: enablerInPlay, isDrying: false },
+      ],
+      hand: [enablerInHand],
+      inkwell: 2,
+      deck: 1,
+    });
+
+    const result = engine.asPlayerOne().takeAutomatedAction({
+      strategy: deckAwareLoreRaceAutomatedActionStrategy,
+    });
+
+    expect(result.selectedCandidate).toMatchObject({
+      family: "playCard",
+      cardId: engine.asPlayerOne().getCard(enablerInHand).id,
+    });
+    expect(result.finalResult.success).toBe(true);
+  });
+
   it("lets quest-only-test pick a quest when quest, challenge, and play are all legal", () => {
     const quester = createMockCharacter({
       id: "quest-only-quester",
@@ -4358,7 +4429,7 @@ describe("automated actions", () => {
     expect(decisionTraces[0]?.orderedCandidates[0]?.heuristics).toContainEqual({
       direction: "asc",
       key: "familyOrder",
-      value: 4,
+      value: 4.5,
     });
     expect(decisionTraces[0]?.orderedCandidates[0]?.heuristics).toContainEqual({
       direction: "desc",
@@ -4944,6 +5015,331 @@ describe("automated action execution", () => {
     expect(bagCandidates[0]).toMatchObject({
       family: "resolveBag",
       bagId: "bag:regression:the890",
+    });
+  });
+
+  describe("choice-selection with discard options (Lucifer pattern)", () => {
+    it("enumerates resolveEffect candidates for a choice-selection pending effect with discard options", () => {
+      const source = createMockCharacter({
+        id: "lucifer-test-source",
+        name: "Lucifer Test",
+        cost: 5,
+      });
+      const handCard1 = createMockActionCard({
+        id: "hand-action-1",
+        name: "Hand Action 1",
+        cost: 2,
+        text: "Test action",
+        abilities: [],
+      });
+      const handCard2 = createMockCharacter({
+        id: "hand-char-1",
+        name: "Hand Char 1",
+        cost: 3,
+      });
+      const handCard3 = createMockActionCard({
+        id: "hand-action-2",
+        name: "Hand Action 2",
+        cost: 1,
+        text: "Test action 2",
+        abilities: [],
+      });
+
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: source, isDrying: false }],
+          deck: 1,
+        },
+        {
+          hand: [handCard1, handCard2, handCard3],
+          deck: 1,
+        },
+      );
+      const sourceId = engine.asPlayerOne().getCard(source).id as CardInstanceId;
+
+      loadMutatedState(engine, (state) => {
+        state.ctx.priority.holder = PLAYER_TWO;
+        state.G.pendingEffects = [
+          {
+            id: "pending:lucifer-choice:1",
+            type: "action-effect",
+            kind: "choice-selection",
+            sourceId,
+            sourceCardId: sourceId,
+            controllerId: PLAYER_ONE,
+            chooserId: PLAYER_TWO,
+            cardPlayed: getCardPlayedPayload({
+              playerId: PLAYER_ONE,
+              cardId: sourceId,
+              cardType: "character",
+            }),
+            effect: {
+              type: "choice",
+              chooser: "OPPONENT",
+              optionLabels: ["discard 2 cards", "discard 1 action card"],
+              options: [
+                {
+                  amount: 2,
+                  chosen: true,
+                  target: "OPPONENT",
+                  type: "discard",
+                },
+                {
+                  amount: 1,
+                  chosen: true,
+                  target: "OPPONENT",
+                  type: "discard",
+                  filter: {
+                    cardType: "action",
+                  },
+                },
+              ],
+            } satisfies Effect,
+            resolutionInput: {},
+          } satisfies PendingActionEffect,
+        ];
+        setPendingActionChoice(state, "pending:lucifer-choice:1", PLAYER_TWO);
+      });
+
+      const result = engine.asPlayerTwo().enumerateAutomatedActions();
+      const resolveEffectCandidates = result.candidates.filter(
+        (candidate) => candidate.family === "resolveEffect",
+      );
+      const validationDiagnostics = result.diagnostics.filter(
+        (d) => d.kind === "validation-reject" && d.family === "resolveEffect",
+      );
+
+      expect(validationDiagnostics).toHaveLength(0);
+      expect(resolveEffectCandidates.length).toBeGreaterThan(0);
+
+      const choiceIndices = resolveEffectCandidates
+        .map((c) => c.choiceIndex)
+        .filter((i): i is number => typeof i === "number");
+      expect(new Set(choiceIndices)).toContain(0);
+      expect(new Set(choiceIndices)).toContain(1);
+    });
+
+    it("resolves resolveBag -> choice-selection -> discard-choice in full flow", () => {
+      const source = createMockCharacter({
+        id: "lucifer-bag-source",
+        name: "Lucifer Bag",
+        cost: 5,
+      });
+      const handCard1 = createMockActionCard({
+        id: "bag-action-1",
+        name: "Bag Action 1",
+        cost: 2,
+        text: "Test",
+        abilities: [],
+      });
+      const handCard2 = createMockCharacter({
+        id: "bag-char-1",
+        name: "Bag Char 1",
+        cost: 3,
+      });
+      const handCard3 = createMockActionCard({
+        id: "bag-action-2",
+        name: "Bag Action 2",
+        cost: 1,
+        text: "Test 2",
+        abilities: [],
+      });
+
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: source, isDrying: false }],
+          deck: 1,
+        },
+        {
+          hand: [handCard1, handCard2, handCard3],
+          deck: 1,
+        },
+      );
+      const sourceId = engine.asPlayerOne().getCard(source).id as CardInstanceId;
+
+      loadMutatedState(engine, (state) => {
+        state.ctx.priority.holder = PLAYER_ONE;
+        state.G.triggeredAbilities.bag = {
+          nextSeq: 0,
+          items: [
+            {
+              id: "bag:lucifer:1",
+              type: "bag-effect",
+              kind: "triggered-ability",
+              abilityId: "lucifer-mouse-catcher",
+              abilityKey: "lucifer-mouse-catcher",
+              occurrenceIndex: 0,
+              abilityName: "MOUSE CATCHER",
+              controllerId: PLAYER_ONE,
+              chooserId: PLAYER_TWO,
+              sourceId,
+              cardPlayed: getCardPlayedPayload({
+                playerId: PLAYER_ONE,
+                cardId: sourceId,
+                cardType: "character",
+              }),
+              effect: {
+                type: "choice",
+                chooser: "OPPONENT",
+                optionLabels: ["discard 2 cards", "discard 1 action card"],
+                options: [
+                  {
+                    amount: 2,
+                    chosen: true,
+                    target: "OPPONENT",
+                    type: "discard",
+                  },
+                  {
+                    amount: 1,
+                    chosen: true,
+                    target: "OPPONENT",
+                    type: "discard",
+                    filter: {
+                      cardType: "action",
+                    },
+                  },
+                ],
+              } satisfies Effect,
+              resolutionInput: {},
+            } satisfies BagEffectEntry,
+          ],
+          lastResolvedPlayerId: undefined,
+        };
+      });
+
+      const initialHandSize = engine.asPlayerTwo().getBoard().players[PLAYER_TWO].hand.length;
+
+      const step1 = engine.asServer().takeAutomatedActionForCurrentActor();
+      expect(step1.finalResult.success).toBe(true);
+      expect(step1.fallbackTaken).toBeUndefined();
+
+      const afterStep1 = engine.asServer().getState();
+      const pendingAfterStep1 = afterStep1.G.pendingEffects;
+      const hasChoiceSelection = pendingAfterStep1.some((p) => p.kind === "choice-selection");
+      expect(hasChoiceSelection).toBe(true);
+
+      const step2 = engine.asServer().takeAutomatedActionForCurrentActor();
+      expect(step2.finalResult.success).toBe(true);
+      expect(step2.fallbackTaken).toBeUndefined();
+
+      const afterStep2 = engine.asServer().getState();
+      const pendingAfterStep2 = afterStep2.G.pendingEffects;
+      const hasDiscardChoice = pendingAfterStep2.some((p) => p.kind === "discard-choice");
+      if (hasDiscardChoice) {
+        const step3 = engine.asServer().takeAutomatedActionForCurrentActor();
+        expect(step3.finalResult.success).toBe(true);
+        expect(step3.fallbackTaken).toBeUndefined();
+      }
+
+      const finalHandSize = engine.asPlayerTwo().getBoard().players[PLAYER_TWO].hand.length;
+      expect(finalHandSize).toBeLessThan(initialHandSize);
+      expect(engine.asServer().getState().G.pendingEffects).toHaveLength(0);
+    });
+
+    it("resolves choice-selection and then discard-choice in sequence", () => {
+      const source = createMockCharacter({
+        id: "lucifer-test-source-2",
+        name: "Lucifer Test 2",
+        cost: 5,
+      });
+      const handCard1 = createMockActionCard({
+        id: "hand-action-3",
+        name: "Hand Action 3",
+        cost: 2,
+        text: "Test action",
+        abilities: [],
+      });
+      const handCard2 = createMockCharacter({
+        id: "hand-char-2",
+        name: "Hand Char 2",
+        cost: 3,
+      });
+      const handCard3 = createMockActionCard({
+        id: "hand-action-4",
+        name: "Hand Action 4",
+        cost: 1,
+        text: "Test action 2",
+        abilities: [],
+      });
+
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: source, isDrying: false }],
+          deck: 1,
+        },
+        {
+          hand: [handCard1, handCard2, handCard3],
+          deck: 1,
+        },
+      );
+      const sourceId = engine.asPlayerOne().getCard(source).id as CardInstanceId;
+
+      loadMutatedState(engine, (state) => {
+        state.ctx.priority.holder = PLAYER_TWO;
+        state.G.pendingEffects = [
+          {
+            id: "pending:lucifer-choice:2",
+            type: "action-effect",
+            kind: "choice-selection",
+            sourceId,
+            sourceCardId: sourceId,
+            controllerId: PLAYER_ONE,
+            chooserId: PLAYER_TWO,
+            cardPlayed: getCardPlayedPayload({
+              playerId: PLAYER_ONE,
+              cardId: sourceId,
+              cardType: "character",
+            }),
+            effect: {
+              type: "choice",
+              chooser: "OPPONENT",
+              optionLabels: ["discard 2 cards", "discard 1 action card"],
+              options: [
+                {
+                  amount: 2,
+                  chosen: true,
+                  target: "OPPONENT",
+                  type: "discard",
+                },
+                {
+                  amount: 1,
+                  chosen: true,
+                  target: "OPPONENT",
+                  type: "discard",
+                  filter: {
+                    cardType: "action",
+                  },
+                },
+              ],
+            } satisfies Effect,
+            resolutionInput: {},
+          } satisfies PendingActionEffect,
+        ];
+        setPendingActionChoice(state, "pending:lucifer-choice:2", PLAYER_TWO);
+      });
+
+      const initialHandSize = engine.asPlayerTwo().getBoard().players[PLAYER_TWO].hand.length;
+
+      const step1 = engine.asServer().takeAutomatedActionForCurrentActor();
+      expect(step1.finalResult.success).toBe(true);
+      expect(step1.fallbackTaken).toBeUndefined();
+
+      const afterChoice = engine.asServer().getState();
+      const pendingAfterChoice = afterChoice.G.pendingEffects;
+      if (pendingAfterChoice.length > 0) {
+        const discardPending = pendingAfterChoice.find(
+          (p) => p.kind === "discard-choice" || p.kind === "choice-selection",
+        );
+        if (discardPending?.kind === "discard-choice") {
+          const step2 = engine.asServer().takeAutomatedActionForCurrentActor();
+          expect(step2.finalResult.success).toBe(true);
+          expect(step2.fallbackTaken).toBeUndefined();
+        }
+      }
+
+      const finalHandSize = engine.asPlayerTwo().getBoard().players[PLAYER_TWO].hand.length;
+      expect(finalHandSize).toBeLessThan(initialHandSize);
+      expect(engine.asServer().getState().G.pendingEffects).toHaveLength(0);
     });
   });
 });

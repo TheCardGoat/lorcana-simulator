@@ -426,6 +426,156 @@ describe("buildPlayableHandCardIds", () => {
   });
 });
 
+describe("put-toy-character-on-deck-bottom alternative cost", () => {
+  const handCard: CardSnapshotMap[string] = {
+    cardId: "hand-in-the-box",
+    definitionId: "def-hitb",
+    isMasked: false,
+    label: "Hand-in-the-Box - Sid's Toy",
+    ownerId: "player_one",
+    ownerSide: "playerOne",
+    zoneId: "hand",
+    cardType: "character",
+    facePresentation: "faceUp",
+  };
+
+  const toyInDiscard: CardSnapshotMap[string] = {
+    cardId: "toy-discard",
+    definitionId: "def-toy",
+    isMasked: false,
+    label: "Some Toy",
+    ownerId: "player_one",
+    ownerSide: "playerOne",
+    zoneId: "discard",
+    cardType: "character",
+    facePresentation: "faceUp",
+  };
+
+  const nonToyInDiscard: CardSnapshotMap[string] = {
+    cardId: "non-toy-discard",
+    definitionId: "def-non-toy",
+    isMasked: false,
+    label: "Some Non-Toy",
+    ownerId: "player_one",
+    ownerSide: "playerOne",
+    zoneId: "discard",
+    cardType: "character",
+    facePresentation: "faceUp",
+  };
+
+  const cardsMap: CardSnapshotMap = {
+    "hand-in-the-box": handCard,
+    "toy-discard": toyInDiscard,
+    "non-toy-discard": nonToyInDiscard,
+  };
+
+  function createEngineWithToyInDiscard(toyDiscardIds: string[]): LorcanaEngineBase {
+    return {
+      getMoveOptions: () => [],
+      getBoard: () =>
+        ({
+          playerOrder: [],
+          players: {
+            player_one: {
+              play: [],
+              discard: toyDiscardIds,
+            },
+          },
+          cards: {},
+        }) as unknown as ReturnType<LorcanaEngineBase["getBoard"]>,
+      getClientPlayerId: () => "player_one",
+      canUndo: () => false,
+      getCardDefinitionByInstanceId: (id: string) => {
+        if (id === "hand-in-the-box") {
+          return {
+            cardType: "character",
+            abilities: [
+              {
+                type: "action",
+                alternativeCost: "put-toy-character-on-deck-bottom",
+              },
+            ],
+          };
+        }
+        if (id === "toy-discard") {
+          return {
+            cardType: "character",
+            classifications: ["Toy"],
+          };
+        }
+        if (id === "non-toy-discard") {
+          return {
+            cardType: "character",
+            classifications: ["Hero"],
+          };
+        }
+        return undefined;
+      },
+    } as unknown as LorcanaEngineBase;
+  }
+
+  it("generates a put-on-deck-bottom move entry with Toy character candidates from discard", () => {
+    const engine = createEngineWithToyInDiscard(["toy-discard"]);
+
+    const entries = buildExecutableMoves(
+      engine,
+      cardsMap,
+      [createAvailableMove("playCard", ["hand-in-the-box"])],
+      [],
+    );
+
+    const putOnDeckBottomEntry = entries.find(
+      (e) => (e.params as { cost?: string }).cost === "put-on-deck-bottom",
+    );
+
+    expect(putOnDeckBottomEntry).toBeDefined();
+    expect(putOnDeckBottomEntry?.id).toBe("playCard:hand-in-the-box:put-on-deck-bottom");
+    expect(putOnDeckBottomEntry?.presentation).toMatchObject({
+      categoryId: "play-card",
+      selectableCosts: [
+        {
+          kind: "putOnDeckBottom",
+          count: 1,
+          candidateCardIds: ["toy-discard"],
+          zone: "discard",
+        },
+      ],
+    });
+  });
+
+  it("does not generate a put-on-deck-bottom move entry when no Toy character is in discard", () => {
+    const engine = createEngineWithToyInDiscard(["non-toy-discard"]);
+
+    const entries = buildExecutableMoves(
+      engine,
+      cardsMap,
+      [createAvailableMove("playCard", ["hand-in-the-box"])],
+      [],
+    );
+
+    const putOnDeckBottomEntry = entries.find(
+      (e) => (e.params as { cost?: string }).cost === "put-on-deck-bottom",
+    );
+    expect(putOnDeckBottomEntry).toBeUndefined();
+  });
+
+  it("does not generate a put-on-deck-bottom move entry when discard is empty", () => {
+    const engine = createEngineWithToyInDiscard([]);
+
+    const entries = buildExecutableMoves(
+      engine,
+      cardsMap,
+      [createAvailableMove("playCard", ["hand-in-the-box"])],
+      [],
+    );
+
+    const putOnDeckBottomEntry = entries.find(
+      (e) => (e.params as { cost?: string }).cost === "put-on-deck-bottom",
+    );
+    expect(putOnDeckBottomEntry).toBeUndefined();
+  });
+});
+
 describe("buildPendingResolutionMoves", () => {
   it("returns an empty list when no legal pending moves are available", () => {
     const board = createBoard();

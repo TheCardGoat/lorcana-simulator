@@ -139,7 +139,7 @@ describe("Scrooge McDuck - On the Right Track", () => {
       expect(targetCardAfter.lore).toBe(baseLore);
     });
 
-    it("regression: still queues the trigger when no legal target exists", () => {
+    it("regression: auto-drains the trigger when no legal target exists", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         inkwell: scroogeMcduckOnTheRightTrack.cost,
         hand: [scroogeMcduckOnTheRightTrack],
@@ -152,13 +152,8 @@ describe("Scrooge McDuck - On the Right Track", () => {
         testEngine.asPlayerOne().playCard(scroogeMcduckOnTheRightTrack),
       ).toBeSuccessfulCommand();
 
-      // The trigger still goes to the bag, but with no legal target it resolves as a no-op.
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(scroogeMcduckOnTheRightTrack, { resolveOptional: false }),
-      ).toBeSuccessfulCommand();
+      // With no legal target, the optional bag entry resolves as a no-op without prompting.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       const targetCard = testEngine.asPlayerOne().getCard(characterWithoutCardUnder);
       expect(targetCard.lore).toBe(baseLore);
     });

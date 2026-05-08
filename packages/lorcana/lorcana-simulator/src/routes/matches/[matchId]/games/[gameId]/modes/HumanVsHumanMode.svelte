@@ -20,13 +20,18 @@
   import { createMessageRouter, type RecentHistory, type ProposalPayload } from './game-mode-message-router.js';
   import {
     buildVisualSettings,
-    buildDisplayNames,
-    buildIsMobileMap,
+    buildPlayerMetadataMap,
     mergeWsVisuals,
     createMatchChat,
     checkInitialPresence,
+    type PlayerMatchMetadata,
   } from './game-mode-setup.js';
   import { toast } from 'svelte-sonner';
+  import {
+    createManualModeController,
+    setManualModeContext,
+  } from '@/features/manual-mode/manual-mode-context.svelte.js';
+  import { trackEvent } from '$lib/analytics/analytics.js';
   import type { GamePageData } from '../+page.server.js';
   import type { CardsMaps, LorcanaMatchState } from '@tcg/lorcana-engine';
   import type { MatchChatController } from '@/features/match-chat/match-chat-controller.svelte.js';
@@ -49,6 +54,7 @@
   let matchContext = $state<MatchNavigationContext>({
     nextGameId: deriveNextGameId(initialMatch, initialGameId),
     matchCompleted: initialMatch.status === 'completed',
+    winnerId: initialMatch.winnerId,
     format: initialMatch.format,
     player1Score: initialMatch.player1Score,
     player2Score: initialMatch.player2Score,
@@ -67,8 +73,7 @@
   let orchestrator = $state<HvHPlayerOrchestrator | null>(null);
   let matchChatController = $state<MatchChatController | null>(null);
   let playerVisualSettings = $state<LorcanaPlayerSettingsMap>({});
-  let playerDisplayNames = $state<Record<string, string>>({});
-  let playerIsMobileMap = $state<Record<string, boolean>>({});
+  let playerMetadataMap = $state<Record<string, PlayerMatchMetadata>>({});
 
   const opponentPresence = new OpponentPresenceTracker();
   const opponentAfk = new OpponentAfkTracker();
@@ -77,7 +82,33 @@
   /** Pending undo proposal received from the opponent — awaiting accept/decline. */
   let pendingUndoProposal = $state<{ senderPlayerId: string; deadline: number } | null>(null);
   let pendingFreeTextProposal = $state<{ senderPlayerId: string; deadline: number } | null>(null);
+  let pendingManualModeProposal = $state<{
+    senderPlayerId: string;
+    deadline: number;
+    intent: 'enable_manual_mode' | 'disable_manual_mode';
+  } | null>(null);
+  /**
+   * Mirror of `pendingManualModeProposal` for when *we* are the sender —
+   * shows an "Awaiting opponent…" banner so the request is visible after
+   * a refresh and offers a Cancel button. Without this the sender's UI
+   * has no trace of the in-flight proposal and a refresh appears to
+   * silently drop it (the server still has it in Redis).
+   */
+  let outgoingManualModeProposal = $state<{
+    deadline: number;
+    intent: 'enable_manual_mode' | 'disable_manual_mode';
+  } | null>(null);
   let gateway = $state<GatewayClientStore | null>(null);
+
+  const manualMode = createManualModeController({
+    gameId: initialGameId,
+    getGateway: () => gateway,
+    getExpectedVersion: () => orchestrator?.currentEngine.getStateID() ?? 0,
+    onProposalSent: ({ intent, estimatedDeadline }) => {
+      outgoingManualModeProposal = { intent, deadline: estimatedDeadline };
+    },
+  });
+  setManualModeContext(manualMode);
   let gatewayStatus = $derived(gateway?.status ?? null);
   let connectionEmoji = $derived(
     gatewayStatus === 'connected' ? '\u{1F7E2}' :
@@ -88,6 +119,12 @@
   let pendingRecentHistory = $state<SpectatorRecentHistory | null>(null);
   /** Canonical match player id for filtering `presence_change` (WS identity may differ). */
   let presenceSelfPlayerId = $state<string | null>(null);
+  /** Opponent's game profile id, used to enable the player-report flow. */
+  const opponentGameProfileId = $derived.by(() => {
+    if (!presenceSelfPlayerId) return null;
+    const opponent = data.match.participants.find((p) => p.id !== presenceSelfPlayerId);
+    return opponent?.id ?? null;
+  });
   /** Hoisted from session so the reconnect effect can access it. */
   let sessionUserId = $state<string | null>(null);
   /** Last `connectionId` seen — used to detect WS reconnects and re-subscribe to the game. */
@@ -109,8 +146,12 @@
         typeof msg.message === 'string' && (msg.message as string).trim() !== ''
           ? (msg.message as string)
           : 'Something went wrong';
-      toast.error(text, { duration: 8000 });
       console.error('[hvh-mode] gateway error', msg);
+      // Pre-join errors are already surfaced via loadError (connect-gateway fails fast).
+      // Only toast for in-game errors received after game_joined.
+      if (gameSubscribed) {
+        toast.error(text, { duration: 8000 });
+      }
     },
     onRecentHistory: (history) => {
       if (orchestrator) {
@@ -135,6 +176,24 @@
           engineLogs: payload.engineLogs,
         });
       }
+      // Apply terminal-move match info in the same synchronous turn as the
+      // engine state update. The board flips to "finished" this render;
+      // matchContext must already carry the right nextGameId so the modal
+      // opens with the correct CTA on its first paint.
+      if (payload.matchInfo) {
+        const nextGameId =
+          payload.matchInfo.nextGameId && payload.matchInfo.nextGameId !== data.gameId
+            ? payload.matchInfo.nextGameId
+            : undefined;
+        matchContext = {
+          ...matchContext,
+          nextGameId,
+          matchCompleted: payload.matchInfo.matchCompleted,
+          winnerId: payload.matchInfo.winnerId ?? matchContext.winnerId,
+          player1Score: payload.matchInfo.player1Score,
+          player2Score: payload.matchInfo.player2Score,
+        };
+      }
     },
     onProposalReceived: (proposal) => {
       if (proposal.actionType === 'undo') {
@@ -146,6 +205,15 @@
         pendingFreeTextProposal = {
           senderPlayerId: proposal.senderPlayerId,
           deadline: proposal.deadline,
+        };
+      } else if (
+        proposal.actionType === 'enable_manual_mode' ||
+        proposal.actionType === 'disable_manual_mode'
+      ) {
+        pendingManualModeProposal = {
+          senderPlayerId: proposal.senderPlayerId,
+          deadline: proposal.deadline,
+          intent: proposal.actionType,
         };
       }
     },
@@ -165,6 +233,54 @@
         } else if (proposal.resolution === 'declined') {
           toast.error('Free text chat request declined.', { duration: 4000 });
         }
+      } else if (
+        proposal.actionType === 'enable_manual_mode' ||
+        proposal.actionType === 'disable_manual_mode'
+      ) {
+        const intent = proposal.actionType;
+        pendingManualModeProposal = null;
+        outgoingManualModeProposal = null;
+        if (proposal.resolution === 'accepted') {
+          manualMode.setEnabled(intent === 'enable_manual_mode');
+          // Always emit `manual_mode_accepted` for proposal-pipeline
+          // symmetry with `enable_manual_mode`. Additionally emit
+          // `manual_mode_disabled` for the disable case so the mode-off
+          // state has its own signal.
+          trackEvent('manual_mode_accepted', {
+            game_id: data.gameId,
+            role: 'recipient',
+          });
+          if (intent === 'disable_manual_mode') {
+            trackEvent('manual_mode_disabled', {
+              game_id: data.gameId,
+              by: 'opponent',
+            });
+          }
+          toast.success(
+            intent === 'enable_manual_mode'
+              ? 'Board State Correction enabled.'
+              : 'Board State Correction disabled.',
+            { duration: 4000 },
+          );
+        } else if (proposal.resolution === 'declined') {
+          trackEvent('manual_mode_rejected', {
+            game_id: data.gameId,
+            role: 'recipient',
+            reason: 'declined',
+          });
+          toast.error(
+            intent === 'enable_manual_mode'
+              ? 'Board State Correction request declined.'
+              : 'Disable Board State Correction request declined.',
+            { duration: 4000 },
+          );
+        } else {
+          trackEvent('manual_mode_rejected', {
+            game_id: data.gameId,
+            role: 'recipient',
+            reason: proposal.resolution === 'failed' ? 'failed' : 'expired',
+          });
+        }
       }
     },
     onUnhandled: (msg) => {
@@ -180,6 +296,41 @@
             });
           }
         }
+        // Seed match navigation from game_ended so the post-game modal shows
+        // the correct CTA ("Go to next game" vs "Back to matchmaking") on the
+        // first packet — the paired match_state broadcast can be dropped or
+        // delayed, which previously left the UI stuck on the wrong button.
+        const msgRecord = msg as Record<string, unknown>;
+        const rawNextGameId =
+          typeof msgRecord.nextGameId === 'string' ? msgRecord.nextGameId : null;
+        const nextGameId =
+          rawNextGameId && rawNextGameId !== data.gameId ? rawNextGameId : undefined;
+        const matchCompletedField =
+          typeof msgRecord.matchCompleted === 'boolean' ? msgRecord.matchCompleted : undefined;
+        const matchStatus =
+          typeof msgRecord.matchStatus === 'string' ? msgRecord.matchStatus : undefined;
+        const derivedCompleted =
+          matchCompletedField ??
+          (matchStatus === 'completed' || matchStatus === 'abandoned' ? true : undefined);
+        if (nextGameId !== undefined || derivedCompleted !== undefined) {
+          matchContext = {
+            ...matchContext,
+            nextGameId: nextGameId ?? matchContext.nextGameId,
+            matchCompleted: derivedCompleted ?? matchContext.matchCompleted,
+            winnerId:
+              typeof msgRecord.winnerId === 'string' ? msgRecord.winnerId : matchContext.winnerId,
+            endReason:
+              typeof msgRecord.reason === 'string' ? msgRecord.reason : matchContext.endReason,
+            player1Score:
+              typeof msgRecord.player1Score === 'number'
+                ? msgRecord.player1Score
+                : matchContext.player1Score,
+            player2Score:
+              typeof msgRecord.player2Score === 'number'
+                ? msgRecord.player2Score
+                : matchContext.player2Score,
+          };
+        }
         return;
       }
       if (msg.type === 'match_state') {
@@ -187,10 +338,13 @@
         const matchId = typeof msg.matchId === 'string' ? msg.matchId : null;
         const nextGameId =
           rawNextGameId && rawNextGameId !== data.gameId ? rawNextGameId : undefined;
+        const matchCompleted = msg.status === 'completed' || msg.status === 'abandoned';
         matchContext = {
           ...matchContext,
           nextGameId,
-          matchCompleted: !nextGameId,
+          matchCompleted,
+          winnerId: typeof msg.winnerId === 'string' ? msg.winnerId : matchContext.winnerId,
+          endReason: typeof msg.reason === 'string' ? msg.reason : matchContext.endReason,
           player1Score:
             typeof msg.player1Score === 'number' ? msg.player1Score : matchContext.player1Score,
           player2Score:
@@ -243,6 +397,36 @@
     matchChatController?.clearFreeTextProposalPending();
   }
 
+  function handleAcceptManualModeProposal(): void {
+    if (!pendingManualModeProposal) return;
+    const intent = pendingManualModeProposal.intent;
+    // Defer the local state flip to `onProposalResolved` so a server-side
+    // failure (`resolution === 'failed'`) doesn't leave the UI desynced
+    // from the authoritative Redis flag.
+    gateway?.send({ type: 'proposal_accept', gameId: data.gameId, actionType: intent });
+    pendingManualModeProposal = null;
+  }
+
+  function handleDeclineManualModeProposal(): void {
+    if (!pendingManualModeProposal) return;
+    const intent = pendingManualModeProposal.intent;
+    gateway?.send({ type: 'proposal_decline', gameId: data.gameId, actionType: intent });
+    pendingManualModeProposal = null;
+    trackEvent('manual_mode_rejected', {
+      game_id: data.gameId,
+      role: 'recipient',
+      reason: 'declined',
+    });
+  }
+
+  function handleDismissOutgoingManualModeProposal(): void {
+    // Server-side `proposal_decline` is recipient-only, so this is a
+    // local-only dismissal of the "Awaiting opponent…" banner. The
+    // underlying Redis proposal expires after 15s and the standard
+    // toggle cooldown blocks immediate retries.
+    outgoingManualModeProposal = null;
+  }
+
   function handleSkipOpponent(): void {
     gateway?.send({ type: 'skip_opponent_turn', gameId: data.gameId });
   }
@@ -257,8 +441,7 @@
 
     idleStore.attach();
     playerVisualSettings = buildVisualSettings(match.participants);
-    playerDisplayNames = buildDisplayNames(match.participants);
-    playerIsMobileMap = buildIsMobileMap(match.participants);
+    playerMetadataMap = buildPlayerMetadataMap(match.participants);
 
     // Auth may still be hydrating on first paint (svelte state starts null).
     // Wait briefly so the fallback reconstruction below can match the user.
@@ -330,6 +513,42 @@
       gateway = result.gateway;
       gameSubscribed = true;
       const joinedMsg = result.joinedMsg!;
+
+      // Sync Manual Mode state from the authoritative join payload. The
+      // server emits `manualModeEnabled: true` only when the flag is set;
+      // an absent field means the mode is off, so always set explicitly to
+      // also clear stale state on reconnect (e.g. another tab accepted an
+      // exit proposal while this socket was down).
+      manualMode.setEnabled(joinedMsg.manualModeEnabled === true);
+
+      // Rehydrate any pending Manual Mode proposal on (re)join. The
+      // server includes the active proposal in `game_joined.pendingProposal`
+      // so neither tab loses the in-flight request after a refresh —
+      // recipients re-see the Accept/Decline banner, and senders re-see
+      // the "Awaiting opponent…" banner.
+      const pending = joinedMsg.pendingProposal as
+        | { actionType?: string; senderPlayerId?: string; deadline?: number }
+        | undefined;
+      if (
+        pending &&
+        (pending.actionType === 'enable_manual_mode' ||
+          pending.actionType === 'disable_manual_mode') &&
+        typeof pending.senderPlayerId === 'string' &&
+        typeof pending.deadline === 'number'
+      ) {
+        if (pending.senderPlayerId === session.gameProfileId) {
+          outgoingManualModeProposal = {
+            deadline: pending.deadline,
+            intent: pending.actionType,
+          };
+        } else {
+          pendingManualModeProposal = {
+            senderPlayerId: pending.senderPlayerId,
+            deadline: pending.deadline,
+            intent: pending.actionType,
+          };
+        }
+      }
 
       playerVisualSettings = mergeWsVisuals(
         playerVisualSettings,
@@ -468,15 +687,46 @@
       </div>
     </div>
   {/if}
+  {#if pendingManualModeProposal}
+    <div class="undo-proposal-banner" role="alertdialog" aria-label="Board State Correction request from opponent">
+      <span class="undo-proposal-banner__text">
+        {pendingManualModeProposal.intent === 'enable_manual_mode'
+          ? 'Opponent requests Board State Correction mode'
+          : 'Opponent wants to exit Board State Correction mode'}
+      </span>
+      <div class="undo-proposal-banner__actions">
+        <button class="undo-proposal-banner__btn undo-proposal-banner__btn--accept" onclick={handleAcceptManualModeProposal}>
+          Accept
+        </button>
+        <button class="undo-proposal-banner__btn undo-proposal-banner__btn--decline" onclick={handleDeclineManualModeProposal}>
+          Decline
+        </button>
+      </div>
+    </div>
+  {/if}
+  {#if outgoingManualModeProposal && !pendingManualModeProposal}
+    <div class="undo-proposal-banner" role="status" aria-label="Board State Correction request awaiting opponent">
+      <span class="undo-proposal-banner__text">
+        {outgoingManualModeProposal.intent === 'enable_manual_mode'
+          ? 'Awaiting opponent — Board State Correction request sent'
+          : 'Awaiting opponent — exit Board State Correction request sent'}
+      </span>
+      <div class="undo-proposal-banner__actions">
+        <button class="undo-proposal-banner__btn undo-proposal-banner__btn--decline" onclick={handleDismissOutgoingManualModeProposal}>
+          Dismiss
+        </button>
+      </div>
+    </div>
+  {/if}
   <LorcanaTabletopSimulator
     engine={orchestrator.currentEngine}
     readModel={orchestrator.readModel}
     playerSettings={playerVisualSettings}
-    {playerDisplayNames}
-    {playerIsMobileMap}
+    {playerMetadataMap}
     serverGameplaySettings={data.userSettings?.gameplaySettings}
     postGameGameId={data.gameId}
     isAuthenticated={authSession.isAuthenticated}
+    {opponentGameProfileId}
     {matchChatController}
     {opponentPresence}
     {opponentAfk}
@@ -537,7 +787,7 @@
 
   .undo-proposal-banner {
     position: fixed;
-    top: 1.25rem;
+    top: 50%;
     left: 50%;
     transform: translateX(-50%);
     z-index: 60;
@@ -614,4 +864,5 @@
     background: rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.9);
   }
+
 </style>

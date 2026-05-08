@@ -42,17 +42,26 @@ export const pongoDearOldDad: CharacterCard = {
         timing: "at",
       },
       effect: {
-        chooser: "CONTROLLER",
-        type: "optional",
-        effect: {
-          type: "play-card",
-          from: "inkwell",
-          cost: "free",
-          cardType: "character",
-          filter: {
-            classification: "Puppy",
+        type: "sequence",
+        steps: [
+          {
+            type: "reveal-inkwell",
+            target: "CONTROLLER",
           },
-        },
+          {
+            chooser: "CONTROLLER",
+            type: "optional",
+            effect: {
+              type: "play-card",
+              from: "inkwell",
+              cost: "free",
+              cardType: "character",
+              filter: {
+                classification: "Puppy",
+              },
+            },
+          },
+        ],
       },
     },
   ],

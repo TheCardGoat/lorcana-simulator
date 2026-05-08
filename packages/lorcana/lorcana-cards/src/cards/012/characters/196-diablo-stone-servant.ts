@@ -35,7 +35,7 @@ export const diabloStoneServant: CharacterCard = {
   classifications: ["Dreamborn", "Ally"],
   abilities: [
     {
-      id: "1XC-1",
+      id: "1XC-1a",
       name: "CRUEL INTENT",
       type: "static",
       text: "CRUEL INTENT While you have a Villain character in play, this character gets +2 {S} and +1 {L}.",
@@ -47,21 +47,29 @@ export const diabloStoneServant: CharacterCard = {
         classification: "Villain",
       },
       effect: {
-        type: "sequence",
-        steps: [
-          {
-            type: "modify-stat",
-            stat: "strength",
-            modifier: 2,
-            target: "SELF",
-          },
-          {
-            type: "modify-stat",
-            stat: "lore",
-            modifier: 1,
-            target: "SELF",
-          },
-        ],
+        type: "modify-stat",
+        stat: "strength",
+        modifier: 2,
+        target: "SELF",
+      },
+    },
+    {
+      id: "1XC-1b",
+      name: "CRUEL INTENT",
+      type: "static",
+      text: "CRUEL INTENT While you have a Villain character in play, this character gets +2 {S} and +1 {L}.",
+      condition: {
+        type: "has-character-count",
+        controller: "you",
+        comparison: "greater-or-equal",
+        count: 1,
+        classification: "Villain",
+      },
+      effect: {
+        type: "modify-stat",
+        stat: "lore",
+        modifier: 1,
+        target: "SELF",
       },
     },
     {

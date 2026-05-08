@@ -25,7 +25,7 @@
 <div
   role="button"
   tabindex="0"
-  class="group w-full cursor-pointer text-left rounded-xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {selected ? 'border-primary ring-2 ring-primary/30 shadow-md' : 'border-border hover:border-primary/50'} bg-card"
+  class="w-full cursor-pointer text-left rounded-xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none {selected ? 'border-primary ring-2 ring-primary/30 shadow-md' : 'border-border hover:border-primary/50'} bg-card"
   onclick={onSelect}
   onkeydown={(e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect?.(); } }}
 >
@@ -75,7 +75,7 @@
     <!-- Stats row -->
     <div class="flex items-center justify-between text-xs text-muted-foreground">
       <span>{deck.cardCount} cards</span>
-      <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div class="flex items-center gap-2">
         {#if onEdit}
           <button
             type="button"

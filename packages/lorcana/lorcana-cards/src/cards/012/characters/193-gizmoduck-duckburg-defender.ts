@@ -19,14 +19,17 @@ export const gizmoduckDuckburgDefender: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_3828962996af456097d02272026b2b06",
+  },
   text: [
     {
-      title: "<Resist> +1",
+      title: "Resist +1",
     },
     {
-      title: "Fail-Safe",
+      title: "FAIL-SAFE",
       description:
-        "While you have no cards in your hand, opponents can't play actions with cost 4 or more.",
+        "{} While you have no cards in your hand, opponents can't play actions with cost 4 or more.",
     },
   ],
   classifications: ["Dreamborn", "Super", "Hero", "Inventor"],
@@ -34,25 +37,21 @@ export const gizmoduckDuckburgDefender: CharacterCard = {
     resist(1),
     {
       id: "9Qc-2",
-      name: "Fail-Safe",
+      name: "FAIL-SAFE",
       type: "static",
-      text: "Fail-Safe While you have no cards in your hand, opponents can't play actions with cost 4 or more.",
+      text: "FAIL-SAFE While you have no cards in your hand, opponents can't play actions with cost 4 or more.",
       condition: {
-        type: "and",
-        conditions: [
-          {
-            type: "resource-count",
-            what: "cards-in-hand",
-            controller: "you",
-            comparison: "equal",
-            value: 0,
-          },
-        ],
+        type: "resource-count",
+        what: "cards-in-hand",
+        controller: "you",
+        comparison: "equal",
+        value: 0,
       },
       effect: {
         type: "restriction",
         restriction: "cant-play-actions",
         target: "OPPONENTS",
+        minCost: 4,
       },
     },
   ],

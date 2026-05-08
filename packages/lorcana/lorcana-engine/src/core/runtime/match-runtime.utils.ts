@@ -4,7 +4,6 @@
  * Context builders and utility functions.
  */
 
-import { current as snapshotCurrent } from "mutative";
 import type { Draft } from "mutative";
 import type { GameEvent, MatchState, MoveInput } from "./types";
 import type {
@@ -44,7 +43,7 @@ import {
 // Context Builders
 // =============================================================================
 
-function createFrameworkStateSnapshot(
+export function createFrameworkStateSnapshot(
   state: MatchState | Draft<MatchState>,
   gameEnded: boolean,
 ): FrameworkStateSnapshot {
@@ -83,30 +82,80 @@ const EMPTY_QUERY_API: QueryAPI = {
   explainIllegal: () => undefined,
 };
 
+/**
+ * Per-runtime caches the context builders thread through to downstream APIs.
+ *
+ * - `runtimeCard`: optional state-scoped cache for derived-card projections.
+ *   `MatchRuntime` owns one and passes it through; ad-hoc callers (tests,
+ *   automation) typically omit it and let the cards API rebuild on demand.
+ *
+ * The static-effect registry is currently a process-wide singleton accessed
+ * via {@link defaultRegistryProvider}. A `caches.registry` field intentionally
+ * does *not* live on this interface: the downstream APIs that would consume a
+ * per-runtime provider (cards / static-ability evaluation / warm-up) all read
+ * the singleton today. Adding a field that nothing reads would be misleading.
+ * When per-instance ownership is genuinely needed, plumb the provider through
+ * the consuming APIs first, then add it back here.
+ */
+export interface BuildContextCaches {
+  runtimeCard?: StateScopedValueCache<unknown>;
+}
+
+export interface BuildContextOptions {
+  state: MatchState | Draft<MatchState>;
+  playerId?: string;
+  config: MatchRuntimeConfig;
+  staticResources: MatchStaticResources;
+  gameEnded: boolean;
+  caches?: BuildContextCaches;
+  moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void;
+}
+
+export interface BuildValidationContextOptions<
+  TInput extends MoveInput = MoveInput,
+> extends BuildContextOptions {
+  state: MatchState;
+  playerId: string;
+  input: TInput;
+  validationMode?: "preflight" | "final";
+}
+
+export interface BuildWriteContextOptions extends BuildContextOptions {
+  state: Draft<MatchState>;
+  emit: (event: GameEvent) => void;
+  undo: UndoAPI;
+  gameEndTracker: { ended: boolean; result?: GameEndResult };
+}
+
+export interface BuildExecutionContextOptions<
+  TInput extends MoveInput = MoveInput,
+> extends BuildWriteContextOptions {
+  playerId: string;
+  input: TInput;
+}
+
 function createReadContextBase(
-  state: MatchState,
-  playerId: string,
-  config: MatchRuntimeConfig,
-  staticResources: MatchStaticResources,
-  effectiveGameEnded: boolean,
-  runtimeCardCache?: StateScopedValueCache<unknown>,
+  opts: BuildContextOptions & { playerId: string },
 ): Omit<MoveValidationContext<MoveInput>, keyof MoveInputView> {
-  const zoneRegistry = buildZoneRegistry(config.zones, state.ctx.playerIds);
+  const { state, playerId, config, staticResources, gameEnded } = opts;
+  const runtimeCard = opts.caches?.runtimeCard;
+  const readState = state as MatchState;
+  const zoneRegistry = buildZoneRegistry(config.zones, readState.ctx.playerIds);
   const cardsApi = createCardQueryAPIForState(
-    state,
+    readState,
     staticResources,
     config.deriveRuntimeCard,
     playerId,
-    runtimeCardCache,
+    runtimeCard,
     true,
   );
-  const frameworkState = createFrameworkStateSnapshot(state, effectiveGameEnded);
-  const zones = createZoneQueryAPI(state, cardsApi, zoneRegistry);
-  const time = createTimeQueryAPI(state);
+  const frameworkState = createFrameworkStateSnapshot(readState, gameEnded);
+  const zones = createZoneQueryAPI(readState, cardsApi, zoneRegistry);
+  const time = createTimeQueryAPI(readState);
   const framework = createFrameworkReadAPI(frameworkState, zones, time, cardsApi);
 
   return {
-    G: state.G as DeepReadonly<LorcanaG>,
+    G: readState.G as DeepReadonly<LorcanaG>,
     playerId: playerId as PlayerId,
     query: EMPTY_QUERY_API,
     cards: cardsApi,
@@ -115,26 +164,22 @@ function createReadContextBase(
   };
 }
 
-function createWriteContextBase(
-  draft: Draft<MatchState>,
-  playerId: string | undefined,
-  config: MatchRuntimeConfig,
-  staticResources: MatchStaticResources,
-  effectiveGameEnded: boolean,
-  emitGameEvent: (event: GameEvent) => void,
-  gameEndTracker: { ended: boolean; result?: GameEndResult },
-  undo: UndoAPI,
-  moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
-  runtimeCardCache?: StateScopedValueCache<unknown>,
-  useSnapshotForReads?: boolean,
-): RuntimeLifecycleContext {
-  // When useSnapshotForReads is true (lifecycle/trigger contexts), project from a plain snapshot
-  // to avoid Mutative proxy overhead. Move execution contexts use the live draft so that reads
-  // after in-move mutations reflect the current state.
-  const readState = useSnapshotForReads ? snapshotCurrent(draft) : draft;
-  const zoneRegistry = buildZoneRegistry(config.zones, readState.ctx.playerIds);
+function createWriteContextBase(opts: BuildWriteContextOptions): RuntimeLifecycleContext {
+  const {
+    state: draft,
+    playerId,
+    config,
+    staticResources,
+    gameEnded,
+    emit: emitGameEvent,
+    gameEndTracker,
+    undo,
+    moveLogSink,
+  } = opts;
+  const effectiveGameEnded = gameEnded || draft.ctx.status.gameEnded;
+  const zoneRegistry = buildZoneRegistry(config.zones, draft.ctx.playerIds);
   const cardsApi = createCardQueryAPIForState(
-    readState,
+    draft,
     staticResources,
     config.deriveRuntimeCard,
     playerId,
@@ -181,92 +226,32 @@ function createWriteContextBase(
 }
 
 export function buildValidationContext<TInput extends MoveInput = MoveInput>(
-  state: MatchState,
-  playerId: string,
-  input: TInput,
-  config: MatchRuntimeConfig,
-  staticResources: MatchStaticResources,
-  gameEnded: boolean,
-  validationMode: "preflight" | "final" = "final",
-  runtimeCardCache?: StateScopedValueCache<unknown>,
+  opts: BuildValidationContextOptions<TInput>,
 ): MoveValidationContext<TInput> {
-  const base = createReadContextBase(
-    state,
-    playerId,
-    config,
-    staticResources,
-    gameEnded,
-    runtimeCardCache,
-  );
+  const base = createReadContextBase(opts);
   return {
     ...base,
-    validationMode,
-    ...createMoveInputView(input),
+    validationMode: opts.validationMode ?? "final",
+    ...createMoveInputView(opts.input),
   };
+}
+
+export function buildLifecycleContext(opts: BuildWriteContextOptions): RuntimeLifecycleContext {
+  return createWriteContextBase({
+    ...opts,
+    playerId: opts.playerId ?? opts.state.ctx.priority.holder,
+  });
 }
 
 export function buildExecutionContext<TInput extends MoveInput = MoveInput>(
-  draft: Draft<MatchState>,
-  playerId: string,
-  input: TInput,
-  config: MatchRuntimeConfig,
-  staticResources: MatchStaticResources,
-  gameEnded: boolean,
-  emitGameEvent: (event: GameEvent) => void,
-  gameEndTracker: { ended: boolean; result?: GameEndResult },
-  undo: UndoAPI,
-  moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
-  runtimeCardCache?: StateScopedValueCache<unknown>,
+  opts: BuildExecutionContextOptions<TInput>,
 ): MoveExecutionContext<TInput> {
-  const lifecycleContext = buildLifecycleContext(
-    draft,
-    config,
-    staticResources,
-    gameEnded,
-    emitGameEvent,
-    gameEndTracker,
-    undo,
-    playerId,
-    moveLogSink,
-    runtimeCardCache,
-  );
-
+  const lifecycleContext = buildLifecycleContext(opts);
   return {
-    playerId: playerId as PlayerId,
+    playerId: opts.playerId as PlayerId,
     ...lifecycleContext,
-    ...createMoveInputView(input),
+    ...createMoveInputView(opts.input),
   };
-}
-
-export function buildLifecycleContext(
-  draft: Draft<MatchState>,
-  config: MatchRuntimeConfig,
-  staticResources: MatchStaticResources,
-  gameEnded: boolean,
-  emitGameEvent: (event: GameEvent) => void,
-  gameEndTracker: { ended: boolean; result?: GameEndResult },
-  undo: UndoAPI,
-  playerId: string | undefined = draft.ctx.priority.holder,
-  moveLogSink?: (entries: readonly ProjectedLogEntry[]) => void,
-  runtimeCardCache?: StateScopedValueCache<unknown>,
-  /** When true, card projections use a plain snapshot of the draft (no Mutative proxy overhead).
-   * Only safe for read-only lifecycle hooks (trigger collection) — NOT for move execution. */
-  useSnapshotForReads?: boolean,
-): RuntimeLifecycleContext {
-  const effectiveGameEnded = gameEnded || draft.ctx.status.gameEnded;
-  return createWriteContextBase(
-    draft,
-    playerId,
-    config,
-    staticResources,
-    effectiveGameEnded,
-    emitGameEvent,
-    gameEndTracker,
-    undo,
-    moveLogSink,
-    runtimeCardCache,
-    useSnapshotForReads,
-  );
 }
 
 // =============================================================================

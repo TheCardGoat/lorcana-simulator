@@ -19,13 +19,14 @@
     stateId: number | null;
     serializedState: string;
     serializedBoardProjection: string;
+    serializedInteractionPrompt: string;
     onViewChange: (view: LorcanaSimulatorView) => void;
     onFixtureChange?: (fixtureId: string) => void;
     onReset: () => void;
     onRefresh: () => void;
     onRunAnimation: (animation: SimulatorDebugAnimationRequest) => boolean;
     onRunQuestAnimation?: (cardId: string, player: SimulatorDebugAnimationPlayer, loreGained: number) => boolean;
-    onRunChallengeAnimation?: (attackerId: string, defenderId: string, player: SimulatorDebugAnimationPlayer, preview: { attackerDamageDealt: number; defenderDamageDealt: number; defenderKind: "character" | "location"; attackerWouldBeBanished: boolean; defenderWouldBeBanished: boolean }) => boolean;
+    onRunChallengeAnimation?: (attackerId: string, defenderId: string, player: SimulatorDebugAnimationPlayer, preview: { attackerDamageDealt: number; defenderDamageDealt: number; defenderKind: "character" | "location"; attackerWouldBeBanished: boolean; defenderWouldBeBanished: boolean; attackerDamageIsReduced: boolean; defenderDamageIsReduced: boolean }) => boolean;
     onClose: () => void;
     onOpenStateChange: (open: boolean) => void;
   }
@@ -100,7 +101,7 @@
     anomalies: string[];
   }
 
-  type CopyTarget = "boardProjection" | "state";
+  type CopyTarget = "boardProjection" | "interactionPrompt" | "state";
 
   interface CopyFeedback {
     target: CopyTarget;
@@ -117,6 +118,7 @@
     stateId,
     serializedState,
     serializedBoardProjection,
+    serializedInteractionPrompt,
     onViewChange,
     onFixtureChange,
     onReset,
@@ -140,6 +142,8 @@
   let stateParseError = $state<string | null>(null);
   let parsedBoardProjection = $state<unknown>(null);
   let boardProjectionParseError = $state<string | null>(null);
+  let parsedInteractionPrompt = $state<unknown>(null);
+  let interactionPromptParseError = $state<string | null>(null);
   let projectionSummary = $state<ProjectionSummary | null>(null);
   type AnimationType = "play.action" | "quest" | "challenge" | "lorcana.boardMove";
   let animationType = $state<AnimationType>("quest");
@@ -574,6 +578,8 @@
       defenderKind: challengeDefenderKind,
       attackerWouldBeBanished: challengeAttackerBanished,
       defenderWouldBeBanished: challengeDefenderBanished,
+      attackerDamageIsReduced: false,
+      defenderDamageIsReduced: false,
     });
     animationStatus = success
       ? `Fired challenge animation: ${attackerId} -> ${defenderId}.`
@@ -620,6 +626,8 @@
     stateParseError = null;
     parsedBoardProjection = null;
     boardProjectionParseError = null;
+    parsedInteractionPrompt = null;
+    interactionPromptParseError = null;
     projectionSummary = null;
 
     if (!serializedState || serializedState === "No state available.") {
@@ -643,6 +651,17 @@
       parsedBoardProjection = JSON.parse(serializedBoardProjection);
     } catch {
       boardProjectionParseError = "Unable to parse serialized board projection JSON.";
+    }
+
+    if (!serializedInteractionPrompt || serializedInteractionPrompt === "No interaction prompt available.") {
+      interactionPromptParseError = serializedInteractionPrompt;
+      return;
+    }
+
+    try {
+      parsedInteractionPrompt = JSON.parse(serializedInteractionPrompt);
+    } catch {
+      interactionPromptParseError = "Unable to parse serialized interaction prompt JSON.";
     }
   });
 
@@ -910,6 +929,41 @@
           <p><span>Reveal nextSeq</span><strong>{toScalar(projectionSummary.reveals.nextSeq)}</strong></p>
         </div>
       </section>
+
+      <details class="debug-section debug-raw" open>
+        <summary class="debug-raw__summary">
+          <span>Current UI Prompt JSON ({VIEW_LABELS[view]})</span>
+          <button
+                  type="button"
+                  class="debug-copy-button"
+                  onclick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              void copySerializedJson(
+                "interactionPrompt",
+                serializedInteractionPrompt,
+                "No interaction prompt available.",
+              );
+            }}
+          >
+            Copy JSON
+          </button>
+        </summary>
+        <div class="debug-raw__body">
+          {#if copyFeedback?.target === "interactionPrompt"}
+            <p class:debug-copy-feedback={true} class:debug-copy-feedback--error={copyFeedback.tone === "error"}>
+              {copyFeedback.message}
+            </p>
+          {/if}
+          {#if interactionPromptParseError}
+            <pre class="debug-sidebar__state debug-sidebar__state--raw">{interactionPromptParseError}</pre>
+          {:else if parsedInteractionPrompt}
+            <JSONTree value={parsedInteractionPrompt} />
+          {:else}
+            <pre class="debug-sidebar__state debug-sidebar__state--raw">No parsed interaction prompt available.</pre>
+          {/if}
+        </div>
+      </details>
 
       <section class="debug-section">
         <h3>Zone Projection</h3>

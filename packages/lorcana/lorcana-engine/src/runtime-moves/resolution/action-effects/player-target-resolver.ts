@@ -2,12 +2,20 @@ import type { CardInstanceId, PlayerId } from "#core";
 import type { PlayerTarget, LorcanaPlayerTarget } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
 import type { DynamicAmountEventSnapshot } from "../../../types/domain-events";
-import type { PlayCardExecutionContext } from "./types";
+import type { CardRuntimeReadAPI, DeepReadonly, FrameworkReadAPI } from "../../../core/runtime";
+import type { LorcanaG } from "../../../types";
 import type { TargetSelectionInput } from "../../../targeting/runtime";
 import {
   resolveSelectedPlayerIds,
   resolveTargetPlayerIds as resolveUnifiedPlayerTargets,
 } from "../../../targeting/runtime";
+
+type PlayerTargetResolutionContext = {
+  G: DeepReadonly<LorcanaG>;
+  playerId?: PlayerId;
+  framework: FrameworkReadAPI;
+  cards: CardRuntimeReadAPI;
+};
 
 function normalizeSelectedTargets(selectedTargets?: TargetSelectionInput): string[] {
   if (typeof selectedTargets === "string") {
@@ -20,7 +28,7 @@ function normalizeSelectedTargets(selectedTargets?: TargetSelectionInput): strin
 }
 
 export function resolveTargetPlayerIds(
-  ctx: PlayCardExecutionContext,
+  ctx: PlayerTargetResolutionContext,
   cardPlayed: CardPlayedPayload,
   target: PlayerTarget | LorcanaPlayerTarget | "SELF" | unknown,
   selectedTargets?: TargetSelectionInput,

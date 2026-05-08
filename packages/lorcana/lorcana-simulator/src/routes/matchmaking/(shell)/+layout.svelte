@@ -5,33 +5,60 @@
   import AccountSettingsDialog from '$lib/features/matchmaking/ui/AccountSettingsDialog.svelte';
   import MatchmakingLobbyHero from '$lib/features/matchmaking/ui/MatchmakingLobbyHero.svelte';
   import MatchmakingLobbyFooter from '$lib/features/matchmaking/ui/MatchmakingLobbyFooter.svelte';
+  import PwaInstallCard from '$lib/features/matchmaking/ui/PwaInstallCard.svelte';
+  import { IsMobile } from '$lib/hooks/is-mobile.svelte.js';
   import {
     createMatchmakingLobbyController,
     setMatchmakingLobbyContext,
   } from '$lib/features/matchmaking/ui/useMatchmakingLobbyController.svelte.js';
+  import { MatchmakingInstallNudgeState } from '$lib/features/matchmaking/state/install-nudge.svelte.js';
   import { immersiveExperience } from '$lib/features/immersive/immersive-state.svelte.js';
+  import type { LayoutData } from './$types';
 
   let {
+    data,
     children,
-  }: { children: import('svelte').Snippet } = $props();
+  }: { data: LayoutData; children: import('svelte').Snippet } = $props();
 
-  const controller = createMatchmakingLobbyController();
+  const isMobile = new IsMobile();
+  const installNudge = new MatchmakingInstallNudgeState();
+  let ready = $state(false);
+
+  // svelte-ignore state_referenced_locally
+  const controller = createMatchmakingLobbyController({
+    initialContext: data.matchmakingContext,
+    initialLiveMatches: data.initialLiveMatches,
+    initialQueueStats: data.initialQueueStats,
+    initialActiveMatchId: data.activeMatchId,
+    gatewayTicket: data.gatewayTicket,
+    gatewayAuthToken: data.gatewayAuthToken,
+    initialMatchmakingStatus: data.matchmakingStatus,
+    initialLobbyRoom: data.initialLobbyRoom ?? null,
+    initialLeaderboards: data.initialLeaderboards,
+  });
   setMatchmakingLobbyContext(controller);
+
+  const showPwaInstall = $derived(
+    ready && isMobile.current && installNudge.shouldShow,
+  );
 
   onMount(() => {
     const detach = immersiveExperience.attach();
+    const detachInstallNudge = installNudge.attach();
     immersiveExperience.activateRouteChrome();
+    ready = true;
 
-    void controller.playerSettings.initialize();
-    void controller.playerContext.initialize();
+    void controller.initialize();
 
     return () => {
       detach();
+      detachInstallNudge();
       immersiveExperience.deactivateRouteChrome();
     };
   });
 
   onDestroy(() => {
+    controller.destroy();
     immersiveExperience.deactivateRouteChrome();
   });
 </script>
@@ -51,17 +78,25 @@
   <div
     class="relative flex h-full w-full flex-col gap-4"
   >
+    {#if showPwaInstall}
+      <div
+        class="mx-auto w-full max-w-7xl px-3 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-4"
+      >
+        <PwaInstallCard {installNudge} />
+      </div>
+    {/if}
+
     <MatchmakingLobbyHero
       gateway={controller.gateway}
       activeLane={"queue"}
-      mobileTabsEnabled={false}
-      hasActiveMatch={false}
+      mobileTabsEnabled={isMobile.current}
+      hasActiveMatch={controller.queueStore.activeMatchId !== null}
       selectionDisabled={controller.deckSelection.selectionDisabled}
       isAuthenticated={controller.auth.isAuthenticated}
       isAuthLoading={controller.auth.isLoading}
       user={controller.auth.user}
       onSelectLane={() => {}}
-      onResumeMatch={() => {}}
+      onResumeMatch={() => controller.handleRejoinMatch()}
       onOpenSignIn={() => controller.openSignInDialog()}
       onSignedOut={() => controller.reconnectGatewayAnonymous()}
       onOpenSettings={() => {
@@ -81,7 +116,6 @@
   <PlayerSettingsDialog
     bind:open={controller.playerSettingsOpen}
     selectedLocale={controller.playerSettings.selectedLocale}
-    skipActionConfirmation={controller.playerSettings.skipActionConfirmation}
     hotkeyMode={controller.playerSettings.hotkeyMode}
     cardPreviewMode={controller.playerSettings.cardPreviewMode}
     primaryClickAction={controller.playerSettings.primaryClickAction}
@@ -90,8 +124,6 @@
     accessibleMobileControls={controller.playerSettings
       .accessibleMobileControls}
     onLocaleSelection={controller.playerSettings.handleLocaleSelection}
-    onToggleSkipActionConfirmation={controller.playerSettings
-      .handleSkipActionConfirmationToggle}
     onHotkeyModeChange={controller.playerSettings.handleHotkeyModeChange}
     onCardPreviewModeChange={controller.playerSettings
       .handleCardPreviewModeChange}

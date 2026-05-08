@@ -2,9 +2,11 @@ import type { CardInstanceId, PlayerId } from "#core";
 import type { PutOnTopEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
 import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
+import { isCardInPlayZone } from "../../../operations/zones";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
 import { normalizeSelectedTargets, resolveEffectTargets } from "../../../targeting/runtime";
+import { getCurrentSelectionInput, getEffectTargetSelectionInput } from "./selection-state";
 
 export function isPutOnTopEffect(effect: unknown): effect is PutOnTopEffect {
   return (
@@ -22,9 +24,7 @@ function moveCardToTopOfOwnerDeck(
 ): void {
   const ownerId =
     (ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined) ?? fallbackPlayerId;
-  const zoneKey = ctx.framework.zones.getCardZone(cardId);
-
-  if (typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"))) {
+  if (isCardInPlayZone(ctx, cardId)) {
     moveCardOutOfPlayWithStack(ctx, cardId, {
       zone: "deck",
       playerId: ownerId,
@@ -44,6 +44,25 @@ function resolveSourceCards(
   effect: PutOnTopEffect,
   resolutionInput: ActionResolutionInput,
 ): CardInstanceId[] {
+  // Newer `target` path mirrors PutOnBottomEffect: resolve via the standard
+  // targeting runtime so `chosenBy`/`chooser` and explicit selectors work.
+  if (effect.target) {
+    const candidateTargets =
+      resolveEffectTargets(
+        ctx,
+        cardPlayed,
+        effect.target,
+        getEffectTargetSelectionInput(effect.target, resolutionInput),
+        resolutionInput.eventSnapshot,
+      ) ?? [];
+    const selectedForOrdering =
+      normalizeSelectedTargets(getCurrentSelectionInput(resolutionInput)) ?? [];
+    return effect.ordering === "player-choice" &&
+      selectedForOrdering.length === candidateTargets.length
+      ? selectedForOrdering
+      : candidateTargets;
+  }
+
   const selectedTargets = normalizeSelectedTargets(resolutionInput.targets) ?? [];
 
   if (effect.source === "revealed") {

@@ -55,6 +55,11 @@ export const meekoSkittishScrounger: CharacterCard = {
           value: 1,
         },
       },
+      trigger: {
+        event: "end-turn",
+        on: "YOU",
+        timing: "at",
+      },
       effect: {
         type: "or",
         optionLabels: ["choose and discard a card", "banish him"],
@@ -71,11 +76,6 @@ export const meekoSkittishScrounger: CharacterCard = {
             type: "banish",
           },
         ],
-      },
-      trigger: {
-        event: "end-turn",
-        on: "YOU",
-        timing: "at",
       },
       type: "triggered",
       text: "BOTTOMLESS PIT At the end of your turn, if this character is exerted, choose and discard a card or banish him.",

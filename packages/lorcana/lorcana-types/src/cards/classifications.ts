@@ -30,6 +30,7 @@ export const CLASSIFICATIONS = [
   "Knight",
   "Madrigal",
   "Mentor",
+  "Monster",
   "Musketeer",
   "Pirate",
   "Prince",

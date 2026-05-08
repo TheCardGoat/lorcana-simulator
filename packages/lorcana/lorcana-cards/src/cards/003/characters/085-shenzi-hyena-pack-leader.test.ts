@@ -125,13 +125,8 @@ describe("Shenzi - Hyena Pack Leader", () => {
         testEngine.asPlayerOne().challenge(shenziHyenaPackLeader, weakDefender),
       ).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued when trigger fires, location condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(shenziHyenaPackLeader, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       // Shenzi is not at a location — no card drawn
       const handAfter = testEngine.asPlayerOne().getCardsInZone("hand", PLAYER_ONE).count;
       expect(handAfter).toBe(handBefore);

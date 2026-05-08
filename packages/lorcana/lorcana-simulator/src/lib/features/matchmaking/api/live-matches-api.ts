@@ -1,10 +1,12 @@
-import { getGameServerOrigin } from "$lib/config/public-url-config.js";
+import { getApiOrigin } from "$lib/config/public-url-config.js";
 import { requestJson } from "$lib/data/transport/http-client.js";
 
 export interface LiveMatchPlayer {
   id: string;
   displayName: string;
   isMobile?: boolean;
+  mmr?: number;
+  subscriptionTier?: string;
 }
 
 export interface LiveMatchEntry {
@@ -39,7 +41,7 @@ export async function fetchLiveMatches(
   limit = 25,
   filters: LiveMatchFetchFilters = {},
 ): Promise<LiveMatchListResponse> {
-  const url = new URL(`${getGameServerOrigin()}/v1/play/matches/live`);
+  const url = new URL(`${getApiOrigin()}/v1/games/lorcana/play/matches/live`);
   url.searchParams.set("limit", String(limit));
   if (filters.matchType) url.searchParams.set("matchType", filters.matchType);
   if (filters.format) url.searchParams.set("format", filters.format);

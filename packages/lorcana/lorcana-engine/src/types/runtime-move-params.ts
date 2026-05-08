@@ -55,6 +55,7 @@ export interface PlayCardActionResolutionInput {
   amount?: Amount;
   namedCard?: string;
   resolveOptional?: boolean;
+  enterPlayExerted?: boolean;
   choiceIndex?: number;
   preventAutoResolveTriggeredEffects?: boolean;
   destinations?: {

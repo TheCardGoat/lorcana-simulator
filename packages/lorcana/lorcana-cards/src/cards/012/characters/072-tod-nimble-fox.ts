@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { evasive } from "../../../helpers/abilities/evasive";
 import { todNimbleFoxI18n } from "./072-tod-nimble-fox.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const todNimbleFox: CharacterCard = {
   id: "fT3",

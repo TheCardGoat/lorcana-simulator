@@ -38,6 +38,24 @@ const secondOpponentCharacter = createMockCharacter({
   lore: 1,
 });
 
+const alliedAttacker = createMockCharacter({
+  id: "hh-allied-attacker",
+  name: "Allied Attacker",
+  cost: 3,
+  strength: 4,
+  willpower: 4,
+  lore: 1,
+});
+
+const toughDefender = createMockCharacter({
+  id: "hh-tough-defender",
+  name: "Tough Defender",
+  cost: 4,
+  strength: 3,
+  willpower: 5,
+  lore: 1,
+});
+
 describe("The Headless Horseman - Terror of Sleepy Hollow", () => {
   describe("LEAVES NO TRACE — When you play this character, banish chosen opposing character with 2 {S} or less.", () => {
     it("banishes chosen opposing character with strength 2 or less when played", () => {
@@ -132,6 +150,48 @@ describe("The Headless Horseman - Terror of Sleepy Hollow", () => {
       expect(testEngine.asPlayerOne().getCardStrength(alliedCharacter)).toBe(
         alliedCharacter.strength,
       );
+    });
+
+    it("regression: triggers from LEAVES NO TRACE banish chain on play, enabling challenge", () => {
+      // alliedAttacker has strength 4, toughDefender has willpower 5.
+      // Without GATHERING STRENGTH the challenge would deal 4 damage (not enough to banish).
+      // With GATHERING STRENGTH (+1 from banishing weakTarget) attacker reaches 5 strength,
+      // exactly matching the defender's willpower — so the challenge banishes the defender.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          inkwell: theHeadlessHorsemanTerrorOfSleepyHollow.cost,
+          hand: [theHeadlessHorsemanTerrorOfSleepyHollow],
+          play: [{ card: alliedAttacker, isDrying: false }],
+        },
+        {
+          play: [weakTarget, { card: toughDefender, exerted: true }],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(theHeadlessHorsemanTerrorOfSleepyHollow),
+      ).toBeSuccessfulCommand();
+
+      // Resolve LEAVES NO TRACE bag entry
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(theHeadlessHorsemanTerrorOfSleepyHollow),
+      ).toBeSuccessfulCommand();
+
+      // Select the weak target — this banishes it; GATHERING STRENGTH should auto-trigger
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [weakTarget] }),
+      ).toBeSuccessfulCommand();
+
+      // GATHERING STRENGTH must have fired: alliedAttacker now has strength 5
+      expect(testEngine.asPlayerOne().getCardStrength(alliedAttacker)).toBe(
+        alliedAttacker.strength + 1,
+      );
+
+      // alliedAttacker can now banish toughDefender (5 str vs 5 willpower)
+      expect(
+        testEngine.asPlayerOne().challenge(alliedAttacker, toughDefender),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardZone(toughDefender)).toBe("discard");
     });
 
     it("regression: stacks +1 when multiple opposing characters are banished same turn", () => {

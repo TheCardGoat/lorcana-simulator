@@ -1130,7 +1130,7 @@
   }
 
   .quick-action__label--micro {
-    font-size: 0.46rem;
+    font-size: clamp(0.56rem, 1.65vw, 0.62rem);
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -1154,7 +1154,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.12rem;
-    font-size: 0.46rem;
+    font-size: clamp(0.54rem, 1.55vw, 0.6rem);
     font-weight: 800;
     line-height: 1;
     letter-spacing: 0.04em;
@@ -1184,7 +1184,7 @@
   }
 
   .quick-action__meta {
-    font-size: 0.55rem;
+    font-size: clamp(0.62rem, 1.7vw, 0.68rem);
     font-weight: 800;
     line-height: 1;
     letter-spacing: 0.08em;
@@ -1216,7 +1216,7 @@
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.14);
     padding: 0 0.2rem;
-    font-size: 0.52rem;
+    font-size: clamp(0.58rem, 1.55vw, 0.64rem);
     font-weight: 800;
     line-height: 1;
   }
@@ -1281,7 +1281,7 @@
     color: rgba(148, 163, 184, 0.9);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    font-size: 0.66rem;
+    font-size: clamp(0.72rem, 1.9vw, 0.76rem);
     font-weight: 700;
   }
 
@@ -1351,7 +1351,7 @@
   }
 
   .sheet-action-button__meta {
-    font-size: 0.64rem;
+    font-size: clamp(0.7rem, 1.8vw, 0.74rem);
     color: rgba(191, 219, 254, 0.7);
   }
 
@@ -1439,11 +1439,11 @@
     }
 
     .quick-action__label--micro {
-      font-size: 0.44rem;
+      font-size: 0.54rem;
     }
 
     .quick-action__stat {
-      font-size: 0.43rem;
+      font-size: 0.52rem;
       gap: 0.1rem;
     }
   }

@@ -14,31 +14,27 @@ import {
   validateAndNormalizeTargetSelection,
 } from "../../../targeting/runtime";
 import { getBanishCharacterCostCandidateIds } from "./banish-character-cost-candidates";
-import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
 import {
-  EFFECT_PENDING_ERROR_CODE,
-  hasPendingActionEffectResolution,
-} from "../../resolution/action-effects/pending-action-effects";
+  banishAsAbilityCost,
+  buildStaticContexts,
+  getCardDefinition,
+  validateNoPendingEffects,
+} from "../../../operations";
 import { resolveActionEffect } from "../../resolution/action-effects/composed-effect-resolver";
 import type { ActionResolutionInput } from "../../resolution/action-effects/types";
 import { payBasicCost, validateBasicCost } from "../../rules/play-card-rules";
 import {
   emitTriggeredLorcanaEvent,
   flushTriggeredEventsToBag,
-  hasPendingBagItems,
   queueTriggeredEvent,
-  snapshotTriggeredCandidatesForCard,
 } from "../../effects/triggered-abilities";
 import { emitBeChosenEvents } from "../../effects/be-chosen";
 import { recordBanishedCharacterThisTurn } from "../../state/turn-metrics";
 import { getGrantedActivatedAbilities } from "../../rules/static-ability-utils";
 import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
-import { getKeywordsBeforeBanish } from "../../shared/banish-snapshot";
-import {
-  evaluateCondition,
-  type ConditionEvaluationContext,
-} from "../../../rules/condition-evaluator";
-import { createProjectionState, getEffectiveStrength } from "../../../rules/derived-state";
+import { evaluateCondition } from "../../../rules/condition-evaluator";
+import { buildConditionContext } from "../../../rules/condition-context";
+import { getEffectiveStrength } from "../../../rules/derived-state";
 import {
   flattenSlottedTargets,
   isSlottedTargetInput,
@@ -76,17 +72,6 @@ type ActivatedAbilityReadableContext =
   | ActivatedAbilityValidationContext
   | Parameters<LorcanaMoveDefinition<"activateAbility">["execute"]>[0];
 
-function getCardDefinitionFromContext(
-  ctx: {
-    cards: {
-      getDefinition: (cardId: string) => unknown;
-    };
-  },
-  cardId: string,
-): LorcanaCard | undefined {
-  return ctx.cards.getDefinition(cardId) as LorcanaCard | undefined;
-}
-
 function getControlledCardsInPlay(
   ctx: ActivatedAbilityReadableContext,
   playerId: PlayerId,
@@ -106,7 +91,7 @@ function getActivatedAbilitiesForCard(
   const grantedAbilities = getGrantedActivatedAbilities({
     state: ctx.framework.state,
     cardId,
-    getDefinitionByInstanceId: (instanceId) => getCardDefinitionFromContext(ctx, instanceId),
+    getDefinitionByInstanceId: (instanceId) => getCardDefinition(ctx, instanceId),
     registry,
   }).map((entry) => entry.ability);
 
@@ -193,7 +178,7 @@ function getEligibleExertItemCostCards(
   currentPlayer: PlayerId,
 ): CardInstanceId[] {
   return getControlledCardsInPlay(ctx, currentPlayer).filter((cardId) => {
-    const definition = getCardDefinitionFromContext(ctx, cardId);
+    const definition = getCardDefinition(ctx, cardId);
     if (!definition || definition.cardType !== "item") {
       return false;
     }
@@ -333,7 +318,7 @@ function getEligibleBanishItemCostCards(
   currentPlayer: PlayerId,
 ): CardInstanceId[] {
   return getControlledCardsInPlay(ctx, currentPlayer).filter((cardId) => {
-    const definition = getCardDefinitionFromContext(ctx, cardId);
+    const definition = getCardDefinition(ctx, cardId);
     return definition?.cardType === "item";
   }) as CardInstanceId[];
 }
@@ -466,9 +451,7 @@ function getEligibleDiscardCostCards(
       zone: "hand",
       playerId: currentPlayer,
     }) as CardInstanceId[]
-  ).filter((cardId) =>
-    matchesDiscardCostRequirements(getCardDefinitionFromContext(ctx, cardId), ability),
-  );
+  ).filter((cardId) => matchesDiscardCostRequirements(getCardDefinition(ctx, cardId), ability));
 }
 
 function resolveDiscardCostCards(
@@ -667,7 +650,7 @@ function validateExertCharacterCostSelections(
       );
     }
 
-    const costCardDef = getCardDefinitionFromContext(ctx, cardId);
+    const costCardDef = getCardDefinition(ctx, cardId);
     if (!costCardDef || costCardDef.cardType !== "character") {
       return createFailure(
         "Additional exerted character cost must be a character",
@@ -792,7 +775,7 @@ function buildExertCostCards(
   }
 
   for (const cardId of getRequestedExertCharacterCosts(ctx)) {
-    const costCardDef = getCardDefinitionFromContext(ctx, cardId);
+    const costCardDef = getCardDefinition(ctx, cardId);
     exertCards.push({
       cardId,
       cardType: costCardDef?.cardType,
@@ -855,18 +838,11 @@ function validateAbilityTargeting(
 
 export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
   validate: (ctx): RuntimeValidationResult => {
-    if (hasPendingActionEffectResolution(ctx)) {
-      return createFailure(
-        "Cannot activate abilities while an action effect is pending",
-        EFFECT_PENDING_ERROR_CODE,
-      );
-    }
-
-    if (hasPendingBagItems(ctx)) {
-      return createFailure(
-        "Cannot activate abilities while bag effects are pending",
-        "BAG_PENDING",
-      );
+    const pendingFailure = validateNoPendingEffects(ctx, {
+      actionLabel: "activate abilities",
+    });
+    if (pendingFailure) {
+      return pendingFailure;
     }
 
     const { cardId, abilityIndex } = ctx.args;
@@ -883,7 +859,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       );
     }
 
-    const cardDef = getCardDefinitionFromContext(ctx, cardId);
+    const cardDef = getCardDefinition(ctx, cardId);
     if (!cardDef) {
       return createFailure("Card definition not found", "CARD_NOT_FOUND");
     }
@@ -899,29 +875,16 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
     }
 
     if (ability.condition !== undefined) {
-      const conditionCtx: ConditionEvaluationContext = {
-        framework: {
-          state: {
-            priority: ctx.framework.state.priority,
-            status: ctx.framework.state.status,
-            _zonesPrivate: ctx.framework.state._zonesPrivate,
-            playerIds: ctx.framework.state.playerIds,
-            currentPlayer: currentPlayer,
-          },
-          zones: {
-            getCards: (query: { zone: string; playerId: PlayerId }) =>
-              ctx.framework.zones.getCards(query) as unknown as readonly CardInstanceId[],
-          },
-        },
-        cards: {
-          getDefinition: ctx.cards.getDefinition,
-          require: ctx.cards.require,
-        },
-        G: ctx.G,
+      // NOTE: this site previously stripped `_zonesPrivate` and the full zone
+      // API from the framework before evaluation. The canonical builder passes
+      // ctx.framework through unchanged, which only enables conditions to read
+      // more accurate state (zone scoping, ownership lookups). No condition
+      // observed here mutates state.
+      const conditionCtx = buildConditionContext({
+        ctx,
         playerId: currentPlayer,
         sourceCardId: cardId as CardInstanceId,
-        registry: getOrBuildMoveRegistry(ctx),
-      };
+      });
       const conditionMet = evaluateCondition(ability.condition, conditionCtx);
       if (!conditionMet) {
         return createFailure("Ability condition not met", "ABILITY_CONDITION_NOT_MET");
@@ -1038,7 +1001,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       throw new Error("activateAbility execution requires an active player");
     }
 
-    const cardDef = getCardDefinitionFromContext(ctx, cardId);
+    const cardDef = getCardDefinition(ctx, cardId);
     if (!cardDef) {
       throw new Error(`Card definition not found for '${cardId}'`);
     }
@@ -1072,8 +1035,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
 
     const cost = ability.cost ?? {};
     const currentMeta = (ctx.cards.require(cardId).meta ?? {}) as LorcanaCardMeta;
-    const projectionState = createProjectionState(ctx.framework.state, ctx.G);
-    const registry = getOrBuildMoveRegistry(ctx);
+    const { registry, projectionState } = buildStaticContexts(ctx);
     const banishItemCostCards = resolveBanishItemCostCards(ctx, currentPlayer, ability);
     const banishCharacterCostCards = resolveBanishCharacterCostCards(
       ctx,
@@ -1090,7 +1052,7 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
       ...buildExertCostCards(ctx, cardId as CardInstanceId, cardDef, ability),
       ...exertItemCostCards.map((itemCardId) => ({
         cardId: itemCardId,
-        cardType: getCardDefinitionFromContext(ctx, itemCardId)?.cardType,
+        cardType: getCardDefinition(ctx, itemCardId)?.cardType,
         subject: "Item cost",
       })),
     ];
@@ -1148,48 +1110,14 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
     }
 
     for (const banishItemCardId of banishItemCostCards) {
-      const costCardMeta = (ctx.cards.require(banishItemCardId).meta ?? {}) as LorcanaCardMeta;
-      const subjectAtLocationId = costCardMeta.atLocationId as CardInstanceId | undefined;
-      const keywordsBeforeBanish = getKeywordsBeforeBanish(ctx, banishItemCardId, currentPlayer);
-      const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, banishItemCardId);
-      moveCardOutOfPlayWithStack(ctx, banishItemCardId, {
-        zone: "discard",
+      banishAsAbilityCost(ctx, {
+        cardId: banishItemCardId,
+        sourceId: cardId as CardInstanceId,
         playerId: currentPlayer,
       });
-      emitTriggeredLorcanaEvent(
-        ctx,
-        "cardBanished",
-        {
-          cardId: banishItemCardId,
-          sourceId: cardId as CardInstanceId,
-          snapshot: {
-            keywordsBeforeBanish,
-            subjectAtLocationId,
-          },
-          reason: "activated ability cost",
-        },
-        {
-          event: "banish",
-          playerId: currentPlayer,
-          subjectCardId: banishItemCardId,
-          triggerSourceCardId: banishItemCardId,
-          triggerCandidates,
-          eventSnapshot: {
-            keywordsBeforeBanish,
-            subjectAtLocationId,
-          },
-        },
-      );
     }
 
     for (const banishCharacterCardId of banishCharacterCostCards) {
-      const costCardMeta = (ctx.cards.require(banishCharacterCardId).meta ?? {}) as LorcanaCardMeta;
-      const subjectAtLocationId = costCardMeta.atLocationId as CardInstanceId | undefined;
-      const keywordsBeforeBanish = getKeywordsBeforeBanish(
-        ctx,
-        banishCharacterCardId,
-        currentPlayer,
-      );
       const banishedCharacterDefinition = ctx.cards.getDefinition(banishCharacterCardId) as
         | LorcanaCard
         | undefined;
@@ -1203,37 +1131,12 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
               registry,
             )
           : undefined;
-      const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, banishCharacterCardId);
-      moveCardOutOfPlayWithStack(ctx, banishCharacterCardId, {
-        zone: "discard",
+      banishAsAbilityCost(ctx, {
+        cardId: banishCharacterCardId,
+        sourceId: cardId as CardInstanceId,
         playerId: currentPlayer,
+        strengthBeforeBanish,
       });
-      emitTriggeredLorcanaEvent(
-        ctx,
-        "cardBanished",
-        {
-          cardId: banishCharacterCardId,
-          sourceId: cardId as CardInstanceId,
-          snapshot: {
-            keywordsBeforeBanish,
-            subjectAtLocationId,
-            strengthBeforeBanish,
-          },
-          reason: "activated ability cost",
-        },
-        {
-          event: "banish",
-          playerId: currentPlayer,
-          subjectCardId: banishCharacterCardId,
-          triggerSourceCardId: banishCharacterCardId,
-          triggerCandidates,
-          eventSnapshot: {
-            keywordsBeforeBanish,
-            subjectAtLocationId,
-            strengthBeforeBanish,
-          },
-        },
-      );
       recordBanishedCharacterThisTurn(ctx, banishCharacterCardId);
     }
 
@@ -1243,13 +1146,6 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
 
     // Pay banish self cost
     if (cost.banishSelf) {
-      const currentCardMeta = ctx.cards.require(cardId as CardInstanceId).meta ?? {};
-      const subjectAtLocationId = currentCardMeta.atLocationId as CardInstanceId | undefined;
-      const keywordsBeforeBanish = getKeywordsBeforeBanish(
-        ctx,
-        cardId as CardInstanceId,
-        currentPlayer,
-      );
       const selfStrengthBeforeBanish =
         cardDef.cardType === "character"
           ? getEffectiveStrength(
@@ -1260,37 +1156,12 @@ export const activateAbility: LorcanaMoveDefinition<"activateAbility"> = {
               registry,
             )
           : undefined;
-      const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId as CardInstanceId);
-      moveCardOutOfPlayWithStack(ctx, cardId as CardInstanceId, {
-        zone: "discard",
+      banishAsAbilityCost(ctx, {
+        cardId: cardId as CardInstanceId,
+        sourceId: cardId as CardInstanceId,
         playerId: currentPlayer,
+        strengthBeforeBanish: selfStrengthBeforeBanish,
       });
-      emitTriggeredLorcanaEvent(
-        ctx,
-        "cardBanished",
-        {
-          cardId: cardId as CardInstanceId,
-          sourceId: cardId as CardInstanceId,
-          snapshot: {
-            keywordsBeforeBanish,
-            subjectAtLocationId,
-            strengthBeforeBanish: selfStrengthBeforeBanish,
-          },
-          reason: "activated ability cost",
-        },
-        {
-          event: "banish",
-          playerId: currentPlayer,
-          subjectCardId: cardId as CardInstanceId,
-          triggerSourceCardId: cardId as CardInstanceId,
-          triggerCandidates,
-          eventSnapshot: {
-            keywordsBeforeBanish,
-            subjectAtLocationId,
-            strengthBeforeBanish: selfStrengthBeforeBanish,
-          },
-        },
-      );
       recordBanishedCharacterThisTurn(ctx, cardId as CardInstanceId);
     } else {
       ctx.cards.patchMeta(cardId, {

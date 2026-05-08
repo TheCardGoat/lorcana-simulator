@@ -1,7 +1,7 @@
 import { isRedirect, redirect } from "@sveltejs/kit";
 import type { ServerLoadEvent } from "@sveltejs/kit";
-import { getGameServerOrigin } from "$lib/config/public-url-config.js";
-import { getServerGameServerOrigin } from "$lib/server/fetch-with-cf.js";
+import { getApiOrigin } from "$lib/config/public-url-config.js";
+import { getServerApiOrigin } from "$lib/server/fetch-with-cf.js";
 import { serverJsonOrNull } from "$lib/data/server/server-json.js";
 
 /**
@@ -16,9 +16,8 @@ export async function load(event: ServerLoadEvent) {
   const matchId = event.params.matchId as string;
   const spectate = event.url.searchParams.has("spectate");
 
-  const publicOrigin = getGameServerOrigin();
-  const apiOrigin = getServerGameServerOrigin(publicOrigin);
-  const apiUrl = `${apiOrigin}/v1/play/matches/${matchId}`;
+  const generalApi = getServerApiOrigin(getApiOrigin());
+  const apiUrl = `${generalApi}/v1/games/lorcana/play/matches/${matchId}`;
   const cookie = event.request.headers.get("cookie") ?? "";
 
   try {

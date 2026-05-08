@@ -1,4 +1,4 @@
-import { getGameServerOrigin } from "$lib/config/public-url-config.js";
+import { getApiOrigin } from "$lib/config/public-url-config.js";
 import { HttpRequestError, requestJson, requestVoid } from "$lib/data/transport/http-client.js";
 
 export interface MatchmakingJoinParams {
@@ -48,6 +48,8 @@ export interface MatchmakingStatusResponse {
   /** Present when the player is in the pending-acceptance phase (dequeued until accept/decline/timeout). */
   pendingMatchId?: string;
   pendingMatchDeadline?: number;
+  /** Server timestamp captured with pendingMatchDeadline for client clock-skew correction. */
+  pendingMatchServerNow?: number;
   pendingSelfAccepted?: boolean;
   pendingOpponentAccepted?: boolean;
 }
@@ -72,7 +74,7 @@ export async function joinMatchmakingQueue(
 ): Promise<MatchmakingEntryResponse> {
   try {
     return await requestJson<MatchmakingEntryResponse>(
-      `${getGameServerOrigin()}/v1/play/matchmaking/join`,
+      `${getApiOrigin()}/v1/games/lorcana/play/matchmaking/join`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -96,7 +98,7 @@ export async function joinMatchmakingQueue(
 
 export async function leaveMatchmakingQueue(): Promise<void> {
   await requestVoid(
-    `${getGameServerOrigin()}/v1/play/matchmaking/leave`,
+    `${getApiOrigin()}/v1/games/lorcana/play/matchmaking/leave`,
     {
       method: "DELETE",
     },
@@ -106,7 +108,7 @@ export async function leaveMatchmakingQueue(): Promise<void> {
 
 export async function forfeitMatch(matchId: string): Promise<void> {
   await requestVoid(
-    `${getGameServerOrigin()}/v1/play/matchmaking/forfeit-match`,
+    `${getApiOrigin()}/v1/games/lorcana/play/matchmaking/forfeit-match`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -121,7 +123,7 @@ export async function fetchRejoinMatchDetails(
 ): Promise<RejoinMatchDetailsResponse | null> {
   try {
     return await requestJson<RejoinMatchDetailsResponse>(
-      `${getGameServerOrigin()}/v1/play/matches/${matchId}`,
+      `${getApiOrigin()}/v1/games/lorcana/play/matches/${matchId}`,
       undefined,
       "Could not load match details. Please try again.",
     );
@@ -135,7 +137,7 @@ export async function fetchRejoinMatchDetails(
 
 export async function getMatchmakingStatus(): Promise<MatchmakingStatusResponse> {
   return requestJson<MatchmakingStatusResponse>(
-    `${getGameServerOrigin()}/v1/play/matchmaking/status`,
+    `${getApiOrigin()}/v1/games/lorcana/play/matchmaking/status`,
     undefined,
     "Failed to get matchmaking status",
   );

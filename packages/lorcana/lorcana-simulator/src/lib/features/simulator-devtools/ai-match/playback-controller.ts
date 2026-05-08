@@ -77,10 +77,10 @@ export interface AutomatedMatchPlaybackSession<
   server: AutomatedMatchPlaybackServer;
 }
 
-export function createAutomatedMatchPlaybackSession(
+export async function createAutomatedMatchPlaybackSession(
   config: AutomatedMatchConfig,
-): AutomatedMatchPlaybackSession {
-  const fixture = createAutomatedMatchFixture(config);
+): Promise<AutomatedMatchPlaybackSession> {
+  const fixture = await createAutomatedMatchFixture(config);
   const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
     fixture.playerOne,
     fixture.playerTwo,
@@ -289,7 +289,7 @@ interface AutomatedMatchPlaybackControllerDependencies<
 > {
   createSession?: (
     config: AutomatedMatchConfig,
-  ) => AutomatedMatchPlaybackSession<TEngine, TReadModel>;
+  ) => Promise<AutomatedMatchPlaybackSession<TEngine, TReadModel>>;
 }
 
 export class AutomatedMatchPlaybackController<
@@ -300,7 +300,7 @@ export class AutomatedMatchPlaybackController<
   #config: AutomatedMatchConfig;
   #createSession: (
     config: AutomatedMatchConfig,
-  ) => AutomatedMatchPlaybackSession<TEngine, TReadModel>;
+  ) => Promise<AutomatedMatchPlaybackSession<TEngine, TReadModel>>;
   #listeners = new Set<() => void>();
   #playbackState: AutomatedMatchPlaybackState;
   #playerOneRequestedStrategyId: string;
@@ -313,10 +313,10 @@ export class AutomatedMatchPlaybackController<
   #timer: ReturnType<typeof setTimeout> | null = null;
   #timerRevision = 0;
 
-  constructor(
+  static async create<TEngine = LorcanaServer, TReadModel = AutomatedMatchPlaybackReadModel>(
     config: AutomatedMatchConfig,
     dependencies: AutomatedMatchPlaybackControllerDependencies<TEngine, TReadModel> = {},
-  ) {
+  ): Promise<AutomatedMatchPlaybackController<TEngine, TReadModel>> {
     const playerOneStrategyOption = getSafeAutomatedActionStrategyOption(
       config.playerOneStrategyId,
     );
@@ -324,23 +324,46 @@ export class AutomatedMatchPlaybackController<
       config.playerTwoStrategyId,
     );
 
+    const createSession =
+      dependencies.createSession ??
+      ((nextConfig: AutomatedMatchConfig) =>
+        createAutomatedMatchPlaybackSession(nextConfig) as Promise<
+          AutomatedMatchPlaybackSession<TEngine, TReadModel>
+        >);
+
+    const session = await createSession(config);
+    const controller = new AutomatedMatchPlaybackController(config, {
+      ...dependencies,
+      createSession,
+      session,
+      playerOneStrategyOption,
+      playerTwoStrategyOption,
+    });
+    return controller;
+  }
+
+  private constructor(
+    config: AutomatedMatchConfig,
+    init: {
+      createSession: (
+        config: AutomatedMatchConfig,
+      ) => Promise<AutomatedMatchPlaybackSession<TEngine, TReadModel>>;
+      session: AutomatedMatchPlaybackSession<TEngine, TReadModel>;
+      playerOneStrategyOption: AutomatedActionStrategyOption;
+      playerTwoStrategyOption: AutomatedActionStrategyOption;
+    },
+  ) {
     this.#config = config;
     this.#playerOneRequestedStrategyId = config.playerOneStrategyId;
-    this.#playerOneStrategyOption = playerOneStrategyOption;
+    this.#playerOneStrategyOption = init.playerOneStrategyOption;
     this.#playerTwoRequestedStrategyId = config.playerTwoStrategyId;
-    this.#playerTwoStrategyOption = playerTwoStrategyOption;
-    this.#createSession =
-      dependencies.createSession ??
-      ((nextConfig) =>
-        createAutomatedMatchPlaybackSession(nextConfig) as AutomatedMatchPlaybackSession<
-          TEngine,
-          TReadModel
-        >);
+    this.#playerTwoStrategyOption = init.playerTwoStrategyOption;
+    this.#createSession = init.createSession;
     this.#playbackState = {
       mode: "idle",
       speedMs: DEFAULT_AUTOMATED_MATCH_SPEED_MS,
     };
-    this.#session = this.#createSession(this.#config);
+    this.#session = init.session;
     this.#refreshResolvedStrategyOptions();
     this.#syncTerminalState();
   }
@@ -411,10 +434,10 @@ export class AutomatedMatchPlaybackController<
     });
   }
 
-  restart(): void {
+  async restart(): Promise<void> {
     this.#clearTimer();
     this.#session.dispose();
-    this.#session = this.#createSession(this.#config);
+    this.#session = await this.#createSession(this.#config);
     this.#refreshResolvedStrategyOptions();
     this.#sessionRevision += 1;
     this.#repeatTracker = createRepeatedStateDeadlockTracker();

@@ -308,17 +308,17 @@
   <PlayerSettingsDialog
     bind:open={controller.playerSettingsOpen}
     selectedLocale={controller.playerSettings.selectedLocale}
-    skipActionConfirmation={controller.playerSettings.skipActionConfirmation}
     hotkeyMode={controller.playerSettings.hotkeyMode}
     cardPreviewMode={controller.playerSettings.cardPreviewMode}
+    cardInfoMode={controller.playerSettings.cardInfoMode}
     primaryClickAction={controller.playerSettings.primaryClickAction}
     animationSpeed={controller.playerSettings.animationSpeed}
     soundVolume={controller.playerSettings.soundVolume}
     accessibleMobileControls={controller.playerSettings.accessibleMobileControls}
     onLocaleSelection={controller.playerSettings.handleLocaleSelection}
-    onToggleSkipActionConfirmation={controller.playerSettings.handleSkipActionConfirmationToggle}
     onHotkeyModeChange={controller.playerSettings.handleHotkeyModeChange}
     onCardPreviewModeChange={controller.playerSettings.handleCardPreviewModeChange}
+    onCardInfoModeChange={controller.playerSettings.handleCardInfoModeChange}
     onPrimaryClickActionChange={controller.playerSettings.handlePrimaryClickActionChange}
     onAnimationSpeedChange={controller.playerSettings.handleAnimationSpeedChange}
     onSoundVolumeChange={controller.playerSettings.handleSoundVolumeChange}

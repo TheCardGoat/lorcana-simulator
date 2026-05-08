@@ -6,6 +6,8 @@ import {
   snapshotTriggeredCandidatesForCard,
 } from "../../../triggered-abilities";
 import { moveCardOutOfPlayWithStack } from "../../state/shift-stack";
+import { isDiscardZoneKey, recordDiscardExitThisTurn } from "../../state/turn-metrics";
+import { isPlayZoneKey } from "../../../operations/zones";
 import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
 import { sweepLethalDamageInPlay } from "../../state/lethal-damage-sweep";
@@ -31,9 +33,9 @@ function moveCardToOwnerHand(
     (ctx.framework.zones.getCardOwner(cardId) as PlayerId | undefined) ?? fallbackPlayerId;
   const zoneKey = ctx.framework.zones.getCardZone(cardId);
 
-  effectLogger.debug`[return-to-hand] moveCardToOwnerHand — cardId=${cardId} ownerId=${ownerId} zoneKey=${String(zoneKey)}`;
+  void effectLogger.debug`[return-to-hand] moveCardToOwnerHand — cardId=${cardId} ownerId=${ownerId} zoneKey=${String(zoneKey)}`;
 
-  if (typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"))) {
+  if (isPlayZoneKey(zoneKey)) {
     const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId);
     moveCardOutOfPlayWithStack(ctx, cardId, {
       zone: "hand",
@@ -55,6 +57,10 @@ function moveCardToOwnerHand(
     return;
   }
 
+  if (typeof zoneKey === "string" && isDiscardZoneKey(zoneKey)) {
+    recordDiscardExitThisTurn(ctx);
+  }
+
   ctx.framework.zones.moveCard(cardId, {
     zone: "hand",
     playerId: ownerId,
@@ -68,7 +74,7 @@ export function resolveReturnToHandEffect(
   resolutionInput: ActionResolutionInput,
 ): void {
   const selectionInput = getEffectTargetSelectionInput(effect.target, resolutionInput);
-  effectLogger.debug`[return-to-hand] resolveReturnToHandEffect — sourceCardId=${cardPlayed.cardId} target=${effect.target}`;
+  void effectLogger.debug`[return-to-hand] resolveReturnToHandEffect — sourceCardId=${cardPlayed.cardId} target=${effect.target}`;
 
   const resolvedTargets =
     resolveEffectTargets(
@@ -79,7 +85,7 @@ export function resolveReturnToHandEffect(
       resolutionInput.eventSnapshot,
     ) ?? [];
 
-  effectLogger.debug`[return-to-hand] resolvedTargets=${resolvedTargets}`;
+  void effectLogger.debug`[return-to-hand] resolvedTargets=${resolvedTargets}`;
 
   for (const targetId of resolvedTargets) {
     moveCardToOwnerHand(ctx, targetId, cardPlayed.playerId);

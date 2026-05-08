@@ -41,58 +41,52 @@ export const woodyLeaderOfTheToys: CharacterCard = {
         timing: "when",
       },
       effect: {
-        type: "optional",
-        chooser: "CONTROLLER",
-        effect: {
-          type: "scry",
-          amount: 4,
-          destinations: [
-            {
-              zone: "hand",
-              min: 0,
-              max: 1,
-              reveal: true,
+        type: "scry",
+        amount: 4,
+        destinations: [
+          {
+            zone: "hand",
+            min: 0,
+            max: 1,
+            reveal: true,
+            filter: {
+              type: "or",
               filters: [
                 {
-                  type: "or",
+                  type: "and",
                   filters: [
                     {
-                      type: "and",
-                      filters: [
-                        {
-                          type: "card-type",
-                          cardType: "character",
-                        },
-                        {
-                          type: "has-classification",
-                          classification: "Toy",
-                        },
-                      ],
+                      type: "card-type",
+                      cardType: "character",
                     },
                     {
-                      type: "and",
-                      filters: [
-                        {
-                          type: "card-type",
-                          cardType: "location",
-                        },
-                        {
-                          type: "has-name",
-                          name: "Andy's Room",
-                        },
-                      ],
+                      type: "has-classification",
+                      classification: "Toy",
+                    },
+                  ],
+                },
+                {
+                  type: "and",
+                  filters: [
+                    {
+                      type: "card-type",
+                      cardType: "location",
+                    },
+                    {
+                      type: "has-name",
+                      name: "Andy's Room",
                     },
                   ],
                 },
               ],
             },
-            {
-              zone: "deck-bottom",
-              remainder: true,
-              ordering: "player-choice",
-            },
-          ],
-        },
+          },
+          {
+            zone: "deck-bottom",
+            remainder: true,
+            ordering: "player-choice",
+          },
+        ],
       },
     },
   ],

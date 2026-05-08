@@ -48,6 +48,7 @@ export const CONDITION_VARIANT_TYPES = [
   "has-location-count",
   "has-location-in-play",
   "has-named-character",
+  "has-named-item",
   "has-no-damage",
   "if",
   "if-you-do",
@@ -64,8 +65,10 @@ export const CONDITION_VARIANT_TYPES = [
   "put-card-under-any-this-turn",
   "put-card-under-self-this-turn",
   "resource-count",
+  "returned-card-has-classification",
   "returned-card-is-named",
   "returned-card-is-princess",
+  "revealed-is-card-type",
   "revealed-is-character-named",
   "revealed-matches-chosen-name",
   "revealed-matches-named",
@@ -127,6 +130,7 @@ export interface ConditionEvaluationContext {
     zones: {
       getCards: (query: { zone: string; playerId: PlayerId }) => readonly string[];
       getCardZone?: (cardId: CardInstanceId) => string | undefined;
+      getCardOwner?: (cardId: string) => string | undefined;
     };
   };
   cards: {
@@ -138,6 +142,7 @@ export interface ConditionEvaluationContext {
   playerId: PlayerId;
   sourceCardId?: CardInstanceId;
   getCardStrengthByInstanceId?: (cardId: CardInstanceId) => number;
+  getCardWillpowerByInstanceId?: (cardId: CardInstanceId) => number;
   zoneTypeCache?: PlayZoneCardTypeCache;
   disableFilterRegistry?: boolean;
 
@@ -301,10 +306,14 @@ function getCardNumericAttribute(
         ctx.registry,
       );
     }
-    case "willpower": {
-      const runtimeCard = ctx.cards.require(cardId) as { getWillpower?: () => number } | undefined;
-      return Number(runtimeCard?.getWillpower?.() ?? definition?.willpower ?? 0);
-    }
+    case "willpower":
+      return getEffectiveWillpower(
+        definition,
+        buildDerivedStateFromConditionCtx(ctx),
+        cardId,
+        ctx.cards.getDefinition,
+        ctx.registry,
+      );
     case "cost":
       return Number(definition?.cost ?? 0);
     case "lore":
@@ -484,9 +493,51 @@ function evaluateTurnMetricCondition(
       );
       break;
 
-    case "banished-characters":
-      value = ctx.G.turnMetadata?.banishedCharactersThisTurn?.length ?? 0;
+    case "banished-characters": {
+      const banished = ctx.G.turnMetadata?.banishedCharactersThisTurn ?? [];
+      const targetName =
+        typeof condition.name === "string" && condition.name.length > 0
+          ? condition.name
+          : undefined;
+      const targetClassification =
+        typeof condition.classification === "string" && condition.classification.length > 0
+          ? condition.classification
+          : undefined;
+      const ownerScope = condition.ownerScope;
+      const getCardOwner = ctx.framework.zones.getCardOwner;
+
+      const hasDefinitionFilter = targetName !== undefined || targetClassification !== undefined;
+
+      value = banished.reduce((count, cardId) => {
+        const definition = ctx.cards.getDefinition(cardId);
+        if (hasDefinitionFilter && !definition) {
+          return count;
+        }
+        if (targetName && definition?.name !== targetName) {
+          return count;
+        }
+        if (
+          targetClassification &&
+          !(definition?.classifications ?? []).includes(targetClassification)
+        ) {
+          return count;
+        }
+        if (ownerScope && ownerScope !== "any" && getCardOwner) {
+          const ownerId = getCardOwner(cardId) as PlayerId | undefined;
+          if (!ownerId) {
+            return count;
+          }
+          if (ownerScope === "you" && ownerId !== controllerId) {
+            return count;
+          }
+          if (ownerScope === "opponent" && ownerId === controllerId) {
+            return count;
+          }
+        }
+        return count + 1;
+      }, 0);
       break;
+    }
 
     case "damaged-characters-by-owner":
       value = resolveScopedPlayerCount(
@@ -904,6 +955,22 @@ export function evaluateCondition(
     case "has-location-count":
       return evaluateLegacyCardTypeCountCondition(condition, ctx);
 
+    case "has-named-item": {
+      const namedItemPlayerIds = resolveScopedPlayerIds(
+        condition.controller,
+        ctx.playerId,
+        ctx.framework.state.playerIds,
+        ctx.framework.state.currentPlayer,
+      );
+      return namedItemPlayerIds.some((playerId) => {
+        const cardsInPlay = ctx.framework.zones.getCards({ zone: "play", playerId });
+        return cardsInPlay.some((cardId) => {
+          const def = ctx.cards.getDefinition(cardId as CardInstanceId);
+          return def?.cardType === "item" && cardHasName(def, condition.name);
+        });
+      });
+    }
+
     case "has-location-in-play": {
       const controller = condition.controller ?? "you";
       const playerIds = resolveScopedPlayerIds(
@@ -1077,6 +1144,23 @@ export function evaluateCondition(
         revealedCardId !== undefined &&
         cardHasName(ctx.cards.getDefinition(revealedCardId)!, namedCardName)
       );
+    }
+
+    case "revealed-is-card-type": {
+      const revealedIsCardTypeId = ctx.resolutionInput?.eventSnapshot?.revealedCardIds?.[0] as
+        | CardInstanceId
+        | undefined;
+      if (!revealedIsCardTypeId) {
+        return false;
+      }
+      const revealedCardTypeDef = ctx.cards.getDefinition(revealedIsCardTypeId);
+      if (!revealedCardTypeDef) {
+        return false;
+      }
+      const expectedCardTypes = Array.isArray(condition.cardType)
+        ? condition.cardType
+        : [condition.cardType];
+      return (expectedCardTypes as readonly string[]).includes(revealedCardTypeDef.cardType);
     }
 
     case "revealed-is-character-named": {
@@ -1449,6 +1533,20 @@ export function evaluateCondition(
           Array.isArray(definition?.classifications) &&
           (definition.classifications as readonly string[]).some(
             (c) => c.toLowerCase() === "princess",
+          )
+        );
+      });
+    }
+
+    case "returned-card-has-classification": {
+      const selectedTargets = getSelectedTargets(ctx);
+      const expectedClassification = condition.classification.toLowerCase();
+      return selectedTargets.some((cardId) => {
+        const definition = ctx.cards.getDefinition(cardId as CardInstanceId);
+        return (
+          Array.isArray(definition?.classifications) &&
+          (definition.classifications as readonly string[]).some(
+            (c) => c.toLowerCase() === expectedClassification,
           )
         );
       });

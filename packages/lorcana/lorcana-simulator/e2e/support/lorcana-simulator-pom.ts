@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import type { LorcanaProjectedBoardView, LorcanaProjectedCard } from "@tcg/lorcana-engine";
 import type {
   BrowserTransportLatencyModel,
@@ -214,6 +214,45 @@ export class LorcanaSimulatorPom {
     }
 
     return this.currentView;
+  }
+
+  get resolutionTargetOverlay(): Locator {
+    return this.page.getByTestId("resolution-target-overlay");
+  }
+
+  async openResolutionTargetOverlay(): Promise<void> {
+    await this.page.getByRole("button", { name: "Open target selector" }).click();
+  }
+
+  resolutionTargetSlot(slotKey: "subject" | "location" | "from" | "to"): Locator {
+    return this.page.getByTestId(`resolution-target-slot:${slotKey}`);
+  }
+
+  async chooseResolutionTargetSlot(slotKey: "subject" | "location" | "from" | "to"): Promise<void> {
+    await this.page.getByTestId(`resolution-target-slot-action:${slotKey}`).click();
+  }
+
+  async chooseResolutionTargetCandidate(cardId: string): Promise<void> {
+    await this.page.getByTestId(`resolution-target-candidate:${cardId}`).click();
+  }
+
+  async confirmResolutionSelection(): Promise<void> {
+    const overlayConfirm = this.resolutionTargetOverlay.getByRole("button", { name: "Confirm" });
+    if (
+      (await overlayConfirm.count()) > 0 &&
+      (await overlayConfirm
+        .first()
+        .isVisible()
+        .catch(() => false))
+    ) {
+      await overlayConfirm.first().click();
+      return;
+    }
+
+    await this.page
+      .getByRole("button", { name: /^Confirm/ })
+      .first()
+      .click();
   }
 
   async resolveViewForSeat(seat: LorcanaTableSeat): Promise<OwnedSimulatorView> {

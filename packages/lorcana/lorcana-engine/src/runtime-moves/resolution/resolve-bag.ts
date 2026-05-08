@@ -1,5 +1,9 @@
 import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
-import type { BagEffectEntry, PendingActionResolutionInput } from "../../types";
+import type {
+  BagEffectEntry,
+  PendingActionResolutionInput,
+  TargetResolutionSelectionContext,
+} from "../../types";
 import { createLorcanaLogProjection, type LorcanaMoveDefinition } from "../../types";
 import type { LogTargetId, ResolveBagCancelledCause } from "../../types/log-messages";
 import { continuePendingChallengeResolution } from "../moves/core/challenge";
@@ -7,7 +11,10 @@ import { continuePendingTurnTransition } from "../moves/turn/pass-turn";
 import { resolveActionEffect } from "./action-effects/composed-effect-resolver";
 import type { ActionResolutionInput } from "./action-effects/types";
 import { evaluateActionCondition } from "./action-effects/action-condition-evaluator";
-import { cloneActionResolutionInput } from "./action-effects/pending-action-effects";
+import {
+  cloneActionResolutionInput,
+  clearPendingActionChoice,
+} from "./action-effects/pending-action-effects";
 import { buildResolutionSelectionContext } from "./action-effects/selection-context";
 import {
   getCurrentSelectionInput,
@@ -36,10 +43,12 @@ import {
   countExplicitTargetSelections,
   hasExplicitTargetSelectionInput,
   resolveTargetPlayerIds,
+  type TargetAnalysis,
   validateAndNormalizeTargetSelection,
 } from "../../targeting/runtime";
 import { resolveTurnOwnerId } from "../../core/runtime/turn-owner";
 import { flattenSlottedTargets, isSlottedTargetInput } from "../../targeting/slotted-targets";
+import { shouldSkipEffectWithNoValidTargets } from "../../targeting/runtime/optional-skip-analysis";
 
 type ResolveBagValidationContext = Parameters<
   NonNullable<LorcanaMoveDefinition<"resolveBag">["validate"]>
@@ -71,6 +80,100 @@ function normalizeResolveBagTargets(
   }
 
   return undefined;
+}
+
+function getBagTargetSelectionValidationInput(
+  explicitTargets: ActionResolutionInput["targets"] | undefined,
+  bagSelectionContext: TargetResolutionSelectionContext | undefined,
+  effect: unknown,
+  cardCandidateIds: readonly string[],
+): ActionResolutionInput["targets"] | undefined {
+  const hasFixedMoveDestination =
+    bagSelectionContext?.kind === "target-selection" &&
+    bagSelectionContext.expectedSlottedKind === "move-to-location" &&
+    bagSelectionContext.targetDsl.length === 1;
+  const effectHasFixedMoveDestination = effectContainsTriggerDestinationMoveToLocation(effect);
+
+  if (hasFixedMoveDestination || effectHasFixedMoveDestination) {
+    if (isSlottedTargetInput(explicitTargets) && explicitTargets.kind === "move-to-location") {
+      const [targetDsl] =
+        bagSelectionContext?.kind === "target-selection" ? bagSelectionContext.targetDsl : [];
+      const cardTypes =
+        targetDsl && typeof targetDsl === "object" && "cardTypes" in targetDsl
+          ? targetDsl.cardTypes
+          : undefined;
+      if (Array.isArray(cardTypes) && cardTypes.includes("location")) {
+        return [...explicitTargets.location] as ActionResolutionInput["targets"];
+      }
+
+      return [...explicitTargets.subject] as ActionResolutionInput["targets"];
+    }
+
+    if (Array.isArray(explicitTargets)) {
+      return explicitTargets.filter((target) =>
+        cardCandidateIds.some((candidateId) => candidateId === target),
+      ) as ActionResolutionInput["targets"];
+    }
+  }
+
+  return explicitTargets;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function effectContainsTriggerDestinationMoveToLocation(effect: unknown): boolean {
+  if (!isRecord(effect)) {
+    return false;
+  }
+
+  if (effect.type === "move-to-location") {
+    const location = effect.location;
+    return isRecord(location) && location.ref === "trigger-destination";
+  }
+
+  const nestedEffect = effect.effect;
+  if (nestedEffect && effectContainsTriggerDestinationMoveToLocation(nestedEffect)) {
+    return true;
+  }
+
+  const steps = effect.steps;
+  if (
+    Array.isArray(steps) &&
+    steps.some((step) => effectContainsTriggerDestinationMoveToLocation(step))
+  ) {
+    return true;
+  }
+
+  const options = effect.options;
+  return (
+    Array.isArray(options) &&
+    options.some((option) => effectContainsTriggerDestinationMoveToLocation(option))
+  );
+}
+
+function effectContainsOptional(effect: unknown): boolean {
+  if (!effect || typeof effect !== "object" || Array.isArray(effect)) {
+    return false;
+  }
+
+  const record = effect as Record<string, unknown>;
+  if (record.type === "optional") {
+    return true;
+  }
+
+  const nestedEffects = [
+    ...(Array.isArray(record.steps) ? record.steps : []),
+    ...(Array.isArray(record.effects) ? record.effects : []),
+    record.effect,
+    record.then,
+    record.else,
+    record.ifTrue,
+    record.ifFalse,
+  ];
+
+  return nestedEffects.some(effectContainsOptional);
 }
 
 function logResolveBagMessage(
@@ -395,6 +498,7 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
       targets: explicitTargets as PendingActionResolutionInput["targets"],
       currentTargets: explicitTargets as PendingActionResolutionInput["currentTargets"],
       resolveOptional: params?.resolveOptional,
+      enterPlayExerted: params?.enterPlayExerted,
       choiceIndex: params?.choiceIndex,
       namedCard: params?.namedCard,
       destinations: params?.destinations as PendingActionResolutionInput["destinations"],
@@ -414,10 +518,26 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
       resolutionInput: selectionResolutionInput,
       ctx,
     });
-    const isDecliningOptional = requirements.isOptional && params?.resolveOptional === false;
+    const isDecliningOptional =
+      params?.resolveOptional === false &&
+      (requirements.isOptional || effectContainsOptional(bagEffect.effect));
     const controllerId = bagEffect.controllerId as PlayerId;
+    const effectRecord = bagEffect.effect as Record<string, unknown> | null;
+    const resolutionInput = bagEffect.resolutionInput as PendingActionResolutionInput | undefined;
+    const effectForTargetAnalysis =
+      effectRecord?.type === "or" && typeof resolutionInput?.choiceIndex === "number"
+        ? ((effectRecord.options as unknown[] | undefined)?.[resolutionInput.choiceIndex] ??
+          bagEffect.effect)
+        : bagEffect.effect;
+    if (effectRecord?.type === "or") {
+      // console.log("[DEBUG] or effect detected", {
+      //   choiceIndex: resolutionInput?.choiceIndex,
+      //   isUsingChosenOption: effectForTargetAnalysis !== bagEffect.effect,
+      //   effectType: (effectForTargetAnalysis as Record<string, unknown> | null)?.type,
+      // });
+    }
     const targetAnalysis = analyzeEffectTargets(
-      bagEffect.effect,
+      effectForTargetAnalysis,
       controllerId,
       ctx,
       bagEffect.sourceId as CardInstanceId,
@@ -433,43 +553,50 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
           }
         : targetAnalysis;
     const targetAvailability = analyzeTargetSelectionAvailabilityFromAnalysis(
-      bagEffect.effect,
+      effectForTargetAnalysis,
       currentSelectionAnalysis,
     );
     // For sequences, the whole-effect target analysis aggregates candidates from
     // ALL steps, which can mask that the current step has zero valid candidates.
     // Re-analyze the first step in isolation so shouldAutoRejectForNoValidTargets
     // reflects the step the player is actually resolving.
-    const effectRecord = bagEffect.effect as Record<string, unknown> | null;
+    // Similarly, for "or" effects with a chosen option, re-analyze just the chosen
+    // option to properly validate targets against the constraints of that option.
     const firstStepEffect =
       effectRecord?.type === "sequence"
         ? ((effectRecord.steps as unknown[] | undefined)?.[0] ?? null)
         : null;
+    const chosenOptionEffect =
+      effectRecord?.type === "or" && typeof resolutionInput?.choiceIndex === "number"
+        ? ((effectRecord.options as unknown[] | undefined)?.[resolutionInput.choiceIndex] ?? null)
+        : null;
+    const effectForAnalysis = chosenOptionEffect ?? firstStepEffect ?? bagEffect.effect;
     const shouldAutoRejectForNoValidTargets =
-      targetAvailability.shouldAutoRejectForNoValidTargets ||
-      (firstStepEffect != null &&
-        (() => {
-          const stepAnalysis = analyzeEffectTargets(
-            firstStepEffect,
-            controllerId,
-            ctx,
-            bagEffect.sourceId as CardInstanceId,
-          );
-          const stepSelectionAnalysis =
-            bagSelectionContext?.kind === "target-selection" ||
-            bagSelectionContext?.kind === "discard-choice"
-              ? {
-                  ...stepAnalysis,
-                  minSelections: bagSelectionContext.minSelections,
-                  maxSelections: bagSelectionContext.maxSelections,
-                  ordered: bagSelectionContext.ordered,
-                }
-              : stepAnalysis;
-          return analyzeTargetSelectionAvailabilityFromAnalysis(
-            firstStepEffect,
-            stepSelectionAnalysis,
-          ).shouldAutoRejectForNoValidTargets;
-        })());
+      (chosenOptionEffect != null || firstStepEffect != null) &&
+      targetAvailability.shouldAutoRejectForNoValidTargets === false
+        ? (() => {
+            const isolatedAnalysis = analyzeEffectTargets(
+              effectForAnalysis,
+              controllerId,
+              ctx,
+              bagEffect.sourceId as CardInstanceId,
+            );
+            const isolatedSelectionAnalysis =
+              bagSelectionContext?.kind === "target-selection" ||
+              bagSelectionContext?.kind === "discard-choice"
+                ? {
+                    ...isolatedAnalysis,
+                    minSelections: bagSelectionContext.minSelections,
+                    maxSelections: bagSelectionContext.maxSelections,
+                    ordered: bagSelectionContext.ordered,
+                  }
+                : isolatedAnalysis;
+            return analyzeTargetSelectionAvailabilityFromAnalysis(
+              effectForAnalysis,
+              isolatedSelectionAnalysis,
+            ).shouldAutoRejectForNoValidTargets;
+          })()
+        : targetAvailability.shouldAutoRejectForNoValidTargets;
     // Optional effects with zero valid candidates can never be meaningfully
     // accepted — the only coherent outcome is decline. Treat an empty-targets
     // submission as an implicit decline so the bag can drain instead of the
@@ -539,14 +666,48 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
     // Relax the minimum count to just the explicit target count, but still
     // validate each target's legality so invalid targets (wrong classification,
     // Ward restriction, strength filter, etc.) are still rejected.
+    const targetSelectionContext =
+      bagSelectionContext?.kind === "target-selection" ? bagSelectionContext : undefined;
+    const selectionContextAnalysis: TargetAnalysis | undefined = targetSelectionContext
+      ? {
+          ...currentSelectionAnalysis,
+          targetDsl: [...targetSelectionContext.targetDsl],
+          cardCandidates: [...targetSelectionContext.cardCandidateIds],
+          playerCandidates: [...targetSelectionContext.playerCandidateIds],
+          allowedZones: [...targetSelectionContext.allowedZones],
+          minSelections: targetSelectionContext.minSelections,
+          maxSelections: targetSelectionContext.maxSelections,
+          declaredMaxSelections: targetSelectionContext.declaredMaxSelections,
+          requiresExplicitSelection:
+            targetSelectionContext.minSelections > 0 ||
+            targetSelectionContext.maxSelections > 0 ||
+            targetSelectionContext.cardCandidateIds.length > 0 ||
+            targetSelectionContext.playerCandidateIds.length > 0,
+        }
+      : undefined;
     const relaxTargetCount = bagSelectionContext === undefined;
-    const selectionAnalysisForValidation = relaxTargetCount
-      ? { ...currentSelectionAnalysis, minSelections: explicitTargetCount }
-      : currentSelectionAnalysis;
-    if (hasExplicitTargets && explicitTargets !== undefined) {
-      const selectionValidation = validateAndNormalizeTargetSelection(
+    const selectionAnalysisForValidation =
+      selectionContextAnalysis ??
+      (relaxTargetCount
+        ? { ...currentSelectionAnalysis, minSelections: explicitTargetCount }
+        : currentSelectionAnalysis);
+    if (hasExplicitTargets && explicitTargets !== undefined && !isDecliningOptional) {
+      const validationTargets = getBagTargetSelectionValidationInput(
         explicitTargets,
-        selectionAnalysisForValidation,
+        targetSelectionContext,
+        bagEffect.effect,
+        currentSelectionAnalysis.cardCandidates,
+      );
+      const targetSelectionAnalysisForValidation =
+        validationTargets !== explicitTargets
+          ? {
+              ...selectionAnalysisForValidation,
+              minSelections: Math.min(selectionAnalysisForValidation.minSelections, 1),
+            }
+          : selectionAnalysisForValidation;
+      const selectionValidation = validateAndNormalizeTargetSelection(
+        validationTargets,
+        targetSelectionAnalysisForValidation,
         {
           currentPlayer: controllerId,
           ctx,
@@ -557,9 +718,9 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
         selectionValidation.errorCode === "TOO_FEW_TARGETS" &&
         (shouldAutoRejectForNoValidTargets || optionalWithNoCandidates || abilityConditionWillFail)
           ? validateAndNormalizeTargetSelection(
-              explicitTargets,
+              validationTargets,
               {
-                ...currentSelectionAnalysis,
+                ...targetSelectionAnalysisForValidation,
                 minSelections: 0,
               },
               {
@@ -626,6 +787,7 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
     const hasProvidedTargets = params?.targets !== undefined;
     const hasIntermediateInput =
       typeof params?.resolveOptional === "boolean" ||
+      typeof params?.enterPlayExerted === "boolean" ||
       typeof params?.choiceIndex === "number" ||
       typeof params?.namedCard === "string" ||
       params?.destinations !== undefined;
@@ -636,6 +798,9 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
       };
       if (typeof params.resolveOptional === "boolean") {
         mergedResolutionInput.resolveOptional = params.resolveOptional;
+      }
+      if (typeof params.enterPlayExerted === "boolean") {
+        mergedResolutionInput.enterPlayExerted = params.enterPlayExerted;
       }
       if (typeof params.choiceIndex === "number") {
         mergedResolutionInput.choiceIndex = params.choiceIndex;
@@ -672,23 +837,38 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
       const isAcceptingOptional = mergedResolutionInput.resolveOptional === true;
       const hasResolvedChoice = typeof mergedResolutionInput.choiceIndex === "number";
       const mergedRequirements = analyzeResolutionRequirements(bagEntry.effect);
-      // When accepting an optional that wraps a play-card from hand effect, the
+      // When accepting an optional that wraps a play-card effect, the
       // player must select which card to play before the bag executes.
-      // play-card from hand does not use the pending-effect suspension path, so
-      // we advance the bag state here to show the hand-card picker to the player.
+      // play-card from hand or discard does not use the pending-effect suspension path, so
+      // we advance the bag state here to show the card picker to the player.
       // Use targetDsl.length === 0 to identify play-card contexts: buildPlayCardSelectionContext
-      // always returns targetDsl: [] while other hand-targeting effects (put-into-inkwell, etc.)
+      // always returns targetDsl: [] while other card-targeting effects (put-into-inkwell, etc.)
       // return a non-empty targetDsl and DO use the pending-effect suspension path.
-      const isAcceptingOptionalWithHandPlayCard =
+      const playCardCandidateCount =
+        nextSelectionContext?.kind === "target-selection"
+          ? ((nextSelectionContext.cardCandidateIds as unknown[] | undefined)?.length ?? 0)
+          : 0;
+      const hasPlayCardEntryModeChoice =
+        nextSelectionContext?.kind === "target-selection" &&
+        ((nextSelectionContext.playCardEntryModeCandidateIds as unknown[] | undefined)?.length ??
+          0) > 0;
+      const eventSnapshot = (mergedResolutionInput.eventSnapshot ?? {}) as Record<string, unknown>;
+      const isAutoDrainedAfterDraw = typeof eventSnapshot.drawnCount === "number";
+      const isAcceptingOptionalWithPlayCardSelection =
         isAcceptingOptional &&
         nextSelectionContext?.kind === "target-selection" &&
-        (nextSelectionContext.allowedZones as string[] | undefined)?.includes("hand") === true &&
-        (nextSelectionContext.targetDsl as unknown[])?.length === 0;
+        ((nextSelectionContext.allowedZones as string[] | undefined)?.includes("hand") === true ||
+          (nextSelectionContext.allowedZones as string[] | undefined)?.includes("discard") ===
+            true ||
+          (nextSelectionContext.allowedZones as string[] | undefined)?.includes("inkwell") ===
+            true) &&
+        (nextSelectionContext.targetDsl as unknown[])?.length === 0 &&
+        (playCardCandidateCount !== 1 || hasPlayCardEntryModeChoice || !isAutoDrainedAfterDraw);
       const shouldAdvance =
         nextSelectionContext &&
         (mergedRequirements.requiresExplicitTargetSelection ||
-          isAcceptingOptionalWithHandPlayCard) &&
-        (!isAcceptingOptional || isAcceptingOptionalWithHandPlayCard) &&
+          isAcceptingOptionalWithPlayCardSelection) &&
+        (!isAcceptingOptional || isAcceptingOptionalWithPlayCardSelection) &&
         !hasResolvedChoice;
       if (shouldAdvance) {
         // There's still more input needed — advance the bag item's state
@@ -750,8 +930,21 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
     // Exception: if the optional has zero valid candidates AND no targets were
     // submitted, force decline — the player cannot meaningfully accept, and
     // validate() lets this through specifically so we can drain here.
+    //
+    // Only apply auto-accept when the top-level bag effect IS optional.
+    // A sequence that contains a nested optional (e.g. "draw, then you may
+    // play a character for free") must NOT inherit resolveOptional here —
+    // the optional step will create its own pending-effect prompt after
+    // preceding steps (like draw) have completed.
     const effectRequirements = analyzeResolutionRequirements(bagEffect.effect);
-    if (effectRequirements.isOptional && resolutionInput.resolveOptional !== false) {
+    const topLevelType = (bagEffect.effect as unknown as Record<string, unknown> | null)?.type as
+      | string
+      | undefined;
+    if (
+      topLevelType !== "sequence" &&
+      effectRequirements.isOptional &&
+      resolutionInput.resolveOptional !== false
+    ) {
       const executeRawTargets = ctx.args.params?.targets;
       const executeTargetCount = countExplicitTargetSelections(executeRawTargets);
       const executeTargetAnalysis = analyzeEffectTargets(
@@ -767,15 +960,40 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
       // a target picker (e.g. sequence where the first step synthesizes input),
       // and we must preserve the existing auto-accept behavior.
       if (
-        effectRequirements.requiresExplicitTargetSelection &&
-        executeRawTargets !== undefined &&
-        executeTargetCount === 0 &&
-        executeCandidateCount === 0
+        shouldSkipEffectWithNoValidTargets(
+          bagEffect.effect,
+          bagEffect.controllerId as PlayerId,
+          ctx,
+          bagEffect.sourceId as CardInstanceId,
+          "bag-decision",
+        ) ||
+        (effectRequirements.requiresExplicitTargetSelection &&
+          executeRawTargets !== undefined &&
+          executeTargetCount === 0 &&
+          executeCandidateCount === 0)
       ) {
         (resolutionInput as Record<string, unknown>).resolveOptional = false;
       } else {
         (resolutionInput as Record<string, unknown>).resolveOptional = true;
       }
+    }
+
+    // For a sequence whose first step(s) contain an optional, auto-accept the
+    // optional when the player submitted explicit targets. The bag call implies
+    // acceptance; the targets prove the player intended to proceed with the
+    // optional step. Without this, sequences like `optional { banish(own) }` →
+    // `conditional { if-you-do: opponent banishes }` never propagate the accept.
+    // Note: sequences where the optional is a *later* step (e.g. draw → optional
+    // play-card) do NOT supply targets to the bag call, so `hasProvidedTargets`
+    // is false and this block is skipped — those sequences get their own pending
+    // prompt after the preceding steps resolve.
+    if (
+      topLevelType === "sequence" &&
+      effectRequirements.isOptional &&
+      hasProvidedTargets &&
+      resolutionInput.resolveOptional !== false
+    ) {
+      (resolutionInput as Record<string, unknown>).resolveOptional = true;
     }
 
     const paramsWithPlayerTargets = ctx.args.params as typeof ctx.args.params & {
@@ -866,6 +1084,48 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
             message: "Bag effect resolution is waiting for further input",
           });
           logResolveBagMessage(ctx, bagEffect, resolutionInput, "pending");
+          // When auto-drain partially resolved a sequence (e.g. the leading
+          // mandatory `draw` of "draw a card. Then, you may play a character...")
+          // and the next step needs a player decision (a nested optional), keep
+          // the bag entry with its effect rewritten to the pending sub-effect.
+          // This preserves the player's bag-resolution affordance instead of
+          // forcing them to discover a separately-tracked pendingEffect.
+          // Triggered when: caller supplied no `params` (auto-drain calls resolveBag
+          // with bagId only); top-level effect was a sequence; the pending effect
+          // is an optional-selection.
+          const pendingEffect = result.pendingEffect;
+          const callerParams = ctx.args.params;
+          const isAutoDrain = !callerParams || Object.keys(callerParams).length === 0;
+          const wasSequence =
+            (bagEffect.effect as unknown as Record<string, unknown> | null)?.type === "sequence";
+          const firstSequenceStepType =
+            wasSequence && Array.isArray((bagEffect.effect as { steps?: unknown }).steps)
+              ? ((
+                  (bagEffect.effect as { steps: unknown[] }).steps[0] as
+                    | { type?: unknown }
+                    | undefined
+                )?.type ?? null)
+              : null;
+          if (
+            isAutoDrain &&
+            wasSequence &&
+            firstSequenceStepType === "draw" &&
+            pendingEffect.kind === "optional-selection" &&
+            pendingEffect.effect
+          ) {
+            const bagItems = ctx.G.triggeredAbilities.bag.items ?? [];
+            const entry = bagItems.find((item) => item.id === bagId);
+            if (entry) {
+              entry.effect = pendingEffect.effect as typeof entry.effect;
+              entry.resolutionInput = pendingEffect.resolutionInput as typeof entry.resolutionInput;
+              ctx.G.pendingEffects = (ctx.G.pendingEffects ?? []).filter(
+                (effect) => effect.id !== pendingEffect.id,
+              );
+              clearPendingActionChoice(ctx);
+              flushTriggeredEventsToBag(ctx);
+              return;
+            }
+          }
           // Work continues via pendingEffects — do not keep a duplicate bag row.
           removeBagEffect(ctx, bagId);
           return;
@@ -883,6 +1143,11 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
         });
         const wasAutoRejectedForNoTargets = (() => {
           if (allTargets.length > 0) return false;
+          // For control-flow effects like "or" and "choice", skip the post-resolution auto-rejection check.
+          // These effects have already validated their branches/options during resolution and should not be
+          // marked as "no-valid-targets" after successful resolution of one branch.
+          const effectRecord = bagEffect.effect as unknown as Record<string, unknown> | null;
+          if (effectRecord?.type === "or" || effectRecord?.type === "choice") return false;
           const targetAnalysis = analyzeEffectTargets(
             bagEffect.effect,
             bagEffect.controllerId,
@@ -894,7 +1159,6 @@ export const resolveBag: LorcanaMoveDefinition<"resolveBag"> = {
             targetAnalysis,
           );
           if (availability.shouldAutoRejectForNoValidTargets) return true;
-          const effectRecord = bagEffect.effect as unknown as Record<string, unknown> | null;
           const firstStepEffect =
             effectRecord?.type === "sequence"
               ? ((effectRecord.steps as unknown[] | undefined)?.[0] ?? null)

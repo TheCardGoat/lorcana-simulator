@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { challenger } from "../../../helpers/abilities/challenger";
 import { luisaMadrigalPushingThroughI18n } from "./062-luisa-madrigal-pushing-through.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const luisaMadrigalPushingThrough: CharacterCard = {
   id: "3ym",

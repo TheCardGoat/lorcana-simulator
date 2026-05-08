@@ -30,6 +30,12 @@ function selectionUsesCardTargetModal(
     return true;
   }
 
+  // Bodyguard cards played from hand require an entry-mode choice (ready vs exerted).
+  // The normal hand-zone board-click flow has no UI for this choice, so force the modal.
+  if (selectionState.playCardEntryModeChoice !== undefined) {
+    return true;
+  }
+
   return ZONES_USING_CARD_TARGET_MODAL.some((zone) => selectionState.allowedZones.includes(zone));
 }
 

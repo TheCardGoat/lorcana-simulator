@@ -6,9 +6,9 @@ export const jessieLivelyCowgirlI18n: Record<Languages, I18nProperties> = {
     version: "Lively Cowgirl",
     text: [
       {
-        title: "PART OF A FAMILY",
+        title: "PART OF",
         description:
-          "Whenever this character quests, if you have 2 or more other Toy characters in play, you may draw a card.",
+          "A FAMILY Whenever this character quests, if you have 2 or more other Toy characters in play, you may draw a card.",
       },
       {
         title: "YODEL-AY-HEE-HOO!",

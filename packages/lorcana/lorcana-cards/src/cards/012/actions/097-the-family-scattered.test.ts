@@ -63,4 +63,36 @@ describe("The Family Scattered", () => {
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().getCardZone(opponentCharacterC)).toBe("deck");
   });
+
+  describe("release notes ruling", () => {
+    it("opponent with only 1 character resolves 'as much as possible' — returns it to hand and the rest of the effect is skipped", () => {
+      // Q&A: With fewer than 3 characters, the opponent does as much as
+      // they can in order written: hand → bottom-of-deck → top-of-deck.
+      // With 1 character, only the return-to-hand step happens.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [theFamilyScattered],
+          inkwell: theFamilyScattered.cost,
+          deck: 2,
+        },
+        {
+          play: [opponentCharacterA],
+          deck: 3,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(theFamilyScattered)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({ targets: [opponentCharacterA] }),
+      ).toBeSuccessfulCommand();
+
+      // Returned to hand.
+      expect(testEngine.asPlayerTwo().getCardZone(opponentCharacterA)).toBe("hand");
+
+      // No more pending steps to choose from — the rest of the effect is
+      // skipped because there are no further characters in play.
+      expect(testEngine.asPlayerTwo().getPendingEffects().length).toBe(0);
+    });
+  });
 });

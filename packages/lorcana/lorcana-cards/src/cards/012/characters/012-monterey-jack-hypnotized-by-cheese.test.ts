@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
 import { montereyJackHypnotizedByCheese } from "./012-monterey-jack-hypnotized-by-cheese";
+import { andysRoomHomeBase } from "../locations/034-andys-room-home-base";
 
 const sturdyAlly = createMockCharacter({
   id: "mj-hyp-sturdy-ally",
@@ -30,6 +31,26 @@ describe("Monterey Jack - Hypnotized by Cheese", () => {
       expect(
         testEngine.asPlayerOne().getCard(montereyJackHypnotizedByCheese)?.hasQuestRestriction,
       ).toBe(true);
+    });
+
+    it("regression: lifts quest restriction when this character alone at a location gets buffed willpower above 4", () => {
+      // Monterey Jack (3W base) is the only character at Andy's Room, which grants +2W (5W effective).
+      // 5W >= 4W satisfies BREAK THE TRANCE — quest restriction must lift.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [
+          andysRoomHomeBase,
+          { card: montereyJackHypnotizedByCheese, isDrying: false, atLocation: andysRoomHomeBase },
+        ],
+        deck: [],
+      });
+
+      expect(
+        testEngine.asPlayerOne().getCard(montereyJackHypnotizedByCheese)?.hasQuestRestriction,
+      ).toBe(false);
+
+      expect(
+        testEngine.asPlayerOne().quest(montereyJackHypnotizedByCheese),
+      ).toBeSuccessfulCommand();
     });
 
     it("lifts quest restriction once a character with 4+ willpower is in play", () => {

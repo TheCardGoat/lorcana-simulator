@@ -14,7 +14,7 @@
     type LorcanaSimulatorReadModel,
   } from "$lib";
   import { createPlayerId, type LorcanaServer } from "@tcg/lorcana-engine";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import {
     AutomatedMatchPlaybackController,
     readStoredAutomatedMatchConfig,
@@ -92,22 +92,24 @@
       return;
     }
 
-    try {
-      const nextController = new AutomatedMatchPlaybackController<
-        LorcanaServer,
-        LorcanaSimulatorReadModel
-      >({ ...storedConfig, seed: createAutomatedMatchSeed() });
-      const unsubscribe = nextController.subscribe(forceRefresh);
-      controller = nextController;
-      forceRefresh();
+    void (async () => {
+      try {
+        const nextController = await AutomatedMatchPlaybackController.create<
+          LorcanaServer,
+          LorcanaSimulatorReadModel
+        >({ ...storedConfig, seed: createAutomatedMatchSeed() });
+        const unsubscribe = nextController.subscribe(forceRefresh);
+        controller = nextController;
+        forceRefresh();
 
-      return () => {
-        unsubscribe();
-        nextController.dispose();
-      };
-    } catch (error) {
-      loadError = error instanceof Error ? error.message : "Unable to initialize automated match.";
-    }
+        onDestroy(() => {
+          unsubscribe();
+          nextController.dispose();
+        });
+      } catch (initError) {
+        loadError = initError instanceof Error ? initError.message : "Unable to initialize automated match.";
+      }
+    })();
   });
 
   function playerLabel(playerId?: string): string {

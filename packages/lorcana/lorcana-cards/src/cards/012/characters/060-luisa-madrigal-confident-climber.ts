@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { shift } from "../../../helpers/abilities";
 import { luisaMadrigalConfidentClimberI18n } from "./060-luisa-madrigal-confident-climber.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const luisaMadrigalConfidentClimber: CharacterCard = {
   id: "tct",
@@ -29,7 +29,7 @@ export const luisaMadrigalConfidentClimber: CharacterCard = {
     {
       title: "I CAN TAKE IT 1",
       description:
-        "{E} — Move up to 1 damage from chosen character of yours to this character. Then, if this character has 3 or more damage, move all damage from this character to chosen opposing character.",
+        "{I} — Move up to 1 damage from chosen character of yours to this character. Then, if this character has 3 or more damage, move all damage from this character to chosen opposing character.",
     },
   ],
   classifications: ["Floodborn", "Ally", "Madrigal"],
@@ -40,20 +40,19 @@ export const luisaMadrigalConfidentClimber: CharacterCard = {
       name: "I CAN TAKE IT",
       type: "activated",
       text: "I CAN TAKE IT 1 {I} — Move up to 1 damage from chosen character of yours to this character. Then, if this character has 3 or more damage, move all damage from this character to chosen opposing character.",
-      cost: { ink: 1 },
+      cost: {
+        ink: 1,
+      },
       effect: {
         type: "sequence",
         steps: [
           {
             type: "move-damage",
-            amount: { type: "up-to", value: 1 },
-            from: {
-              selector: "chosen",
-              count: 1,
-              owner: "you",
-              zones: ["play"],
-              cardTypes: ["character"],
+            amount: {
+              type: "up-to",
+              value: 1,
             },
+            from: "CHOSEN_CHARACTER_OF_YOURS",
             to: "SELF",
           },
           {
@@ -63,7 +62,7 @@ export const luisaMadrigalConfidentClimber: CharacterCard = {
               comparison: "greater-or-equal",
               value: 3,
             },
-            then: {
+            effect: {
               type: "move-damage",
               amount: "all",
               from: "SELF",

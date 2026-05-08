@@ -88,13 +88,8 @@ describe("Ariel - Sonic Warrior", () => {
       );
 
       expect(testEngine.asPlayerOne().playCard(testSong)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      expect(
-        testEngine.asPlayerOne().resolvePendingByCard(arielSonicWarrior, {
-          resolveOptional: true,
-        }),
-      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getPendingEffects()).toEqual([]);
 
       // Cannot pay 2 ink, so no damage is dealt
       expect(testEngine.asPlayerTwo().getDamage(targetCharacter)).toBe(0);

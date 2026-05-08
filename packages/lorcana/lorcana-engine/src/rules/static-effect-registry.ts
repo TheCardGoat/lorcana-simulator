@@ -46,6 +46,7 @@ import { getActiveStatModifierTotal } from "../runtime-moves/effects/continuous-
 export type MaterializedEffectKind =
   | "modify-stat"
   | "stat-floor"
+  | "damage-source-stat-override"
   | "gain-keyword"
   | "lose-keyword"
   | "grant-classification"
@@ -414,6 +415,50 @@ export function buildStaticEffectRegistry(
         continue;
       }
 
+      // ----- damage-source-stat-override -----
+      if (effectType === "damage-source-stat-override") {
+        if (
+          !evaluateStaticCondition({
+            condition: ability.condition,
+            state: flatState,
+            controllerId,
+            sourceId,
+            getDefinitionByInstanceId,
+            getCardStrengthByInstanceId: getBaseStrength,
+          })
+        )
+          continue;
+
+        const stat = effect.stat;
+        if (stat !== "willpower" && stat !== "lore") continue;
+
+        for (const targetId of inPlayIds) {
+          if (
+            !matchesDerivedStateTarget(
+              state,
+              flatState,
+              effect.target,
+              sourceId,
+              targetId,
+              controllerId,
+              getDefinitionByInstanceId,
+            )
+          )
+            continue;
+
+          addToTarget(byTarget, targetId, {
+            sourceId,
+            sourceControllerId: controllerId!,
+            abilityIndex: abilityIdx,
+            abilityName: ability.name,
+            sourceDefinitionId: sourceDef.id,
+            kind: "damage-source-stat-override",
+            payload: { stat },
+          });
+        }
+        continue;
+      }
+
       // ----- property-modification[singer-threshold] -----
       if (
         effectType === "property-modification" &&
@@ -619,6 +664,27 @@ export function buildStaticEffectRegistry(
     return Math.max(0, floor !== undefined ? Math.max(derived, floor) : derived);
   };
 
+  const getRegistryWillpower = (cardId: CardInstanceId): number => {
+    const def = getDefinitionByInstanceId(cardId);
+    if (!def || (def.cardType !== "character" && def.cardType !== "location")) return 0;
+    const base = (def.willpower as number | undefined) ?? 0;
+    const staticMod = getEffectsForCard(
+      { byTarget, byPlayer, global, bySource: new Map() },
+      cardId,
+      "modify-stat",
+    )
+      .filter((e) => e.payload.stat === "willpower")
+      .reduce((sum, e) => sum + (e.payload.modifier as number), 0);
+    const activeStatMod = getActiveStatModifierTotal(
+      state,
+      cardId,
+      "willpower",
+      getDefinitionByInstanceId,
+    );
+    const derived = base + staticMod + activeStatMod;
+    return Math.max(0, derived);
+  };
+
   // ------------------------------------------------------------------
   // Pass 2a — Keywords (gain-keyword, lose-keyword)
   // Evaluated before grants/restrictions so that keyword-dependent
@@ -648,6 +714,7 @@ export function buildStaticEffectRegistry(
         sourceId,
         getDefinitionByInstanceId,
         getCardStrengthByInstanceId: getRegistryStrength,
+        getCardWillpowerByInstanceId: getRegistryWillpower,
       });
       if (!condOk) continue;
 
@@ -825,6 +892,108 @@ export function buildStaticEffectRegistry(
   };
 
   // ------------------------------------------------------------------
+  // Pass 2a.5 — Re-evaluate modify-stat whose target filter depends on
+  // keywords granted in Pass 2a (e.g. Gadget Hackwrench's WELL SUPPLIED
+  // "Your characters with Support get +1 lore" must observe Support
+  // granted by Ranger Plane's AIR SUPPORT). Pass 1 only saw base-keyword
+  // definitions; this pass uses the keyword-augmented def getter.
+  // ------------------------------------------------------------------
+  for (const sourceId of inPlayIds) {
+    const sourceDef = getDefinitionByInstanceId(sourceId);
+    if (!sourceDef) continue;
+    const controllerId = cardIndex[sourceId]?.controllerID as PlayerId | undefined;
+
+    for (let abilityIdx = 0; abilityIdx < (sourceDef.abilities ?? []).length; abilityIdx++) {
+      const ability = (sourceDef.abilities ?? [])[abilityIdx];
+      if (ability.type !== "static") continue;
+      const effect = ability.effect as unknown as Record<string, unknown>;
+      const effectType = effect.type as string;
+
+      let modifyStatEffect: ModifyStatEffect | undefined;
+      let extraCondition: unknown;
+
+      if (effectType === "modify-stat") {
+        modifyStatEffect = effect as unknown as ModifyStatEffect;
+      } else if (
+        effectType === "conditional" &&
+        (effect.then as Record<string, unknown> | undefined)?.type === "modify-stat"
+      ) {
+        modifyStatEffect = effect.then as ModifyStatEffect;
+        extraCondition = effect.condition;
+      }
+
+      if (!modifyStatEffect) continue;
+
+      const condOk = evaluateStaticCondition({
+        condition: ability.condition,
+        state: flatState,
+        controllerId,
+        sourceId,
+        getDefinitionByInstanceId: getDefinitionWithGrantedKeywords,
+        getCardStrengthByInstanceId: getRegistryStrength,
+        getCardWillpowerByInstanceId: getRegistryWillpower,
+      });
+      if (!condOk) continue;
+
+      if (
+        extraCondition &&
+        !evaluateStaticCondition({
+          condition: extraCondition as Parameters<typeof evaluateStaticCondition>[0]["condition"],
+          state: flatState,
+          controllerId,
+          sourceId,
+          getDefinitionByInstanceId: getDefinitionWithGrantedKeywords,
+          getCardStrengthByInstanceId: getRegistryStrength,
+          getCardWillpowerByInstanceId: getRegistryWillpower,
+        })
+      )
+        continue;
+
+      for (const targetId of inPlayIds) {
+        if (
+          !matchesDerivedStateTarget(
+            state,
+            flatState,
+            modifyStatEffect.target,
+            sourceId,
+            targetId,
+            controllerId,
+            getDefinitionWithGrantedKeywords,
+          )
+        )
+          continue;
+
+        const existing = byTarget.get(targetId);
+        const alreadyAdded =
+          existing?.some(
+            (e) =>
+              e.sourceId === sourceId && e.abilityIndex === abilityIdx && e.kind === "modify-stat",
+          ) ?? false;
+        if (alreadyAdded) continue;
+
+        const amount = resolveStaticStatModifierAmount({
+          state,
+          effect: modifyStatEffect,
+          sourceId,
+          targetId,
+          controllerId,
+          getDefinitionByInstanceId: getDefinitionWithGrantedKeywords,
+        });
+
+        addToTarget(byTarget, targetId, {
+          sourceId,
+          sourceControllerId: controllerId!,
+          abilityIndex: abilityIdx,
+          abilityName: ability.name,
+          sourceDefinitionId: sourceDef.id,
+          kind: "modify-stat",
+          payload: { stat: modifyStatEffect.stat, modifier: amount },
+        });
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------
   // Pass 2b — Everything else (classifications, restrictions, cost
   // modifiers, granted abilities). Uses keyword-augmented definitions
   // so that grant targets depending on keywords work correctly.
@@ -844,6 +1013,7 @@ export function buildStaticEffectRegistry(
       if (
         effectType === "modify-stat" ||
         effectType === "stat-floor" ||
+        effectType === "damage-source-stat-override" ||
         effectType === "gain-keyword" ||
         effectType === "lose-keyword" ||
         (effectType === "conditional" &&
@@ -860,6 +1030,7 @@ export function buildStaticEffectRegistry(
         sourceId,
         getDefinitionByInstanceId,
         getCardStrengthByInstanceId: getRegistryStrength,
+        getCardWillpowerByInstanceId: getRegistryWillpower,
       });
       if (!condOk) continue;
 
@@ -911,6 +1082,8 @@ export function buildStaticEffectRegistry(
           restriction,
           target: restrictionTarget,
           limit,
+          minCost,
+          costRestriction,
           challengerFilter,
           effectCondition,
         } = restrictionEffect;
@@ -925,7 +1098,14 @@ export function buildStaticEffectRegistry(
                 abilityIndex: abilityIdx,
                 abilityName: ability.name,
                 kind: "restriction",
-                payload: { restriction, playerTarget: "CONTROLLER", limit, challengerFilter },
+                payload: {
+                  restriction,
+                  playerTarget: "CONTROLLER",
+                  limit,
+                  minCost,
+                  costRestriction,
+                  challengerFilter,
+                },
               };
               addToPlayer(byPlayer, controllerId, entry);
             }
@@ -939,7 +1119,14 @@ export function buildStaticEffectRegistry(
                 abilityIndex: abilityIdx,
                 abilityName: ability.name,
                 kind: "restriction",
-                payload: { restriction, playerTarget: "OPPONENTS", limit, challengerFilter },
+                payload: {
+                  restriction,
+                  playerTarget: "OPPONENTS",
+                  limit,
+                  minCost,
+                  costRestriction,
+                  challengerFilter,
+                },
               };
               addToPlayer(byPlayer, pid, entry);
             }
@@ -950,7 +1137,14 @@ export function buildStaticEffectRegistry(
               abilityIndex: abilityIdx,
               abilityName: ability.name,
               kind: "restriction",
-              payload: { restriction, playerTarget: "ALL_PLAYERS", limit, challengerFilter },
+              payload: {
+                restriction,
+                playerTarget: "ALL_PLAYERS",
+                limit,
+                minCost,
+                costRestriction,
+                challengerFilter,
+              },
             });
           }
         } else {
@@ -1029,7 +1223,7 @@ export function buildStaticEffectRegistry(
           classification?: unknown;
           cardName?: unknown;
           name?: unknown;
-          playMethod?: string;
+          playMethod?: "shift" | "standard" | "either";
         };
 
         addToPlayer(byPlayer, controllerId, {
@@ -1191,14 +1385,49 @@ export function buildStaticEffectRegistry(
 // Helpers for restriction extraction
 // ============================================================================
 
+type RestrictionCostComparison = "less-or-equal" | "greater-or-equal" | "equal";
+
+type RestrictionCostRestriction = {
+  comparison: RestrictionCostComparison;
+  value: number;
+};
+
 type ExtractedRestriction = {
   restriction: string;
   target: unknown;
   limit?: number;
+  minCost?: number;
+  costRestriction?: RestrictionCostRestriction;
   challengerFilter?: unknown;
   /** Per-target condition from the effect itself (e.g. "NOT being-challenged"). */
   effectCondition?: unknown;
 };
+
+function readCostRestriction(value: unknown): RestrictionCostRestriction | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const record = value as { comparison?: unknown; value?: unknown };
+  if (typeof record.value !== "number" || !Number.isFinite(record.value)) return undefined;
+  if (
+    record.comparison !== "less-or-equal" &&
+    record.comparison !== "greater-or-equal" &&
+    record.comparison !== "equal"
+  ) {
+    return undefined;
+  }
+  return { comparison: record.comparison, value: record.value };
+}
+
+function deriveCostRestriction(
+  source: Record<string, unknown>,
+): RestrictionCostRestriction | undefined {
+  const explicit = readCostRestriction(source.costRestriction);
+  if (explicit) return explicit;
+  const minCost = source.minCost;
+  if (typeof minCost === "number" && Number.isFinite(minCost)) {
+    return { comparison: "greater-or-equal", value: minCost };
+  }
+  return undefined;
+}
 
 /**
  * Extracts a restriction from a potentially-wrapped effect.
@@ -1213,6 +1442,8 @@ function extractRestrictionEffect(
       restriction: effect.restriction as string,
       target: effect.target,
       limit: effect.limit as number | undefined,
+      minCost: effect.minCost as number | undefined,
+      costRestriction: deriveCostRestriction(effect),
       challengerFilter: effect.challengerFilter,
       effectCondition: effect.condition,
     };
@@ -1225,6 +1456,8 @@ function extractRestrictionEffect(
         restriction: then.restriction as string,
         target: then.target,
         limit: then.limit as number | undefined,
+        minCost: then.minCost as number | undefined,
+        costRestriction: deriveCostRestriction(then),
         challengerFilter: then.challengerFilter,
         effectCondition: then.condition,
       };

@@ -15,10 +15,10 @@ describe("public-url-config", () => {
     expect(getPublicUrlConfig()).toEqual({
       apiOrigin: "http://localhost:3000",
       gameServerOrigin: "http://localhost:3001",
-      trackerOrigin: "https://thecardgoat.com",
+      trackerOrigin: "https://new.lorcanito.com",
       gatewayWsUrl: "ws://localhost:3001/v1/gateway/ws",
-      simulatorAssetBaseUrl: "https://r2.tcg.online/public/lorcana/simulator",
-      lorcanaAssetBaseUrl: "https://r2.tcg.online/public/lorcana",
+      simulatorAssetBaseUrl: "https://new-cdn.lorcanito.com/public/lorcana/simulator",
+      lorcanaAssetBaseUrl: "https://new-cdn.lorcanito.com/public/lorcana",
     });
   });
 
@@ -31,7 +31,7 @@ describe("public-url-config", () => {
     expect(getPublicUrlConfig()).toEqual({
       apiOrigin: "https://api.example.com",
       gameServerOrigin: "https://server.example.com",
-      trackerOrigin: "https://thecardgoat.com",
+      trackerOrigin: "https://new.lorcanito.com",
       gatewayWsUrl: "wss://server.example.com/v1/gateway/ws",
       simulatorAssetBaseUrl: "https://cdn.example.com/simulator",
       lorcanaAssetBaseUrl: "https://cdn.example.com/lorcana",

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import LiveMatchesTable from "$lib/features/matchmaking/ui/LiveMatchesTable.svelte";
   import MatchmakingActiveMatchCard from "$lib/features/matchmaking/ui/MatchmakingActiveMatchCard.svelte";
@@ -20,6 +21,7 @@
   import { cn } from "$lib/utils.js";
   import { m } from "$lib/i18n/messages.js";
   import { Card, CardContent } from "$lib/design-system/primitives/card";
+  import { IdleStore } from "@/features/gateway/idle-store.svelte.js";
 
   const PAGE_TITLE = "Lorcana Simulator Matchmaking";
   const controller = getMatchmakingLobbyContext();
@@ -36,7 +38,17 @@
     controller.openSpectatorDialog(matchId, gameId);
   }
 
+  const idleStore = new IdleStore(10 * 60 * 1000);
+
+  $effect(() => {
+    if (idleStore.idle) {
+      goto("/idle");
+    }
+  });
+
   onMount(() => {
+    idleStore.attach();
+
     const deckParam = page.url.searchParams.get("deck");
     if (!deckParam) return;
     try {
@@ -51,6 +63,10 @@
     } catch {
       // silently ignore malformed param
     }
+  });
+
+  onDestroy(() => {
+    idleStore.detach();
   });
 </script>
 

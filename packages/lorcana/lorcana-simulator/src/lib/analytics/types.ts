@@ -3,6 +3,10 @@
  *
  * All custom events use snake_case, domain-prefixed naming.
  * Parameter values are strings or numbers only (GA4 constraint).
+ *
+ * PRIVACY: Never put free-text user input (deck names, chat, usernames, emails)
+ * into event params. Only structured/enumerated values and bounded numerics.
+ * Error messages must be truncated via `truncateForAnalytics()` from analytics.ts.
  */
 
 // ── Auth Events ──────────────────────────────────────────────
@@ -31,6 +35,10 @@ export interface DeckImportCompleteParams {
 }
 export interface DeckImportErrorParams {
   error: string;
+  /** Optional structured error code (e.g. HTTP status, parser code). */
+  error_code?: string;
+  /** Truncated error message — never raw user-supplied text. */
+  error_message?: string;
 }
 
 // ── Matchmaking Events ───────────────────────────────────────
@@ -41,6 +49,8 @@ export interface QueueJoinParams {
 }
 export interface QueueJoinErrorParams {
   error: string;
+  error_code?: string;
+  error_message?: string;
 }
 export interface QueueJoinBlockedParams {
   reason: string;
@@ -56,7 +66,7 @@ export interface QueueTimeoutParams {
 
 // ── Game Events ──────────────────────────────────────────────
 export interface GameJoinParams {
-  mode: "ranked" | "practice" | "spectator";
+  mode: "ranked" | "practice" | "spectator" | "unknown";
 }
 export interface GamePregameFirstParams {
   /** GA4 only supports string/number values — use "true"/"false" instead of boolean. */
@@ -68,6 +78,18 @@ export interface GameMulliganParams {
 export interface GameMoveParams {
   move_id: string;
   turn: number;
+  /** Card identifier (cardId / instanceId) when the move acts on a card. */
+  card_id?: string;
+  /** Ink cost paid for the move when applicable. */
+  ink_cost?: number;
+  /** Milliseconds since the previous tracked move; useful for pace-of-play analysis. */
+  ms_since_prev_move?: number;
+  /**
+   * Side that initiated the move. Currently only "self" is emitted because the
+   * local client only dispatches its own moves; opponent move tracking would
+   * require wiring through the WebSocket inbound handler.
+   */
+  actor_side?: "self";
 }
 // game_concede has no params
 export interface GameEndParams {
@@ -75,6 +97,41 @@ export interface GameEndParams {
   turns: number;
   duration_seconds: number;
   mode: string;
+  /** Format of the match (e.g. "core_constructed", "draft"). */
+  format?: string;
+  /** Local player's deck identifier — non-PII opaque ID, never deck name. */
+  deck_id?: string;
+}
+
+// ── Performance & Quality Signals ────────────────────────────
+export interface WebVitalParams {
+  /** Vital name: LCP, INP, CLS, FCP, TTFB. */
+  name: "LCP" | "INP" | "CLS" | "FCP" | "TTFB";
+  /** Vital value in ms (or unitless for CLS). */
+  value: number;
+  /** Google's bucket rating. */
+  rating: "good" | "needs-improvement" | "poor";
+}
+export interface WsLatencySampleParams {
+  latency_ms: number;
+}
+export interface TimeToFirstMoveParams {
+  duration_ms: number;
+}
+export interface TimeToMulliganParams {
+  duration_ms: number;
+}
+
+// ── Exception / Error Events ─────────────────────────────────
+export interface AppExceptionParams {
+  /** Subsystem the exception originated from. */
+  source: string;
+  /** Structured error code; "unknown" if none available. */
+  code: string;
+  /** Truncated error message (≤ 100 chars). Never include free-text user input. */
+  message?: string;
+  /** "true" if the error was unrecoverable. GA4 stores booleans as strings. */
+  fatal: "true" | "false";
 }
 
 // ── Connection Events ────────────────────────────────────────
@@ -84,6 +141,10 @@ export interface WsDisconnectParams {
 }
 export interface WsReconnectParams {
   attempts: number;
+}
+export interface WsReconnectFailedParams {
+  attempts: number;
+  last_error?: string;
 }
 
 // ── Replay & Spectator Events ────────────────────────────────
@@ -112,6 +173,34 @@ export interface SettingsChangeParams {
 }
 // install_nudge_shown has no params
 // install_nudge_dismiss has no params
+// session_start has no params
+export interface SessionEndParams {
+  duration_seconds: number;
+}
+export interface OnboardStepViewParams {
+  step_id: string;
+}
+
+// ── Manual Mode (Board State Correction) Events ─────────────
+export interface ManualModeProposalParams {
+  game_id: string;
+  role: "sender" | "recipient";
+  /** Which side of the toggle was requested. Only present on `manual_mode_requested`. */
+  intent?: "enable" | "disable";
+}
+export interface ManualModeRejectedParams {
+  game_id: string;
+  role: "sender" | "recipient";
+  reason: "declined" | "expired" | "failed";
+}
+export interface ManualModeDisabledParams {
+  game_id: string;
+  by: "self" | "opponent";
+}
+export interface ManualModeCorrectionParams {
+  game_id: string;
+  kind: "lore" | "damage" | "move";
+}
 
 // ── Match History Events ────────────────────────────────────
 export interface DeckRundownViewParams {
@@ -147,7 +236,7 @@ export interface AnalyticsEventMap {
   deck_delete: Record<string, never>;
   legacy_import_start: Record<string, never>;
   legacy_import_complete: Record<string, never>;
-  legacy_import_error: { error: string };
+  legacy_import_error: { error: string; error_code?: string; error_message?: string };
 
   // Matchmaking
   queue_join: QueueJoinParams;
@@ -179,6 +268,16 @@ export interface AnalyticsEventMap {
   ws_connect: Record<string, never>;
   ws_disconnect: WsDisconnectParams;
   ws_reconnect: WsReconnectParams;
+  ws_reconnect_failed: WsReconnectFailedParams;
+  ws_latency_sample: WsLatencySampleParams;
+
+  // Performance
+  web_vital: WebVitalParams;
+  time_to_first_move: TimeToFirstMoveParams;
+  time_to_mulligan: TimeToMulliganParams;
+
+  // Exceptions
+  app_exception: AppExceptionParams;
 
   // Replay & Spectator
   replay_view: Record<string, never>;
@@ -192,6 +291,16 @@ export interface AnalyticsEventMap {
   settings_change: SettingsChangeParams;
   install_nudge_shown: Record<string, never>;
   install_nudge_dismiss: Record<string, never>;
+  session_start: Record<string, never>;
+  session_end: SessionEndParams;
+  onboard_step_view: OnboardStepViewParams;
+
+  // Manual Mode (Board State Correction)
+  manual_mode_requested: ManualModeProposalParams;
+  manual_mode_accepted: ManualModeProposalParams;
+  manual_mode_rejected: ManualModeRejectedParams;
+  manual_mode_disabled: ManualModeDisabledParams;
+  manual_mode_correction_applied: ManualModeCorrectionParams;
 
   // Match History
   deck_rundown_view: DeckRundownViewParams;
@@ -205,4 +314,10 @@ export interface AnalyticsUserProperties {
   auth_state: "authenticated" | "anonymous";
   has_profile: "true" | "false";
   locale: string;
+  /** Most-used format inferred from completed games (e.g. "core_constructed"). */
+  preferred_format: string;
+  /** Total games completed by this user across sessions. */
+  total_games: number;
+  /** Bucketed win rate to keep cardinality low for GA4 segments. */
+  win_rate_bucket: "<40%" | "40-60%" | ">60%" | "unknown";
 }

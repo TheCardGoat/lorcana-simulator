@@ -19,6 +19,9 @@ export const thePrinceSearchingForHisLove: CharacterCard = {
   lore: 2,
   inkable: false,
   vanilla: true,
+  externalIds: {
+    lorcast: "crd_25eee8741de44224946fe827a0debb09",
+  },
   classifications: ["Storyborn", "Hero", "Prince"],
   i18n: thePrinceSearchingForHisLoveI18n,
 };

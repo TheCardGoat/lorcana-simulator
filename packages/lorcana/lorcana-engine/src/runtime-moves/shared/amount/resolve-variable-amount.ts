@@ -257,11 +257,12 @@ function resolveDslTargets(
     return [];
   }
 
+  const sourceCardId = context.sourceId ?? cardPlayed.cardId;
   const candidates = resolveCandidateTargets(context.ctx, cardPlayed, descriptor, {
     selectedTargets: context.targets,
-    sourceCardId: context.sourceId ?? cardPlayed.cardId,
+    sourceCardId,
   });
-  return selectTargets(candidates, descriptor, context.targets);
+  return selectTargets(candidates, descriptor, context.targets, { sourceCardId });
 }
 
 function resolveTargetLocationLore(
@@ -797,20 +798,20 @@ function evaluateAggregate(
     case "strength-of": {
       const descriptor = normalizeTargetDescriptor(amount.target);
       const scopedTargets = resolveDslTargets(context, amount.target, true);
-      const resolvedTarget =
-        descriptor?.reference !== undefined
-          ? (scopedTargets[0] ?? targetId)
-          : (targetId ?? scopedTargets[0]);
+      const preferScoped = descriptor?.reference !== undefined || descriptor?.selector === "self";
+      const resolvedTarget = preferScoped
+        ? (scopedTargets[0] ?? targetId)
+        : (targetId ?? scopedTargets[0]);
       return resolvedTarget ? getCardStrength(context, resolvedTarget) : 0;
     }
 
     case "willpower-of": {
       const descriptor = normalizeTargetDescriptor(amount.target);
       const scopedTargets = resolveDslTargets(context, amount.target, true);
-      const resolvedTarget =
-        descriptor?.reference !== undefined
-          ? (scopedTargets[0] ?? targetId)
-          : (targetId ?? scopedTargets[0]);
+      const preferScoped = descriptor?.reference !== undefined || descriptor?.selector === "self";
+      const resolvedTarget = preferScoped
+        ? (scopedTargets[0] ?? targetId)
+        : (targetId ?? scopedTargets[0]);
       const runtimeCard = resolvedTarget
         ? (context.ctx.cards.require(resolvedTarget) as { willpower?: number } | undefined)
         : undefined;
@@ -831,10 +832,10 @@ function evaluateAggregate(
     case "lore-value-of": {
       const descriptor = normalizeTargetDescriptor(amount.target);
       const scopedTargets = resolveDslTargets(context, amount.target, true);
-      const resolvedTarget =
-        descriptor?.reference !== undefined
-          ? (scopedTargets[0] ?? targetId)
-          : (targetId ?? scopedTargets[0]);
+      const preferScoped = descriptor?.reference !== undefined || descriptor?.selector === "self";
+      const resolvedTarget = preferScoped
+        ? (scopedTargets[0] ?? targetId)
+        : (targetId ?? scopedTargets[0]);
       return resolvedTarget ? getCardLoreValue(context, resolvedTarget) : 0;
     }
 

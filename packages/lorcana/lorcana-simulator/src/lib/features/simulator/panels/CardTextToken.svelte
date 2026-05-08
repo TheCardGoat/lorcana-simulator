@@ -42,16 +42,16 @@
 </script>
 
 {#if interactive}
-  <button
-    type="button"
+  <span
     class={`inline cursor-pointer border-0 bg-transparent p-0 font-bold underline underline-offset-2 decoration-1 align-baseline leading-[inherit] transition hover:opacity-75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-current ${cardTokenClasses(card)}`}
     onmouseenter={onHover}
     onmouseleave={onLeave}
     onfocus={onHover}
     onblur={onLeave}
+    role="log"
   >
     {text}
-  </button>
+  </span>
 {:else}
   <span
     role="presentation"

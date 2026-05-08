@@ -55,6 +55,11 @@ export interface ServerEngineConfig {
   runtimeConfig: MatchRuntimeConfig;
   players: Player[];
   seed?: string;
+  /** Server-side game ID (e.g. the API's gameId). Stored in ctx.gameID so the
+   *  projected board view carries the correct identifier for replay lookup. */
+  gameID?: string;
+  /** Server-side match ID. Stored in ctx.matchID. */
+  matchID?: string;
   staticResources: MatchStaticResources;
   debugMode?: boolean;
   choosingFirstPlayer?: string;
@@ -105,6 +110,8 @@ export class ServerEngine implements GameEngine {
       this.runtime = new MatchRuntime(config.runtimeConfig, {
         players: config.players,
         seed: config.seed,
+        gameID: config.gameID,
+        matchID: config.matchID,
         capturePatches: true,
         cardsMaps: emptyCardsMaps,
         cardCatalog: config.staticResources.cards,
@@ -119,6 +126,8 @@ export class ServerEngine implements GameEngine {
     this.runtime = new MatchRuntime(config.runtimeConfig, {
       players: config.players,
       seed: config.seed,
+      gameID: config.gameID,
+      matchID: config.matchID,
       capturePatches: true,
       //TODO: We could pass both `cardsMaps` and `cardCatalog` from constructuror
       cardsMaps: createCardsMapsFromStaticResources(config.staticResources),

@@ -18,14 +18,17 @@ export const snowWhiteMerryAsTheMorning: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_6253282cb5e14ec384482907b1b1aaa3",
+  },
   text: [
     {
-      title: "Clarion Call",
+      title: "CLARION CALL",
       description:
         "Whenever this character quests, you may return chosen Seven Dwarfs character of yours to your hand to draw a card.",
     },
     {
-      title: "Never Forgotten",
+      title: "NEVER FORGOTTEN",
       description:
         "During an opponent's turn, when this character is banished in a challenge, return this card to your hand.",
     },
@@ -56,7 +59,12 @@ export const snowWhiteMerryAsTheMorning: CharacterCard = {
                 owner: "you",
                 zones: ["play"],
                 cardTypes: ["character"],
-                filter: [{ type: "has-classification", classification: "Seven Dwarfs" }],
+                filter: [
+                  {
+                    type: "has-classification",
+                    classification: "Seven Dwarfs",
+                  },
+                ],
               },
             },
             {

@@ -801,7 +801,14 @@ export function deriveMoveCost(
 export type PendingCostReduction = {
   amount: number;
   sourceId?: CardInstanceId;
-  cardType?: "character" | "item" | "location" | "action" | "song";
+  cardType?:
+    | "character"
+    | "item"
+    | "location"
+    | "action"
+    | "song"
+    | ("character" | "item" | "location" | "action" | "song")[]
+    | readonly ("character" | "item" | "location" | "action" | "song")[];
   classification?: Classification | Classification[] | readonly Classification[];
   expiresAtTurn: number;
   consumeOnUse: boolean;
@@ -829,6 +836,10 @@ function matchesCostReductionCardType(
 ): boolean {
   if (!targetCardType) {
     return true;
+  }
+
+  if (Array.isArray(targetCardType)) {
+    return targetCardType.some((type) => matchesCostReductionCardType(definition, type));
   }
 
   if (targetCardType === "song") {
@@ -895,7 +906,7 @@ function getStaticCostReductionAmount(args: {
   playerId: PlayerId;
   definition: LorcanaCardDefinition;
   getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
-  playMethod?: "shift" | "standard";
+  playMethod?: "shift" | "standard" | "either";
   registry: StaticEffectRegistry;
 }): number {
   const { state, playerId, definition, getDefinitionByInstanceId, playMethod, registry } = args;
@@ -913,7 +924,12 @@ function getStaticCostReductionAmount(args: {
       playMethod?: string;
     };
     const effectPlayMethod = payload.playMethod;
-    if (effectPlayMethod !== undefined && (!playMethod || playMethod !== effectPlayMethod))
+    // "either" on the cost-reduction effect itself is a wildcard that matches both shift and standard.
+    if (
+      effectPlayMethod !== undefined &&
+      effectPlayMethod !== "either" &&
+      (!playMethod || (playMethod !== "either" && playMethod !== effectPlayMethod))
+    )
       continue;
     if (
       !matchesCostReductionCardType(
@@ -1343,6 +1359,7 @@ export function getDerivedHasQuestRestriction(
   state: DerivedStateContext,
   cardInstanceId: CardInstanceId | undefined,
   getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined,
+  registry?: StaticEffectRegistry,
 ): boolean {
   if (
     hasTemporaryRestriction(meta, currentTurn, "cant-quest", {
@@ -1353,12 +1370,23 @@ export function getDerivedHasQuestRestriction(
   }
 
   if (cardInstanceId) {
+    const getCardWillpowerByInstanceId = registry
+      ? (id: CardInstanceId) =>
+          getEffectiveWillpower(
+            getDefinitionByInstanceId(id),
+            state,
+            id,
+            getDefinitionByInstanceId,
+            registry,
+          )
+      : undefined;
     if (
       hasStaticSelfRestriction({
         state,
         cardId: cardInstanceId,
         restriction: "cant-quest",
         getDefinitionByInstanceId,
+        getCardWillpowerByInstanceId,
       })
     ) {
       return true;
