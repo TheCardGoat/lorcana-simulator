@@ -635,6 +635,32 @@ function consumeAppliedCostReductions(
   });
 }
 
+function consumeAppliedCostReductions(
+  turnMetadata: PlayCardExecutionContext["G"]["turnMetadata"],
+  playerId: PlayerId,
+  consumeIndexes: number[],
+  currentTurn: number,
+): void {
+  const pendingByPlayer =
+    turnMetadata.pendingCostReductionsByPlayer ?? (turnMetadata.pendingCostReductionsByPlayer = {});
+  const currentEntries = pendingByPlayer[playerId] ?? [];
+
+  if (currentEntries.length === 0) {
+    return;
+  }
+
+  const consumeIndexSet = new Set(consumeIndexes);
+  pendingByPlayer[playerId] = currentEntries.filter((entry, index) => {
+    if (entry.expiresAtTurn < currentTurn) {
+      return false;
+    }
+    if (consumeIndexSet.size > 0 && consumeIndexSet.has(index)) {
+      return false;
+    }
+    return true;
+  });
+}
+
 export function resolvePlayCardEffect(
   ctx: PlayCardExecutionContext,
   cardPlayed: CardPlayedPayload,

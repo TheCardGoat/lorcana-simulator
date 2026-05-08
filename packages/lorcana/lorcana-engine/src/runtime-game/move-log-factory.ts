@@ -343,6 +343,7 @@ function convertProjectedEntry(
         playerId,
         timestamp,
         cardId: v.cardId as CardInstanceId,
+        cardName: v.cardName as string | undefined,
       };
 
     case "lorcana.move.quest":
@@ -425,6 +426,9 @@ function convertProjectedEntry(
         timestamp,
         cardId: v.cardId as CardInstanceId,
         shiftTargetId: v.shiftTargetId as CardInstanceId,
+        ...(typeof v.shiftTargetName === "string" && v.shiftTargetName.length > 0
+          ? { shiftTargetName: v.shiftTargetName }
+          : {}),
         outcomes,
       };
 

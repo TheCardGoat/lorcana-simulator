@@ -2009,6 +2009,9 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
               playerId: currentPlayer,
               cardId,
               shiftTargetId,
+              shiftTargetName: formatLorcanaCardName(
+                ctx.cards.require(shiftTargetId).definition as LorcanaCard,
+              ),
             },
             { mode: "PUBLIC" },
             "action",

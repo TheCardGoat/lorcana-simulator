@@ -3351,7 +3351,7 @@
     "cardNumber": 142,
     "rarity": "common",
     "author": "Yu Nguyen / Mariana Moreno",
-    "flavorText": "Sometimes, people just need to know there’s someone watching over them.",
+    "flavorText": "Sometimes, people just need to know there\u2019s someone watching over them.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2572
   },
@@ -4069,7 +4069,7 @@
     "cardNumber": 229,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Juan Pablo Velázquez",
+    "author": "Juan Pablo Vel\u00e1zquez",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2485
   },
@@ -4146,7 +4146,7 @@
     "cardNumber": 238,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Juan Pablo Velázquez",
+    "author": "Juan Pablo Vel\u00e1zquez",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2476
   },
@@ -4586,7 +4586,7 @@
     "set": "set10",
     "cardNumber": 37,
     "rarity": "uncommon",
-    "author": "João Moura",
+    "author": "Jo\u00e3o Moura",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2426
   },
@@ -5215,7 +5215,7 @@
     "set": "set10",
     "cardNumber": 113,
     "rarity": "uncommon",
-    "author": "Juan Diego León",
+    "author": "Juan Diego Le\u00f3n",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2350
   },
@@ -5368,7 +5368,7 @@
     "set": "set10",
     "cardNumber": 128,
     "rarity": "rare",
-    "author": "Roger Pérez",
+    "author": "Roger P\u00e9rez",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2335
   },
@@ -5499,7 +5499,7 @@
     "set": "set10",
     "cardNumber": 148,
     "rarity": "rare",
-    "author": "Ismael González-Granero / Casey Jo Ocean",
+    "author": "Ismael Gonz\u00e1lez-Granero / Casey Jo Ocean",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2315
   },
@@ -5803,7 +5803,7 @@
     "set": "set10",
     "cardNumber": 187,
     "rarity": "rare",
-    "author": "César Vergara / Alex Accorsi",
+    "author": "C\u00e9sar Vergara / Alex Accorsi",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2276
   },
@@ -5875,7 +5875,7 @@
     "cardNumber": 194,
     "rarity": "common",
     "author": "Cristian Romero",
-    "flavorText": "If you hear hoofbeats in the dark, don’t look back.",
+    "flavorText": "If you hear hoofbeats in the dark, don\u2019t look back.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2269
   },
@@ -6103,7 +6103,7 @@
     "cardNumber": 229,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Iwo Widuliński",
+    "author": "Iwo Widuli\u0144ski",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2234
   },
@@ -6309,7 +6309,7 @@
     "set": "set9",
     "cardNumber": 0,
     "rarity": "common",
-    "author": "Juan Diego León",
+    "author": "Juan Diego Le\u00f3n",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2209
   },
@@ -6341,7 +6341,7 @@
     "cardNumber": 3,
     "rarity": "common",
     "author": "Simangaliso Sibaya",
-    "flavorText": "The best part about a beachside concert is that there’s always room for one more.",
+    "flavorText": "The best part about a beachside concert is that there\u2019s always room for one more.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2206
   },
@@ -6384,7 +6384,7 @@
     "cardNumber": 7,
     "rarity": "common",
     "author": "Eva Widermann",
-    "flavorText": "Don’t question her. Don’t doubt her. And above all, don’t disobey her.",
+    "flavorText": "Don\u2019t question her. Don\u2019t doubt her. And above all, don\u2019t disobey her.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2202
   },
@@ -6417,7 +6417,7 @@
     "cardNumber": 10,
     "rarity": "common",
     "author": "Amber Kommavongsa",
-    "flavorText": "Everything looks better when you’re free to be yourself.",
+    "flavorText": "Everything looks better when you\u2019re free to be yourself.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2199
   },
@@ -6439,7 +6439,7 @@
     "cardNumber": 12,
     "rarity": "uncommon",
     "author": "Aisha Durmagambetova",
-    "flavorText": "Plenty of berries—and friendship—to go around.",
+    "flavorText": "Plenty of berries\u2014and friendship\u2014to go around.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2197
   },
@@ -6450,7 +6450,7 @@
     "cardNumber": 13,
     "rarity": "uncommon",
     "author": "Dave Beauchene",
-    "flavorText": "As long as he’s around, newcomers to the Great Illuminary will always get a warm welcome.",
+    "flavorText": "As long as he\u2019s around, newcomers to the Great Illuminary will always get a warm welcome.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2196
   },
@@ -6624,7 +6624,7 @@
     "cardNumber": 39,
     "rarity": "common",
     "author": "Angelina \"Spikie\" Ricardo",
-    "flavorText": "No matter what she tried, Belle couldn’t completely heal Beast’s wound.",
+    "flavorText": "No matter what she tried, Belle couldn\u2019t completely heal Beast\u2019s wound.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2170
   },
@@ -6646,7 +6646,7 @@
     "cardNumber": 41,
     "rarity": "common",
     "author": "John Loren",
-    "flavorText": "He’d always felt a kinship with honey. They were both golden, and sweet, and likely to end up in sticky situations.",
+    "flavorText": "He\u2019d always felt a kinship with honey. They were both golden, and sweet, and likely to end up in sticky situations.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2168
   },
@@ -6965,7 +6965,7 @@
     "set": "set9",
     "cardNumber": 80,
     "rarity": "common",
-    "author": "Juan Diego León",
+    "author": "Juan Diego Le\u00f3n",
     "flavorText": "On rivers throughout the Inklands, the little steamboat's whistle answers the cheery tunes of its pilot.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2129
@@ -7137,7 +7137,7 @@
     "cardNumber": 105,
     "rarity": "rare",
     "author": "Oggy Christiansson",
-    "flavorText": "He’ll join the hunt for lore after he’s had a quick snack.",
+    "flavorText": "He\u2019ll join the hunt for lore after he\u2019s had a quick snack.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2104
   },
@@ -7159,7 +7159,7 @@
     "cardNumber": 107,
     "rarity": "common",
     "author": "Javi Salas",
-    "flavorText": "Shipwrecks are great places to find lore—and hide from sharks!",
+    "flavorText": "Shipwrecks are great places to find lore\u2014and hide from sharks!",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2102
   },
@@ -7243,7 +7243,7 @@
     "cardNumber": 115,
     "rarity": "common",
     "author": "Matthew Robert Davies",
-    "flavorText": "It’s not arrogance when you really <are> the best.",
+    "flavorText": "It\u2019s not arrogance when you really <are> the best.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2094
   },
@@ -7319,7 +7319,7 @@
     "cardNumber": 122,
     "rarity": "uncommon",
     "author": "Bill Robinson",
-    "flavorText": "You’ll have to deal with them sooner or later.",
+    "flavorText": "You\u2019ll have to deal with them sooner or later.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2087
   },
@@ -7352,7 +7352,7 @@
     "cardNumber": 125,
     "rarity": "common",
     "author": "Jared Mathews",
-    "flavorText": "She’ll never give up.",
+    "flavorText": "She\u2019ll never give up.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2084
   },
@@ -7405,7 +7405,7 @@
     "cardNumber": 137,
     "rarity": "rare",
     "author": "Leonardo Giammichele",
-    "flavorText": "Make sure you know what’s truly important and be willing to fight for it.",
+    "flavorText": "Make sure you know what\u2019s truly important and be willing to fight for it.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2072
   },
@@ -7468,7 +7468,7 @@
     "set": "set9",
     "cardNumber": 143,
     "rarity": "legendary",
-    "author": "Juan Diego León",
+    "author": "Juan Diego Le\u00f3n",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2066
   },
@@ -7523,7 +7523,7 @@
     "cardNumber": 148,
     "rarity": "common",
     "author": "Dustin Panzino / Leonardo Giammichele",
-    "flavorText": "Hans was confident he could bring Anna to Ursula—all he needed was something of Kristoff's to lure her in.",
+    "flavorText": "Hans was confident he could bring Anna to Ursula\u2014all he needed was something of Kristoff's to lure her in.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2061
   },
@@ -7534,7 +7534,7 @@
     "cardNumber": 149,
     "rarity": "uncommon",
     "author": "Jennifer Gheduzzi / Livio Cacciatore",
-    "flavorText": "She has only one question, and she’d better like the answer.",
+    "flavorText": "She has only one question, and she\u2019d better like the answer.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2060
   },
@@ -7544,7 +7544,7 @@
     "set": "set9",
     "cardNumber": 150,
     "rarity": "rare",
-    "author": "Juan Diego León",
+    "author": "Juan Diego Le\u00f3n",
     "flavorText": "When he talks, even the sky listens.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2059
@@ -7589,7 +7589,7 @@
     "cardNumber": 154,
     "rarity": "common",
     "author": "Koni",
-    "flavorText": "Her music fills the Illuminary’s gardens with joy and light.",
+    "flavorText": "Her music fills the Illuminary\u2019s gardens with joy and light.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2055
   },
@@ -7600,7 +7600,7 @@
     "cardNumber": 155,
     "rarity": "common",
     "author": "Rosa la Barbera / Leonardo Giammichele",
-    "flavorText": "She may be young, but she’s got the spirit of a true leader.",
+    "flavorText": "She may be young, but she\u2019s got the spirit of a true leader.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2054
   },
@@ -7919,7 +7919,7 @@
     "cardNumber": 193,
     "rarity": "uncommon",
     "author": "Carlos Ruiz",
-    "flavorText": "Immovable as a mountain and fierce as a dragon—the Empire's finest warrior.",
+    "flavorText": "Immovable as a mountain and fierce as a dragon\u2014the Empire's finest warrior.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2016
   },
@@ -7951,7 +7951,7 @@
     "cardNumber": 196,
     "rarity": "common",
     "author": "Dylan Bonner",
-    "flavorText": "Everything she’s ever wanted is almost in reach.",
+    "flavorText": "Everything she\u2019s ever wanted is almost in reach.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2013
   },
@@ -8103,7 +8103,7 @@
     "rarity": "common",
     "specialRarity": "epic",
     "author": "Jennifer Gheduzzi",
-    "flavorText": "She has only one question, and she’d better like the answer.",
+    "flavorText": "She has only one question, and she\u2019d better like the answer.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1990
   },
@@ -8226,7 +8226,7 @@
     "cardNumber": 232,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "João Moura",
+    "author": "Jo\u00e3o Moura",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1977
   },
@@ -8303,7 +8303,7 @@
     "cardNumber": 240,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Juan Diego León",
+    "author": "Juan Diego Le\u00f3n",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1969
   },
@@ -9144,7 +9144,7 @@
     "set": "set8",
     "cardNumber": 71,
     "rarity": "uncommon",
-    "author": "Mané Kandalyan Manderson",
+    "author": "Man\u00e9 Kandalyan Manderson",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1882
   },
@@ -9154,7 +9154,7 @@
     "set": "set8",
     "cardNumber": 72,
     "rarity": "rare",
-    "author": "Luigi Aimè",
+    "author": "Luigi Aim\u00e8",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1881
   },
@@ -9399,7 +9399,7 @@
     "cardNumber": 103,
     "rarity": "uncommon",
     "author": "Joel DuQue",
-    "flavorText": "The tea is strong, even if he isn’t.",
+    "flavorText": "The tea is strong, even if he isn\u2019t.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1850
   },
@@ -9420,7 +9420,7 @@
     "cardNumber": 105,
     "rarity": "common",
     "author": "Gonzalo Kenny",
-    "flavorText": "She’ll go wherever she pleases, no matter who she has to step on to get there.",
+    "flavorText": "She\u2019ll go wherever she pleases, no matter who she has to step on to get there.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1848
   },
@@ -10238,7 +10238,7 @@
     "cardNumber": 205,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Juan Diego León",
+    "author": "Juan Diego Le\u00f3n",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1748
   },
@@ -10500,7 +10500,7 @@
     "set": "set7",
     "cardNumber": 2,
     "rarity": "rare",
-    "author": "Cécile Carre",
+    "author": "C\u00e9cile Carre",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1680
   },
@@ -10680,7 +10680,7 @@
     "cardNumber": 19,
     "rarity": "uncommon",
     "author": "Aubrey Archer",
-    "flavorText": "Once Pascal got into Archazia’s flowerbeds, there was no getting him out.",
+    "flavorText": "Once Pascal got into Archazia\u2019s flowerbeds, there was no getting him out.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1663
   },
@@ -10732,7 +10732,7 @@
     "set": "set7",
     "cardNumber": 24,
     "rarity": "uncommon",
-    "author": "João Moura",
+    "author": "Jo\u00e3o Moura",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1658
   },
@@ -10774,7 +10774,7 @@
     "set": "set7",
     "cardNumber": 28,
     "rarity": "common",
-    "author": "João Moura",
+    "author": "Jo\u00e3o Moura",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1654
   },
@@ -10784,7 +10784,7 @@
     "set": "set7",
     "cardNumber": 29,
     "rarity": "common",
-    "author": "Cécile Carre",
+    "author": "C\u00e9cile Carre",
     "flavorText": "Tricks and traps are nothing for plucky pups.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1653
@@ -10869,7 +10869,7 @@
     "cardNumber": 37,
     "rarity": "common",
     "author": "Valentina Graziuso",
-    "flavorText": "Archazia’s calming presence helped Pepa dispel her dark mood.",
+    "flavorText": "Archazia\u2019s calming presence helped Pepa dispel her dark mood.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1645
   },
@@ -10964,7 +10964,7 @@
     "set": "set7",
     "cardNumber": 53,
     "rarity": "uncommon",
-    "author": "Roger Pérez",
+    "author": "Roger P\u00e9rez",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1629
   },
@@ -11204,7 +11204,7 @@
     "cardNumber": 76,
     "rarity": "uncommon",
     "author": "Luis Huerta",
-    "flavorText": "Archazia’s library was a treasure trove of knowledge even for such an educated owl.",
+    "flavorText": "Archazia\u2019s library was a treasure trove of knowledge even for such an educated owl.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1606
   },
@@ -11226,7 +11226,7 @@
     "cardNumber": 78,
     "rarity": "common",
     "author": "Samanta Erdini",
-    "flavorText": "She heard Mariano’s heart skip a beat. Was it because of the puzzle, or was he looking at her?",
+    "flavorText": "She heard Mariano\u2019s heart skip a beat. Was it because of the puzzle, or was he looking at her?",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1604
   },
@@ -11247,7 +11247,7 @@
     "cardNumber": 85,
     "rarity": "common",
     "author": "Rianti Hidayat",
-    "flavorText": "Once again, Drizella was confronted with a simple truth: life wasn’t fair.",
+    "flavorText": "Once again, Drizella was confronted with a simple truth: life wasn\u2019t fair.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1597
   },
@@ -11280,7 +11280,7 @@
     "cardNumber": 88,
     "rarity": "uncommon",
     "author": "Kasia Brzezinska",
-    "flavorText": "There's nothing he can’t talk his way out of.",
+    "flavorText": "There's nothing he can\u2019t talk his way out of.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1594
   },
@@ -11728,7 +11728,7 @@
     "cardNumber": 135,
     "rarity": "uncommon",
     "author": "Luca Pinelli",
-    "flavorText": "Nobody knows who or what he really is or what he’s planning.",
+    "flavorText": "Nobody knows who or what he really is or what he\u2019s planning.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1547
   },
@@ -11780,7 +11780,7 @@
     "cardNumber": 140,
     "rarity": "rare",
     "author": "Federico Maria Cugliari",
-    "flavorText": "He got what he wanted—just not the way he planned.",
+    "flavorText": "He got what he wanted\u2014just not the way he planned.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1542
   },
@@ -12854,8 +12854,8 @@
     "set": "set6",
     "cardNumber": 26,
     "rarity": "common",
-    "author": "César Vergara",
-    "flavorText": "Always ready in an emergency—usually because he caused it.",
+    "author": "C\u00e9sar Vergara",
+    "flavorText": "Always ready in an emergency\u2014usually because he caused it.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1418
   },
@@ -12953,7 +12953,7 @@
     "cardNumber": 44,
     "rarity": "common",
     "author": "Andrea Parisi",
-    "flavorText": "The Carpenter’s stomach growled as he clenched his hammer tight . . .",
+    "flavorText": "The Carpenter\u2019s stomach growled as he clenched his hammer tight\u00a0.\u00a0.\u00a0.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1400
   },
@@ -12995,7 +12995,7 @@
     "set": "set6",
     "cardNumber": 48,
     "rarity": "uncommon",
-    "author": "Laia López",
+    "author": "Laia L\u00f3pez",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1396
   },
@@ -13217,7 +13217,7 @@
     "cardNumber": 78,
     "rarity": "common",
     "author": "Veronica Di Lorenzo / Livio Cacciatore",
-    "flavorText": "Loyal butler, training target, helicopter pilot—and completely unflappable.",
+    "flavorText": "Loyal butler, training target, helicopter pilot\u2014and completely unflappable.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1366
   },
@@ -13436,7 +13436,7 @@
     "set": "set6",
     "cardNumber": 109,
     "rarity": "uncommon",
-    "author": "César Vergara",
+    "author": "C\u00e9sar Vergara",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1335
   },
@@ -13776,7 +13776,7 @@
     "set": "set6",
     "cardNumber": 150,
     "rarity": "uncommon",
-    "author": "João Moura",
+    "author": "Jo\u00e3o Moura",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1294
   },
@@ -14063,7 +14063,7 @@
     "set": "set6",
     "cardNumber": 186,
     "rarity": "uncommon",
-    "author": "Hedvig Häggman-Sund",
+    "author": "Hedvig H\u00e4ggman-Sund",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1258
   },
@@ -14559,7 +14559,7 @@
     "set": "set5",
     "cardNumber": 12,
     "rarity": "uncommon",
-    "author": "João Moura",
+    "author": "Jo\u00e3o Moura",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1193
   },
@@ -14590,7 +14590,7 @@
     "set": "set5",
     "cardNumber": 15,
     "rarity": "common",
-    "author": "Roger Pérez / Leonardo Giammichele",
+    "author": "Roger P\u00e9rez / Leonardo Giammichele",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1190
   },
@@ -14654,7 +14654,7 @@
     "cardNumber": 21,
     "rarity": "rare",
     "author": "Hyuna Lee",
-    "flavorText": "If he must give a victory speech, he’ll keep it brief.",
+    "flavorText": "If he must give a victory speech, he\u2019ll keep it brief.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1184
   },
@@ -15066,7 +15066,7 @@
     "cardNumber": 80,
     "rarity": "rare",
     "author": "Otto Paredes",
-    "flavorText": "He won’t turn down a quick bite before dinner.",
+    "flavorText": "He won\u2019t turn down a quick bite before dinner.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1125
   },
@@ -15200,7 +15200,7 @@
     "set": "set5",
     "cardNumber": 93,
     "rarity": "rare",
-    "author": "César Vergara",
+    "author": "C\u00e9sar Vergara",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1112
   },
@@ -15252,7 +15252,7 @@
     "set": "set5",
     "cardNumber": 107,
     "rarity": "legendary",
-    "author": "César Vergara",
+    "author": "C\u00e9sar Vergara",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1098
   },
@@ -15454,7 +15454,7 @@
     "cardNumber": 126,
     "rarity": "uncommon",
     "author": "Raquel Villanueva",
-    "flavorText": "She doesn't seek the spotlight—the spotlight seeks her.",
+    "flavorText": "She doesn't seek the spotlight\u2014the spotlight seeks her.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1079
   },
@@ -15550,7 +15550,7 @@
     "set": "set5",
     "cardNumber": 145,
     "rarity": "rare",
-    "author": "Josep Solé",
+    "author": "Josep Sol\u00e9",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1060
   },
@@ -15707,7 +15707,7 @@
     "cardNumber": 171,
     "rarity": "uncommon",
     "author": "Karen Hallion",
-    "flavorText": "He’s not the biggest glimmer on the team, but he still packs a wallop.",
+    "flavorText": "He\u2019s not the biggest glimmer on the team, but he still packs a wallop.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1034
   },
@@ -16191,7 +16191,7 @@
     "cardNumber": 1,
     "rarity": "common",
     "author": "Eri Welli",
-    "flavorText": "Falling for Julieta was the easiest thing he’d ever done.",
+    "flavorText": "Falling for Julieta was the easiest thing he\u2019d ever done.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -970
   },
@@ -16276,8 +16276,8 @@
     "set": "set4",
     "cardNumber": 9,
     "rarity": "uncommon",
-    "author": "Hedvig Häggman-Sund",
-    "flavorText": "Who needs a gift when you’re having this much fun?",
+    "author": "Hedvig H\u00e4ggman-Sund",
+    "flavorText": "Who needs a gift when you\u2019re having this much fun?",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -962
   },
@@ -16299,7 +16299,7 @@
     "cardNumber": 11,
     "rarity": "rare",
     "author": "Andrea Parisi",
-    "flavorText": "You’ll miss her when she’s gone.",
+    "flavorText": "You\u2019ll miss her when she\u2019s gone.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -960
   },
@@ -16478,7 +16478,7 @@
     "cardNumber": 37,
     "rarity": "common",
     "author": "Angelina \"Spikie\" Ricardo",
-    "flavorText": "No matter what she tried, Belle couldn’t completely heal Beast’s wound.",
+    "flavorText": "No matter what she tried, Belle couldn\u2019t completely heal Beast\u2019s wound.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -934
   },
@@ -16604,7 +16604,7 @@
     "cardNumber": 49,
     "rarity": "common",
     "author": "Rudy Hill",
-    "flavorText": "Clean like no one’s watching.",
+    "flavorText": "Clean like no one\u2019s watching.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -922
   },
@@ -16824,8 +16824,8 @@
     "set": "set4",
     "cardNumber": 79,
     "rarity": "common",
-    "author": "Yu Nguyễn",
-    "flavorText": "With love, there’s always a catch.",
+    "author": "Yu Nguy\u1ec5n",
+    "flavorText": "With love, there\u2019s always a catch.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -892
   },
@@ -16974,7 +16974,7 @@
     "cardNumber": 103,
     "rarity": "uncommon",
     "author": "Ian MacDonald",
-    "flavorText": "It wasn’t the severity of the wounds but the sickly substance that caused such unbearable pain.",
+    "flavorText": "It wasn\u2019t the severity of the wounds but the sickly substance that caused such unbearable pain.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -868
   },
@@ -17103,7 +17103,7 @@
     "cardNumber": 115,
     "rarity": "uncommon",
     "author": "Jared Mathews",
-    "flavorText": "Ursula’s messengers fled, leaving behind tendrils of dark ink.",
+    "flavorText": "Ursula\u2019s messengers fled, leaving behind tendrils of dark ink.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -856
   },
@@ -17114,7 +17114,7 @@
     "cardNumber": 116,
     "rarity": "common",
     "author": "Jared Mathews",
-    "flavorText": "She’ll never give up.",
+    "flavorText": "She\u2019ll never give up.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -855
   },
@@ -17146,7 +17146,7 @@
     "cardNumber": 119,
     "rarity": "common",
     "author": "Denny Minonne",
-    "flavorText": "Fortune favors the bold—no matter how small.",
+    "flavorText": "Fortune favors the bold\u2014no matter how small.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -852
   },
@@ -17254,7 +17254,7 @@
     "cardNumber": 138,
     "rarity": "common",
     "author": "Leonardo Giammichele",
-    "flavorText": "Make sure you know what’s truly important and be willing to fight for it.",
+    "flavorText": "Make sure you know what\u2019s truly important and be willing to fight for it.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -833
   },
@@ -17285,7 +17285,7 @@
     "cardNumber": 141,
     "rarity": "common",
     "author": "Koni",
-    "flavorText": "Her music fills the Illuminary’s gardens with joy and light.",
+    "flavorText": "Her music fills the Illuminary\u2019s gardens with joy and light.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -830
   },
@@ -17340,7 +17340,7 @@
     "cardNumber": 146,
     "rarity": "common",
     "author": "Dustin Panzino / Leonardo Giammichele",
-    "flavorText": "Hans was confident he could bring Anna to Ursula—all he needed was something of Kristoff's to lure her in.",
+    "flavorText": "Hans was confident he could bring Anna to Ursula\u2014all he needed was something of Kristoff's to lure her in.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -825
   },
@@ -17394,7 +17394,7 @@
     "cardNumber": 151,
     "rarity": "common",
     "author": "Noukah",
-    "flavorText": "If you want to find something hidden, get someone who’s an expert at hiding.",
+    "flavorText": "If you want to find something hidden, get someone who\u2019s an expert at hiding.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -820
   },
@@ -17543,7 +17543,7 @@
     "cardNumber": 174,
     "rarity": "common",
     "author": "Dylan Bonner",
-    "flavorText": "Everything she’s ever wanted is almost in reach.",
+    "flavorText": "Everything she\u2019s ever wanted is almost in reach.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -797
   },
@@ -17628,7 +17628,7 @@
     "cardNumber": 182,
     "rarity": "uncommon",
     "author": "Carlos Ruiz",
-    "flavorText": "Immovable as a mountain and fierce as a dragon—the Empire's finest warrior.",
+    "flavorText": "Immovable as a mountain and fierce as a dragon\u2014the Empire's finest warrior.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -789
   },
@@ -17843,7 +17843,7 @@
     "cardNumber": 215,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "João Moura",
+    "author": "Jo\u00e3o Moura",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -756
   },
@@ -18136,7 +18136,7 @@
     "cardNumber": 14,
     "rarity": "common",
     "author": "Ellie Horie",
-    "flavorText": "Just like Thunderbolt, he’ll stand up to any bad guy.",
+    "flavorText": "Just like Thunderbolt, he\u2019ll stand up to any bad guy.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -687
   },
@@ -18146,7 +18146,7 @@
     "set": "set3",
     "cardNumber": 15,
     "rarity": "legendary",
-    "author": "Defne Tözüm / Livio Cacciatore",
+    "author": "Defne T\u00f6z\u00fcm / Livio Cacciatore",
     "flavorText": "Her pups will follow her anywhere.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -686
@@ -18223,7 +18223,7 @@
     "cardNumber": 22,
     "rarity": "uncommon",
     "author": "Aisha Durmagambetova",
-    "flavorText": "Plenty of berries—and friendship—to go around.",
+    "flavorText": "Plenty of berries\u2014and friendship\u2014to go around.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -679
   },
@@ -18234,7 +18234,7 @@
     "cardNumber": 23,
     "rarity": "uncommon",
     "author": "Aubrey Archer",
-    "flavorText": "With Tink’s upgrades in place, Wendy took them to the skies to find the missing mermaid.",
+    "flavorText": "With Tink\u2019s upgrades in place, Wendy took them to the skies to find the missing mermaid.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -678
   },
@@ -18791,7 +18791,7 @@
     "cardNumber": 103,
     "rarity": "common",
     "author": "Javi Salas",
-    "flavorText": "Shipwrecks are great places to find lore—and hide from sharks!",
+    "flavorText": "Shipwrecks are great places to find lore\u2014and hide from sharks!",
     "setRotationState": "CoreConstructed",
     "sortNumber": -598
   },
@@ -18867,7 +18867,7 @@
     "cardNumber": 110,
     "rarity": "common",
     "author": "Marcel Berg",
-    "flavorText": "If you want a bigger reward, you’ve got to take bigger risks.",
+    "flavorText": "If you want a bigger reward, you\u2019ve got to take bigger risks.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -591
   },
@@ -18878,7 +18878,7 @@
     "cardNumber": 111,
     "rarity": "common",
     "author": "Brian Kesinger",
-    "flavorText": "There’s a bunch more where he came from.",
+    "flavorText": "There\u2019s a bunch more where he came from.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -590
   },
@@ -19008,7 +19008,7 @@
     "cardNumber": 123,
     "rarity": "rare",
     "author": "Agnes Christianson",
-    "flavorText": "He’ll join the hunt for lore after he’s had a quick snack.",
+    "flavorText": "He\u2019ll join the hunt for lore after he\u2019s had a quick snack.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -578
   },
@@ -19117,7 +19117,7 @@
     "set": "set3",
     "cardNumber": 142,
     "rarity": "common",
-    "author": "Cécile Carre / Anna Stosik",
+    "author": "C\u00e9cile Carre / Anna Stosik",
     "flavorText": "Listen with your whole heart, and the ancestors will guide you.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -559
@@ -19172,7 +19172,7 @@
     "set": "set3",
     "cardNumber": 147,
     "rarity": "uncommon",
-    "author": "Roger Pérez",
+    "author": "Roger P\u00e9rez",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -554
   },
@@ -19227,7 +19227,7 @@
     "cardNumber": 152,
     "rarity": "common",
     "author": "Rianti Hidayat",
-    "flavorText": "Pluto’s job was to keep Gustav’s attention so Minnie could get to the cave.",
+    "flavorText": "Pluto\u2019s job was to keep Gustav\u2019s attention so Minnie could get to the cave.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -549
   },
@@ -19271,7 +19271,7 @@
     "cardNumber": 156,
     "rarity": "uncommon",
     "author": "Jennifer Gheduzzi / Livio Cacciatore",
-    "flavorText": "She has only one question, and she’d better like the answer.",
+    "flavorText": "She has only one question, and she\u2019d better like the answer.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -545
   },
@@ -19410,7 +19410,7 @@
     "cardNumber": 181,
     "rarity": "common",
     "author": "Louis Jones",
-    "flavorText": "Mickey knew just where to start searching for the Sorcerer’s Hat, but he didn’t expect it to be guarded.",
+    "flavorText": "Mickey knew just where to start searching for the Sorcerer\u2019s Hat, but he didn\u2019t expect it to be guarded.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -520
   },
@@ -19529,7 +19529,7 @@
     "cardNumber": 192,
     "rarity": "common",
     "author": "Noukah",
-    "flavorText": "He’s ready to restore the Pride Lands to their former glory.",
+    "flavorText": "He\u2019s ready to restore the Pride Lands to their former glory.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -509
   },
@@ -19573,7 +19573,7 @@
     "cardNumber": 206,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Grzegorz Krysiński",
+    "author": "Grzegorz Krysi\u0144ski",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -495
   },
@@ -19672,7 +19672,7 @@
     "cardNumber": 220,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Luigi Aimé",
+    "author": "Luigi Aim\u00e9",
     "setRotationState": "CoreConstructed",
     "sortNumber": -481
   },
@@ -19911,7 +19911,7 @@
     "cardNumber": 15,
     "rarity": "common",
     "author": "Amber Kommavongsa",
-    "flavorText": "Everything looks better when you’re free to be yourself.",
+    "flavorText": "Everything looks better when you\u2019re free to be yourself.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -456
   },
@@ -19932,7 +19932,7 @@
     "cardNumber": 17,
     "rarity": "uncommon",
     "author": "Filipe Laurentino",
-    "flavorText": "Children are a dog’s best friend.",
+    "flavorText": "Children are a dog\u2019s best friend.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -454
   },
@@ -19986,7 +19986,7 @@
     "cardNumber": 22,
     "rarity": "common",
     "author": "Kendall Hale",
-    "flavorText": "Look out! He’s gonna blow!",
+    "flavorText": "Look out! He\u2019s gonna blow!",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -449
   },
@@ -20039,7 +20039,7 @@
     "cardNumber": 27,
     "rarity": "common",
     "author": "Eva Widermann",
-    "flavorText": "Don’t question her. Don’t doubt her. And above all, don’t disobey her.",
+    "flavorText": "Don\u2019t question her. Don\u2019t doubt her. And above all, don\u2019t disobey her.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -444
   },
@@ -20189,7 +20189,7 @@
     "set": "set2",
     "cardNumber": 48,
     "rarity": "rare",
-    "author": "Mané Kandalyan / Pix Smith",
+    "author": "Man\u00e9 Kandalyan / Pix Smith",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -423
   },
@@ -20211,7 +20211,7 @@
     "cardNumber": 50,
     "rarity": "common",
     "author": "Valentina Graziuso",
-    "flavorText": "He’ll be out of this in a snap!",
+    "flavorText": "He\u2019ll be out of this in a snap!",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -421
   },
@@ -20309,7 +20309,7 @@
     "cardNumber": 59,
     "rarity": "common",
     "author": "John Loren",
-    "flavorText": "He’d always felt a kinship with honey. They were both golden, and sweet, and likely to end up in sticky situations.",
+    "flavorText": "He\u2019d always felt a kinship with honey. They were both golden, and sweet, and likely to end up in sticky situations.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -412
   },
@@ -20543,7 +20543,7 @@
     "set": "set2",
     "cardNumber": 88,
     "rarity": "rare",
-    "author": "Hedvig Häggman-Sund",
+    "author": "Hedvig H\u00e4ggman-Sund",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -383
   },
@@ -20653,7 +20653,7 @@
     "cardNumber": 105,
     "rarity": "uncommon",
     "author": "Bill Robinson",
-    "flavorText": "You’ll have to deal with them sooner or later.",
+    "flavorText": "You\u2019ll have to deal with them sooner or later.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -366
   },
@@ -21062,7 +21062,7 @@
     "cardNumber": 151,
     "rarity": "common",
     "author": "R. la Barbera / L. Giammichele",
-    "flavorText": "She may be young, but she’s got the spirit of a true leader.",
+    "flavorText": "She may be young, but she\u2019s got the spirit of a true leader.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -320
   },
@@ -21127,7 +21127,7 @@
     "cardNumber": 157,
     "rarity": "rare",
     "author": "Vicky Xie / Mariana Moreno",
-    "flavorText": "He’d searched across the Inklands for the young woman who’d stolen his heart at the ball, only to find more mysteries.",
+    "flavorText": "He\u2019d searched across the Inklands for the young woman who\u2019d stolen his heart at the ball, only to find more mysteries.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -314
   },
@@ -21149,7 +21149,7 @@
     "cardNumber": 159,
     "rarity": "legendary",
     "author": "Grace Tran",
-    "flavorText": "No matter her shape, you can’t mistake her heart.",
+    "flavorText": "No matter her shape, you can\u2019t mistake her heart.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -312
   },
@@ -21237,7 +21237,7 @@
     "cardNumber": 176,
     "rarity": "common",
     "author": "Grace Tran",
-    "flavorText": "She's always had the heart of a champion—now she'll have the skills, too.",
+    "flavorText": "She's always had the heart of a champion\u2014now she'll have the skills, too.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -295
   },
@@ -21280,7 +21280,7 @@
     "cardNumber": 180,
     "rarity": "rare",
     "author": "Marco Giorgianni",
-    "flavorText": "It’s a banner day for Sir Goofy, who is steeled to prove his mettle against anyone courting trouble—joust in case.",
+    "flavorText": "It\u2019s a banner day for Sir Goofy, who is steeled to prove his mettle against anyone courting trouble\u2014joust in case.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -291
   },
@@ -21518,7 +21518,7 @@
     "cardNumber": 209,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Hedvig Häggman-Sund",
+    "author": "Hedvig H\u00e4ggman-Sund",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -262
   },
@@ -21824,7 +21824,7 @@
     "cardNumber": 12,
     "rarity": "uncommon",
     "author": "Dave Beauchene",
-    "flavorText": "As long as he’s around, newcomers to the Great Illuminary will always get a warm welcome.",
+    "flavorText": "As long as he\u2019s around, newcomers to the Great Illuminary will always get a warm welcome.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -232
   },
@@ -21944,7 +21944,7 @@
     "cardNumber": 23,
     "rarity": "common",
     "author": "Simangaliso Sibaya",
-    "flavorText": "The best part about a beachside concert is that there’s always room for one more.",
+    "flavorText": "The best part about a beachside concert is that there\u2019s always room for one more.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -221
   },
@@ -22227,7 +22227,7 @@
     "cardNumber": 59,
     "rarity": "legendary",
     "author": "Simangaliso Sibaya",
-    "flavorText": "The first Rule of Villainy: If you’re going to be evil, you’ve got to have STYLE.",
+    "flavorText": "The first Rule of Villainy: If you\u2019re going to be evil, you\u2019ve got to have STYLE.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -185
   },
@@ -22553,7 +22553,7 @@
     "cardNumber": 105,
     "rarity": "common",
     "author": "Peter Brockhammer",
-    "flavorText": "It can be hard to tell the difference between a diamond in the rough and someone who’s just, well, rough.",
+    "flavorText": "It can be hard to tell the difference between a diamond in the rough and someone who\u2019s just, well, rough.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -139
   },
@@ -22608,7 +22608,7 @@
     "cardNumber": 110,
     "rarity": "common",
     "author": "Matthew Robert Davies",
-    "flavorText": "It’s not arrogance when you really <are> the best.",
+    "flavorText": "It\u2019s not arrogance when you really <are> the best.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -134
   },
@@ -22619,7 +22619,7 @@
     "cardNumber": 111,
     "rarity": "common",
     "author": "Kenneth Anderson",
-    "flavorText": "Sometimes you gotta give it the ol’ jump and hyuck.",
+    "flavorText": "Sometimes you gotta give it the ol\u2019 jump and hyuck.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -133
   },
@@ -22958,7 +22958,7 @@
     "cardNumber": 151,
     "rarity": "rare",
     "author": "Gaku Kumatori",
-    "flavorText": "She had no invitation—and needed no introduction.",
+    "flavorText": "She had no invitation\u2014and needed no introduction.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -93
   },
@@ -23100,7 +23100,7 @@
     "cardNumber": 174,
     "rarity": "common",
     "author": "Marcel Berg",
-    "flavorText": "He loves to make light of a foe’s predicament.",
+    "flavorText": "He loves to make light of a foe\u2019s predicament.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -70
   },
@@ -23219,7 +23219,7 @@
     "cardNumber": 185,
     "rarity": "rare",
     "author": "Isaiah Mesq",
-    "flavorText": "When the gods gift you a boat, you take it. The boat’s owner is optional.",
+    "flavorText": "When the gods gift you a boat, you take it. The boat\u2019s owner is optional.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -59
   },
@@ -23437,7 +23437,7 @@
     "cardNumber": 215,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Hedvig Häggman-Sund",
+    "author": "Hedvig H\u00e4ggman-Sund",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -29
   },
@@ -23917,7 +23917,7 @@
     "cardNumber": 204,
     "rarity": "uncommon",
     "author": "Jeremy Adams",
-    "flavorText": "Nothing but boulders and sand—easy to miss.",
+    "flavorText": "Nothing but boulders and sand\u2014easy to miss.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2005
   },
@@ -23948,7 +23948,7 @@
     "cardNumber": 68,
     "rarity": "common",
     "author": "Kristen Kaluba",
-    "flavorText": "Legends say that whenever something goes missing, it’s been taken to build the fairy ships of the Azurite Sea.",
+    "flavorText": "Legends say that whenever something goes missing, it\u2019s been taken to build the fairy ships of the Azurite Sea.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1376
   },
@@ -24049,7 +24049,7 @@
     "cardNumber": 207,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Andrew Peña / Aubrey Archer",
+    "author": "Andrew Pe\u00f1a / Aubrey Archer",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1237
   },
@@ -24380,8 +24380,8 @@
     "set": "set3",
     "cardNumber": 32,
     "rarity": "common",
-    "author": "Cécile Carre",
-    "flavorText": "The mermaids told Peter they’d seen some items floating by several days earlier, but they were more concerned that one of their sisters had gone missing.",
+    "author": "C\u00e9cile Carre",
+    "flavorText": "The mermaids told Peter they\u2019d seen some items floating by several days earlier, but they were more concerned that one of their sisters had gone missing.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -669
   },
@@ -24413,7 +24413,7 @@
     "cardNumber": 66,
     "rarity": "common",
     "author": "Jimmy Lo",
-    "flavorText": "An eerie quiet surrounds the castle—but beware of the dangerous occupant within.",
+    "flavorText": "An eerie quiet surrounds the castle\u2014but beware of the dangerous occupant within.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -635
   },
@@ -24424,7 +24424,7 @@
     "cardNumber": 67,
     "rarity": "rare",
     "author": "Matthew Oates",
-    "flavorText": "Those who visit the mirror can choose their question—but not the answer.",
+    "flavorText": "Those who visit the mirror can choose their question\u2014but not the answer.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -634
   },
@@ -24542,7 +24542,7 @@
     "cardNumber": 202,
     "rarity": "rare",
     "author": "Jeremy Adams",
-    "flavorText": "Nothing but boulders and sand—easy to miss.",
+    "flavorText": "Nothing but boulders and sand\u2014easy to miss.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -499
   },
@@ -24870,7 +24870,7 @@
     "cardNumber": 101,
     "rarity": "rare",
     "author": "Tanisha Cherislin",
-    "flavorText": "There’s a right tool for every job.",
+    "flavorText": "There\u2019s a right tool for every job.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2613
   },
@@ -25119,7 +25119,7 @@
     "set": "set10",
     "cardNumber": 168,
     "rarity": "common",
-    "author": "Aurélie Lise-Anne",
+    "author": "Aur\u00e9lie Lise-Anne",
     "flavorText": "Sometimes a glimpse is all you need.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2295
@@ -25248,7 +25248,7 @@
     "cardNumber": 67,
     "rarity": "common",
     "author": "Gabriel Angelo",
-    "flavorText": "The transformed rose made short work of the Beast’s wound. But even the gentlest magic comes at a cost.",
+    "flavorText": "The transformed rose made short work of the Beast\u2019s wound. But even the gentlest magic comes at a cost.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2142
   },
@@ -25279,7 +25279,7 @@
     "set": "set9",
     "cardNumber": 134,
     "rarity": "uncommon",
-    "author": "Defne Tözüm",
+    "author": "Defne T\u00f6z\u00fcm",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2075
   },
@@ -25323,7 +25323,7 @@
     "cardNumber": 169,
     "rarity": "common",
     "author": "Milica Celikovic",
-    "flavorText": "The coconut is a versatile gift from the gods, used to make nearly everything—including baskets to carry more coconuts.",
+    "flavorText": "The coconut is a versatile gift from the gods, used to make nearly everything\u2014including baskets to carry more coconuts.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2040
   },
@@ -25451,7 +25451,7 @@
     "cardNumber": 219,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Jonathan Livslyst / Renée Chio",
+    "author": "Jonathan Livslyst / Ren\u00e9e Chio",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1734
   },
@@ -26079,7 +26079,7 @@
     "cardNumber": 65,
     "rarity": "common",
     "author": "Gabriel Angelo",
-    "flavorText": "The transformed rose made short work of the Beast’s wound. But even the gentlest magic comes at a cost.",
+    "flavorText": "The transformed rose made short work of the Beast\u2019s wound. But even the gentlest magic comes at a cost.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -906
   },
@@ -26144,7 +26144,7 @@
     "set": "set4",
     "cardNumber": 132,
     "rarity": "uncommon",
-    "author": "Defne Tözüm",
+    "author": "Defne T\u00f6z\u00fcm",
     "setRotationState": "CoreConstructed",
     "sortNumber": -839
   },
@@ -26195,7 +26195,7 @@
     "set": "set4",
     "cardNumber": 168,
     "rarity": "common",
-    "author": "Grzegorz Krysiński",
+    "author": "Grzegorz Krysi\u0144ski",
     "flavorText": "Frozen ink can be harvested and processed to many useful ends.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -803
@@ -26510,7 +26510,7 @@
     "cardNumber": 68,
     "rarity": "rare",
     "author": "Julie Vu",
-    "flavorText": "Illumineers seek the power of knowledge—but must be aware of the price.",
+    "flavorText": "Illumineers seek the power of knowledge\u2014but must be aware of the price.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -403
   },
@@ -26521,7 +26521,7 @@
     "cardNumber": 102,
     "rarity": "rare",
     "author": "Leonardo Giammichele",
-    "flavorText": "Simple in purpose, elaborate in execution—just like Ratigan.",
+    "flavorText": "Simple in purpose, elaborate in execution\u2014just like Ratigan.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -369
   },
@@ -26761,7 +26761,7 @@
     "cardNumber": 136,
     "rarity": "rare",
     "author": "Andrew Trabbold",
-    "flavorText": "Almost as powerful as True Love’s Kiss.",
+    "flavorText": "Almost as powerful as True Love\u2019s Kiss.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -108
   },
@@ -26772,7 +26772,7 @@
     "cardNumber": 166,
     "rarity": "uncommon",
     "author": "Milica Celikovic",
-    "flavorText": "The coconut is a versatile gift from the gods, used to make nearly everything—including baskets to carry more coconuts.",
+    "flavorText": "The coconut is a versatile gift from the gods, used to make nearly everything\u2014including baskets to carry more coconuts.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -78
   },
@@ -26837,7 +26837,7 @@
     "cardNumber": 202,
     "rarity": "uncommon",
     "author": "Kamil Murzyn",
-    "flavorText": "It’s a fine piece of cookware, but as a weapon it’s truly stunning.",
+    "flavorText": "It\u2019s a fine piece of cookware, but as a weapon it\u2019s truly stunning.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -42
   },
@@ -26848,7 +26848,7 @@
     "cardNumber": 203,
     "rarity": "rare",
     "author": "Dav Augereau",
-    "flavorText": "There’s no such thing as a lone musketeer.",
+    "flavorText": "There\u2019s no such thing as a lone musketeer.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -41
   },
@@ -27507,7 +27507,7 @@
     "cardNumber": 240,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Juan Pablo Velázquez",
+    "author": "Juan Pablo Vel\u00e1zquez",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2474
   },
@@ -27529,7 +27529,7 @@
     "cardNumber": 27,
     "rarity": "uncommon",
     "author": "Carlos Gomes Cabral",
-    "flavorText": "Every day they're out there making DuckTales! Woo-oo!",
+    "flavorText": "Every day they're out there making\u2028DuckTales! Woo-oo!",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2436
   },
@@ -27615,7 +27615,7 @@
     "cardNumber": 94,
     "rarity": "common",
     "author": "Valentina Graziuso",
-    "flavorText": "He's a patient merman—up to a point.",
+    "flavorText": "He's a patient merman\u2014up to a point.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2369
   },
@@ -27668,7 +27668,7 @@
     "cardNumber": 130,
     "rarity": "rare",
     "author": "Sebastian Lozano",
-    "flavorText": "Run scared if you must—but whatever you do, RUN!",
+    "flavorText": "Run scared if you must\u2014but whatever you do, RUN!",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2333
   },
@@ -27841,7 +27841,7 @@
     "cardNumber": 228,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Monika Pałosz",
+    "author": "Monika Pa\u0142osz",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2235
   },
@@ -27874,7 +27874,7 @@
     "cardNumber": 237,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Grzegorz Krysiński",
+    "author": "Grzegorz Krysi\u0144ski",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2226
   },
@@ -27942,7 +27942,7 @@
     "cardNumber": 28,
     "rarity": "common",
     "author": "Ellie Horie",
-    "flavorText": "I’m left behind, wondering if I should follow",
+    "flavorText": "I\u2019m left behind, wondering if I should follow",
     "setRotationState": "CoreConstructed",
     "sortNumber": -2181
   },
@@ -28723,7 +28723,7 @@
     "cardNumber": 83,
     "rarity": "rare",
     "author": "Jochem van Gool",
-    "flavorText": "The Hexwell surged with pure creative energy, fusing the crown’s pieces in a final burst of power.",
+    "flavorText": "The Hexwell surged with pure creative energy, fusing the crown\u2019s pieces in a final burst of power.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1599
   },
@@ -28995,7 +28995,7 @@
     "cardNumber": 95,
     "rarity": "common",
     "author": "Domenico Russo",
-    "flavorText": "If honey’s what you covet, you’ll find that they love it",
+    "flavorText": "If honey\u2019s what you covet, you\u2019ll find that they love it",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1349
   },
@@ -29340,7 +29340,7 @@
     "set": "set5",
     "cardNumber": 96,
     "rarity": "uncommon",
-    "author": "César Vergara",
+    "author": "C\u00e9sar Vergara",
     "flavorText": "I make everything happen!",
     "setRotationState": "CoreConstructed",
     "sortNumber": -1109
@@ -29602,7 +29602,7 @@
     "cardNumber": 29,
     "rarity": "uncommon",
     "author": "Ellie Horie",
-    "flavorText": "I’m left behind, wondering if I should follow",
+    "flavorText": "I\u2019m left behind, wondering if I should follow",
     "setRotationState": "CoreConstructed",
     "sortNumber": -942
   },
@@ -29742,7 +29742,7 @@
     "cardNumber": 130,
     "rarity": "common",
     "author": "R. la Barbera / L. Giammichele",
-    "flavorText": "There are two ways to leave the Snuggly Duckling—the door or the window.",
+    "flavorText": "There are two ways to leave the Snuggly Duckling\u2014the door or the window.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -841
   },
@@ -29871,7 +29871,7 @@
     "cardNumber": 213,
     "rarity": "enchanted",
     "specialRarity": "enchanted",
-    "author": "Victor “Yano” Covarrubias",
+    "author": "Victor \u201cYano\u201d Covarrubias",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -758
   },
@@ -29948,7 +29948,7 @@
     "cardNumber": 61,
     "rarity": "uncommon",
     "author": "Luis Huerta",
-    "flavorText": "I am everything I’ve learned and more",
+    "flavorText": "I am everything I\u2019ve learned and more",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -640
   },
@@ -30250,7 +30250,7 @@
     "cardNumber": 96,
     "rarity": "rare",
     "author": "LadyShalirin",
-    "flavorText": "It’ll do magic, believe it or not",
+    "flavorText": "It\u2019ll do magic, believe it or not",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -375
   },
@@ -30400,7 +30400,7 @@
     "set": "set2",
     "cardNumber": 165,
     "rarity": "common",
-    "author": "Mané Kandalyan / Jochem van Gool",
+    "author": "Man\u00e9 Kandalyan / Jochem van Gool",
     "flavorText": "Helps you avoid unpleasant surprises.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -306
@@ -30411,7 +30411,7 @@
     "set": "set2",
     "cardNumber": 198,
     "rarity": "common",
-    "author": "Hedvig Häggman-Sund",
+    "author": "Hedvig H\u00e4ggman-Sund",
     "flavorText": "Sometimes subtlety is required. This is not one of those times.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -273
@@ -30510,7 +30510,7 @@
     "cardNumber": 29,
     "rarity": "rare",
     "author": "Leonardo Giammichele",
-    "flavorText": "The best heroes always arrive at the perfect moment—whether they know it or not.",
+    "flavorText": "The best heroes always arrive at the perfect moment\u2014whether they know it or not.",
     "setRotationState": "InfinityConstructed",
     "sortNumber": -215
   },
@@ -30686,7 +30686,7 @@
     "cardNumber": 130,
     "rarity": "uncommon",
     "author": "Luis Huerta",
-    "flavorText": "Rare is the hero who can withstand a dragon’s wrath.",
+    "flavorText": "Rare is the hero who can withstand a dragon\u2019s wrath.",
     "setRotationState": "CoreConstructed",
     "sortNumber": -114
   },

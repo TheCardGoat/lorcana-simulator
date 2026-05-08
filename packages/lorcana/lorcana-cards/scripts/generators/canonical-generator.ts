@@ -664,6 +664,21 @@ function buildPlaceholderI18n(
 }
 
 /**
+ * Minimal i18n so generate-cards can emit .i18n.ts before embed-card-i18n runs.
+ * Non-English locales mirror English; embed-card-i18n replaces them from API data.
+ */
+function buildPlaceholderI18n(
+  card: Pick<CanonicalCard, "name" | "version" | "rulesText">,
+): Record<Languages, I18nProperties> {
+  const en: I18nProperties = {
+    name: card.name,
+    ...(card.version ? { version: card.version } : {}),
+    ...(card.rulesText ? { text: card.rulesText } : {}),
+  };
+  return { en, de: { ...en }, fr: { ...en }, it: { ...en } };
+}
+
+/**
  * Generate one CardDefinition per printing from expanded items and printing ids.
  * Card id is always the 3-char shortId from byPrintingId (do not change to printing-id format).
  * Record is keyed by printingId so file generator can look up the printing.

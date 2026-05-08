@@ -1091,6 +1091,7 @@ $effect(() => {
       playerSide={ownerSide ?? "playerOne"}
       viewerSide={ownerSide}
       cards={targetSelectionDialogCards}
+      trustCandidates={true}
       selectable={true}
       players={targetSelectionDialogPlayers}
       selectedCardIds={selectedTargetCardIds}

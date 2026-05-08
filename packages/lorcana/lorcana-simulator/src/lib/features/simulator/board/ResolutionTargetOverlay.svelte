@@ -341,6 +341,55 @@ function handleSelectInteraction(interaction: InteractionSelectCard): void {
               </section>
             {/each}
           </div>
+
+          {#each [{ label: "Your characters", entries: yourCandidates }, { label: "Opponent's characters", entries: opponentCandidates }] as group (group.label)}
+            {#if group.entries.length > 0}
+              {#if showGroupLabels}
+                <p class="target-overlay__group-label">{group.label}</p>
+              {/if}
+              <div class="target-overlay__candidate-grid">
+                {#each group.entries as entry (entry.id)}
+                  {@const candidateCard = entry.kind === "card" && entry.cardId ? getCard(entry.cardId) : null}
+                  {#if candidateCard}
+                    <button
+                      type="button"
+                      class="target-overlay__candidate-button"
+                      class:target-overlay__candidate-button--selected={entry.selected}
+                      onclick={() => onSelectCard?.(candidateCard.cardId)}
+                      onmouseenter={() => handleCardPreviewEnter(candidateCard)}
+                      onmouseleave={() => handleCardPreviewLeave(candidateCard)}
+                      data-testid={`resolution-target-candidate:${candidateCard.cardId}`}
+                    >
+                      <LorcanaCard
+                        card={candidateCard}
+                        size="small"
+                        isSelected={entry.selected}
+                        isMasked={candidateCard.isMasked}
+                        interactionMeta={{
+                          cardId: candidateCard.cardId,
+                          ownerSide: candidateCard.ownerSide,
+                          zoneId: candidateCard.zoneId,
+                          selectionGroup: "resolution-target-overlay-candidates",
+                          selectionMode: "none",
+                          selectable: true,
+                        }}
+                      />
+                      <span class="target-overlay__candidate-label">{entry.label}</span>
+                    </button>
+                  {/if}
+                {/each}
+              </div>
+            {/if}
+          {/each}
+        </section>
+
+        {#if selectionState.amountSelection}
+          <ResolutionAmountControls
+            selection={selectionState.amountSelection}
+            onChange={(value) => {
+              onAmountChange?.(value);
+            }}
+          />
         {/if}
 
         <section class="target-overlay__candidates">

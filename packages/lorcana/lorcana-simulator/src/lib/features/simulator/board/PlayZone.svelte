@@ -420,6 +420,20 @@
     flex: 0 0 auto;
   }
 
+  /* Sparse state (1–4 cards): raise the width cap so cards grow to fill
+     the lane instead of floating in empty space. The height clamp still
+     applies, so cards won't overflow vertically. */
+  .board-zone--sparse {
+    --sparse-mult: 1.5;
+  }
+
+  .card-slot__card-wrapper {
+    position: relative;
+    width: var(--card-art-width);
+    height: var(--card-art-height);
+    flex: 0 0 auto;
+  }
+
   .cards-content {
     display: flex;
     flex-direction: column;

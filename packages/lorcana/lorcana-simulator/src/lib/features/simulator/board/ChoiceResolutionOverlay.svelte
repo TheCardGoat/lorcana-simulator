@@ -374,6 +374,50 @@ onMount(() => {
     line-height: 1.35;
   }
 
+  .choice-overlay__target {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.65rem;
+    align-items: center;
+    padding: 0.6rem;
+    border: 1px solid rgba(190, 225, 195, 0.15);
+    border-radius: 0.65rem;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .choice-overlay__target-art {
+    width: 3.2rem;
+    border-radius: 0.35rem;
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: box-shadow 0.12s ease;
+  }
+
+  .choice-overlay__target-art:hover {
+    box-shadow: 0 0 0 2px rgba(125, 180, 111, 0.5);
+  }
+
+  .choice-overlay__target-info {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: rgba(193, 228, 197, 0.7);
+    min-width: 0;
+  }
+
+  :global(.choice-overlay__target-icon) {
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  .choice-overlay__target-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .choice-overlay__drag-handle {
     display: inline-flex;
     align-items: center;

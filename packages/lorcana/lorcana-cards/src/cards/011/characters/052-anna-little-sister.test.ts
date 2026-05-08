@@ -17,12 +17,6 @@ const discardFodder = createMockCharacter({
   lore: 1,
 });
 
-const actionFodder = createMockAction({
-  id: "anna-little-sister-action-fodder",
-  name: "Action Fodder",
-  cost: 1,
-});
-
 describe("Anna - Little Sister", () => {
   describe("UNEXPECTED DISCOVERY - When you play this character, you may put a card from chosen player's discard on the bottom of their deck", () => {
     it("should put a card from own discard on bottom of own deck when accepted", () => {

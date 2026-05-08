@@ -48,6 +48,7 @@ export interface AbilityActivatedWithDiscardCostLogValues extends AbilityActivat
 export interface CardInkedLogValues {
   playerId: PlayerId;
   cardId: CardInstanceId;
+  cardName?: string;
 }
 
 export interface ScryCountLogValues {
@@ -343,6 +344,18 @@ export interface PlayCardShiftLogValues {
   playerId: PlayerId;
   cardId: CardInstanceId;
   shiftTargetId: CardInstanceId;
+  /** Captured at shift resolution so logs stay readable after the target moves to limbo (hidden projection). */
+  shiftTargetName?: string;
+}
+
+export interface OutcomeCardInkedLogValues {
+  playerId: PlayerId;
+  cardId: CardInstanceId;
+}
+
+export interface OutcomeCardInkedExertedLogValues {
+  playerId: PlayerId;
+  cardId: CardInstanceId;
 }
 
 export interface OutcomeCardInkedLogValues {

@@ -418,6 +418,46 @@ export function formatEventLogBody(
       );
     }
 
+    // Shift puts the target in limbo without publicFaceState; zone projection masks it as hidden.
+    // Prefer the name captured on the move log (same pattern as inkCard + cardName).
+    if (moveLog.type === "shiftCard" && moveLog.shiftTargetName) {
+      const shiftTargetLabel = moveLog.shiftTargetName;
+      segments = segments.map((seg) =>
+        seg.kind === "card" && seg.cardId === moveLog.shiftTargetId
+          ? { ...seg, fallbackLabel: shiftTargetLabel }
+          : seg,
+      );
+    }
+
+    // After resolveCard runs, re-apply the stored card name for inkCard.
+    // resolveCard may have set "Hidden card" because the inked card is now face-down,
+    // but inking is a public action and the card name must be shown to all players.
+    if (moveLog.type === "inkCard" && moveLog.cardName) {
+      const cardName = moveLog.cardName;
+      segments = segments.map((seg) =>
+        seg.kind === "card" && seg.cardId === moveLog.cardId
+          ? { ...seg, fallbackLabel: cardName }
+          : seg,
+      );
+    }
+
+    // For any move with cardsInked outcomes that carry a stored cardName,
+    // override the fallbackLabel so the card name is shown even when face-down.
+    if ("outcomes" in moveLog && moveLog.outcomes?.cardsInked) {
+      const inkedNameMap = new Map(
+        moveLog.outcomes.cardsInked
+          .filter((entry) => entry.cardName)
+          .map((entry) => [entry.cardId, entry.cardName as string]),
+      );
+      if (inkedNameMap.size > 0) {
+        segments = segments.map((seg) =>
+          seg.kind === "card" && inkedNameMap.has(seg.cardId as CardInstanceId)
+            ? { ...seg, fallbackLabel: inkedNameMap.get(seg.cardId as CardInstanceId) }
+            : seg,
+        );
+      }
+    }
+
     const text = segments.length > 0 ? flattenEventLogSegments(segments) : entry.title || moveType;
     return {
       marker,
@@ -440,6 +480,20 @@ export function formatEventLogBody(
         ? { ...s, fallbackLabel: resolveCard(s.cardId)?.label ?? s.fallbackLabel }
         : s,
     );
+  }
+
+  if (typedMessageEntry.type === "lorcana.move.playCard.shift") {
+    const shiftValues = typedMessageEntry.values as {
+      shiftTargetId?: string;
+      shiftTargetName?: string;
+    };
+    if (shiftValues.shiftTargetName && shiftValues.shiftTargetId) {
+      const label = shiftValues.shiftTargetName;
+      const targetId = shiftValues.shiftTargetId;
+      segments = segments.map((seg) =>
+        seg.kind === "card" && seg.cardId === targetId ? { ...seg, fallbackLabel: label } : seg,
+      );
+    }
   }
 
   return {

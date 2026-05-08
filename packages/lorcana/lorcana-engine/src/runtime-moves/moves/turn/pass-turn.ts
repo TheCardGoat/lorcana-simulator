@@ -272,6 +272,17 @@ function drawForTurn(ctx: PassTurnExecutionContext, playerId: PlayerId, turnNumb
       },
     );
   }
+
+  // Emit triggered events for each drawn card so "Whenever you draw" abilities fire.
+  // source: "mandatory-draw" routes these to TurnStartLog instead of the current move's outcomes.
+  for (const cardId of drawnCardIds) {
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "cardsDrawn",
+      { playerId, amount: 1, cardIds: [cardId], source: "mandatory-draw" },
+      { event: "draw", playerId, subjectCardId: cardId },
+    );
+  }
 }
 
 function shouldSkipDrawStepForPlayer(

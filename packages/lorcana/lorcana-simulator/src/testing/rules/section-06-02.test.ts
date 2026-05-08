@@ -51,6 +51,18 @@ describe("# 6. ABILITIES, EFFECTS, AND RESOLVING", () => {
       });
 
       expect(noTriggerEngine.asPlayerOne().playCard(stitchCarefreeSurfer)).toBeSuccessfulCommand();
+      expect(noTriggerEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(noTriggerEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
+
+      // Resolve the pending triggered ability — condition (2+ other characters) is not met,
+      // so the effect does not occur (no cards drawn).
+      expect(
+        noTriggerEngine
+          .asPlayerOne()
+          .resolvePendingByCard(noTriggerEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
+            resolveOptional: false,
+          }),
+      ).toBeSuccessfulCommand();
       expect(noTriggerEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(noTriggerEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
       expect(noTriggerEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);

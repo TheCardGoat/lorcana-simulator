@@ -53,7 +53,7 @@ async function readZipAsReplayData(
 async function gzipBytes(input: Uint8Array): Promise<ArrayBuffer> {
   const stream = new Blob([input.buffer as ArrayBuffer])
     .stream()
-    .pipeThrough(new CompressionStream("gzip"));
+    .pipeThrough(new CompressionStream("gzip") as ReadableWritablePair<Uint8Array, Uint8Array>);
   return new Response(stream).arrayBuffer();
 }
 

@@ -72,6 +72,8 @@ export interface ShiftCardLog extends MoveLogBase {
   type: "shiftCard";
   cardId: CardInstanceId;
   shiftTargetId: CardInstanceId;
+  /** Stored when the move runs so UI text can name the target after it is in limbo (hidden in zone projection). */
+  shiftTargetName?: string;
   inkPaid?: number;
   outcomes?: MoveOutcomes;
 }
@@ -110,6 +112,7 @@ export interface QuestWithAllLog extends MoveLogBase {
 export interface InkCardLog extends MoveLogBase {
   type: "inkCard";
   cardId: CardInstanceId;
+  cardName?: string;
 }
 
 export interface LookAtInkwellLog extends MoveLogBase {

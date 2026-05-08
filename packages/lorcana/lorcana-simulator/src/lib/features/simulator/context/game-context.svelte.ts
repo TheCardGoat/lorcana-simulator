@@ -756,6 +756,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     playerSettings: LorcanaPlayerSettingsMap = {},
     playerMetadataMap: Record<string, PlayerMatchMetadata> = {},
     debugPerformance = DEBUG_PERFORMANCE_LOGS,
+    playerIsMobileMap: Record<string, boolean> = {},
   ) {
     initSoundService();
     this.#debugPerformance = debugPerformance;
@@ -9757,6 +9758,7 @@ export function setLorcanaGameContext(value: SetLorcanaGameContextOptions): Lorc
     value.playerSettings,
     value.playerMetadataMap,
     value.debugPerformance,
+    value.playerIsMobileMap,
   );
   onDestroy(() => {
     context.destroy();

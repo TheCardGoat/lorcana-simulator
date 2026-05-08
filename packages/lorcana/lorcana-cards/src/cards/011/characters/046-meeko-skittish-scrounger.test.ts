@@ -40,6 +40,7 @@ describe("Meeko - Skittish Scrounger", () => {
     testEngine.asServer().manualExertCard(meekoSkittishScrounger);
     expect(testEngine.asPlayerOne().isExerted(meekoSkittishScrounger)).toBe(true);
 
+    expect(testEngine.asPlayerOne().isExerted(meekoSkittishScrounger)).toBe(false);
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     testEngine.asPlayerOne().resolveAllBagEffects({ maxIterations: 10 });
 

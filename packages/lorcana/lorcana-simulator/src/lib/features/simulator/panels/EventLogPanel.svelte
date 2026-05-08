@@ -108,6 +108,65 @@
     return debugMode ? 28 + group.rows.length * 120 : 28 + group.rows.length * 22;
   }
 
+  function resolveChatSenderLabel(senderSeat: 0 | 1 | 2): string {
+    if (senderSeat === 0) return "System";
+    if (viewerSide === "playerOne") {
+      return senderSeat === 1 ? m["sim.player.you"]({}) : m["sim.player.opponent"]({});
+    }
+    if (viewerSide === "playerTwo") {
+      return senderSeat === 2 ? m["sim.player.you"]({}) : m["sim.player.opponent"]({});
+    }
+    return senderSeat === 1 ? m["sim.player.side.playerOne"]({}) : m["sim.player.side.playerTwo"]({});
+  }
+
+  function formatChatTimestamp(epochMs: number): string {
+    return new Date(epochMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function isSelfChatMessage(senderSeat: 0 | 1 | 2): boolean {
+    if (senderSeat === 0) return false;
+    if (viewerSide === "playerOne") return senderSeat === 1;
+    if (viewerSide === "playerTwo") return senderSeat === 2;
+    return false;
+  }
+
+  const SYSTEM_EVENT_LABELS: Record<string, string> = {
+    // cancel_match lifecycle
+    cancel_match_proposed: "Match cancellation proposed",
+    cancel_match_accepted: "Match cancelled by mutual agreement",
+    cancel_match_declined: "Match cancellation declined",
+    cancel_match_expired: "Match cancellation expired",
+    // undo lifecycle
+    undo_proposed: "Undo proposed",
+    undo_accepted: "Undo accepted",
+    undo_declined: "Undo declined",
+    undo_expired: "Undo request expired",
+    // enable_free_text_chat lifecycle
+    enable_free_text_chat_proposed: "Free text chat proposed",
+    free_text_chat_enabled: "Free text chat enabled",
+    enable_free_text_chat_declined: "Free text chat request declined",
+    enable_free_text_chat_expired: "Free text chat request expired",
+    // legacy / fallback (pre-THIS-PR events that may still exist in Redis TTL window)
+    proposal_sent: "Proposal sent",
+    proposal_accepted: "Proposal accepted",
+    proposal_declined: "Proposal declined",
+    proposal_expired: "Proposal expired",
+  };
+
+  function formatSystemEvent(event: string): string {
+    return SYSTEM_EVENT_LABELS[event] ?? event.replaceAll("_", " ");
+  }
+
+  function resolveChatMessageText(item: ChatFeedItem): string {
+    if (item.presetKey) {
+      return m[`sim.tabletop.chat.preset.${item.presetKey}`]({});
+    }
+    if (item.systemEvent) {
+      return formatSystemEvent(item.systemEvent);
+    }
+    return item.text ?? "";
+  }
+
   function measureVirtualRow(node: HTMLDivElement): { update: () => void; destroy: () => void } {
     if (!browser) return { update: () => {}, destroy: () => {} };
 

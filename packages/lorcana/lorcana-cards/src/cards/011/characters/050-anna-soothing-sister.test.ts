@@ -181,4 +181,58 @@ describe("Anna - Soothing Sister", () => {
       expect(result).not.toBeSuccessfulCommand();
     });
   });
+
+  describe("UNUSUAL TRANSFORMATION - If a card left a player's discard this turn, this card gains Shift 0", () => {
+    it("should allow Shift 0 after a card leaves discard via Anna Little Sister's ability", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [annaLittleSister, annaSoothingSister],
+        discard: [heiheiBoatSnack],
+        inkwell: annaLittleSister.cost,
+        deck: 10,
+      });
+
+      // Play Anna Little Sister to trigger UNEXPECTED DISCOVERY
+      expect(testEngine.asPlayerOne().playCard(annaLittleSister)).toBeSuccessfulCommand();
+
+      // Resolve UNEXPECTED DISCOVERY: put HeiHei from discard on bottom of deck
+      const heiheiId = testEngine.findCardInstanceId(heiheiBoatSnack, "discard", PLAYER_ONE);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(annaLittleSister, {
+          resolveOptional: true,
+          targets: [heiheiId],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // HeiHei should have moved from discard to deck
+      expect(testEngine.asPlayerOne().getCardZone(heiheiBoatSnack)).toBe("deck");
+
+      // Anna Little Sister should still be in play
+      expect(testEngine.asPlayerOne().getCardZone(annaLittleSister)).toBe("play");
+
+      // Now a card has left discard this turn; Shift 0 should be available
+      const shiftTarget = testEngine.findCardInstanceId(annaLittleSister, "play", PLAYER_ONE);
+      expect(shiftTarget).toBeDefined();
+      const result = testEngine.asPlayerOne().playCard(annaSoothingSister, {
+        cost: { cost: "shift", shiftTarget },
+      });
+      expect(result).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(annaSoothingSister)).toBe("play");
+    });
+
+    it("should NOT allow Shift 0 when no card has left discard this turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: annaLittleSister, isDrying: false }],
+        hand: [annaSoothingSister],
+        deck: 10,
+        inkwell: 5,
+      });
+
+      // No card has left discard — Shift 0 condition should fail
+      const shiftTarget = testEngine.findCardInstanceId(annaLittleSister, "play", PLAYER_ONE);
+      const result = testEngine.asPlayerOne().playCard(annaSoothingSister, {
+        cost: { cost: "shift", shiftTarget },
+      });
+      expect(result).not.toBeSuccessfulCommand();
+    });
+  });
 });

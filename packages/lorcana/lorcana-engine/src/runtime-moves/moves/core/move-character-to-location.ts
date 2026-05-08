@@ -120,6 +120,57 @@ function matchesMoveCostReductionFilters(
   return true;
 }
 
+function isCharacterExerted(ctx: MoveReadableContext, characterId: CardInstanceId): boolean {
+  const card = ctx.cards.get(characterId);
+  return card?.meta?.state === "exerted";
+}
+
+/**
+ * Evaluates the subset of `CardFilter` variants supported by
+ * `move-cost-reduction`. Only the filters required by printed cards today
+ * are considered; anything else is treated as a non-match so unrecognised
+ * filters don't silently grant free moves.
+ */
+function matchesMoveCostReductionFilters(
+  ctx: MoveReadableContext,
+  filters: readonly CardFilter[],
+  characterId: CardInstanceId,
+  characterDefinition: LorcanaCard | undefined,
+): boolean {
+  for (const filter of filters) {
+    if (filter.type === "exerted") {
+      if (!isCharacterExerted(ctx, characterId)) {
+        return false;
+      }
+      continue;
+    }
+
+    if (filter.type === "classification") {
+      const classifications: readonly string[] =
+        characterDefinition && characterDefinition.cardType === "character"
+          ? (characterDefinition.classifications ?? [])
+          : [];
+      if (!classifications.includes(filter.classification)) {
+        return false;
+      }
+      continue;
+    }
+
+    if (filter.type === "name" && "equals" in filter) {
+      if (characterDefinition?.name !== filter.equals) {
+        return false;
+      }
+      continue;
+    }
+
+    // Unsupported filter variant: be conservative and treat the
+    // reduction as inapplicable rather than silently enabling it.
+    return false;
+  }
+
+  return true;
+}
+
 function getStaticMoveCostReduction(
   ctx: MoveReadableContext,
   characterId: CardInstanceId,

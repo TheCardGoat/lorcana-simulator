@@ -21,6 +21,12 @@ export type UserRole = "user" | "donor" | "moderator" | "admin";
 export type SubscriptionTier = "free" | "tier1" | "tier2" | "tier3" | "tier4" | "tier5" | "tier6";
 
 /**
+ * Minimum tier required to use alternate art in matches.
+ * Players below this tier have their art selections silently ignored at match creation.
+ */
+export const ENCHANTED_TIER: SubscriptionTier = "tier4";
+
+/**
  * User type from Better Auth session
  *
  * Custom DB columns are surfaced on the session payload via `user.additionalFields`

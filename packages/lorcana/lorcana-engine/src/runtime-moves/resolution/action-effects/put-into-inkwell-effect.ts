@@ -1,6 +1,7 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type { PutIntoInkwellEffect } from "@tcg/lorcana-types";
 import type { CardPlayedPayload } from "../../../types";
+import { getLorcanaCardName } from "../../../runtime-trace";
 import {
   emitTriggeredLorcanaEvent,
   snapshotTriggeredCandidatesForCard,
@@ -90,6 +91,9 @@ function moveCardIntoInkwell(
     typeof sourceZoneKey === "string" &&
     (sourceZoneKey === "play" || sourceZoneKey.startsWith("play:"));
   const isPrivateSource = isPrivateSourceZone(sourceZoneKey);
+
+  // Capture the card name before moving (for log rendering after it's face-down)
+  const cardName = getLorcanaCardName(cardId, (id) => ctx.cards.getDefinition(id));
 
   if (isFromPlay) {
     const triggerCandidates = snapshotTriggeredCandidatesForCard(ctx, cardId);

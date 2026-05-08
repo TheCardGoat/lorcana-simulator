@@ -90,7 +90,9 @@ export async function fetchReplayBlob(gameId: string): Promise<ArrayBuffer> {
  * Uses the browser-native DecompressionStream API.
  */
 export async function decompressReplayBlob(compressed: ArrayBuffer): Promise<PersistedReplayData> {
-  const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream("gzip"));
+  const stream = new Blob([compressed])
+    .stream()
+    .pipeThrough(new DecompressionStream("gzip") as ReadableWritablePair<Uint8Array, Uint8Array>);
 
   const decompressed = await new Response(stream).text();
   return JSON.parse(decompressed) as PersistedReplayData;

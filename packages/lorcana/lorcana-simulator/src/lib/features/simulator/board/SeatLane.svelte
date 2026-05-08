@@ -684,6 +684,23 @@ function confirmPendingAction(): void {
     transition: filter 0.5s ease;
   }
 
+  .seat-lane__content {
+    display: contents;
+    transition: filter 0.5s ease;
+  }
+
+  .seat-lane__content--dimmed {
+    display: contents;
+    filter: grayscale(0.7) brightness(0.55);
+  }
+
+  /* When disconnected, apply filter to direct children via the content wrapper.
+     Since display:contents passes through, we target the actual children. */
+  .seat-lane--disconnected > .seat-lane__content--dimmed > * {
+    filter: grayscale(0.7) brightness(0.55);
+    transition: filter 0.5s ease;
+  }
+
   .seat-lane__section {
     position: relative;
     z-index: 1;
