@@ -18,6 +18,16 @@ export interface RecentHistory {
   }>;
 }
 
+export interface LiveMatchInfo {
+  matchId: string;
+  matchStatus: "waiting" | "in_progress" | "completed" | "abandoned";
+  matchCompleted: boolean;
+  nextGameId?: string;
+  player1Score: number;
+  player2Score: number;
+  winnerId?: string;
+}
+
 export interface LiveMovePayload {
   acceptedMove: RecentHistory["acceptedMoves"][number] | undefined;
   engineLogs: RecentHistory["engineLogs"] | undefined;
@@ -27,6 +37,13 @@ export interface LiveMovePayload {
   patches?: unknown[];
   /** Card instance mapping — provided in state_update for client-authority games */
   cardsMaps?: unknown;
+  /**
+   * Present only on the terminal move that ends a game. Bundled with the
+   * engine snapshot that flips the board to "finished" so UI code can
+   * update matchContext in the same render pass — no post-game modal
+   * flicker between state_update and the follow-up game_ended packet.
+   */
+  matchInfo?: LiveMatchInfo;
 }
 
 export interface ProposalPayload {
@@ -82,6 +99,7 @@ export function buildAcceptedMove(
   stateVersion: number | undefined,
   engineLogs: RecentHistory["engineLogs"] | undefined,
   state: unknown,
+  payload?: unknown,
 ): RecentHistory["acceptedMoves"][number] | undefined {
   if (!actorId || !moveType || stateVersion === undefined) return undefined;
   const timestamp =
@@ -92,7 +110,44 @@ export function buildAcceptedMove(
   const turnNumber = turnStartLog
     ? (turnStartLog.log as { turn: number }).turn - 1
     : ((state as { ctx?: { status?: { turn?: number } } } | null)?.ctx?.status?.turn ?? 1);
-  return { actorId, moveId: moveType, stateVersion, timestamp, turnNumber };
+  // Wrap the wire-format `payload` into MoveInput shape (`{ args }`) so
+  // downstream `normalizePersistedMoveParams` treats live and persisted
+  // entries identically. Manual moves (which produce no engine logs) rely
+  // on this for damage/lore amounts to render in the event log.
+  const input = payload !== undefined ? { args: payload } : undefined;
+  return {
+    actorId,
+    moveId: moveType,
+    stateVersion,
+    timestamp,
+    turnNumber,
+    ...(input !== undefined ? { input } : {}),
+  };
+}
+
+function parseMatchInfo(raw: unknown): LiveMatchInfo | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const r = raw as Record<string, unknown>;
+  const matchId = typeof r.matchId === "string" ? r.matchId : undefined;
+  const matchStatus = r.matchStatus;
+  if (
+    !matchId ||
+    (matchStatus !== "waiting" &&
+      matchStatus !== "in_progress" &&
+      matchStatus !== "completed" &&
+      matchStatus !== "abandoned")
+  ) {
+    return undefined;
+  }
+  return {
+    matchId,
+    matchStatus,
+    matchCompleted: r.matchCompleted === true,
+    nextGameId: typeof r.nextGameId === "string" ? r.nextGameId : undefined,
+    player1Score: typeof r.player1Score === "number" ? r.player1Score : 0,
+    player2Score: typeof r.player2Score === "number" ? r.player2Score : 0,
+    winnerId: typeof r.winnerId === "string" ? r.winnerId : undefined,
+  };
 }
 
 const ERROR_TYPES = new Set(["game_error", "error", "gateway_error"]);
@@ -125,8 +180,14 @@ export function createMessageRouter(
         typeof msg.stateVersion === "number" ? msg.stateVersion : undefined,
         engineLogs,
         msg.state,
+        msg.payload,
       );
-      refs.onLiveMove({ acceptedMove, engineLogs, state: msg.state });
+      refs.onLiveMove({
+        acceptedMove,
+        engineLogs,
+        state: msg.state,
+        matchInfo: parseMatchInfo(msg.matchInfo),
+      });
       return;
     }
 
@@ -142,6 +203,11 @@ export function createMessageRouter(
         (e) => (e.log as { type?: string } | null)?.type === moveType,
       );
       const actorId = (() => {
+        // Prefer the explicit actorId from the broadcast (the dispatcher).
+        // Manual moves bypass the engine log pipeline, so engineLog.playerId
+        // is unreliable for attribution — and even when a log exists, it
+        // tracks the affected player, not the issuer of the correction.
+        if (typeof msg.actorId === "string") return msg.actorId;
         const fromMatch = (moveLog?.log as { playerId?: string } | null)?.playerId;
         if (typeof fromMatch === "string") return fromMatch;
         for (const entry of engineLogs ?? []) {
@@ -156,6 +222,7 @@ export function createMessageRouter(
         typeof msg.stateVersion === "number" ? msg.stateVersion : undefined,
         engineLogs,
         msg.state,
+        msg.payload,
       );
       refs.onLiveMove({
         acceptedMove,
@@ -163,6 +230,7 @@ export function createMessageRouter(
         state: msg.state,
         patches: Array.isArray(msg.patches) ? msg.patches : undefined,
         cardsMaps: msg.cardsMaps && typeof msg.cardsMaps === "object" ? msg.cardsMaps : undefined,
+        matchInfo: parseMatchInfo(msg.matchInfo),
       });
       return;
     }

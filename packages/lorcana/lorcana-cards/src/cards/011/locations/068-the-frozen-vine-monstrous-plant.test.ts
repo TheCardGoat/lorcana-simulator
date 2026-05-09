@@ -59,13 +59,8 @@ describe("The Frozen Vine - Monstrous Plant", () => {
     expect(
       testEngine.asPlayerTwo().challenge(locationAttacker, theFrozenVineMonstrousPlant),
     ).toBeSuccessfulCommand();
-    // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
-    expect(
-      testEngine
-        .asPlayerOne()
-        .resolvePendingByCard(theFrozenVineMonstrousPlant, { resolveOptional: true }),
-    ).toBeSuccessfulCommand();
+    // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
     expect(testEngine.asPlayerOne().getCardZone(theFrozenVineMonstrousPlant)).toBe("discard");
   });
 
@@ -83,13 +78,8 @@ describe("The Frozen Vine - Monstrous Plant", () => {
     expect(
       testEngine.asPlayerTwo().challenge(locationAttacker, theFrozenVineMonstrousPlant),
     ).toBeSuccessfulCommand();
-    // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
-    expect(
-      testEngine
-        .asPlayerOne()
-        .resolvePendingByCard(theFrozenVineMonstrousPlant, { resolveOptional: true }),
-    ).toBeSuccessfulCommand();
+    // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
     expect(testEngine.asPlayerOne().getCardZone(theFrozenVineMonstrousPlant)).toBe("discard");
   });
 });

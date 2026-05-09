@@ -210,6 +210,7 @@ export type {
   LorcanaGameLogEntry,
   LorcanaGameLogEntryCategory,
   LorcanaLogProjection,
+  LogTargetId,
 } from "./log-messages";
 
 export {
@@ -227,6 +228,7 @@ export type {
   MoveLogBase,
   MoveOutcomes,
   DamageEntry,
+  MovedDamageEntry,
   PlayCardLog,
   ShiftCardLog,
   SingCardLog,

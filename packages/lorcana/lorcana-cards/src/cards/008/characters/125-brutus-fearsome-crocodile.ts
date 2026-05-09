@@ -26,7 +26,7 @@ export const brutusFearsomeCrocodile: CharacterCard = {
     {
       title: "SPITEFUL",
       description:
-        "During your turn, when this character is banished, if one of your characters was damaged this turn, gain 2 lore.",
+        "During your turn, when this character is banished, if one of your characters took damage this turn, gain 2 lore.",
     },
   ],
   classifications: ["Storyborn", "Ally"],
@@ -47,7 +47,7 @@ export const brutusFearsomeCrocodile: CharacterCard = {
       },
       id: "j0c-1",
       name: "SPITEFUL",
-      text: "SPITEFUL During your turn, when this character is banished, if one of your characters was damaged this turn, gain 2 lore.",
+      text: "SPITEFUL During your turn, when this character is banished, if one of your characters took damage this turn, gain 2 lore.",
       trigger: {
         event: "banish",
         on: "SELF",

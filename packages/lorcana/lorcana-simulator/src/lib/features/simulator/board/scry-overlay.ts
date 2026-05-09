@@ -1,8 +1,4 @@
-import type {
-  AvailableMovesSelectionEntry,
-  AvailableMovesScryDestinationState,
-  ResolutionScryAvailableMovesSelectionState,
-} from "@/features/simulator/model/contracts.js";
+import type { PromptScryDestination, PromptScryRevealedCard } from "@tcg/lorcana-interaction";
 
 const SCRYPT_ZONE_DROP_ID_PREFIX = "scry-zone:";
 const SCRYPT_CARD_DROP_ID_PREFIX = "scry-card:";
@@ -62,87 +58,92 @@ export function parseScryDropTarget(id: string | null | undefined): ScryDropTarg
   return null;
 }
 
+/* ------------------------------------------------------------------ *
+ * View-shape-aware helpers (consume `PlayerInteractionView` slices). *
+ * ------------------------------------------------------------------ */
+
 export function findScryDestination(
-  selectionState: ResolutionScryAvailableMovesSelectionState,
+  destinations: readonly PromptScryDestination[],
   destinationId: string,
-): AvailableMovesScryDestinationState | null {
-  return (
-    selectionState.destinations.find((destination) => destination.id === destinationId) ?? null
-  );
+): PromptScryDestination | null {
+  return destinations.find((destination) => destination.id === destinationId) ?? null;
 }
 
-export function findScryEntry(
-  selectionState: ResolutionScryAvailableMovesSelectionState,
+export function findScryRevealedCard(
+  revealed: readonly PromptScryRevealedCard[],
   cardId: string,
-): AvailableMovesSelectionEntry | null {
-  return selectionState.entries.find((entry) => entry.cardId === cardId) ?? null;
+): PromptScryRevealedCard | null {
+  return revealed.find((card) => String(card.cardId) === cardId) ?? null;
 }
 
 export function findScryCardDestinationId(
-  selectionState: ResolutionScryAvailableMovesSelectionState,
+  revealed: readonly PromptScryRevealedCard[],
   cardId: string,
 ): string | null {
-  for (const destination of selectionState.destinations) {
-    if (destination.cards.some((card) => card.cardId === cardId)) {
-      return destination.id;
-    }
-  }
-
-  return null;
+  return findScryRevealedCard(revealed, cardId)?.currentDestinationId ?? null;
 }
 
 export function getScryRemainderDestination(
-  selectionState: ResolutionScryAvailableMovesSelectionState,
-): AvailableMovesScryDestinationState | null {
-  return selectionState.destinations.find((destination) => destination.rule.remainder) ?? null;
+  destinations: readonly PromptScryDestination[],
+): PromptScryDestination | null {
+  return destinations.find((destination) => destination.remainder) ?? null;
 }
 
-export function getScryDestinationCountLabel(
-  destination: AvailableMovesScryDestinationState,
-): string {
-  const max = destination.rule.max;
-  if (max === null) {
-    return `${destination.cards.length}`;
+export function getScryDestinationCountLabel(destination: PromptScryDestination): string {
+  if (destination.max === null) {
+    return `${destination.currentCardIds.length}`;
   }
-
-  return `${destination.cards.length}/${max}`;
+  return `${destination.currentCardIds.length}/${destination.max}`;
 }
 
+/**
+ * Whether a revealed card may legally be dropped on a destination.
+ *
+ * Two checks:
+ *   1. Capacity — destination has room (or already holds the card).
+ *   2. Eligibility — destination accepts this card per the engine's
+ *      `filters`. The view layer pre-computes `eligibleDestinationIds` on
+ *      each revealed card; `[]` means the engine returned no destination
+ *      list (legacy view payloads), in which case we conservatively allow
+ *      the drop and let the engine reject at submit time.
+ */
 export function canAssignScryCardToDestination(
-  selectionState: ResolutionScryAvailableMovesSelectionState,
+  destinations: readonly PromptScryDestination[],
+  revealed: readonly PromptScryRevealedCard[],
   cardId: string,
   destinationId: string,
 ): boolean {
-  const entry = findScryEntry(selectionState, cardId);
-  const destination = findScryDestination(selectionState, destinationId);
-  if (!entry?.cardId || !destination) {
+  const destination = findScryDestination(destinations, destinationId);
+  const card = findScryRevealedCard(revealed, cardId);
+  if (!destination || !card) {
     return false;
   }
 
-  if (!entry.availableDestinationIds?.includes(destinationId)) {
+  const eligibilityList = card.eligibleDestinationIds;
+  if (eligibilityList && eligibilityList.length > 0 && !eligibilityList.includes(destinationId)) {
     return false;
   }
 
-  const currentDestinationId = findScryCardDestinationId(selectionState, cardId);
-  const currentCount = destination.cards.length;
+  const currentDestinationId = card.currentDestinationId;
+  const currentCount = destination.currentCardIds.length;
   const adjustedCount = currentDestinationId === destinationId ? currentCount : currentCount + 1;
-
-  return destination.rule.max === null || adjustedCount <= destination.rule.max;
+  return destination.max === null || adjustedCount <= destination.max;
 }
 
 export function getScryTapDestination(
-  selectionState: ResolutionScryAvailableMovesSelectionState,
+  destinations: readonly PromptScryDestination[],
+  revealed: readonly PromptScryRevealedCard[],
   cardId: string,
 ): string | null {
-  const currentDestinationId = findScryCardDestinationId(selectionState, cardId);
-  const remainderDestination = getScryRemainderDestination(selectionState);
+  const currentDestinationId = findScryCardDestinationId(revealed, cardId);
+  const remainderDestination = getScryRemainderDestination(destinations);
 
   // If the card is currently unassigned (not in any destination):
   // - With a remainder destination: assign to the first non-remainder destination that accepts it
   // - Without a remainder destination: assign to the first destination that accepts it
   if (!currentDestinationId) {
-    for (const destination of selectionState.destinations) {
-      if (canAssignScryCardToDestination(selectionState, cardId, destination.id)) {
+    for (const destination of destinations) {
+      if (canAssignScryCardToDestination(destinations, revealed, cardId, destination.id)) {
         return destination.id;
       }
     }
@@ -151,19 +152,19 @@ export function getScryTapDestination(
 
   // Card is currently in a non-remainder destination — send it back to remainder (if any)
   if (remainderDestination && currentDestinationId !== remainderDestination.id) {
-    return canAssignScryCardToDestination(selectionState, cardId, remainderDestination.id)
+    return canAssignScryCardToDestination(destinations, revealed, cardId, remainderDestination.id)
       ? remainderDestination.id
       : null;
   }
 
   // Card is in the remainder destination (or there's no remainder) — cycle to the next
   // non-remainder destination that accepts it
-  for (const destination of selectionState.destinations) {
-    if (destination.rule.remainder) {
+  for (const destination of destinations) {
+    if (destination.remainder) {
       continue;
     }
 
-    if (canAssignScryCardToDestination(selectionState, cardId, destination.id)) {
+    if (canAssignScryCardToDestination(destinations, revealed, cardId, destination.id)) {
       return destination.id;
     }
   }
@@ -184,17 +185,14 @@ export function getScryTapDestination(
  * so we return the card at indexOf(X) + 1 in the original.
  */
 export function mapReversedBeforeCardId(
-  destination: AvailableMovesScryDestinationState,
+  destination: PromptScryDestination,
   visualBeforeCardId: string | null,
 ): string | null {
   if (!destination.orderingEnabled || visualBeforeCardId === null) {
     return visualBeforeCardId;
   }
 
-  const originalCards = destination.cards
-    .map((card) => card.cardId)
-    .filter((id): id is string => Boolean(id));
-
+  const originalCards = destination.currentCardIds.map((cardId) => String(cardId));
   const idx = originalCards.indexOf(visualBeforeCardId);
   if (idx < 0) {
     return null;
@@ -204,13 +202,13 @@ export function mapReversedBeforeCardId(
 }
 
 export function getScryDesiredOrder(
-  destination: AvailableMovesScryDestinationState,
+  destination: PromptScryDestination,
   draggedCardId: string,
   beforeCardId: string | null,
 ): string[] | null {
-  const remainingCards = destination.cards
-    .map((card) => card.cardId)
-    .filter((cardId): cardId is string => Boolean(cardId) && cardId !== draggedCardId);
+  const remainingCards = destination.currentCardIds
+    .map((cardId) => String(cardId))
+    .filter((cardId) => cardId !== draggedCardId);
   const insertIndex =
     beforeCardId === null ? remainingCards.length : remainingCards.indexOf(beforeCardId);
 

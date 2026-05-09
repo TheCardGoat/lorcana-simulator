@@ -54,5 +54,29 @@ describe("Vincenzo Santorini - The Explosives Expert", () => {
 
       expect(testEngine.asPlayerTwo().getDamage(target)).toBe(3);
     });
+
+    it("regression: declining the optional 'you may' deals no damage", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [vincenzoSantoriniTheExplosivesExpert],
+          inkwell: vincenzoSantoriniTheExplosivesExpert.cost,
+        },
+        {
+          play: [target],
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().playCard(vincenzoSantoriniTheExplosivesExpert),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(vincenzoSantoriniTheExplosivesExpert, {
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getDamage(target)).toBe(0);
+    });
   });
 });

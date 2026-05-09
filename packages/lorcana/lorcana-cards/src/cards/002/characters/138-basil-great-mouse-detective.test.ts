@@ -58,13 +58,8 @@ describe("Basil - Great Mouse Detective", () => {
 
       expect(testEngine.asPlayerOne().playCard(basilGreatMouseDetective)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued when trigger fires, Shift condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(basilGreatMouseDetective, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       // Not played via Shift — no cards drawn, hand just loses the played card
       expect(testEngine.asPlayerOne().getZonesCardCount()).toMatchObject({

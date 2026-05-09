@@ -1,5 +1,9 @@
 <script lang="ts">
   import { m } from "$lib/i18n/messages.js";
+  import Star from "@lucide/svelte/icons/star";
+  import Gem from "@lucide/svelte/icons/gem";
+  import Sparkles from "@lucide/svelte/icons/sparkles";
+  import Crown from "@lucide/svelte/icons/crown";
   import * as Dialog from "$lib/design-system/primitives/dialog";
   import { authSession } from "$lib/auth/session.svelte.js";
   import {
@@ -79,7 +83,11 @@
     activeGameProfileId?: string | null;
   } = $props();
 
+  const KOFI_CANCEL_ARTICLE_URL =
+    "https://help.ko-fi.com/hc/en-us/articles/360007556993-How-to-help-a-supporter-cancel-their-membership#h_01HF9S5084YEY17PETS0VGC3SF";
+
   let activeTab = $state<AccountTab>("profile");
+  let cancelHelpOpen = $state(false);
   let loading = $state(false);
   let saving = $state(false);
   let saveStatus = $state<"idle" | "saved" | "error">("idle");
@@ -219,6 +227,14 @@
         return "Player";
     }
   }
+
+  type PatronTierConfig = { name: () => string; color: string; glow: string; border: string };
+  const patronTierConfigs: Record<string, PatronTierConfig> = {
+    tier2: { name: () => m["patron_tier_supporter"]({}), color: "#cd7f32", glow: "rgba(205,127,50,0.55)", border: "rgba(205,127,50,0.5)" },
+    tier3: { name: () => m["patron_tier_champion"]({}),  color: "#d4d4d4", glow: "rgba(212,212,212,0.5)", border: "rgba(212,212,212,0.45)" },
+    tier4: { name: () => m["patron_tier_legend"]({}),    color: "#ffd700", glow: "rgba(255,215,0,0.6)",   border: "rgba(255,215,0,0.55)" },
+    tier5: { name: () => m["patron_tier_admin"]({}),     color: "#a855f7", glow: "rgba(168,85,247,0.55)", border: "rgba(168,85,247,0.5)" },
+  };
 
   function getProviderLabel(providerId: string): string {
     switch (providerId) {
@@ -401,7 +417,30 @@
             <div class="grid gap-1.5">
               <span class="account-label">{m["sim.accountSettings.subscriptionTier"]({})}</span>
               <span class="account-value">
-                <span class="account-badge">{profile.subscriptionTier}</span>
+                {#if patronTierConfigs[profile.subscriptionTier]}
+                  {@const cfg = patronTierConfigs[profile.subscriptionTier]}
+                  <span
+                    class="account-patron-badge"
+                    style:--patron-color={cfg.color}
+                    style:--patron-glow={cfg.glow}
+                    style:--patron-border={cfg.border}
+                  >
+                    <span class="account-patron-icon">
+                      {#if profile.subscriptionTier === "tier5"}
+                        <Crown class="size-3" />
+                      {:else if profile.subscriptionTier === "tier4"}
+                        <Sparkles class="size-3" />
+                      {:else if profile.subscriptionTier === "tier3"}
+                        <Gem class="size-3" />
+                      {:else}
+                        <Star class="size-3" />
+                      {/if}
+                    </span>
+                    {cfg.name()}
+                  </span>
+                {:else}
+                  <span class="account-badge">{profile.subscriptionTier}</span>
+                {/if}
               </span>
             </div>
 
@@ -424,12 +463,74 @@
             </div>
           </div>
         {/if}
+
+        {#if !loading && profile}
+          <div class="cancel-subscription-row">
+            <button
+              type="button"
+              class="cancel-subscription-link"
+              onclick={() => (cancelHelpOpen = true)}
+            >
+              {m["sim.accountSettings.cancelSubscription.link"]({})}
+            </button>
+          </div>
+        {/if}
       </div>
 
       <Dialog.Footer class="shrink-0">
         <Dialog.Close
           class="player-settings-close"
           aria-label={m["sim.accountSettings.closeAria"]({})}
+        >
+          {m["sim.settings.close"]({})}
+        </Dialog.Close>
+      </Dialog.Footer>
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
+
+<Dialog.Root bind:open={cancelHelpOpen}>
+  <Dialog.Portal>
+    <Dialog.Overlay class="player-settings-overlay" />
+    <Dialog.Content class="player-settings-dialog">
+      <Dialog.Header class="shrink-0 gap-1">
+        <Dialog.Title class="text-base font-semibold tracking-tight text-slate-100">
+          {m["sim.accountSettings.cancelSubscription.title"]({})}
+        </Dialog.Title>
+        <Dialog.Description class="text-sm text-slate-400">
+          {m["sim.accountSettings.cancelSubscription.intro"]({})}
+        </Dialog.Description>
+      </Dialog.Header>
+
+      <div class="player-settings-scroll">
+        <div class="grid gap-3">
+          <p class="cancel-help-section-title">
+            {m["sim.accountSettings.cancelSubscription.stepsTitle"]({})}
+          </p>
+          <ol class="cancel-help-steps">
+            <li>{m["sim.accountSettings.cancelSubscription.step1"]({})}</li>
+            <li>{m["sim.accountSettings.cancelSubscription.step2"]({})}</li>
+            <li>{m["sim.accountSettings.cancelSubscription.step3"]({})}</li>
+            <li>{m["sim.accountSettings.cancelSubscription.step4"]({})}</li>
+          </ol>
+          <p class="cancel-help-outro">
+            {m["sim.accountSettings.cancelSubscription.outro"]({})}
+          </p>
+          <a
+            class="cancel-help-article-link"
+            href={KOFI_CANCEL_ARTICLE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {m["sim.accountSettings.cancelSubscription.articleLink"]({})}
+          </a>
+        </div>
+      </div>
+
+      <Dialog.Footer class="shrink-0">
+        <Dialog.Close
+          class="player-settings-close"
+          aria-label={m["sim.accountSettings.cancelSubscription.closeAria"]({})}
         >
           {m["sim.settings.close"]({})}
         </Dialog.Close>
@@ -513,6 +614,38 @@
     text-transform: capitalize;
   }
 
+  .account-patron-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem 0.2rem 0.45rem;
+    border-radius: 0.45rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--patron-border);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--patron-color);
+    box-shadow:
+      0 0 6px var(--patron-glow),
+      0 0 14px var(--patron-glow),
+      inset 0 0 6px rgba(255, 255, 255, 0.04);
+    letter-spacing: 0.02em;
+  }
+
+  .account-patron-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--patron-border);
+    color: var(--patron-color);
+    box-shadow: 0 0 4px var(--patron-glow);
+    flex-shrink: 0;
+  }
+
   .account-linked-list {
     display: flex;
     gap: 0.4rem;
@@ -556,5 +689,76 @@
   .account-sync-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .cancel-subscription-row {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(108, 145, 192, 0.2);
+    display: flex;
+    justify-content: center;
+  }
+
+  .cancel-subscription-link {
+    align-self: start;
+    margin-top: 0.15rem;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.78rem;
+    color: #93c5fd;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  .cancel-subscription-link:hover,
+  .cancel-subscription-link:focus-visible {
+    color: #bfdbfe;
+    outline: none;
+  }
+
+  .cancel-help-section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #94a3b8;
+  }
+
+  .cancel-help-steps {
+    list-style: decimal;
+    padding-left: 1.2rem;
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: #e5edf7;
+    line-height: 1.45;
+  }
+
+  .cancel-help-outro {
+    font-size: 0.85rem;
+    color: #cbd5f5;
+    line-height: 1.5;
+  }
+
+  .cancel-help-article-link {
+    align-self: start;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(125, 211, 252, 0.5);
+    background: rgba(21, 48, 77, 0.8);
+    color: #dbeafe;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .cancel-help-article-link:hover,
+  .cancel-help-article-link:focus-visible {
+    background: rgba(34, 74, 117, 0.95);
+    border-color: rgba(191, 219, 254, 0.82);
+    outline: none;
   }
 </style>

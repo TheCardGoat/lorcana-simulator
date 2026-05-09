@@ -1,7 +1,7 @@
-import { getGameServerOrigin } from "$lib/config/public-url-config.js";
+import { getApiOrigin } from "$lib/config/public-url-config.js";
 import { requestJson } from "$lib/data/transport/http-client.js";
 
-export type QueueStatsFormat = "infinity" | "core-constructed" | "early-access";
+export type QueueStatsFormat = "infinity" | "core-constructed";
 export type QueueStatsMode = "1" | "3";
 
 export type QueueStatsMatchType = "ranked" | "casual" | "testing";
@@ -22,7 +22,7 @@ export interface QueueStatsResponse {
 
 export async function fetchQueueStats(): Promise<QueueStatsResponse> {
   return requestJson<QueueStatsResponse>(
-    `${getGameServerOrigin()}/v1/play/matchmaking/stats`,
+    `${getApiOrigin()}/v1/games/lorcana/play/matchmaking/stats`,
     undefined,
     "Failed to fetch queue stats",
   );

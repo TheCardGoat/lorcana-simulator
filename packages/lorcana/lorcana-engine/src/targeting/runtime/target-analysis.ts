@@ -17,6 +17,7 @@ type RemoveDamageTargetDescriptor = {
   cardTypes?: readonly string[];
   filter?: TargetDescriptor["filter"];
   filters?: TargetDescriptor["filters"];
+  excludeSelf?: boolean;
 };
 
 type ReturnToHandTargetDescriptor = {
@@ -24,6 +25,7 @@ type ReturnToHandTargetDescriptor = {
   cardTypes?: readonly string[];
   filter?: TargetDescriptor["filter"];
   filters?: TargetDescriptor["filters"];
+  excludeSelf?: boolean;
 };
 
 type ReturnFromDiscardTargetDescriptor = {
@@ -54,8 +56,8 @@ type DiscardTargetDescriptor = {
 
 type PlayCardSelectionDescriptor = {
   owner: "you" | "opponent" | "any";
-  sourceZone: "deck" | "hand" | "discard";
-  sourceZones?: readonly ("deck" | "hand" | "discard")[];
+  sourceZone: "deck" | "hand" | "discard" | "inkwell";
+  sourceZones?: readonly ("deck" | "hand" | "discard" | "inkwell")[];
   cardType?: LorcanaCard["cardType"] | "song" | "floodborn";
   filter?: {
     cardType?: LorcanaCard["cardType"] | "song" | "floodborn";
@@ -555,6 +557,7 @@ function collectReturnToHandTargetDescriptors(effect: unknown): ReturnToHandTarg
             cardTypes: normalizedTarget.cardTypes,
             filter: normalizedTarget.filter,
             filters: normalizedTarget.filters,
+            excludeSelf: normalizedTarget.excludeSelf,
           },
         ]
       : [];
@@ -831,7 +834,7 @@ function normalizePlayCardSelectionDescriptor(
   }
 
   const from = effectRecord.from;
-  const validSingleZones = ["deck", "hand", "discard"] as const;
+  const validSingleZones = ["deck", "hand", "discard", "inkwell"] as const;
   type SingleZone = (typeof validSingleZones)[number];
 
   let sourceZone: SingleZone | undefined;
@@ -846,7 +849,7 @@ function normalizePlayCardSelectionDescriptor(
     }
     sourceZones = normalizedZones;
     sourceZone = normalizedZones[0];
-  } else if (from === "deck" || from === "hand" || from === "discard") {
+  } else if (from === "deck" || from === "hand" || from === "discard" || from === "inkwell") {
     sourceZone = from;
   } else {
     return undefined;
@@ -886,14 +889,18 @@ function normalizePlayCardSelectionDescriptor(
 
 /**
  * Returns true if the effect (or any nested effect) is a play-card effect that uses the
- * "shift" play method, requiring a secondary in-play shift-target selection.
+ * "shift" or "either" play method, requiring a secondary in-play shift-target selection.
+ * For "either" the descriptor is injected as optional so a hand-only selection is also legal.
  */
 function hasPlayCardShiftMethod(effect: unknown): boolean {
   if (!effect || typeof effect !== "object" || Array.isArray(effect)) {
     return false;
   }
   const effectRecord = effect as Record<string, unknown>;
-  if (effectRecord.type === "play-card" && effectRecord.playMethod === "shift") {
+  if (
+    effectRecord.type === "play-card" &&
+    (effectRecord.playMethod === "shift" || effectRecord.playMethod === "either")
+  ) {
     return true;
   }
   const nestedEffects: unknown[] = [
@@ -910,6 +917,34 @@ function hasPlayCardShiftMethod(effect: unknown): boolean {
     effectRecord.else,
   ];
   return nestedEffects.some((nested) => hasPlayCardShiftMethod(nested));
+}
+
+/**
+ * Returns true if the effect (or any nested effect) is a play-card effect that uses the
+ * "either" play method (player chooses standard or shift at resolution time).
+ */
+function hasPlayCardEitherMethod(effect: unknown): boolean {
+  if (!effect || typeof effect !== "object" || Array.isArray(effect)) {
+    return false;
+  }
+  const effectRecord = effect as Record<string, unknown>;
+  if (effectRecord.type === "play-card" && effectRecord.playMethod === "either") {
+    return true;
+  }
+  const nestedEffects: unknown[] = [
+    effectRecord.effect,
+    ...(Array.isArray(effectRecord.options) ? effectRecord.options : []),
+    ...(Array.isArray(effectRecord.choices) ? effectRecord.choices : []),
+    ...(Array.isArray(effectRecord.effects) ? effectRecord.effects : []),
+    ...(Array.isArray(effectRecord.steps) ? effectRecord.steps : []),
+    effectRecord.trueEffect,
+    effectRecord.falseEffect,
+    effectRecord.ifTrue,
+    effectRecord.ifFalse,
+    effectRecord.then,
+    effectRecord.else,
+  ];
+  return nestedEffects.some((nested) => hasPlayCardEitherMethod(nested));
 }
 
 function collectPlayCardSelectionDescriptors(effect: unknown): PlayCardSelectionDescriptor[] {
@@ -1093,6 +1128,7 @@ function resolveActionTargetCandidates(
   targetDescriptors: RemoveDamageTargetDescriptor[],
   playerId: PlayerId,
   ctx: ActionTargetRuntimeContext,
+  sourceCardId?: CardInstanceId,
 ): CardInstanceId[] {
   if (targetDescriptors.length === 0) {
     return [];
@@ -1101,16 +1137,28 @@ function resolveActionTargetCandidates(
   const candidates = new Set<CardInstanceId>();
   for (const targetDescriptor of targetDescriptors) {
     const descriptor = normalizeTargetDescriptor({
-      selector: "all",
+      // `selector: "chosen"` so target-resolver applies the Ward (and other
+      // chosen-target restriction) filter to opposing characters. These
+      // descriptors back move-damage / remove-damage / return-to-hand prompts
+      // where the chooser is picking a single character — Ward must exclude
+      // opposing Ward'd cards from the candidate pool. Using "all" here would
+      // leak Ward'd opposing chars into `cardCandidates`, the validation pass
+      // would accept the selection, and the resolver would silently no-op when
+      // the chosen-target path filters them out at execution time. Replay
+      // mgPNpagigao72B9Hc9_xf2x turn 13 is the canonical repro: Belle's
+      // ENHANCED HEALING accepted a Ward'd destination and applied no patches.
+      selector: "chosen",
       count: "all",
       owner: targetDescriptor.owner,
       zones: ["play"],
       cardTypes: targetDescriptor.cardTypes,
       filter: targetDescriptor.filter,
       filters: targetDescriptor.filters,
+      excludeSelf: targetDescriptor.excludeSelf,
     });
     const resolved = resolveCandidateTargets(ctx, descriptor, {
       controllerId: playerId,
+      sourceCardId,
     });
     for (const cardId of resolved) {
       candidates.add(cardId as CardInstanceId);
@@ -1496,12 +1544,15 @@ export function analyzeEffectTargets(
     (descriptor) => descriptor.sourceZone === "hand",
   );
   const baseChosenCardTargetDescriptors = collectChosenCardTargetDescriptors(effect, options);
-  // For play-card effects with playMethod: "shift", inject a secondary target descriptor so that
-  // an in-play character (the shift target) is accepted as a valid selection.
+  // For play-card effects with playMethod: "shift" or "either", inject a secondary target
+  // descriptor so that an in-play character (the shift target) is accepted as a valid selection.
+  // For "either" the descriptor is optional (count: { upTo: 1 }) so the player may decline the
+  // shift base and fall through to a standard play.
+  const playCardEitherMode = hasPlayCardEitherMethod(effect);
   const shiftTargetDescriptor = hasPlayCardShiftMethod(effect)
     ? (normalizeTargetDescriptor({
         selector: "chosen",
-        count: 1,
+        count: playCardEitherMode ? { upTo: 1 } : 1,
         owner: "you",
         zones: ["play"],
         cardTypes: ["character"],
@@ -1531,6 +1582,7 @@ export function analyzeEffectTargets(
     [...removeDamageTargetDescriptors, ...returnToHandTargetDescriptors],
     playerId,
     ctx,
+    sourceCardId,
   );
   const chosenTargetCandidates = resolveActionChosenTargetCandidates(
     chosenCardTargetDescriptors,

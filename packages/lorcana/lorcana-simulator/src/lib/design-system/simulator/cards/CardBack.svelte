@@ -4,6 +4,7 @@
   import type { ImageFormat } from "$lib/design-system/simulator/cards/card-image-format.js";
   import { maybeUseLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
   import { resolveLorcanaCardBack } from "@/features/simulator/model/player-visual-settings.js";
+  import { getCdnFallbackUrl } from "$lib/config/public-url-config.js";
 
   interface CardBackProps {
     // Sizing
@@ -84,6 +85,11 @@
       class:card-back__image--art-only-fallback={isArtOnlyFallback}
       loading="lazy"
       data-card-back-src={backImageSrc}
+      onerror={(e) => {
+        const img = e.currentTarget as HTMLImageElement;
+        const fallback = getCdnFallbackUrl(img.src);
+        if (fallback) img.src = fallback;
+      }}
     />
   </AspectRatio>
 

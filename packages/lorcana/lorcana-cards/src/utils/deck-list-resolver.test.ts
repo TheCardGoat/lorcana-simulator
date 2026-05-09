@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { getAllCardsById } from "../cards";
 import { getLorcanaDisplayName, resolveLorcanaDeckListText } from "./deck-list-resolver";
 
 describe("deck-list-resolver", () => {
@@ -76,6 +77,34 @@ describe("deck-list-resolver", () => {
     expect(result.diagnostics.unresolvedNames).toHaveLength(0);
     expect(result.cards).toHaveLength(1);
     expect(getLorcanaDisplayName(result.cards[0]!)).toBe("Merryweather - Good Fairy");
+  });
+
+  it("resolves Finders Keepers to the amethyst card, not Three Arrows Epic", async () => {
+    const result = await resolveLorcanaDeckListText("1 Finders Keepers");
+
+    expect(result.diagnostics.unresolvedNames).toHaveLength(0);
+    const resolved = result.resolvedCards[0];
+    expect(resolved?.card.name).toBe("Finders Keepers");
+    expect(resolved?.card.inkType).toEqual(["amethyst"]);
+    // Canonical id for Finders Keepers (set5-060) per canonical-cards.json
+    expect(resolved?.cardId).toBe("J7L");
+
+    // The resolved id must map back to Finders Keepers, not Three Arrows Epic
+    const byId = await getAllCardsById();
+    const lookedUp = byId[resolved!.cardId];
+    expect(lookedUp?.name).toBe("Finders Keepers");
+    expect(lookedUp?.inkType).toEqual(["amethyst"]);
+  });
+
+  it("no two cards share the same id", async () => {
+    const byId = await getAllCardsById();
+    const allCards = await import("../cards").then((m) => m.getAllCards());
+    const seen = new Map<string, string>();
+    for (const card of allCards) {
+      const prev = seen.get(card.id);
+      expect(prev).toBeUndefined(); // duplicate: prev card name if fails
+      seen.set(card.id, card.name);
+    }
   });
 
   it("expands deck list quantities", async () => {

@@ -33,13 +33,16 @@ describe("board-order", () => {
 
     const ordered = buildOrderedPlayZoneEntries(cards, "top");
 
-    expect(ordered.map((entry) => entry.card.cardId)).toEqual([
-      "location-1",
-      "character-1",
-      "character-2",
-    ]);
-    expect(ordered[0]?.association?.role).toBe("location");
-    expect(ordered[1]?.association?.role).toBe("occupant");
+    expect(ordered.map((entry) => entry.kind)).toEqual(["locationCluster", "card"]);
+    expect(ordered[0]?.kind).toBe("locationCluster");
+    if (ordered[0]?.kind === "locationCluster") {
+      expect(ordered[0].location.cardId).toBe("location-1");
+      expect(ordered[0].occupants.map((card) => card.cardId)).toEqual(["character-1"]);
+    }
+    expect(ordered[1]?.kind).toBe("card");
+    if (ordered[1]?.kind === "card") {
+      expect(ordered[1].card.cardId).toBe("character-2");
+    }
   });
 
   it("moves bottom seat location clusters after standalone cards", () => {
@@ -72,7 +75,9 @@ describe("board-order", () => {
     const ordered = buildOrderedPlayZoneEntries(cards, "bottom");
 
     expect(ordered).toHaveLength(1);
-    expect(ordered[0]?.association).toBeUndefined();
-    expect(ordered[0]?.card.cardId).toBe("character-1");
+    expect(ordered[0]?.kind).toBe("card");
+    if (ordered[0]?.kind === "card") {
+      expect(ordered[0].card.cardId).toBe("character-1");
+    }
   });
 });

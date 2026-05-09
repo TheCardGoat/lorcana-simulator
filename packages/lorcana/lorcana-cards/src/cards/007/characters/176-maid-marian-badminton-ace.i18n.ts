@@ -8,7 +8,7 @@ export const maidMarianBadmintonAceI18n: Record<Languages, I18nProperties> = {
       {
         title: "GOOD SHOT",
         description:
-          "During an opponent's turn, whenever one of your Ally characters is damaged, deal 1 damage to chosen opposing character.",
+          "During an opponent's turn, whenever one of your Ally characters takes damage, deal 1 damage to chosen opposing character.",
       },
       {
         title: "FAIR PLAY",

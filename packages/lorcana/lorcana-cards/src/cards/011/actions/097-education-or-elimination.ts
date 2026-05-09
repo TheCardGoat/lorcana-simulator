@@ -37,6 +37,10 @@ export const educationOrElimination: ActionCard = {
       text: "Choose one: Draw a card. Chosen character of yours gets +1 {L} and gains Evasive until the start of your next turn. Banish chosen damaged character.",
       effect: {
         type: "choice",
+        optionLabels: [
+          "Draw a card. Chosen character of yours gets +1 {L} and gains Evasive until the start of your next turn.",
+          "Banish chosen damaged character.",
+        ],
         options: [
           {
             type: "sequence",

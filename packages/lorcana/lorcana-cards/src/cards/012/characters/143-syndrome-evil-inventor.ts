@@ -19,6 +19,9 @@ export const syndromeEvilInventor: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_6a4abcb645cf41f282d3e6466283ea8d",
+  },
   text: [
     {
       title: "Alert",

@@ -25,6 +25,7 @@ const {
   fetchProfileDeckSummaries,
   fetchSelectedProfileDeckSummary,
   importDeckForProfile,
+  importLegacyDecksForProfile,
   joinMatchmakingEngagementEvent,
   updateActiveMatchmakingProfile,
   updateProfileSelectedDeck,
@@ -209,6 +210,44 @@ describe("player-context-api", () => {
       }),
     );
     expect(result.deckId).toBe("deck_9");
+  });
+
+  it("imports legacy decks for the active profile", async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            account: {
+              userId: "user_1",
+              name: "Edu",
+              email: "edu@example.com",
+              image: null,
+              username: "edu",
+              displayUsername: "This is Edu",
+              linkedAccounts: [],
+            },
+            activeGameProfileId: "gp_2",
+            profiles: [],
+            engagement: {
+              walletBalance: 0,
+              featuredEvent: null,
+              activeEvents: [],
+            },
+          }),
+        ),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    await importLegacyDecksForProfile("gp_2");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.test/v1/users/me/games/lorcana/onboard",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({ termsAccepted: true, forceReimport: true, gameProfileId: "gp_2" }),
+      }),
+    );
   });
 
   it("turns a deck list payload into a historic deck and deck text snapshot", async () => {

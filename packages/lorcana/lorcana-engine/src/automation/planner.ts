@@ -881,15 +881,15 @@ function cartesianProduct<T>(
 }
 
 function buildReadContext(adapter: AutomatedActionPlannerAdapter, actorId: PlayerId) {
-  return buildValidationContext(
-    adapter.state as LorcanaMatchState,
-    actorId,
-    { args: {} },
-    lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
-    adapter.staticResources,
-    adapter.board.status === "finished",
-    "preflight",
-  );
+  return buildValidationContext({
+    state: adapter.state as LorcanaMatchState,
+    playerId: actorId,
+    input: { args: {} },
+    config: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+    staticResources: adapter.staticResources,
+    gameEnded: adapter.board.status === "finished",
+    validationMode: "preflight",
+  });
 }
 
 function pushValidationDiagnostic(
@@ -1233,6 +1233,10 @@ function buildTargetVariants(args: {
     return [[...(baseTargets ?? [])]];
   }
   if (!effect) {
+    return [[]];
+  }
+
+  if (selectionContext?.kind === "choice-selection") {
     return [[]];
   }
 
@@ -2136,7 +2140,16 @@ function enumeratePlayCostModes(args: {
   diagnostics: AutomatedActionDiagnostic[];
 }): PlayCardCostInput[] {
   const { actorId, adapter, cardDef, cardId, searchCaps, diagnostics } = args;
-  const costModes: PlayCardCostInput[] = ["standard", "free"];
+  // The projection computes playCost without `playMethod`, so it will not
+  // reflect standard-only cost reducers. Always emit `standard` and let the
+  // engine validate it. The `free` validation path also uses `playMethod:
+  // undefined`, so the projected playCost is exact for that check — emit
+  // `free` only when the projection says the cost is already zero.
+  const costModes: PlayCardCostInput[] = ["standard"];
+  const projectedPlayCost = getProjectedCard(adapter.board, cardId)?.playCost ?? cardDef.cost;
+  if (projectedPlayCost === 0) {
+    costModes.push("free");
+  }
   const readContext = buildReadContext(adapter, actorId);
   const readyCharacters = getActorCharactersInPlay(adapter, actorId).filter((characterId) => {
     const meta = readContext.cards.require(characterId).meta;
@@ -2596,6 +2609,14 @@ function enumerateQuestCandidates(args: {
   }
 
   for (const cardId of getActorCharactersInPlay(adapter, actorId)) {
+    // Skip exerted characters — they cannot quest in any scenario. We do
+    // NOT pre-filter `drying`, because keywords like QuestWhileDrying /
+    // can-quest-turn-played make some drying characters legal questers;
+    // validation handles that exception correctly.
+    const projected = getProjectedCard(adapter.board, cardId);
+    if (projected?.exerted === true) {
+      continue;
+    }
     addValidatedCandidate(adapter, diagnostics, actorId, candidates, {
       family: "quest",
       cardId,
@@ -2614,7 +2635,17 @@ function enumerateChallengeCandidates(args: {
     return;
   }
 
-  const attackers = getActorCharactersInPlay(adapter, actorId);
+  // Skip exerted attackers — they cannot challenge. We do NOT pre-filter
+  // `drying` attackers, because Rush (and similar grants) lets drying
+  // characters challenge legally; validation handles that exception.
+  const attackers = getActorCharactersInPlay(adapter, actorId).filter((cardId) => {
+    const projected = getProjectedCard(adapter.board, cardId);
+    return projected?.exerted !== true;
+  });
+  // Defenders include any character or location. We do NOT filter ready
+  // character defenders here, because some attackers can grant
+  // can-challenge-ready (challenge ready characters), and that decision is
+  // attacker-specific — validation handles it per pairing.
   const defenders = stableSortIds(
     adapter.board,
     adapter.board.playerOrder

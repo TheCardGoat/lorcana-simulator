@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { evasive } from "../../../helpers/abilities/evasive";
 import { hamishHubertHarrisTroublemakingTripletsI18n } from "./070-hamish-hubert-harris-troublemaking-triplets.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const hamishHubertHarrisTroublemakingTriplets: CharacterCard = {
   id: "4Qe",

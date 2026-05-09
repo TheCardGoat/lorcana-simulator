@@ -44,7 +44,12 @@ export const jingleJoeSidsToy: CharacterCard = {
           excludeSelf: true,
         },
         timing: "whenever",
-        restrictions: [{ type: "during-turn", whose: "your" }],
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
       },
       effect: {
         type: "gain-keyword",

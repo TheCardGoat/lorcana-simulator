@@ -3,8 +3,24 @@ import {
   LorcanaMultiplayerTestEngine,
   PLAYER_ONE,
   createMockCharacter,
+  createMockItem,
 } from "@tcg/lorcana-engine/testing";
 import { plutoSteelChampion } from "./191-pluto-steel-champion";
+
+const opposingItem = createMockItem({
+  id: "pluto-opposing-item",
+  name: "Opposing Item",
+  cost: 2,
+});
+
+const incomingSteelAlly = createMockCharacter({
+  id: "pluto-incoming-steel",
+  name: "Incoming Steel",
+  cost: 2,
+  strength: 2,
+  willpower: 2,
+  inkType: ["steel"],
+});
 
 const steelAlly = createMockCharacter({
   id: "pluto-steel-ally",
@@ -82,5 +98,31 @@ describe("Pluto - Steel Champion", () => {
     }
 
     expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+  });
+
+  it("MAKE ROOM banishes a chosen opposing item when another Steel character is played", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: plutoSteelChampion, isDrying: false }],
+        hand: [incomingSteelAlly],
+        inkwell: incomingSteelAlly.cost,
+      },
+      {
+        play: [opposingItem],
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(incomingSteelAlly)).toBeSuccessfulCommand();
+    const itemId = testEngine.findCardInstanceId(opposingItem, "play", "p2");
+
+    const bagEffects = testEngine.asPlayerOne().getBagEffects();
+    expect(bagEffects.length).toBe(1);
+    expect(bagEffects[0]!.chooserId).toBe(PLAYER_ONE);
+
+    expect(
+      testEngine.asPlayerOne().resolveOnlyBag({ resolveOptional: true, targets: [itemId] }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getCardZone(itemId)).toBe("discard");
   });
 });

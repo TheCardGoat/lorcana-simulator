@@ -38,6 +38,11 @@ export const rcRemotecontrolledCar: CharacterCard = {
         type: "restriction",
         restriction: "cant-quest-or-challenge",
         target: "SELF",
+        bypass: {
+          cost: {
+            ink: 1,
+          },
+        },
       },
       text: "LOW BATTERIES This character can't quest or challenge unless you pay 1 {I}. (You pay this cost each time.)",
     },

@@ -125,6 +125,7 @@ export function projectLorcanaCardDerived(args: {
     state,
     cardInstanceId,
     getDefinitionByInstanceId,
+    registry,
   );
   derived.strength = deriveStrength(
     definition,

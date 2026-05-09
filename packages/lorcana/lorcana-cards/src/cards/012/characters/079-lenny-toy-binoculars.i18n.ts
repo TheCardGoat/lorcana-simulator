@@ -6,9 +6,9 @@ export const lennyToyBinocularsI18n: Record<Languages, I18nProperties> = {
     version: "Toy Binoculars",
     text: [
       {
-        title: "TAKE A GOOD LOOK",
+        title: "TAKE",
         description:
-          "When you play this character, chosen opponent reveals their hand and discards an action card of your choice.",
+          "A GOOD LOOK When you play this character, chosen opponent reveals their hand and discards an action card of your choice.",
       },
       {
         title: "COMIN' UP FAST",

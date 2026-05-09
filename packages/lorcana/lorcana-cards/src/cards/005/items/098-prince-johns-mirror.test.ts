@@ -128,11 +128,8 @@ describe("Prince John's Mirror", () => {
 
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
-      expect(
-        testEngine.asPlayerTwo().resolvePendingByCard(princeJohnsMirror, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
     });
 
     it("forces the opponent to discard down to 3 cards (P1 owns mirror, P2 discards)", () => {

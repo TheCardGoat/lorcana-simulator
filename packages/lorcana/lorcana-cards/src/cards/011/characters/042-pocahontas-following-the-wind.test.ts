@@ -94,6 +94,56 @@ describe("Pocahontas - Following the Wind", () => {
       );
     });
 
+    // Player bug report: Pocahontas could choose an opponent's exerted
+    // character that has Ward. Ward must protect opposing characters from
+    // being chosen by opposing effects.
+    it("excludes opposing Ward characters from candidate targets", () => {
+      const exertedOpponentWardChar = createMockCharacter({
+        id: "pocahontas-exerted-opponent-ward",
+        name: "Warded Opponent",
+        cost: 2,
+        strength: 2,
+        willpower: 3,
+        lore: 3,
+        abilities: [
+          {
+            id: "pocahontas-exerted-opponent-ward-kw",
+            type: "keyword",
+            keyword: "Ward",
+            text: "Ward",
+          },
+        ],
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: pocahontasFollowingTheWind, isDrying: false }],
+          deck: 3,
+        },
+        {
+          play: [{ card: exertedOpponentWardChar, exerted: true, isDrying: false }],
+          deck: 3,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().quest(pocahontasFollowingTheWind)).toBeSuccessfulCommand();
+
+      // The Warded opposing character must not be a valid target.
+      // With no other exerted characters, the trigger has zero valid candidates
+      // and should auto-resolve as a no-op rather than letting Pocahontas pick
+      // through Ward.
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(pocahontasFollowingTheWind, {
+          targets: [exertedOpponentWardChar],
+        }),
+      ).not.toBeSuccessfulCommand();
+
+      // Only Pocahontas's own quest lore should have been gained — the bonus
+      // from "another chosen exerted character" must not include the warded
+      // opponent.
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(pocahontasFollowingTheWind.lore);
+    });
+
     it("does not trigger when there are no exerted characters to choose", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

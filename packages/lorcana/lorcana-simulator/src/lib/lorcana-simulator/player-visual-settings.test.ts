@@ -39,12 +39,13 @@ describe("player visual settings resolution", () => {
 
     expect(resolved.cardBack).toEqual({
       id: "white",
-      src: "https://r2.tcg.online/public/lorcana/simulator/card-back/back-white.webp",
-      artOnlySrc: "https://r2.tcg.online/public/lorcana/simulator/card-back/back-white-square.webp",
+      src: "https://new-cdn.lorcanito.com/public/lorcana/simulator/card-back/back-white.webp",
+      artOnlySrc:
+        "https://new-cdn.lorcanito.com/public/lorcana/simulator/card-back/back-white-square.webp",
     });
     expect(resolved.playmat).toEqual({
       id: "elsa",
-      src: "https://r2.tcg.online/public/lorcana/simulator/playmats/elsa_bg.webp",
+      src: "https://new-cdn.lorcanito.com/public/lorcana/simulator/playmats/elsa_bg.webp",
     });
   });
 

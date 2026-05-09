@@ -65,6 +65,11 @@ export function cloneActionResolutionInput(
         revealWindowIds: Array.isArray(resolutionInput.eventSnapshot.revealWindowIds)
           ? [...resolutionInput.eventSnapshot.revealWindowIds]
           : resolutionInput.eventSnapshot.revealWindowIds,
+        previouslyTargetedCardIds: Array.isArray(
+          resolutionInput.eventSnapshot.previouslyTargetedCardIds,
+        )
+          ? [...resolutionInput.eventSnapshot.previouslyTargetedCardIds]
+          : resolutionInput.eventSnapshot.previouslyTargetedCardIds,
       }
     : undefined;
 

@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { evasive } from "../../../helpers/abilities/evasive";
 import { frozoneSuperSlickI18n } from "./046-frozone-super-slick.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const frozoneSuperSlick: CharacterCard = {
   id: "cV4",
@@ -19,6 +19,9 @@ export const frozoneSuperSlick: CharacterCard = {
   willpower: 2,
   lore: 1,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_176292aded014342b14e66e92f47427b",
+  },
   text: "Evasive",
   classifications: ["Storyborn", "Super", "Hero"],
   abilities: [evasive],

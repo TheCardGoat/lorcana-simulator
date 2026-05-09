@@ -3,17 +3,25 @@ import type {
   LorcanaTableSeat,
 } from "@/features/simulator/model/contracts.js";
 
-export interface OrderedPlayZoneEntryAssociation {
-  clusterId: string;
-  role: "location" | "occupant";
-  clusterSize: number;
-  isClusterStart: boolean;
-  isClusterEnd: boolean;
+export interface OrderedPlayZoneCardEntry {
+  kind: "card";
+  card: LorcanaCardSnapshot;
 }
 
-export interface OrderedPlayZoneEntry {
-  card: LorcanaCardSnapshot;
-  association?: OrderedPlayZoneEntryAssociation;
+export interface OrderedPlayZoneLocationClusterEntry {
+  kind: "locationCluster";
+  location: LorcanaCardSnapshot;
+  occupants: LorcanaCardSnapshot[];
+}
+
+export type OrderedPlayZoneEntry = OrderedPlayZoneCardEntry | OrderedPlayZoneLocationClusterEntry;
+
+function flattenPlayZoneEntry(entry: OrderedPlayZoneEntry): LorcanaCardSnapshot[] {
+  if (entry.kind === "card") {
+    return [entry.card];
+  }
+
+  return [entry.location, ...entry.occupants];
 }
 
 export function buildOrderedPlayZoneEntries(
@@ -45,34 +53,16 @@ export function buildOrderedPlayZoneEntries(
   for (const card of cards) {
     if (card.cardType === "location") {
       const occupants = occupantsByLocation.get(card.cardId) ?? [];
-      const clusterSize = 1 + occupants.length;
-      const clusterEntries: OrderedPlayZoneEntry[] = [
-        {
-          card,
-          association: {
-            clusterId: card.cardId,
-            role: "location",
-            clusterSize,
-            isClusterStart: true,
-            isClusterEnd: occupants.length === 0,
-          },
-        },
-        ...occupants.map((occupant, occupantIndex) => ({
-          card: occupant,
-          association: {
-            clusterId: card.cardId,
-            role: "occupant" as const,
-            clusterSize,
-            isClusterStart: false,
-            isClusterEnd: occupantIndex === occupants.length - 1,
-          },
-        })),
-      ];
+      const clusterEntry: OrderedPlayZoneEntry = {
+        kind: "locationCluster",
+        location: card,
+        occupants,
+      };
 
       if (seat === "bottom") {
-        locationClusterEntries.push(...clusterEntries);
+        locationClusterEntries.push(clusterEntry);
       } else {
-        orderedEntries.push(...clusterEntries);
+        orderedEntries.push(clusterEntry);
       }
       continue;
     }
@@ -81,7 +71,7 @@ export function buildOrderedPlayZoneEntries(
       continue;
     }
 
-    const nextEntry = { card };
+    const nextEntry: OrderedPlayZoneEntry = { kind: "card", card };
     if (seat === "bottom") {
       standaloneEntries.push(nextEntry);
     } else {
@@ -100,5 +90,5 @@ export function getOrderedPlayZoneCards(
   cards: readonly LorcanaCardSnapshot[],
   seat: LorcanaTableSeat,
 ): LorcanaCardSnapshot[] {
-  return buildOrderedPlayZoneEntries(cards, seat).map((entry) => entry.card);
+  return buildOrderedPlayZoneEntries(cards, seat).flatMap(flattenPlayZoneEntry);
 }

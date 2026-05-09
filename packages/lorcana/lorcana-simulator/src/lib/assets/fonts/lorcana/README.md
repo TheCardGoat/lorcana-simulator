@@ -15,6 +15,6 @@ Expected files:
 Notes:
 
 - `bbh-sans-bogle.woff2` is bundled from the public `@fontsource/bbh-sans-bogle` package.
-- The remaining Lorcana display faces are commercial fonts. The simulator only resolves them via `local(...)` until licensed binaries are provided.
-- `Bogle` falls back to the bundled `BBH Sans Bogle` webfont when the exact local face is unavailable.
+- The remaining Lorcana display faces are bundled `woff2` assets so simulator typography stays consistent across devices.
+- `Bogle` resolves to the bundled `bogle.woff2` first and falls back to the bundled `BBH Sans Bogle` webfont.
 - Font-family mapping is defined in `/src/lib/app.css`.

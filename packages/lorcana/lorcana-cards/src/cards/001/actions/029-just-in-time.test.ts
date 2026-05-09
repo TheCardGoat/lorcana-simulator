@@ -32,6 +32,7 @@ describe("Just in Time", () => {
     expect(
       testEngine.asPlayerOne().playCard(justInTime, {
         resolveOptional: true,
+        enterPlayExerted: true,
         targets: [simbaId],
       }),
     ).toBeSuccessfulCommand();
@@ -40,7 +41,7 @@ describe("Just in Time", () => {
     expect(testEngine.asPlayerOne().isExerted(simbaProtectiveCub)).toEqual(true);
   });
 
-  it("lets a Bodyguard character enter play ready", () => {
+  it("lets a Bodyguard character enter play ready from the pending free-play prompt", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [justInTime, simbaProtectiveCub],
       inkwell: justInTime.cost,
@@ -58,6 +59,27 @@ describe("Just in Time", () => {
     expect(testEngine.asPlayerOne().getCardZone(justInTime)).toEqual("discard");
     expect(testEngine.asPlayerOne().getCardZone(simbaProtectiveCub)).toEqual("play");
     expect(testEngine.asPlayerOne().isExerted(simbaProtectiveCub)).toEqual(false);
+  });
+
+  it("lets a Bodyguard character enter play exerted from the pending free-play prompt", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [justInTime, simbaProtectiveCub],
+      inkwell: justInTime.cost,
+    });
+    const simbaId = testEngine.findCardInstanceId(simbaProtectiveCub, "hand", "p1");
+
+    expect(testEngine.asPlayerOne().playCard(justInTime)).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({
+        resolveOptional: true,
+        enterPlayExerted: true,
+        targets: [simbaId],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(justInTime)).toEqual("discard");
+    expect(testEngine.asPlayerOne().getCardZone(simbaProtectiveCub)).toEqual("play");
+    expect(testEngine.asPlayerOne().isExerted(simbaProtectiveCub)).toEqual(true);
   });
 
   it("does not play a character with cost greater than 5 for free", () => {

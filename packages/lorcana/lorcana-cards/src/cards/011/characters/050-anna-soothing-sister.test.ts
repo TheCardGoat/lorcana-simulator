@@ -107,26 +107,24 @@ describe("Anna - Soothing Sister", () => {
       // Moana should still be in discard
       expect(testEngine.asPlayerOne().getCardZone(moanaOfMotunui)).toBe("discard");
     });
-  });
 
-  describe("Stats and basic properties", () => {
-    it("should have correct stats", () => {
-      expect(annaSoothingSister.cost).toBe(5);
-      expect(annaSoothingSister.strength).toBe(5);
-      expect(annaSoothingSister.willpower).toBe(5);
-      expect(annaSoothingSister.lore).toBe(1);
-    });
+    it("should auto-decline and create no pending effect when discard has no character cards", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: annaSoothingSister, isDrying: false }],
+        discard: [],
+        deck: 10,
+      });
 
-    it("should be inkable", () => {
-      expect(annaSoothingSister.inkable).toBe(true);
-    });
+      const loreBefore = testEngine.getLore(PLAYER_ONE);
 
-    it("should have correct classifications", () => {
-      expect(annaSoothingSister.classifications).toEqual(["Floodborn", "Hero", "Queen"]);
-    });
+      expect(testEngine.asPlayerOne().quest(annaSoothingSister)).toBeSuccessfulCommand();
 
-    it("should be amethyst ink", () => {
-      expect(annaSoothingSister.inkType).toEqual(["amethyst"]);
+      // No character cards in discard — WARM HEART must auto-decline with no prompt
+      expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+
+      // Only Anna's quest lore gained
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(loreBefore + annaSoothingSister.lore);
     });
   });
 

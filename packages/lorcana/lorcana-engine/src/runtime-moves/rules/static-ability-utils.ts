@@ -724,6 +724,7 @@ import {
   evaluateCondition,
   type ConditionEvaluationContext,
 } from "../../rules/condition-evaluator";
+import { buildConditionContextFromMatchState } from "../../rules/condition-context";
 
 export function evaluateStaticCondition(args: {
   condition: Condition | undefined;
@@ -732,6 +733,7 @@ export function evaluateStaticCondition(args: {
   sourceId?: CardInstanceId;
   getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
   getCardStrengthByInstanceId?: (cardId: CardInstanceId) => number;
+  getCardWillpowerByInstanceId?: (cardId: CardInstanceId) => number;
 }): boolean {
   const { condition, state, controllerId, sourceId, getDefinitionByInstanceId } = args;
 
@@ -745,75 +747,18 @@ export function evaluateStaticCondition(args: {
     return false;
   }
 
-  const evaluationContext: ConditionEvaluationContext = {
-    framework: {
-      state: {
-        priority: state.priority as ConditionEvaluationContext["framework"]["state"]["priority"],
-        status: state.status as ConditionEvaluationContext["framework"]["state"]["status"],
-        _zonesPrivate:
-          state._zonesPrivate as ConditionEvaluationContext["framework"]["state"]["_zonesPrivate"],
-        currentPlayer: getActivePlayerId(state),
-        playerIds: getStatePlayerIds(state),
-      },
-      zones: {
-        getCards: ({ zone, playerId }: { zone: string; playerId: PlayerId }) => {
-          // Try player-scoped zone first (e.g. "play:player_two", "hand:player_two")
-          const scopedKey = `${zone}:${playerId}`;
-          const allZones = state._zonesPrivate?.zoneCards as
-            | Record<string, readonly string[] | undefined>
-            | undefined;
-          const scopedCards = allZones?.[scopedKey];
-          if (scopedCards !== undefined) {
-            return scopedCards as CardInstanceId[];
-          }
-
-          // Fall back to a global (unscoped) zone, filtering by owner/controller.
-          // Only use this path if the global zone has entries that actually belong to this player.
-          const globalCards = allZones?.[zone];
-          if (globalCards) {
-            const ownerFiltered = globalCards.filter(
-              (id) =>
-                state._zonesPrivate?.cardIndex?.[id]?.controllerID === playerId ||
-                state._zonesPrivate?.cardIndex?.[id]?.ownerID === playerId,
-            ) as CardInstanceId[];
-            if (ownerFiltered.length > 0) {
-              return ownerFiltered;
-            }
-          }
-
-          // Last resort: use public zone summaries to synthesize a count-only placeholder array.
-          // This handles the case where a private zone (e.g. opponent's hand) is filtered out
-          // of the client-side state view, but we still need to evaluate a count-based condition.
-          // The public zone summary is available on both server and client for all zones.
-          const summary = state._zonesPublic?.zoneSummaries?.[scopedKey];
-          if (summary !== undefined) {
-            const count = summary?.count ?? 0;
-            return Array.from(
-              { length: count },
-              (_, i) => `__summary_${scopedKey}_${i}` as CardInstanceId,
-            );
-          }
-
-          return [];
-        },
-        getCardZone: (cardId: CardInstanceId) => state._zonesPrivate?.cardIndex?.[cardId]?.zoneKey,
-      },
-    },
-    cards: {
-      getDefinition: getDefinitionByInstanceId,
-      require: (cardId: CardInstanceId) => ({
-        meta: state._zonesPrivate?.cardMeta?.[cardId] ?? {},
-      }),
-      get: (cardId: CardInstanceId) => ({
-        definition: getDefinitionByInstanceId(cardId),
-      }),
-    },
-    G: state.G as DeepReadonly<LorcanaG>, // Cast assuming G is sufficient if present, or will crash/fail gracefully
+  const evaluationContext = buildConditionContextFromMatchState({
+    state,
     playerId: controllerId,
     sourceCardId: sourceId,
+    currentPlayer: getActivePlayerId(state),
+    playerIds: getStatePlayerIds(state),
+    getDefinitionByInstanceId,
     getCardStrengthByInstanceId: args.getCardStrengthByInstanceId,
+    getCardWillpowerByInstanceId: args.getCardWillpowerByInstanceId,
     disableFilterRegistry: true,
-  };
+    extendedZoneGetters: true,
+  });
 
   return evaluateCondition(condition, evaluationContext);
 }
@@ -823,6 +768,7 @@ export function hasStaticSelfRestriction(args: {
   cardId: CardInstanceId;
   restriction: string;
   getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+  getCardWillpowerByInstanceId?: (cardId: CardInstanceId) => number;
 }): boolean {
   const { state, cardId, restriction, getDefinitionByInstanceId } = args;
   if (!isCardInPlay(state, cardId) || !getDefinitionByInstanceId) {
@@ -852,8 +798,135 @@ export function hasStaticSelfRestriction(args: {
         controllerId,
         sourceId: cardId,
         getDefinitionByInstanceId,
+        getCardWillpowerByInstanceId: args.getCardWillpowerByInstanceId,
       }),
   );
+}
+
+type RestrictionBypass = { cost: { ink: number } };
+
+/**
+ * Find the first `bypass` descriptor attached to a matching SELF restriction on
+ * `cardId`. Returns the bypass shape when the card has an active static
+ * restriction that matches `restriction` and carries a bypass; otherwise null.
+ *
+ * Used by the quest/challenge validators to honor "can't X unless you pay N {I}"
+ * escape clauses (e.g., RC, Remote-Controlled Car).
+ */
+export function getStaticSelfRestrictionBypass(args: {
+  state: StaticAbilityState;
+  cardId: CardInstanceId;
+  restriction: string;
+  getDefinitionByInstanceId: (cardId: CardInstanceId) => LorcanaCardDefinition | undefined;
+}): RestrictionBypass | null {
+  const { state, cardId, restriction, getDefinitionByInstanceId } = args;
+  if (!isCardInPlay(state, cardId) || !getDefinitionByInstanceId) {
+    return null;
+  }
+
+  const definition = getDefinitionByInstanceId(cardId);
+  if (!definition) {
+    return null;
+  }
+
+  const controllerId = state._zonesPrivate?.cardIndex?.[cardId]?.controllerID as
+    | PlayerId
+    | undefined;
+
+  for (const ability of definition.abilities ?? []) {
+    if (ability.type !== "static") {
+      continue;
+    }
+    if (
+      !staticEffectContainsRestriction({
+        effect: ability.effect,
+        restriction,
+        target: "SELF",
+      })
+    ) {
+      continue;
+    }
+    if (
+      !evaluateStaticCondition({
+        condition: ability.condition,
+        state,
+        controllerId,
+        sourceId: cardId,
+        getDefinitionByInstanceId,
+      })
+    ) {
+      continue;
+    }
+    const bypass = extractBypassFromEffect(ability.effect, restriction);
+    if (bypass) {
+      return bypass;
+    }
+  }
+  return null;
+}
+
+function extractBypassFromEffect(
+  effect: StaticAbilityDefinition["effect"] | Effect,
+  restriction: string,
+): RestrictionBypass | null {
+  if (effect.type === "restriction") {
+    if (!restrictionMatches(effect.restriction, restriction)) {
+      return null;
+    }
+    const bypass = (effect as { bypass?: unknown }).bypass;
+    if (
+      bypass &&
+      typeof bypass === "object" &&
+      "cost" in bypass &&
+      (bypass as { cost?: unknown }).cost &&
+      typeof (bypass as { cost: { ink?: unknown } }).cost.ink === "number"
+    ) {
+      return { cost: { ink: (bypass as { cost: { ink: number } }).cost.ink } };
+    }
+    return null;
+  }
+
+  if (effect.type === "sequence") {
+    const steps = effect.steps ?? effect.effects ?? [];
+    for (const step of steps) {
+      const found = extractBypassFromEffect(step, restriction);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  if (effect.type === "conditional") {
+    const thenEffect = effect.then ?? effect.effect ?? effect.ifTrue;
+    if (thenEffect) {
+      const found = extractBypassFromEffect(thenEffect, restriction);
+      if (found) return found;
+    }
+    const elseEffect = effect.else ?? effect.ifFalse;
+    if (elseEffect) {
+      const found = extractBypassFromEffect(elseEffect, restriction);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  if (effect.type === "optional" && effect.effect) {
+    return extractBypassFromEffect(effect.effect, restriction);
+  }
+
+  if (effect.type === "or") {
+    const options = effect.options ?? effect.choices ?? [];
+    for (const option of options) {
+      const found = extractBypassFromEffect(option, restriction);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  if (effect.type === "for-each" && effect.effect) {
+    return extractBypassFromEffect(effect.effect, restriction);
+  }
+
+  return null;
 }
 
 /**
@@ -1450,17 +1523,39 @@ export function hasOpponentStaticPlayRestriction(args: {
   playerId: PlayerId;
   restriction: string;
   registry: StaticEffectRegistry;
+  cardCost?: number;
 }): boolean {
-  const { playerId, restriction, registry } = args;
+  const { playerId, restriction, registry, cardCost } = args;
 
   // OPPONENTS restrictions from opponent cards are already routed to byPlayer[playerId]
   // by the registry builder. We just filter by sourceControllerId to confirm it's from an opponent.
-  return registryEffectsForPlayer(registry, playerId, "restriction").some(
-    (e) =>
-      e.payload.restriction === restriction &&
-      e.payload.playerTarget === "OPPONENTS" &&
-      e.sourceControllerId !== playerId,
-  );
+  return registryEffectsForPlayer(registry, playerId, "restriction").some((e) => {
+    if (e.payload.restriction !== restriction) return false;
+    if (e.payload.playerTarget !== "OPPONENTS") return false;
+    if (e.sourceControllerId === playerId) return false;
+    // Honor structured costRestriction (preferred) and legacy minCost.
+    const costRestriction = e.payload.costRestriction as
+      | { comparison: "less-or-equal" | "greater-or-equal" | "equal"; value: number }
+      | undefined;
+    if (costRestriction) {
+      if (typeof cardCost !== "number") return false;
+      switch (costRestriction.comparison) {
+        case "greater-or-equal":
+          if (cardCost < costRestriction.value) return false;
+          break;
+        case "less-or-equal":
+          if (cardCost > costRestriction.value) return false;
+          break;
+        case "equal":
+          if (cardCost !== costRestriction.value) return false;
+          break;
+      }
+    } else if (typeof e.payload.minCost === "number" && typeof cardCost === "number") {
+      // Legacy minCost — only apply if the card meets or exceeds it.
+      if (cardCost < (e.payload.minCost as number)) return false;
+    }
+    return true;
+  });
 }
 
 /**

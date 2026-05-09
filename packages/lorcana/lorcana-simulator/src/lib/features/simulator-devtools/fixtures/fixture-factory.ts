@@ -1,38 +1,12 @@
 import { getLogger } from "@logtape/logtape";
-import * as cards001Module from "@tcg/lorcana-cards/cards/001";
-import * as cards002Module from "@tcg/lorcana-cards/cards/002";
-import * as cards003Module from "@tcg/lorcana-cards/cards/003";
-import * as cards004Module from "@tcg/lorcana-cards/cards/004";
-import * as cards005Module from "@tcg/lorcana-cards/cards/005";
-import * as cards006Module from "@tcg/lorcana-cards/cards/006";
-import * as cards007Module from "@tcg/lorcana-cards/cards/007";
-import * as cards008Module from "@tcg/lorcana-cards/cards/008";
-import * as cards009Module from "@tcg/lorcana-cards/cards/009";
-import * as cards010Module from "@tcg/lorcana-cards/cards/010";
-import * as cards011Module from "@tcg/lorcana-cards/cards/011";
 import type { LorcanaCard } from "@tcg/lorcana-engine";
 import type { TestInitialState } from "@tcg/lorcana-engine/testing";
-import * as deckListResolverModule from "@tcg/lorcana-cards/deck-list-resolver";
 import type { LorcanaDeckListResolutionDiagnostics } from "@tcg/lorcana-cards/deck-list-resolver";
 import type { LorcanaSimulatorFixture } from "@/features/simulator/model/contracts.js";
 
 type FixturePlayerInput = Omit<TestInitialState, "deck"> & {
   deck?: TestInitialState["deck"] | string;
 };
-
-const { all001Cards } = cards001Module as typeof import("@tcg/lorcana-cards/cards/001");
-const { all002Cards } = cards002Module as typeof import("@tcg/lorcana-cards/cards/002");
-const { all003Cards } = cards003Module as typeof import("@tcg/lorcana-cards/cards/003");
-const { all004Cards } = cards004Module as typeof import("@tcg/lorcana-cards/cards/004");
-const { all005Cards } = cards005Module as typeof import("@tcg/lorcana-cards/cards/005");
-const { all006Cards } = cards006Module as typeof import("@tcg/lorcana-cards/cards/006");
-const { all007Cards } = cards007Module as typeof import("@tcg/lorcana-cards/cards/007");
-const { all008Cards } = cards008Module as typeof import("@tcg/lorcana-cards/cards/008");
-const { all009Cards } = cards009Module as typeof import("@tcg/lorcana-cards/cards/009");
-const { all010Cards } = cards010Module as typeof import("@tcg/lorcana-cards/cards/010");
-const { all011Cards } = cards011Module as typeof import("@tcg/lorcana-cards/cards/011");
-const { resolveLorcanaDeckListTextFromPool } =
-  deckListResolverModule as typeof import("@tcg/lorcana-cards/deck-list-resolver");
 
 export type LorcanaSimulatorFixtureInput = Omit<
   LorcanaSimulatorFixture,
@@ -44,19 +18,54 @@ export type LorcanaSimulatorFixtureInput = Omit<
 
 const logger = getLogger(["tcg", "core-simulator", "lorcana-simulator", "fixture-factory"]);
 
-const ALL_LORCANA_CARDS: LorcanaCard[] = [
-  ...all001Cards,
-  ...all002Cards,
-  ...all003Cards,
-  ...all004Cards,
-  ...all005Cards,
-  ...all006Cards,
-  ...all007Cards,
-  ...all008Cards,
-  ...all009Cards,
-  ...all010Cards,
-  ...all011Cards,
-].filter((card) => card?.name != null);
+// ---------------------------------------------------------------------------
+// Lazy card pool — only loaded when a string deck list needs resolving.
+// Pre-materialized fixture callers (the vast majority) never trigger this.
+// ---------------------------------------------------------------------------
+
+let _cardPoolPromise: Promise<LorcanaCard[]> | null = null;
+
+async function getCardPool(): Promise<LorcanaCard[]> {
+  if (!_cardPoolPromise) {
+    _cardPoolPromise = (async () => {
+      const [m001, m002, m003, m004, m005, m006, m007, m008, m009, m010, m011, m012] =
+        await Promise.all([
+          import("@tcg/lorcana-cards/cards/001"),
+          import("@tcg/lorcana-cards/cards/002"),
+          import("@tcg/lorcana-cards/cards/003"),
+          import("@tcg/lorcana-cards/cards/004"),
+          import("@tcg/lorcana-cards/cards/005"),
+          import("@tcg/lorcana-cards/cards/006"),
+          import("@tcg/lorcana-cards/cards/007"),
+          import("@tcg/lorcana-cards/cards/008"),
+          import("@tcg/lorcana-cards/cards/009"),
+          import("@tcg/lorcana-cards/cards/010"),
+          import("@tcg/lorcana-cards/cards/011"),
+          import("@tcg/lorcana-cards/cards/012"),
+        ]);
+
+      return [
+        ...m001.all001Cards,
+        ...m002.all002Cards,
+        ...m003.all003Cards,
+        ...m004.all004Cards,
+        ...m005.all005Cards,
+        ...m006.all006Cards,
+        ...m007.all007Cards,
+        ...m008.all008Cards,
+        ...m009.all009Cards,
+        ...m010.all010Cards,
+        ...m011.all011Cards,
+        ...m012.all012Cards,
+      ].filter((card) => card?.name != null);
+    })();
+  }
+  return _cardPoolPromise;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function isStringDeck(deck: TestInitialState["deck"] | string | undefined): deck is string {
   return typeof deck === "string";
@@ -101,20 +110,23 @@ function throwMalformedEntries(
   throw new Error(`Fixture "${fixtureId}" ${side} decklist contains malformed lines: ${invalid}`);
 }
 
-function parseDeckFromText(
+async function parseDeckFromText(
   side: "playerOne" | "playerTwo",
   fixtureId: string,
   deckText: string,
-): LorcanaCard[] {
+): Promise<LorcanaCard[]> {
   logger.info("Parsing decklist text for fixture", {
     fixtureId,
     side,
     textLength: deckText.length,
   });
 
+  const allCards = await getCardPool();
+  const { resolveLorcanaDeckListTextFromPool } =
+    await import("@tcg/lorcana-cards/deck-list-resolver");
   const { resolvedByCardName, cards, diagnostics } = resolveLorcanaDeckListTextFromPool(
     deckText,
-    ALL_LORCANA_CARDS,
+    allCards,
   );
 
   logger.debug("Decklist parse result", {
@@ -165,42 +177,44 @@ function parseDeckFromText(
   return cards;
 }
 
-export function sanitizeDeckText(deckText: string): {
-  sanitizedText: string;
-  unknownCards: string[];
-} {
-  const { diagnostics, entries } = resolveLorcanaDeckListTextFromPool(deckText, ALL_LORCANA_CARDS);
-  const unknownSet = new Set(diagnostics.unresolvedNames);
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
-  const sanitizedText = entries
-    .filter((entry) => !unknownSet.has(entry.cardName))
-    .map((entry) => `${entry.quantity} ${entry.cardName}`)
-    .join("\n");
-
-  return {
-    sanitizedText,
-    unknownCards: diagnostics.unresolvedNames,
-  };
-}
-
-function normalizePlayerState(
-  fixtureId: string,
-  side: "playerOne" | "playerTwo",
-  state: FixturePlayerInput,
-): TestInitialState {
-  if (!isStringDeck(state.deck)) {
-    return state as TestInitialState;
-  }
-
-  const deckCards = parseDeckFromText(side, fixtureId, state.deck);
-  return {
-    ...state,
-    deck: deckCards,
-  };
-}
-
+/**
+ * Create a fixture from pre-materialized card objects (synchronous).
+ *
+ * Both playerOne.deck and playerTwo.deck must be card arrays, numbers, or
+ * undefined — not deck-list strings. Use createFixtureFromDeckList for the
+ * string-deck path.
+ */
 export const createFixture = (fixture: LorcanaSimulatorFixtureInput): LorcanaSimulatorFixture => {
   logger.info("Creating Lorcana simulator fixture", {
+    fixtureId: fixture.id,
+    fixtureName: fixture.name,
+  });
+
+  if (isStringDeck(fixture.playerOne.deck) || isStringDeck(fixture.playerTwo.deck)) {
+    throw new Error(
+      `Fixture "${fixture.id}" uses a string deck list. Use createFixtureFromDeckList instead.`,
+    );
+  }
+
+  logger.debug("Fixture uses pre-materialized deck values (non-string)", {
+    fixtureId: fixture.id,
+  });
+
+  return fixture as LorcanaSimulatorFixture;
+};
+
+/**
+ * Create a fixture where one or both decks are specified as deck-list strings
+ * (asynchronous — loads the full card pool on first call, then caches it).
+ */
+export async function createFixtureFromDeckList(
+  fixture: LorcanaSimulatorFixtureInput,
+): Promise<LorcanaSimulatorFixture> {
+  logger.info("Creating Lorcana simulator fixture from deck list", {
     fixtureId: fixture.id,
     fixtureName: fixture.name,
   });
@@ -219,20 +233,19 @@ export const createFixture = (fixture: LorcanaSimulatorFixtureInput): LorcanaSim
     );
   }
 
-  if (!playerOneDeckIsString) {
-    logger.debug("Fixture uses pre-materialized deck values (non-string)", {
-      fixtureId: fixture.id,
-    });
-    return fixture as LorcanaSimulatorFixture;
-  }
-
-  const playerOne = normalizePlayerState(fixture.id, "playerOne", fixture.playerOne);
-  const playerTwo = normalizePlayerState(fixture.id, "playerTwo", fixture.playerTwo);
+  const [playerOneCards, playerTwoCards] = await Promise.all([
+    playerOneDeckIsString
+      ? parseDeckFromText("playerOne", fixture.id, fixture.playerOne.deck as string)
+      : Promise.resolve(fixture.playerOne.deck),
+    playerTwoDeckIsString
+      ? parseDeckFromText("playerTwo", fixture.id, fixture.playerTwo.deck as string)
+      : Promise.resolve(fixture.playerTwo.deck),
+  ]);
 
   const resolvedFixture: LorcanaSimulatorFixture = {
     ...fixture,
-    playerOne,
-    playerTwo,
+    playerOne: { ...fixture.playerOne, deck: playerOneCards } as TestInitialState,
+    playerTwo: { ...fixture.playerTwo, deck: playerTwoCards } as TestInitialState,
   };
 
   logger.info("Finished creating Lorcana simulator fixture", {
@@ -252,4 +265,30 @@ export const createFixture = (fixture: LorcanaSimulatorFixtureInput): LorcanaSim
   });
 
   return resolvedFixture;
-};
+}
+
+/**
+ * Validate and sanitize a raw deck-list string against the known card pool.
+ * Returns the sanitized text (unknown cards stripped) and the list of
+ * card names that could not be resolved.
+ */
+export async function sanitizeDeckText(deckText: string): Promise<{
+  sanitizedText: string;
+  unknownCards: string[];
+}> {
+  const allCards = await getCardPool();
+  const { resolveLorcanaDeckListTextFromPool } =
+    await import("@tcg/lorcana-cards/deck-list-resolver");
+  const { diagnostics, entries } = resolveLorcanaDeckListTextFromPool(deckText, allCards);
+  const unknownSet = new Set(diagnostics.unresolvedNames);
+
+  const sanitizedText = entries
+    .filter((entry) => !unknownSet.has(entry.cardName))
+    .map((entry) => `${entry.quantity} ${entry.cardName}`)
+    .join("\n");
+
+  return {
+    sanitizedText,
+    unknownCards: diagnostics.unresolvedNames,
+  };
+}

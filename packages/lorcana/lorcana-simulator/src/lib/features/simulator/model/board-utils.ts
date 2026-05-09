@@ -782,8 +782,9 @@ export function mergeSupplementalScryCardSnapshots(args: {
   staticResources: MatchStaticResources;
   authoritativeState: AuthoritativeCardStateView;
   snapshots: CardSnapshotMap;
+  viewerPlayerId?: string | null;
 }): CardSnapshotMap {
-  const { board, staticResources, authoritativeState, snapshots } = args;
+  const { board, staticResources, authoritativeState, snapshots, viewerPlayerId } = args;
   const nextSnapshots: CardSnapshotMap = { ...snapshots };
   const revealedCardIds = new Set<string>();
 
@@ -797,8 +798,31 @@ export function mergeSupplementalScryCardSnapshots(args: {
     }
   }
 
+  if (viewerPlayerId) {
+    const shouldRevealViewerInkwell = [...board.pendingEffects, ...board.bagEffects].some(
+      (effect) => {
+        const context = effect.selectionContext;
+        return (
+          context?.kind === "target-selection" &&
+          context.chooserId === viewerPlayerId &&
+          context.allowedZones.includes("inkwell")
+        );
+      },
+    );
+
+    if (shouldRevealViewerInkwell) {
+      const viewerInkwellCards = board.players[viewerPlayerId]?.inkwell ?? [];
+      for (const cardId of viewerInkwellCards) {
+        if (typeof cardId === "string" && cardId.length > 0) {
+          revealedCardIds.add(cardId);
+        }
+      }
+    }
+  }
+
   for (const cardId of revealedCardIds) {
-    if (nextSnapshots[cardId]) {
+    const existingSnapshot = nextSnapshots[cardId];
+    if (existingSnapshot && !existingSnapshot.isMasked) {
       continue;
     }
 

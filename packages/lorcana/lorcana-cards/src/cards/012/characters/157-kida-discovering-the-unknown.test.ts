@@ -97,6 +97,45 @@ describe("Kida - Discovering the Unknown", () => {
       expect(playerOne.getCardZone(topDeckCard)).toBe("deck");
     });
 
+    it("counts cards-under that move to discard when their Boost host is banished (R15)", () => {
+      const boostHost = createMockCharacter({
+        id: "kida-boost-host",
+        name: "Boost Host",
+        cost: 2,
+        strength: 1,
+        willpower: 1,
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: kidaDiscoveringTheUnknown, isDrying: false }, boostHost],
+          deck: [topDeckCard, discardFodder, discardFodder2],
+        },
+        {
+          deck: 1,
+        },
+      );
+
+      // Set up: put 2 cards under boost host (simulating prior Boost activations).
+      const boostHostId = testEngine.findCardInstanceId(boostHost, "play", PLAYER_ONE);
+      const deckIds = testEngine.getCardInstanceIdsInZone("deck", PLAYER_ONE);
+      testEngine.putCardUnder(boostHostId!, deckIds[1]!);
+      testEngine.putCardUnder(boostHostId!, deckIds[2]!);
+      expect(testEngine.getCardsUnder(boostHostId!)).toHaveLength(2);
+
+      // Banish the host directly — its cards-under should follow into discard.
+      expect(
+        testEngine.asServer().manualMoveCard(boostHostId!, `discard:${PLAYER_ONE}` as ZoneId),
+      ).toBeSuccessfulCommand();
+
+      // Expect 3 cards entered discard (host + 2 under). Kida's quest then triggers.
+      const playerOne = testEngine.asPlayerOne();
+      expect(playerOne.quest(kidaDiscoveringTheUnknown)).toBeSuccessfulCommand();
+      expect(playerOne.resolvePendingByCard(kidaDiscoveringTheUnknown)).toBeSuccessfulCommand();
+      expect(playerOne.getCardZone(topDeckCard)).toBe("inkwell");
+    });
+
     it("does not trigger when fewer than 2 cards entered your discard this turn", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

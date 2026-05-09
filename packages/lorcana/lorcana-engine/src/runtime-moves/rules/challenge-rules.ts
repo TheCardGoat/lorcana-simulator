@@ -13,6 +13,7 @@ import { getTotalKeyword, hasKeyword } from "../../card-utils";
 import { projectLorcanaCardDerived } from "../../projection/card-derived";
 import { createProjectionState } from "../../rules/derived-state";
 import { resolveCandidateTargets } from "../../targeting/runtime";
+import { isCardInPlayZone } from "../../operations/zones";
 import type {
   ChallengeState,
   LorcanaCardDefinition,
@@ -29,7 +30,9 @@ import {
   isCardInPlay,
   evaluateStaticCondition,
   hasStaticSelfRestriction,
+  getStaticSelfRestrictionBypass,
 } from "./static-ability-utils";
+import { getAvailableInk } from "./play-card-rules";
 import {
   getTemporaryAbilityPayload,
   hasTemporaryAbility,
@@ -37,8 +40,10 @@ import {
   hasTemporaryRestriction,
 } from "../effects/temporary-effects";
 import { getOrBuildMoveRegistry } from "./move-registry-cache";
-import { buildStaticEffectRegistry } from "../../rules/static-effect-registry";
+import { buildStaticEffectRegistry, getEffectsForCard } from "../../rules/static-effect-registry";
 import type { StaticEffectRegistry } from "../../rules/static-effect-registry";
+import { previewReplacementEffects } from "../effects/replacement-effects";
+import type { ReplacementContext } from "../effects/replacement-effects";
 
 export const CHALLENGE_DEFENDER_TARGET_DSL = {
   selector: "chosen",
@@ -67,11 +72,6 @@ type ChallengeFrameworkReadContext = Pick<ChallengeAnyContext, "framework" | "G"
 type ChallengeCardStateContext = ChallengeCardReadContext & ChallengeFrameworkReadContext;
 
 type RuntimeLorcanaCardWithDerived = RuntimeCardWithDefinition & LorcanaCardDerived;
-
-function isCardStillInPlay(ctx: ChallengeAnyContext, sourceId: string): boolean {
-  const zoneKey = ctx.framework.zones.getCardZone(sourceId);
-  return typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"));
-}
 
 type ChallengeCardsAPI = {
   getDefinition(cardId: CardInstanceId): LorcanaCard | undefined;
@@ -364,7 +364,7 @@ function cantBeChallenged(
   const cardMeta = getCardMeta(ctx, cardId);
   if (
     hasTemporaryRestriction(cardMeta, currentTurn, "cant-be-challenged", {
-      isSourceInPlay: (sourceId) => isCardStillInPlay(ctx, sourceId),
+      isSourceInPlay: (sourceId) => isCardInPlayZone(ctx, sourceId),
     })
   ) {
     return true;
@@ -441,7 +441,7 @@ function isChallengeReadyAttacker(ctx: ChallengeAnyContext, attackerId: CardInst
 
   if (
     hasTemporaryRestriction(attackerMeta, currentTurn, "cant-challenge", {
-      isSourceInPlay: (sourceId) => isCardStillInPlay(ctx, sourceId),
+      isSourceInPlay: (sourceId) => isCardInPlayZone(ctx, sourceId),
     })
   ) {
     return false;
@@ -455,7 +455,18 @@ function isChallengeReadyAttacker(ctx: ChallengeAnyContext, attackerId: CardInst
       getDefinitionByInstanceId: (instanceId) => getCardsApi(ctx).getDefinition(instanceId),
     })
   ) {
-    return false;
+    const bypass = getStaticSelfRestrictionBypass({
+      state: ctx.framework.state,
+      cardId: attackerId,
+      restriction: "cant-challenge",
+      getDefinitionByInstanceId: (instanceId) => getCardsApi(ctx).getDefinition(instanceId),
+    });
+    if (!bypass) {
+      return false;
+    }
+    if (!controllerId || getAvailableInk(ctx, controllerId) < bypass.cost.ink) {
+      return false;
+    }
   }
 
   if (
@@ -770,7 +781,7 @@ export function validateChallengeAction(ctx: ChallengeValidationContext): Runtim
 
   if (
     hasTemporaryRestriction(attackerMeta, currentTurn, "cant-challenge", {
-      isSourceInPlay: (sourceId) => isCardStillInPlay(ctx, sourceId),
+      isSourceInPlay: (sourceId) => isCardInPlayZone(ctx, sourceId),
     })
   ) {
     return createFailure("Attacker cannot challenge", "ATTACKER_CANT_CHALLENGE");
@@ -784,7 +795,21 @@ export function validateChallengeAction(ctx: ChallengeValidationContext): Runtim
       getDefinitionByInstanceId: (instanceId) => getCardsApi(ctx).getDefinition(instanceId),
     })
   ) {
-    return createFailure("Attacker cannot challenge", "ATTACKER_CANT_CHALLENGE");
+    const bypass = getStaticSelfRestrictionBypass({
+      state: ctx.framework.state,
+      cardId: attackerId,
+      restriction: "cant-challenge",
+      getDefinitionByInstanceId: (instanceId) => getCardsApi(ctx).getDefinition(instanceId),
+    });
+    if (!bypass) {
+      return createFailure("Attacker cannot challenge", "ATTACKER_CANT_CHALLENGE");
+    }
+    if (!attackerControllerId || getAvailableInk(ctx, attackerControllerId) < bypass.cost.ink) {
+      return createFailure(
+        "Not enough ink to pay the challenge bypass cost",
+        "ATTACKER_CANT_CHALLENGE",
+      );
+    }
   }
 
   if (
@@ -953,11 +978,32 @@ function resolveChallengeStrength(
   const challengerBonus = challenging ? (derived.keywordValues?.challenger ?? 0) : 0;
 
   const dynamic = resolveDynamicCombatModifierTODO(card.instanceId as CardInstanceId);
-  // Use derived.strength (which includes static modify-stat effects with in-challenge
-  // conditions evaluated against the synthetic challengeState) instead of the
-  // pre-projected card strength to correctly handle "while being challenged" bonuses.
-  const baseStrength = derived.strength ?? (card as LorcanaRuntimeCard).strength;
-  const totalStrength = baseStrength + challengerBonus + dynamic.strengthModifier;
+
+  // Check for "damage source stat override" — e.g. Dale's SPIKE SUIT makes
+  // the character deal damage with their {W} instead of their {S} during a
+  // challenge. The override replaces the strength contribution but still
+  // allows Challenger bonuses and dynamic modifiers to apply on top.
+  const overrides = getEffectsForCard(
+    registry,
+    card.instanceId as CardInstanceId,
+    "damage-source-stat-override",
+  );
+  let damageStat: number;
+  if (overrides.length > 0) {
+    // If multiple overrides apply, prefer the highest resulting value so that
+    // a character benefits from the most favorable substitution.
+    damageStat = overrides.reduce((best, effect) => {
+      const stat = effect.payload.stat as "willpower" | "lore";
+      const value = stat === "willpower" ? (derived.willpower ?? 0) : (derived.lore ?? 0);
+      return Math.max(best, value);
+    }, 0);
+  } else {
+    // Use derived.strength (which includes static modify-stat effects with in-challenge
+    // conditions evaluated against the synthetic challengeState) instead of the
+    // pre-projected card strength to correctly handle "while being challenged" bonuses.
+    damageStat = derived.strength ?? (card as LorcanaRuntimeCard).strength;
+  }
+  const totalStrength = damageStat + challengerBonus + dynamic.strengthModifier;
 
   return Math.max(0, totalStrength);
 }
@@ -1033,6 +1079,8 @@ export interface ChallengeDamageResult {
   defenderWillpower: number;
   attackerLethal: boolean;
   defenderLethal: boolean;
+  attackerDamageIsReduced: boolean;
+  defenderDamageIsReduced: boolean;
   attackerDefinition: CharacterCard;
   defenderDefinition: CharacterCard | LocationCard;
 }
@@ -1081,6 +1129,12 @@ export function computeChallengeDamageResult(
       "") as PlayerId,
     stage: "damage",
   };
+  // The registry must reflect a *hypothetical* G with `challengeState.stage =
+  // "damage"` so that "in-challenge" static conditions resolve as if the
+  // declared challenge were already in damage stage. The cached registry
+  // (keyed off the live `ctx.G.staticEffectsVersion`) reflects the actual G,
+  // not this synthetic. Therefore `getOrBuildMoveRegistry(ctx)` is *not*
+  // appropriate here — keep the direct fresh build.
   const syntheticGForRegistry = { ...ctx.G, challengeState: syntheticChallengeStateForRegistry };
   const registry = buildStaticEffectRegistry(
     createProjectionState(ctx.framework.state, syntheticGForRegistry),
@@ -1099,24 +1153,68 @@ export function computeChallengeDamageResult(
 
   const rawAttackerToDefenderDamage = attackerStrength;
   const rawDefenderToAttackerDamage = isCharacterCard(defenderDef) ? defenderStrength : 0;
-  const attackerToDefenderDamage = finalizeChallengeDamageAmount(
-    ctx,
+
+  const attackerOwnerId = syntheticChallengeStateForRegistry.attackerOwnerId;
+  const defenderOwnerId = syntheticChallengeStateForRegistry.defenderOwnerId;
+
+  // Simulate replacement effects (prevent-damage, redirect-damage) without consuming them,
+  // so the preview reflects what the actual challenge execution would produce.
+  const defenderPreviewEvent = previewReplacementEffects(ctx as unknown as ReplacementContext, {
+    kind: "challenge-damage" as const,
+    eventId: `preview-challenge-damage:${attackerId}:${defenderId}:defender`,
+    sourceId: attackerId,
+    controllerId: attackerOwnerId,
+    attackerId,
     defenderId,
-    defenderDef,
-    rawAttackerToDefenderDamage,
-    undefined,
-    registry,
-  );
-  const defenderToAttackerDamage = isCharacterCard(defenderDef)
-    ? finalizeChallengeDamageAmount(
-        ctx,
-        attackerId,
-        attackerDef,
-        rawDefenderToAttackerDamage,
-        undefined,
-        registry,
-      )
-    : 0;
+    targetId: defenderId,
+    amount: rawAttackerToDefenderDamage,
+  });
+  const attackerPreviewEvent = previewReplacementEffects(ctx as unknown as ReplacementContext, {
+    kind: "challenge-damage" as const,
+    eventId: `preview-challenge-damage:${attackerId}:${defenderId}:attacker`,
+    sourceId: defenderId,
+    controllerId: defenderOwnerId,
+    attackerId,
+    defenderId,
+    targetId: attackerId,
+    amount: rawDefenderToAttackerDamage,
+  });
+
+  const finalDefenderTargetId = defenderPreviewEvent.targetId;
+  const finalDefenderTargetDef = getCardsApi(ctx).getDefinition(finalDefenderTargetId) as
+    | CharacterCard
+    | LocationCard
+    | undefined;
+  const finalAttackerTargetId = attackerPreviewEvent.targetId;
+  const finalAttackerTargetDef = getCardsApi(ctx).getDefinition(finalAttackerTargetId) as
+    | CharacterCard
+    | undefined;
+
+  const attackerToDefenderDamage =
+    finalDefenderTargetDef &&
+    (isCharacterCard(finalDefenderTargetDef) || isLocationCard(finalDefenderTargetDef))
+      ? finalizeChallengeDamageAmount(
+          ctx,
+          finalDefenderTargetId,
+          finalDefenderTargetDef,
+          defenderPreviewEvent.amount,
+          attackerId,
+          registry,
+        )
+      : 0;
+  const defenderToAttackerDamage =
+    isCharacterCard(defenderDef) &&
+    finalAttackerTargetDef &&
+    isCharacterCard(finalAttackerTargetDef)
+      ? finalizeChallengeDamageAmount(
+          ctx,
+          finalAttackerTargetId,
+          finalAttackerTargetDef,
+          attackerPreviewEvent.amount,
+          defenderId,
+          registry,
+        )
+      : 0;
 
   const attackerNextDamage = attackerCurrentDamage + defenderToAttackerDamage;
   const defenderNextDamage = defenderCurrentDamage + attackerToDefenderDamage;
@@ -1126,6 +1224,9 @@ export function computeChallengeDamageResult(
 
   const attackerLethal = attackerWillpower > 0 && attackerNextDamage >= attackerWillpower;
   const defenderLethal = defenderWillpower > 0 && defenderNextDamage >= defenderWillpower;
+
+  const defenderDamageIsReduced = attackerToDefenderDamage < rawAttackerToDefenderDamage;
+  const attackerDamageIsReduced = defenderToAttackerDamage < rawDefenderToAttackerDamage;
 
   return {
     rawAttackerToDefenderDamage,
@@ -1140,6 +1241,8 @@ export function computeChallengeDamageResult(
     defenderWillpower,
     attackerLethal,
     defenderLethal,
+    attackerDamageIsReduced,
+    defenderDamageIsReduced,
     attackerDefinition: attackerDef,
     defenderDefinition: defenderDef,
   };

@@ -2,9 +2,9 @@ import { env } from "$env/dynamic/public";
 
 const DEFAULT_API_ORIGIN = "http://localhost:3000";
 const DEFAULT_GAME_SERVER_ORIGIN = "http://localhost:3001";
-const DEFAULT_TRACKER_ORIGIN = "https://thecardgoat.com";
-const DEFAULT_SIMULATOR_ASSET_BASE_URL = "https://r2.tcg.online/public/lorcana/simulator";
-const DEFAULT_LORCANA_ASSET_BASE_URL = "https://r2.tcg.online/public/lorcana";
+const DEFAULT_TRACKER_ORIGIN = "https://new.lorcanito.com";
+const DEFAULT_SIMULATOR_ASSET_BASE_URL = "https://new-cdn.lorcanito.com/public/lorcana/simulator";
+const DEFAULT_LORCANA_ASSET_BASE_URL = "https://new-cdn.lorcanito.com/public/lorcana";
 
 function addDefaultProtocolIfMissing(value: string, allowedProtocols: readonly string[]): string {
   if (/^[a-z][a-z\d+\-.]*:\/\//i.test(value)) {
@@ -181,4 +181,27 @@ export function buildSimulatorAssetUrl(path: string): string {
 export function buildLorcanaAssetUrl(path: string): string {
   const relativePath = path.replace(/^\/+/, "");
   return `${getLorcanaAssetBaseUrl()}/${relativePath}`;
+}
+
+const FALLBACK_CDN_ORIGIN = "https://r2.tcg.online";
+
+export function getCdnFallbackUrl(url: string): string | null {
+  // Collect the distinct origins from both asset base URLs so that both
+  // simulator assets (card backs, playmats) and lorcana card images get a
+  // fallback even when the two bases are configured to different origins.
+  const candidateOrigins = new Set<string>();
+  for (const base of [getLorcanaAssetBaseUrl(), getSimulatorAssetBaseUrl()]) {
+    try {
+      candidateOrigins.add(new URL(base).origin);
+    } catch {
+      // ignore invalid base
+    }
+  }
+
+  for (const origin of candidateOrigins) {
+    if (origin !== FALLBACK_CDN_ORIGIN && url.startsWith(origin)) {
+      return FALLBACK_CDN_ORIGIN + url.slice(origin.length);
+    }
+  }
+  return null;
 }

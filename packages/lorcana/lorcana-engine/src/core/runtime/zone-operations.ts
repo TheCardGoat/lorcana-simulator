@@ -6,6 +6,7 @@ import { emitLorcanaDomainEvent } from "../../types";
 import type { ZoneRegistry } from "./zone-registry";
 import { resolveZoneIdFromRegistry } from "./zone-registry";
 import type { UndoBarrierReason } from "./match-runtime.types";
+import { invalidateStaticEffects } from "../../runtime-moves/rules/static-effects-invalidation";
 
 // =============================================================================
 // Zone Operations API
@@ -231,26 +232,20 @@ export function createZoneOperations(
 
       onCardEnteredZone?.(cardId, resolvedToZone, previous.ownerId);
 
-      // Invalidate the static-effect registry when cards enter or leave a play, hand,
-      // or inkwell zone. Play zone changes affect which cards emit static abilities;
-      // hand zone changes affect resource-count conditions (e.g. Stone by Day);
-      // inkwell transitions must invalidate the move-registry cache (THE-971) because
-      // `getOrBuildMoveRegistry` keys on `staticEffectsVersion` — e.g. limbo→inkwell
-      // or discard→inkwell would otherwise skip invalidation vs play→inkwell.
-      const zoneKeyIsInkwell = (zoneKey: string | undefined): boolean =>
-        typeof zoneKey === "string" && (zoneKey === "inkwell" || zoneKey.startsWith("inkwell:"));
-      const fromIsPlay = previous.fromZone
-        ? previous.fromZone === "play" || previous.fromZone.startsWith("play:")
-        : false;
-      const toIsPlay = resolvedToZone === "play" || resolvedToZone.startsWith("play:");
-      const fromIsHand = previous.fromZone
-        ? previous.fromZone === "hand" || previous.fromZone.startsWith("hand:")
-        : false;
-      const toIsHand = resolvedToZone === "hand" || resolvedToZone.startsWith("hand:");
-      const fromIsInkwell = zoneKeyIsInkwell(previous.fromZone);
-      const toIsInkwell = zoneKeyIsInkwell(resolvedToZone);
-      if (fromIsPlay || toIsPlay || fromIsHand || toIsHand || fromIsInkwell || toIsInkwell) {
-        draft.G.staticEffectsVersion = (draft.G.staticEffectsVersion ?? 0) + 1;
+      // Invalidate the static-effect registry when cards enter or leave a zone whose
+      // contents are referenced by static-ability conditions: play (which cards emit
+      // abilities), hand (`cards-in-hand` resource counts), inkwell (THE-971 — registry
+      // cache keys on staticEffectsVersion, so e.g. limbo→inkwell would otherwise skip
+      // invalidation vs play→inkwell), discard (`cards-in-discard` resource counts), and
+      // deck (covers shuffle-back, return-from-discard-to-deck, and any future
+      // deck-count condition).
+      const zoneMatches = (zoneKey: string | undefined, prefix: string): boolean =>
+        typeof zoneKey === "string" && (zoneKey === prefix || zoneKey.startsWith(`${prefix}:`));
+      const STATIC_ZONES = ["play", "hand", "inkwell", "discard", "deck"] as const;
+      const fromAffectsStatic = STATIC_ZONES.some((p) => zoneMatches(previous.fromZone, p));
+      const toAffectsStatic = STATIC_ZONES.some((p) => zoneMatches(resolvedToZone, p));
+      if (fromAffectsStatic || toAffectsStatic) {
+        invalidateStaticEffects(draft);
       }
 
       if (previous.fromZone) {

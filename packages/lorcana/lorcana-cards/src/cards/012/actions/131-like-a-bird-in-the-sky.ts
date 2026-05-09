@@ -31,7 +31,13 @@ export const likeABirdInTheSky: ActionCard = {
             stat: "lore",
             modifier: 1,
             duration: "until-start-of-next-turn",
-            target: "CHOSEN_CHARACTER",
+            target: {
+              selector: "chosen",
+              count: 1,
+              owner: "any",
+              zones: ["play"],
+              cardTypes: ["character"],
+            },
           },
           {
             type: "gain-keyword",

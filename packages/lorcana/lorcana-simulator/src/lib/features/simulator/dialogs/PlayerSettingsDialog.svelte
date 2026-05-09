@@ -5,6 +5,7 @@
   import HotkeyDisplay from "@/features/simulator/hotkeys/HotkeyDisplay.svelte";
   import type {
     AnimationSpeed,
+    CardInfoMode,
     CardPreviewMode,
     HotkeyMode,
     PrimaryClickAction,
@@ -20,18 +21,18 @@
     open?: boolean;
     selectedLocale: SupportedLocale;
     showRawLogRegistryJson?: boolean;
-    skipActionConfirmation?: boolean;
     hotkeyMode?: HotkeyMode;
     cardPreviewMode?: CardPreviewMode;
+    cardInfoMode?: CardInfoMode;
     primaryClickAction?: PrimaryClickAction;
     animationSpeed?: AnimationSpeed;
     soundVolume?: number;
     onOpenHotkeys?: () => void;
     onLocaleSelection: (nextLocale: SupportedLocale) => void;
     onToggleRawLogRegistryJson?: (enabled: boolean) => void;
-    onToggleSkipActionConfirmation?: (enabled: boolean) => void;
     onHotkeyModeChange?: (mode: HotkeyMode) => void;
     onCardPreviewModeChange?: (mode: CardPreviewMode) => void;
+    onCardInfoModeChange?: (mode: CardInfoMode) => void;
     onPrimaryClickActionChange?: (action: PrimaryClickAction) => void;
     onAnimationSpeedChange?: (speed: AnimationSpeed) => void;
     onSoundVolumeChange?: (volume: number) => void;
@@ -51,18 +52,18 @@
     open = $bindable(false),
     selectedLocale,
     showRawLogRegistryJson = false,
-    skipActionConfirmation = false,
     hotkeyMode = "confirm-only",
     cardPreviewMode = "delayed",
+    cardInfoMode = "detailed",
     primaryClickAction = "challenge",
     animationSpeed = "off",
     soundVolume = 50,
     onOpenHotkeys,
     onLocaleSelection,
     onToggleRawLogRegistryJson,
-    onToggleSkipActionConfirmation,
     onHotkeyModeChange,
     onCardPreviewModeChange,
+    onCardInfoModeChange,
     onPrimaryClickActionChange,
     onAnimationSpeedChange,
     onSoundVolumeChange,
@@ -113,15 +114,6 @@
     onToggleRawLogRegistryJson?.(input.checked);
   }
 
-  function handleSkipActionConfirmationToggle(event: Event): void {
-    const input = event.currentTarget;
-    if (!(input instanceof HTMLInputElement)) {
-      return;
-    }
-
-    onToggleSkipActionConfirmation?.(input.checked);
-  }
-
   function handleHotkeyModeSelection(event: Event): void {
     const selectElement = event.currentTarget;
     if (!(selectElement instanceof HTMLSelectElement)) {
@@ -143,6 +135,18 @@
     const nextMode = selectElement.value as CardPreviewMode;
     if (nextMode === "disabled" || nextMode === "immediate" || nextMode === "delayed") {
       onCardPreviewModeChange?.(nextMode);
+    }
+  }
+
+  function handleCardInfoModeSelection(event: Event): void {
+    const selectElement = event.currentTarget;
+    if (!(selectElement instanceof HTMLSelectElement)) {
+      return;
+    }
+
+    const nextMode = selectElement.value as CardInfoMode;
+    if (nextMode === "detailed" || nextMode === "quick") {
+      onCardInfoModeChange?.(nextMode);
     }
   }
 
@@ -257,22 +261,6 @@
         </div>
 
         <div class="grid gap-1.5">
-          <label
-            class="player-settings-checkbox-row"
-            for="player-skip-action-confirmation-toggle"
-          >
-            <input
-              id="player-skip-action-confirmation-toggle"
-              type="checkbox"
-              checked={skipActionConfirmation}
-              onchange={handleSkipActionConfirmationToggle}
-            />
-            <span>{m["sim.settings.skipActionConfirmationLabel"]({})}</span>
-          </label>
-          <p class="player-settings-help">{m["sim.settings.skipActionConfirmationDescription"]({})}</p>
-        </div>
-
-        <div class="grid gap-1.5">
           <label class="text-xs font-medium uppercase tracking-widest text-slate-400" for="player-hotkey-mode-select">
             {m["sim.settings.hotkeyModeLabel"]({})}
           </label>
@@ -304,6 +292,22 @@
             <option value="delayed">{m["sim.settings.cardPreviewMode.delayed"]({})}</option>
           </select>
           <p class="player-settings-help">{m["sim.settings.cardPreviewModeDescription"]({})}</p>
+        </div>
+
+        <div class="grid gap-1.5">
+          <label class="text-xs font-medium uppercase tracking-widest text-slate-400" for="player-card-info-mode-select">
+            {m["sim.settings.cardInfoModeLabel"]({})}
+          </label>
+          <select
+            id="player-card-info-mode-select"
+            class="player-settings-select"
+            value={cardInfoMode}
+            onchange={handleCardInfoModeSelection}
+          >
+            <option value="detailed">{m["sim.settings.cardInfoMode.detailed"]({})}</option>
+            <option value="quick">{m["sim.settings.cardInfoMode.quick"]({})}</option>
+          </select>
+          <p class="player-settings-help">{m["sim.settings.cardInfoModeDescription"]({})}</p>
         </div>
 
         <div class="grid gap-1.5">

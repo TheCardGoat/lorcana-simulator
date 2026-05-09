@@ -69,7 +69,7 @@ describe("AvailableMovesPanel interactions", () => {
     expect(body).toContain('data-action-icon="move-to-location"');
   });
 
-  it("renders fixed move and selection hotkey hints", () => {
+  it("renders selection hotkey hints but not category digit hints", () => {
     const selectionState: AvailableMovesSelectionState = {
       mode: "resolution-choice",
       categoryId: "unknown",
@@ -114,12 +114,14 @@ describe("AvailableMovesPanel interactions", () => {
       },
     });
 
-    const playHotkey = getFormattedHotkeyParts("2")[0]!;
     const cancelHotkey = getFormattedHotkeyParts("Escape")[0]!;
     const confirmHotkey = getFormattedHotkeyParts("Enter")[0]!;
     const backHotkey = getFormattedHotkeyParts("Backspace")[0]!;
 
-    expect(rootView.body).toContain(`>${playHotkey}<`);
+    // Top-level move categories no longer claim digit hotkeys — number row
+    // 1-0 is reserved for hand cards. Per-card action shortcuts live in the
+    // card quick-menu (action-menu layer) instead.
+    expect(rootView.body).not.toContain(">2<");
     expect(selectionView.body).toContain(`>${cancelHotkey}<`);
     expect(selectionView.body).toContain(`>${confirmHotkey}<`);
     expect(selectionView.body).toContain(`>${backHotkey}<`);

@@ -12,6 +12,7 @@ import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { isPlayerTargetDescriptor, resolveEffectTargets } from "../../../targeting/runtime";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import { getEffectTargetSelectionInput } from "./selection-state";
+import { invalidateStaticEffects } from "../../rules/static-effects-invalidation";
 
 export function isRestrictionEffect(effect: unknown): effect is RestrictionEffect {
   return (
@@ -74,6 +75,10 @@ export function resolveRestrictionEffect(
       );
     }
     ctx.G.temporaryPlayerRestrictions = nextState;
+    // Static abilities and `hasStaticPlayerRestriction` checks key off the registry,
+    // which is cached by `staticEffectsVersion`. Bump it so the new player restrictions
+    // become visible immediately within the same move.
+    invalidateStaticEffects(ctx);
     return;
   }
 

@@ -320,23 +320,8 @@ describe("Emerald Chromicon", () => {
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().getCardZone(massBanisher)).toBe("hand");
 
-    // Decline second trigger
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
-    const remainingEffects = testEngine.asPlayerOne().getBagEffects();
-    expect(
-      testEngine.asPlayerOne().resolveBag(remainingEffects[0]!.id, {
-        resolveOptional: false,
-      }),
-    ).toBeSuccessfulCommand();
-
-    // Decline third trigger
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    const lastEffects = testEngine.asPlayerOne().getBagEffects();
-    expect(
-      testEngine.asPlayerOne().resolveBag(lastEffects[0]!.id, {
-        resolveOptional: false,
-      }),
-    ).toBeSuccessfulCommand();
+    // The remaining optional entries have no legal target and auto-drain.
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
   });

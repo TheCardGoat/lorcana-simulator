@@ -99,15 +99,7 @@ describe("Banzai - Taunting Hyena", () => {
 
       expect(testEngine.asPlayerOne().playCard(banzaiTauntingHyena)).toBeSuccessfulCommand();
 
-      expect(
-        testEngine.asPlayerOne().resolvePendingByCard(banzaiTauntingHyena),
-      ).toBeSuccessfulCommand();
-      expect(
-        testEngine.asPlayerOne().resolveNextPending({
-          resolveOptional: true,
-          targets: [undamagedCharacter],
-        }),
-      ).not.toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       expect(testEngine.isExerted(undamagedCharacter)).toBe(false);
     });

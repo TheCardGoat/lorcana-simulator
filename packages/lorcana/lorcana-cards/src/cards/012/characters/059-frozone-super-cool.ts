@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { rush } from "../../../helpers/abilities/rush";
 import { frozoneSuperCoolI18n } from "./059-frozone-super-cool.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const frozoneSuperCool: CharacterCard = {
   id: "Ea1",
@@ -20,7 +20,7 @@ export const frozoneSuperCool: CharacterCard = {
   lore: 2,
   inkable: false,
   externalIds: {
-    lorcast: "crd_c36df8a0b082402b95a4545e874435f0",
+    lorcast: "crd_aa4a880f25814ec58358ea3ad771fbb3",
   },
   text: [
     {
@@ -36,10 +36,9 @@ export const frozoneSuperCool: CharacterCard = {
   abilities: [
     rush,
     {
-      id: "Ea1-1",
+      id: "Ea1-2",
       name: "JUST CHILL",
       type: "triggered",
-      text: "JUST CHILL When you play this character, if you have another Super character in play, you may exert chosen opposing character.",
       trigger: {
         event: "play",
         on: "SELF",
@@ -48,10 +47,9 @@ export const frozoneSuperCool: CharacterCard = {
       condition: {
         type: "has-character-count",
         controller: "you",
-        comparison: "greater-or-equal",
-        count: 1,
         classification: "Super",
-        excludeSelf: true,
+        count: 2,
+        comparison: "greater-or-equal",
       },
       effect: {
         type: "optional",
@@ -62,11 +60,12 @@ export const frozoneSuperCool: CharacterCard = {
             selector: "chosen",
             count: 1,
             owner: "opponent",
-            cardTypes: ["character"],
             zones: ["play"],
+            cardTypes: ["character"],
           },
         },
       },
+      text: "JUST CHILL When you play this character, if you have another Super character in play, you may exert chosen opposing character.",
     },
   ],
   i18n: frozoneSuperCoolI18n,

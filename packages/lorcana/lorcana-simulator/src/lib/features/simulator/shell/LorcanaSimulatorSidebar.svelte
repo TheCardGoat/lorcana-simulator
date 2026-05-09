@@ -34,6 +34,9 @@
     onReturnToMatchmaking?: (() => void | Promise<void>) | null;
     /** Whether the opponent is AFK (idle or tab hidden). */
     isOpponentAfk?: boolean;
+    /** Whether the current viewer can report the opponent (auth + opponent identity available). */
+    canReportOpponent?: boolean;
+    onReportOpponent?: () => void;
   }
 
   let {
@@ -50,6 +53,8 @@
     onNextGame = null,
     onReturnToMatchmaking = null,
     isOpponentAfk = false,
+    canReportOpponent = false,
+    onReportOpponent,
   }: LorcanaSimulatorSidebarProps = $props();
 
   const sidebar = useLorcanaSidebarPresenter();
@@ -68,6 +73,10 @@
   const footerPlayerLabel = $derived(sidebar.footerPlayerLabel);
   const headerPlayerIsMobile = $derived(sidebar.headerPlayerIsMobile);
   const footerPlayerIsMobile = $derived(sidebar.footerPlayerIsMobile);
+  const headerPlayerMmr = $derived(sidebar.headerPlayerMmr);
+  const footerPlayerMmr = $derived(sidebar.footerPlayerMmr);
+  const headerPlayerSubscriptionTier = $derived(sidebar.headerPlayerSubscriptionTier);
+  const footerPlayerSubscriptionTier = $derived(sidebar.footerPlayerSubscriptionTier);
   const moveLogEntries = $derived(sidebar.moveLogEntries);
   const ownerSide = $derived(sidebar.ownerSide);
   const activeSide = $derived(sidebar.activeSide);
@@ -195,7 +204,11 @@
         isOpponent={hasOwnedView}
         isAfk={hasOwnedView && isOpponentAfk}
         isMobile={headerPlayerIsMobile}
+        mmr={headerPlayerMmr}
+        subscriptionTier={headerPlayerSubscriptionTier}
         timer={headerPlayerData.timer}
+        showReport={hasOwnedView && canReportOpponent}
+        onReportClick={onReportOpponent}
       >
         {#if $aiOrchestratorStore}
           <AiPlayerControls orchestrator={$aiOrchestratorStore} />
@@ -399,6 +412,8 @@
         showSettings
         showSupport
         isMobile={footerPlayerIsMobile}
+        mmr={footerPlayerMmr}
+        subscriptionTier={footerPlayerSubscriptionTier}
         timer={footerPlayerData.timer}
         onSettingsClick={sidebar.handleOpenPlayerSettings}
         onSupportClick={onOpenSupport}

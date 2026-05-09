@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { support } from "../../../helpers/abilities/support";
 import { faunaGoodnaturedFairyI18n } from "./140-fauna-good-natured-fairy.i18n";
+import { support } from "../../../helpers/abilities/support";
 
 export const faunaGoodnaturedFairy: CharacterCard = {
   id: "lVp",

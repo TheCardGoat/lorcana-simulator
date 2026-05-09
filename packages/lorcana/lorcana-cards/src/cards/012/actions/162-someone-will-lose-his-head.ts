@@ -14,6 +14,9 @@ export const someoneWillLoseHisHead: ActionCard = {
   rarity: "common",
   cost: 3,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_b6e75e30d325452bba95859c5d667442",
+  },
   text: "Each opposing character gets -2 {S} this turn.",
   actionSubtype: "song",
   abilities: [

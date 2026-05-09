@@ -33,6 +33,10 @@
     "./testing/matchers": {
       "types": "./src/testing/matchers.d.ts",
       "default": "./src/testing/matchers.d.ts"
+    },
+    "./support-probe": {
+      "types": "./src/support-probe/index.ts",
+      "default": "./src/support-probe/index.ts"
     }
   },
   "scripts": {
@@ -40,7 +44,7 @@
     "typecheck": "bun run check-types",
     "check-types": "tsc --noEmit",
     "i18n:verify": "bun run i18n:compile && bun run i18n:check",
-    "i18n:compile": "bun x @inlang/paraglide-js compile --project ./project.inlang --outdir ./src/i18n/paraglide",
+    "i18n:compile": "pnpm dlx @inlang/paraglide-js compile --project ./project.inlang --outdir ./src/i18n/paraglide",
     "events:check": "bun run ./src/i18n/check-custom-event-usage.ts",
     "i18n:check": "bun run ./src/i18n/check-log-translations.ts && bun run ./src/i18n/check-custom-event-usage.ts",
     "audit:action-effect-coverage": "bun run ./scripts/audit-action-effect-resolver-coverage.ts",

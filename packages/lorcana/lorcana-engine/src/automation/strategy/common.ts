@@ -167,8 +167,8 @@ export function getFamilyOrder(
     alterHand: 1,
     resolveEffect: 2,
     resolveBag: 3,
-    quest: 4,
-    playCard: 4.5,
+    playCard: 4,
+    quest: 4.5,
     putCardIntoInkwell: 5,
     activateAbility: 6,
     moveCharacterToLocation: 8,
@@ -176,7 +176,7 @@ export function getFamilyOrder(
   };
 
   if (candidateFamily === "challenge" && prioritizeChallenge) {
-    return FAMILY_ORDER.quest - 0.5;
+    return FAMILY_ORDER.quest - 0.25;
   }
 
   return FAMILY_ORDER[candidateFamily];

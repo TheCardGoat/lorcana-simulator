@@ -22,7 +22,16 @@ describe("createSpectatorHistoryEntries", () => {
           turnNumber: 2,
         },
       ],
-      engineLogs: [],
+      engineLogs: [
+        {
+          stateVersion: 3,
+          log: {
+            type: "passTurn",
+            playerId: "player-one",
+            timestamp: 123,
+          },
+        },
+      ],
       resolveActorSide: (actorId) => (actorId === "player-one" ? "playerOne" : undefined),
     });
 

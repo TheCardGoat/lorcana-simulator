@@ -6,7 +6,7 @@ export const devilsEyeDiamondI18n: Record<Languages, I18nProperties> = {
     text: [
       {
         title: "THE PRICE OF POWER",
-        description: "{E} — If one of your characters was damaged this turn, gain 1 lore.",
+        description: "{E} — If one of your characters took damage this turn, gain 1 lore.",
       },
     ],
   },

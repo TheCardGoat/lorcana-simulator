@@ -19,8 +19,11 @@ import { createProjectionState } from "../../rules/derived-state";
 import {
   createStateScopedValueCache,
   getOrBuildStateScopedValue,
+  getStateScopedValueCacheStats,
+  type CacheObserver,
+  type StateScopedValueCacheStats,
 } from "../../core/runtime/state-scoped-value-cache";
-import type { LorcanaG, LorcanaMatchState } from "../../types";
+import type { LorcanaMatchState } from "../../types";
 
 /**
  * Minimum context shape needed to build a registry in move execution.
@@ -33,7 +36,9 @@ export type MoveRegistryCtx = {
   cards: { getDefinition: (id: CardInstanceId) => LorcanaCardDefinition | undefined };
 };
 
-const moveRegistryCache = createStateScopedValueCache<StaticEffectRegistry>();
+const moveRegistryCache = createStateScopedValueCache<StaticEffectRegistry>({
+  label: "move-registry",
+});
 
 /**
  * Returns the static effect registry for the current state, building it once
@@ -87,4 +92,24 @@ export function buildRegistryFromMatchState(
   getDefinitionByInstanceId: (id: CardInstanceId) => LorcanaCardDefinition | undefined,
 ): StaticEffectRegistry {
   return buildStaticEffectRegistry(matchState, getDefinitionByInstanceId);
+}
+
+/**
+ * Replace the observer attached to the module-level move-registry cache.
+ *
+ * Today this is the only seam available because the cache is a module
+ * singleton. Once Section 5 lands and `RegistryProvider` becomes
+ * per-`MatchRuntime`, observers will be passed at construction time.
+ */
+export function setMoveRegistryCacheObserver(observer: CacheObserver): void {
+  moveRegistryCache.observer = observer;
+}
+
+/**
+ * Snapshot of the module-level move-registry cache's stats. Exposed via
+ * `RegistryProvider.stats()` for telemetry. Returns the live counters for the
+ * current `stateID` window — they reset on evict.
+ */
+export function getMoveRegistryCacheStats(): StateScopedValueCacheStats {
+  return getStateScopedValueCacheStats(moveRegistryCache);
 }

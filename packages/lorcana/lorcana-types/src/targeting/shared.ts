@@ -173,6 +173,14 @@ export function normalizeCardTargetRecord(record: LegacyTargetRecord): LorcanaCa
       typeof record.requireDifferentTargets === "boolean"
         ? record.requireDifferentTargets
         : undefined,
+    totalCostBudget:
+      typeof record.totalCostBudget === "number" && Number.isFinite(record.totalCostBudget)
+        ? record.totalCostBudget
+        : undefined,
+    totalStrengthBudget:
+      typeof record.totalStrengthBudget === "number" && Number.isFinite(record.totalStrengthBudget)
+        ? record.totalStrengthBudget
+        : undefined,
     reference: normalizedReference,
   };
 }

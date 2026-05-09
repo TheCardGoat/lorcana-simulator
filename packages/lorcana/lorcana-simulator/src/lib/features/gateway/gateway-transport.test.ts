@@ -44,6 +44,9 @@ describe("GatewayTransport gateway errors → engine ERROR", () => {
           inbound = undefined;
         };
       },
+      addStatusChangeListener() {
+        return () => {};
+      },
       send() {},
     } as unknown as GatewayClientStore;
 
@@ -145,6 +148,9 @@ describe("GatewayTransport move_accepted delivers UPDATE_FULL", () => {
         return () => {
           inbound = undefined;
         };
+      },
+      addStatusChangeListener() {
+        return () => {};
       },
       send() {},
     } as unknown as GatewayClientStore;

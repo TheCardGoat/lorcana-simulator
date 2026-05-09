@@ -8,6 +8,7 @@
   import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
   import {ZONE_IMAGE_FORMATS} from "@/design-system/simulator/cards/card-image-format.js";
   import ZoneCounter from "@/design-system/simulator/display/ZoneCounter.svelte";
+  import { Trash2 } from "lucide-svelte";
 
   interface DiscardZoneProps {
     isOpponent: boolean;
@@ -28,7 +29,7 @@
 </script>
 
 <HoverCard.Root openDelay={300}>
-<HoverCard.Trigger class="discard-zone-trigger">
+<HoverCard.Trigger class="discard-zone-trigger w-full">
 <button
   type="button"
   class={cn(
@@ -78,7 +79,6 @@
           useContainerSize
           imageFormat={ZONE_IMAGE_FORMATS.discard}
           isMasked={isMasked}
-          showHoverCard={false}
         />
       </div>
     </div>
@@ -94,17 +94,7 @@
           : "border-sky-400/30 text-sky-200/55",
       )}
     >
-      <svg
-        class="h-6 w-6"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        aria-hidden="true"
-      >
-        <rect x="3" y="5" width="18" height="14" rx="2" />
-        <path d="M3 10h18" />
-      </svg>
+      <Trash2 />
     </div>
   {/if}
 

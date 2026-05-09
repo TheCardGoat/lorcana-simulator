@@ -624,6 +624,30 @@ function fullName(card: CanonicalCard): string {
   return card.version ? `${card.name} - ${card.version}` : card.name;
 }
 
+function isSpecialPrintingId(printingId: string): boolean {
+  return /-(?:enchanted|epic|iconic|promo|challenge)(?:-\d+)?$/i.test(printingId);
+}
+
+function printingSet(printingId: string): string | undefined {
+  return printingId.match(/^set\d+/i)?.[0]?.toLowerCase();
+}
+
+function copySharedDataFromBasePrinting(
+  special: CanonicalCard,
+  base: CanonicalCard,
+): CanonicalCard {
+  const { id, canonicalId, legalities, releasedAt, illustrators } = special;
+
+  return {
+    ...base,
+    id,
+    canonicalId,
+    ...(legalities ? { legalities } : {}),
+    ...(releasedAt ? { releasedAt } : {}),
+    ...(illustrators ? { illustrators } : {}),
+  };
+}
+
 /**
  * Minimal i18n so generate-cards can emit .i18n.ts before embed-card-i18n runs.
  * Non-English locales mirror English; embed-card-i18n replaces them from API data.
@@ -723,6 +747,25 @@ export function generateCanonicalCardsFromPrintings(
     const canonicalId = entries[0]!.card.canonicalId;
     for (let i = 1; i < entries.length; i++) {
       entries[i]!.card.canonicalId = canonicalId;
+    }
+  }
+
+  // Special printings are alternate art / promo printings of a same-set base card. Keep their
+  // unique printing id, but copy the gameplay/text payload from that base to prevent source drift.
+  for (const [printingId, card] of Object.entries(canonicalCards)) {
+    if (!isSpecialPrintingId(printingId)) continue;
+
+    const set = printingSet(printingId);
+    const baseEntry = Object.entries(canonicalCards).find(
+      ([candidatePrintingId, candidateCard]) =>
+        !isSpecialPrintingId(candidatePrintingId) &&
+        candidateCard.canonicalId === card.canonicalId &&
+        set !== undefined &&
+        printingSet(candidatePrintingId) === set,
+    );
+
+    if (baseEntry) {
+      canonicalCards[printingId] = copySharedDataFromBasePrinting(card, baseEntry[1]);
     }
   }
 

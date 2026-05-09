@@ -17,6 +17,7 @@ import {
   passesFilter,
   resolveCandidateTargets,
 } from "./target-resolver";
+import { validateBasicCost } from "../../runtime-moves/rules/play-card-rules";
 
 export type OptionalSkipContext = Pick<
   MoveValidationContext<MoveInput> | MoveEnumerationContext,
@@ -33,10 +34,20 @@ type HasReturnFromDiscardCtx = Pick<MoveExecutionContext<never>, "framework" | "
  * its target-requiring step has no valid candidates on the current board.
  *
  * Used at two call sites:
- *  - Trigger-fire time (triggered-abilities/index.ts): suppress bag entries before they are created
- *  - Bag-decision time (lorcana-engine-base.ts): auto-resolve bag entries without prompting the player
+ *  - Trigger-fire time (triggered-abilities/index.ts): suppress bag entries before they are created.
+ *    Pass `callSite: "trigger-fire"` (the default).
+ *  - Bag-decision time (lorcana-engine-base.ts): auto-resolve bag entries without prompting the player.
+ *    Pass `callSite: "bag-decision"`.
  *
- * Both call sites share this implementation so the skip conditions are always identical.
+ * The two call sites differ in how `owner: "any"` targets are handled:
+ *  - At trigger-fire time, the analysis context may not enumerate both players' cards correctly
+ *    during opponent action resolution (false-zero counts). To avoid incorrectly suppressing bag
+ *    entries (which would violate CR 6.2.3 — triggers enter the bag regardless of target availability),
+ *    `owner: "any"` targets are excluded from analysis and the effect is not skipped.
+ *  - At bag-decision time, the board context is stable (player-scoped projection) so `owner: "any"`
+ *    targets are correctly enumerated. When all candidates are filtered out (e.g. no damaged
+ *    characters for a "damaged" filter), the bag auto-resolves without prompting the player,
+ *    preventing a stuck target-selection prompt.
  *
  * Handles three patterns:
  *
@@ -54,9 +65,6 @@ type HasReturnFromDiscardCtx = Pick<MoveExecutionContext<never>, "framework" | "
  * selection in this helper's analysis model, and resolving as much of the mill as possible is
  * treated as best-effort rather than a reason to suppress the whole effect up front.
  *
- * Effects with owner:"any" targets are excluded from generic analysis: the analysis context
- * may not enumerate both players' cards correctly during opponent action resolution.
- *
  * Note: effects with `chosenBy: "opponent"` are NOT handled here — those are mandatory effects
  * where the opponent picks the target via a pendingEffect. They have `canAutoResolve = true` in
  * `analyzeResolutionRequirements`, so `bagEffectNeedsPlayerDecision` already returns `false` and
@@ -67,6 +75,7 @@ export function shouldSkipEffectWithNoValidTargets(
   playerId: PlayerId,
   ctx: OptionalSkipContext,
   sourceCardId?: CardInstanceId,
+  callSite: "trigger-fire" | "bag-decision" = "trigger-fire",
 ): boolean {
   const effectRecord = effect as Record<string, unknown> | null | undefined;
   if (!effectRecord || typeof effectRecord !== "object") return false;
@@ -76,7 +85,7 @@ export function shouldSkipEffectWithNoValidTargets(
   // --- Mandatory sequence whose first step is return-from-discard ---
   // Skip before creating a bag entry that would immediately fizzle.
   if (effectType === "sequence") {
-    return shouldSkipMandatoryReturnFromDiscardSequence(effectRecord, playerId, ctx);
+    return shouldSkipMandatoryReturnFromDiscardSequence(effectRecord, playerId, ctx, sourceCardId);
   }
 
   if (effectType !== "optional") return false;
@@ -85,12 +94,27 @@ export function shouldSkipEffectWithNoValidTargets(
   if (innerEffect == null) return false;
   const innerRecord = innerEffect as Record<string, unknown>;
 
+  // --- optional → pay-cost ---
+  // If the player cannot pay the nested cost, accepting the optional cannot
+  // produce a legal resolution. Only auto-drain at bag-decision time to
+  // preserve ordering windows where a prior simultaneous trigger may change
+  // resources before this one resolves (e.g. Mama Odie adding ink before
+  // Ursula's Shell Necklace cost is checked).
+  if (
+    callSite === "bag-decision" &&
+    innerRecord.type === "pay-cost" &&
+    !canPayNestedCost(innerRecord, playerId, ctx, sourceCardId)
+  ) {
+    return true;
+  }
+
   // --- optional → return-from-discard (direct) ---
   if (isReturnFromDiscardEffect(innerEffect)) {
     return !hasReturnFromDiscardCandidates(
       ctx as unknown as HasReturnFromDiscardCtx,
       playerId,
       innerEffect,
+      sourceCardId,
     );
   }
 
@@ -106,7 +130,24 @@ export function shouldSkipEffectWithNoValidTargets(
         ctx as unknown as HasReturnFromDiscardCtx,
         playerId,
         firstStep,
+        sourceCardId,
       );
+    }
+
+    // If any step in the sequence has a chosen target exclusively in discard or
+    // hand zones and those zones have no matching candidates, the optional cannot
+    // be meaningfully accepted. Unlike play-zone chosen targets (where trigger-fire
+    // time enumeration may be incomplete — CR 6.2.3), the controller's discard and
+    // hand are correctly enumerated at both call sites.
+    if (hasUnfillableNonPlayZoneChosenSlot(innerEffect, playerId, ctx, sourceCardId)) {
+      return true;
+    }
+
+    // Triggered optional chosen-target abilities enter the bag even when no
+    // legal target is currently available. Source-pool optionals such as
+    // return-from-discard are checked above before this short-circuit.
+    if (callSite === "trigger-fire" && containsChosenTargetSlot(innerEffect)) {
+      return false;
     }
 
     // Sequence whose first step is a discard-from-hand with filters (e.g. STEALTH MODE)
@@ -119,11 +160,23 @@ export function shouldSkipEffectWithNoValidTargets(
     return false;
   }
 
+  // Triggered optional chosen-target abilities enter the bag even when no
+  // legal target is currently available. At bag-decision time the same analysis
+  // may still auto-drain impossible entries before prompting the player.
+  if (callSite === "trigger-fire" && containsChosenTargetSlot(innerEffect)) {
+    return false;
+  }
+
   // --- Generic analysis for non-sequence, non-return-from-discard optionals ---
-  // Skip owner:"any" targets — the analysis context may produce false-zero counts during
-  // opponent action resolution (both sides' cards may not be visible simultaneously).
-  const innerTarget = innerRecord.target as Record<string, unknown> | undefined;
-  if ((innerTarget?.owner as string | undefined) === "any") return false;
+  // At trigger-fire time, skip owner:"any" targets: the analysis context may produce false-zero
+  // counts during opponent action resolution (both sides' cards may not be visible simultaneously).
+  // Skipping would suppress the bag entry in violation of CR 6.2.3. At bag-decision time the
+  // board context is player-scoped and correctly enumerates all characters, so we analyse fully
+  // and allow the optional to auto-resolve when no valid targets exist.
+  if (callSite === "trigger-fire") {
+    const innerTarget = innerRecord.target as Record<string, unknown> | undefined;
+    if ((innerTarget?.owner as string | undefined) === "any") return false;
+  }
 
   const analysis = analyzeEffectTargets(innerEffect, playerId, ctx, sourceCardId);
   const availability = analyzeTargetSelectionAvailabilityFromAnalysis(innerEffect, analysis);
@@ -142,6 +195,71 @@ export function shouldSkipEffectWithNoValidTargets(
   // the optional cannot produce a legal selection — force the skip so the bag
   // drains instead of opening an unresolvable picker.
   return hasUnfillableChosenSlot(innerEffect, playerId, ctx, sourceCardId);
+}
+
+function canPayNestedCost(
+  effectRecord: Record<string, unknown>,
+  playerId: PlayerId,
+  ctx: OptionalSkipContext,
+  sourceCardId?: CardInstanceId,
+): boolean {
+  const rawCost = effectRecord.cost;
+  if (!rawCost || typeof rawCost !== "object" || Array.isArray(rawCost)) {
+    return true;
+  }
+
+  const cost = rawCost as Record<string, unknown>;
+  const ink = typeof cost.ink === "number" && Number.isFinite(cost.ink) ? cost.ink : 0;
+  const exertCards =
+    cost.exert && sourceCardId ? [{ cardId: sourceCardId, subject: "source" as const }] : undefined;
+
+  return validateBasicCost(
+    {
+      framework: ctx.framework,
+      cards: ctx.cards,
+      playerId,
+    },
+    { ink, exertCards },
+  ).valid;
+}
+
+function containsChosenTargetSlot(effect: unknown): boolean {
+  if (!effect || typeof effect !== "object") return false;
+  const record = effect as Record<string, unknown>;
+
+  for (const key of CHOSEN_SLOT_KEYS) {
+    const raw = record[key];
+    if (
+      raw === undefined ||
+      raw === null ||
+      raw === "chosen-for-effect" ||
+      (typeof raw === "object" &&
+        !Array.isArray(raw) &&
+        ("ref" in (raw as object) || "reference" in (raw as object)))
+    ) {
+      continue;
+    }
+    const descriptor = normalizeTargetDescriptor(raw);
+    if (descriptor?.selector === "chosen") {
+      return true;
+    }
+  }
+
+  const nested: unknown[] = [
+    record.effect,
+    ...(Array.isArray(record.effects) ? record.effects : []),
+    ...(Array.isArray(record.steps) ? record.steps : []),
+    ...(Array.isArray(record.options) ? record.options : []),
+    ...(Array.isArray(record.choices) ? record.choices : []),
+    record.trueEffect,
+    record.falseEffect,
+    record.ifTrue,
+    record.ifFalse,
+    record.then,
+    record.else,
+  ];
+
+  return nested.some((next) => containsChosenTargetSlot(next));
 }
 
 const CHOSEN_SLOT_KEYS = [
@@ -237,6 +355,7 @@ function shouldSkipMandatoryReturnFromDiscardSequence(
   sequenceRecord: Record<string, unknown>,
   playerId: PlayerId,
   ctx: OptionalSkipContext,
+  sourceCardId?: CardInstanceId,
 ): boolean {
   const steps = Array.isArray(sequenceRecord.steps) ? sequenceRecord.steps : [];
   const firstStep = steps[0];
@@ -246,6 +365,7 @@ function shouldSkipMandatoryReturnFromDiscardSequence(
     ctx as unknown as HasReturnFromDiscardCtx,
     playerId,
     firstStep,
+    sourceCardId,
   );
 }
 
@@ -279,4 +399,83 @@ function shouldSkipDiscardFirstStep(
   }
 
   return true; // no valid discard targets — suppress the effect
+}
+
+/**
+ * Returns true if any "chosen" target slot in the effect (or its nested steps/effects)
+ * exclusively targets the discard zone and has zero candidates.
+ *
+ * Intentionally limited to discard (not hand): hand can be replenished by prior steps
+ * in a sequence (e.g. draw then put-on-bottom), so an empty hand at trigger-fire time
+ * does not mean the step will have no targets when it actually executes.
+ */
+function hasUnfillableNonPlayZoneChosenSlot(
+  effect: unknown,
+  playerId: PlayerId,
+  ctx: OptionalSkipContext,
+  sourceCardId?: CardInstanceId,
+): boolean {
+  if (!effect || typeof effect !== "object") return false;
+  const record = effect as Record<string, unknown>;
+
+  for (const key of CHOSEN_SLOT_KEYS) {
+    const raw = record[key];
+    if (
+      raw === undefined ||
+      raw === null ||
+      raw === "chosen-for-effect" ||
+      (typeof raw === "object" &&
+        !Array.isArray(raw) &&
+        ("ref" in (raw as object) || "reference" in (raw as object)))
+    ) {
+      continue;
+    }
+    const descriptor = normalizeTargetDescriptor(raw);
+    if (!descriptor || descriptor.selector !== "chosen") {
+      continue;
+    }
+    // Only check slots that exclusively target the discard zone.
+    const rawZones = (raw as Record<string, unknown>).zones;
+    if (!Array.isArray(rawZones) || rawZones.length === 0) {
+      continue;
+    }
+    const isDiscardOnly = rawZones.every((z: unknown) => z === "discard");
+    if (!isDiscardOnly) {
+      continue;
+    }
+
+    const candidates = resolveCandidateTargets(
+      ctx as Parameters<typeof resolveCandidateTargets>[0],
+      descriptor,
+      { controllerId: playerId, sourceCardId },
+    );
+    const requiredCount =
+      typeof descriptor.count === "number" && descriptor.count > 0 ? descriptor.count : 1;
+    if (candidates.length < requiredCount) {
+      return true;
+    }
+  }
+
+  const nested: unknown[] = [
+    record.effect,
+    ...(Array.isArray(record.effects) ? record.effects : []),
+    ...(Array.isArray(record.steps) ? record.steps : []),
+    ...(Array.isArray(record.options) ? record.options : []),
+    ...(Array.isArray(record.choices) ? record.choices : []),
+    record.trueEffect,
+    record.falseEffect,
+    record.ifTrue,
+    record.ifFalse,
+    record.then,
+    record.else,
+  ];
+
+  for (const next of nested) {
+    if (next && typeof next === "object") {
+      if (hasUnfillableNonPlayZoneChosenSlot(next, playerId, ctx, sourceCardId)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }

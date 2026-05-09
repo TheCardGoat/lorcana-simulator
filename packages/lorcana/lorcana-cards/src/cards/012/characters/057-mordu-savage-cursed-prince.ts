@@ -23,11 +23,11 @@ export const morduSavageCursedPrince: CharacterCard = {
   },
   text: [
     {
-      title: "FEROCIOUS ROAR",
+      title: "Ferocious Roar",
       description: "When you play this character, exert all your characters not named Mor'du.",
     },
     {
-      title: "ROOTED BY FEAR",
+      title: "Rooted by Fear",
       description: "Your characters not named Mor'du can't ready at the start of your turn.",
     },
   ],

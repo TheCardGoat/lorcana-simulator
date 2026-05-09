@@ -1,9 +1,5 @@
 import { createFixture } from "./fixture-factory.js";
 import type { LorcanaSimulatorFixture } from "@/features/simulator/model/contracts.js";
-import {
-  amberAmethystControl,
-  steelSapphireMidrange,
-} from "@/features/simulator-devtools/deck-fixtures/index.js";
 
 export const preGameFixture: LorcanaSimulatorFixture = createFixture({
   id: "pre-game",
@@ -12,7 +8,7 @@ export const preGameFixture: LorcanaSimulatorFixture = createFixture({
   seed: "storybook-local-pre-game",
   skipPreGame: false,
   playerOne: {
-    deck: amberAmethystControl.cards,
+    deck: 60,
     hand: 0,
     inkwell: 0,
     lore: 0,
@@ -20,7 +16,7 @@ export const preGameFixture: LorcanaSimulatorFixture = createFixture({
     discard: [],
   },
   playerTwo: {
-    deck: steelSapphireMidrange.cards,
+    deck: 60,
     hand: 0,
     inkwell: 0,
     lore: 0,

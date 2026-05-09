@@ -271,7 +271,29 @@ function buildPromptContent(
     // the runtime-clamped max, so the prompt always reflects the card text even
     // when only 1 valid candidate exists (e.g. Elsa alone on an empty board).
     const displayMaxSelections = selectionContext?.declaredMaxSelections ?? maxSelections;
-    const isOptional = minSelections === 0;
+    // A prompt is treated as optional when minSelections is 0 OR when the engine
+    // has flagged the prompt as declinable (e.g. an "optional" effect step merged
+    // into a target-selection context — the player can skip the prompt entirely).
+    const isOptional =
+      minSelections === 0 ||
+      selectionContext?.canDeclineSelection === true ||
+      selectionContext?.originatesFromOptional === true;
+
+    if (selectionContext?.expectedSlottedKind === "move-to-location") {
+      const prefix =
+        selectionContext.targetDsl.length === 1
+          ? "Choose a character to move for "
+          : "Choose characters to move, then choose a location for ";
+      return {
+        promptMessage: `${prefix}${referenceLabel} (optional).`,
+        promptInlineReference: buildInlineReference(
+          referenceLabel,
+          sourceCard,
+          prefix,
+          " (optional).",
+        ),
+      };
+    }
 
     // Single-target, required.
     if (!selectionContext || (displayMaxSelections <= 1 && !isOptional)) {

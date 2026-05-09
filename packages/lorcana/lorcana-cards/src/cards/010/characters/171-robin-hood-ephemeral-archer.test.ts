@@ -126,13 +126,8 @@ describe("Robin Hood - Ephemeral Archer", () => {
 
       expect(testEngine.asPlayerOne().quest(robinHoodEphemeralArcher)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(robinHoodEphemeralArcher, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       // Condition failed (no card under Robin Hood), so no damage dealt
       expect(testEngine.asPlayerTwo().getCard(opponentCharacter1).damage).toBe(0);
       expect(testEngine.asPlayerTwo().getCard(opponentCharacter2).damage).toBe(0);

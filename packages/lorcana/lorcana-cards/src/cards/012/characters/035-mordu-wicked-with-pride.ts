@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { rush } from "../../../helpers/abilities/rush";
 import { morduWickedWithPrideI18n } from "./035-mordu-wicked-with-pride.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const morduWickedWithPride: CharacterCard = {
   id: "rHk",
@@ -22,7 +22,7 @@ export const morduWickedWithPride: CharacterCard = {
   externalIds: {
     lorcast: "crd_6ed671e897624e01b14ca2e5db565d06",
   },
-  text: "Rush",
+  text: "<Rush>",
   classifications: ["Storyborn", "Villain", "Prince"],
   abilities: [rush],
   i18n: morduWickedWithPrideI18n,

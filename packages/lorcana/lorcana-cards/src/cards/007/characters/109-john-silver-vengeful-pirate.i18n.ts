@@ -8,7 +8,7 @@ export const johnSilverVengefulPirateI18n: Record<Languages, I18nProperties> = {
       {
         title: "DRAWN TO A FIGHT",
         description:
-          "If an opposing character was damaged this turn, you pay 2 {I} less to play this character.",
+          "If an opposing character took damage this turn, you pay 2 {I} less to play this character.",
       },
       {
         title: "Resist +1",

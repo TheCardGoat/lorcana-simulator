@@ -31,20 +31,37 @@
   } from "../deck-rundown-aggregate";
   import { cn } from "$lib/utils.js";
 
+  interface Props {
+    initialStats?: PlayerStats | null;
+    initialMmrHistory?: MmrHistoryPoint[];
+    initialPlayingStreak?: PlayingStreak | null;
+    initialMatchList?: { matches: MatchListResponse["matches"]; nextCursor: string | null };
+    initialDeckRundown?: DeckRundownResponse | null;
+  }
+
+  let {
+    initialStats,
+    initialMmrHistory,
+    initialPlayingStreak,
+    initialMatchList,
+    initialDeckRundown,
+  }: Props = $props();
+
+  const hasServerData = initialStats !== undefined;
+
   const EYEBROW_CLASS =
     "text-muted-foreground text-xs font-semibold uppercase tracking-[0.24em]";
 
-  let stats = $state<PlayerStats | null>(null);
-  let mmrHistory = $state<MmrHistoryPoint[]>([]);
-  let playingStreak = $state<PlayingStreak | null>(null);
-  let matchList = $state<{ matches: MatchListResponse["matches"]; nextCursor: string | null }>({
-    matches: [],
-    nextCursor: null,
-  });
-  let loading = $state(true);
+  let stats = $state<PlayerStats | null>(initialStats ?? null);
+  let mmrHistory = $state<MmrHistoryPoint[]>(initialMmrHistory ?? []);
+  let playingStreak = $state<PlayingStreak | null>(initialPlayingStreak ?? null);
+  let matchList = $state<{ matches: MatchListResponse["matches"]; nextCursor: string | null }>(
+    initialMatchList ?? { matches: [], nextCursor: null },
+  );
+  let loading = $state(!hasServerData);
   let error = $state<string | null>(null);
   let partialWarning = $state<string | null>(null);
-  let deckRundown = $state<DeckRundownResponse | null>(null);
+  let deckRundown = $state<DeckRundownResponse | null>(initialDeckRundown ?? null);
   let deckRundownLoading = $state(false);
   let deckRundownError = $state<string | null>(null);
 
@@ -136,11 +153,13 @@
   }
 
   onMount(() => {
-    void loadAll();
+    if (!hasServerData) {
+      void loadAll();
+    }
   });
 </script>
 
-<div class="space-y-4">
+<div class="space-y-3 sm:space-y-4">
   {#if loading}
     <div class="space-y-4">
       <div class="grid grid-cols-3 gap-2.5">
@@ -185,49 +204,55 @@
       </div>
     {/if}
 
-    <StatsOverview {stats} />
+    <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)]">
+      <div class="space-y-3 sm:space-y-4">
+        <StatsOverview {stats} />
 
-    {#if stats.currentWinStreak >= 2}
-      <StreakBanner {stats} />
-    {/if}
+        {#if stats.currentWinStreak >= 2}
+          <StreakBanner {stats} />
+        {/if}
 
-    {#if stats.recentResults.length > 0}
-      <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-        <p class={cn(EYEBROW_CLASS, "mb-2")}>Recent Results</p>
-        <ResultLine {stats} />
+        <DeckRundownCard
+          matches={matchList.matches}
+          rundown={deckRundown}
+          rundownLoading={deckRundownLoading}
+          rundownError={deckRundownError}
+          onDeckChange={(opt) => void loadDeckRundownForOption(opt)}
+        />
+
+        <div>
+          <p class={cn(EYEBROW_CLASS, "mb-2.5 px-1")}>Match History</p>
+          <MatchList
+            bind:this={matchListRef}
+            initialMatches={matchList.matches}
+            initialCursor={matchList.nextCursor}
+          />
+        </div>
       </div>
-    {/if}
 
-    <DeckRundownCard
-      matches={matchList.matches}
-      rundown={deckRundown}
-      rundownLoading={deckRundownLoading}
-      rundownError={deckRundownError}
-      onDeckChange={(opt) => void loadDeckRundownForOption(opt)}
-    />
+      <aside class="space-y-3 sm:space-y-4 lg:sticky lg:top-0">
+        {#if stats.recentResults.length > 0}
+          <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+            <p class={cn(EYEBROW_CLASS, "mb-2")}>Recent Results</p>
+            <ResultLine {stats} />
+          </div>
+        {/if}
 
-    <MmrChart
-      data={mmrHistory}
-      mmr={stats.mmr}
-      highestMmr={stats.highestMmr}
-      bracket={stats.bracket}
-    />
+        <MmrChart
+          data={mmrHistory}
+          mmr={stats.mmr}
+          highestMmr={stats.highestMmr}
+          bracket={stats.bracket}
+        />
 
-    {#if playingStreak}
-      <PlayingStreakCard streak={playingStreak} />
-    {/if}
+        {#if playingStreak}
+          <PlayingStreakCard streak={playingStreak} />
+        {/if}
 
-    <MilestonesCard {stats} />
+        <MilestonesCard {stats} />
 
-    <SportsmanshipCard {stats} />
-
-    <div>
-      <p class={cn(EYEBROW_CLASS, "mb-2.5 px-1")}>Match History</p>
-      <MatchList
-        bind:this={matchListRef}
-        initialMatches={matchList.matches}
-        initialCursor={matchList.nextCursor}
-      />
+        <SportsmanshipCard {stats} />
+      </aside>
     </div>
 
     {#if import.meta.env.DEV}

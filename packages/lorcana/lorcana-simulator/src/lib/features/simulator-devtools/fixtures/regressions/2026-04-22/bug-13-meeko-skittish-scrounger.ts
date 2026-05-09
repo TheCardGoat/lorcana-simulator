@@ -1,5 +1,5 @@
 import { heiheiBoatSnack, belleStrangeButSpecial } from "@tcg/lorcana-cards/cards/001";
-import { peteBadGuy } from "@tcg/lorcana-cards/cards/002";
+import { madamMimSnake, peteBadGuy } from "@tcg/lorcana-cards/cards/002";
 import { meekoSkittishScrounger } from "@tcg/lorcana-cards/cards/011";
 import { createFixture } from "../../fixture-factory.js";
 
@@ -13,7 +13,7 @@ export const bug13MeekoSkittishScrounger = createFixture({
       { card: meekoSkittishScrounger, exerted: true },
       { card: meekoSkittishScrounger, exerted: true },
     ],
-    hand: [belleStrangeButSpecial],
+    hand: [madamMimSnake],
     inkwell: 6,
     deck: [heiheiBoatSnack, heiheiBoatSnack, heiheiBoatSnack],
   },

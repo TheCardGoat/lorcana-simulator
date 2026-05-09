@@ -71,6 +71,42 @@ describe("Shere Khan - Fearsome Tiger", () => {
       expect(testEngine.asPlayerOne().getDamage(diabloWatchfulRaven)).toBe(1);
     });
 
+    it("allows declining the optional second damage effect", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: shereKhanFearsomeTiger, isDrying: false }],
+          deck: 2,
+        },
+        {
+          play: [{ card: akelaForestRunner, damage: 1 }],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().quest(shereKhanFearsomeTiger)).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(shereKhanFearsomeTiger, {
+          targets: [akelaForestRunner],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(akelaForestRunner)).toBe("discard");
+
+      // The optional "may put 1 damage" should be declinable when opponent has
+      // no characters left — player should not be forced to damage their own.
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(shereKhanFearsomeTiger, {
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getDamage(shereKhanFearsomeTiger)).toBe(0);
+      // Declining the optional should drain the bag entry cleanly and leave
+      // no stale pending prompts.
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+    });
+
     it("second effect should activate even if no opposing damaged characters to banish", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

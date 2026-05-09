@@ -18,9 +18,12 @@ export const sneezyStartlinglyLoud: CharacterCard = {
   willpower: 4,
   lore: 1,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_157e8d9b9f8745f2addc02e485dd2050",
+  },
   text: [
     {
-      title: "Gesundheit",
+      title: "GESUNDHEIT",
       description: "When you play this character, chosen character gets +1 {L} this turn.",
     },
   ],

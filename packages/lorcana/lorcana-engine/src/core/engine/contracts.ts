@@ -126,6 +126,8 @@ export interface GameEngine {
   canUndo?(playerId: string): boolean;
   undo?(playerId: string, prevStateID?: number): boolean;
   dispose(): void | Promise<void>;
+  /** True while a move has been sent to the server but the authoritative confirmation has not yet arrived. */
+  readonly isOptimisticMovePending?: boolean;
 }
 
 /**

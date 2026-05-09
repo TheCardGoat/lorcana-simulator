@@ -20,10 +20,15 @@
   import { useSimulatorCardContext } from '@/features/simulator/context/simulator-card-context.svelte.js';
   import type {
     LorcanaCardSnapshot,
-    ResolutionScryAvailableMovesSelectionState,
+    LorcanaPlayerSide,
   } from '@/features/simulator/model/contracts.js';
   import { SimulatorLayoutModeObserver } from '@/features/simulator/model/layout-mode.svelte.js';
   import { getScryZoneLabel } from '@/features/simulator/model/scry-destinations.js';
+  import type {
+    PlayerInteractionView,
+    PromptScryDestination,
+    PromptScryRevealedCard,
+  } from '@tcg/lorcana-interaction';
   import {
     countHiddenScrollableItems,
     getScrollableItemStep,
@@ -45,8 +50,9 @@
   } from './scry-overlay.js';
 
   interface ScryResolutionOverlayProps {
-    selectionState: ResolutionScryAvailableMovesSelectionState;
-    cardSnapshots?: Record<string, LorcanaCardSnapshot>;
+    view: PlayerInteractionView;
+    cardSnapshotsById?: Record<string, LorcanaCardSnapshot>;
+    viewerSide?: LorcanaPlayerSide | null;
     onAssignCard?: (cardId: string, destinationId: string) => boolean;
     onReorderCard?: (
       destinationId: string,
@@ -58,13 +64,17 @@
   }
 
   let {
-    selectionState,
-    cardSnapshots = {},
+    view,
+    cardSnapshotsById = {},
+    viewerSide: _viewerSide = null,
     onAssignCard,
     onReorderCard,
     onConfirm,
     onDismiss,
   }: ScryResolutionOverlayProps = $props();
+  // viewerSide accepted for parity with other overlays; the scry overlay
+  // surfaces the chooser's pending arrangement which is already viewer-correct.
+  void _viewerSide;
 
   const simulatorCardContext = useSimulatorCardContext();
   const layout = new SimulatorLayoutModeObserver();
@@ -104,21 +114,48 @@
   const SCRY_CARD_ASPECT_RATIO =
     CARD_IMAGE_ASPECT_RATIOS[SCRY_CARD_IMAGE_FORMAT];
   const isMobileLayout = $derived(layout.current !== 'desktop');
+  const activePrompt = $derived(view.activePrompt);
+  const scryDestinations = $derived<readonly PromptScryDestination[]>(
+    activePrompt?.scryDestinations ?? [],
+  );
+  const scryRevealed = $derived<readonly PromptScryRevealedCard[]>(
+    activePrompt?.scryRevealed ?? [],
+  );
+  const sourceCardId = $derived<string | null>(
+    activePrompt ? (activePrompt.sourceCardId as unknown as string) : null,
+  );
   const sourceCard = $derived(
-    selectionState.sourceCardId
-      ? (cardSnapshots[selectionState.sourceCardId] ?? null)
-      : null,
+    sourceCardId ? (cardSnapshotsById[sourceCardId] ?? null) : null,
   );
-  const scryHeaderSubtitle = $derived(selectionState.headerSubtitle ?? null);
+  const overlayTitle = $derived(
+    sourceCard?.label ?? m['sim.actions.scry.revealedCards']({}),
+  );
+  const scryHeaderSubtitle = $derived<string | null>(
+    m['sim.actions.scry.revealedStripHint']({}),
+  );
   const scryOverlayAriaLabel = $derived(
-    [selectionState.title, scryHeaderSubtitle].filter(Boolean).join('. '),
+    [overlayTitle, scryHeaderSubtitle].filter(Boolean).join('. '),
   );
-  /** All revealed scry cards — always listed in the top strip so players can tap/drag any card before confirm. */
+  const remainderDestination = $derived(
+    getScryRemainderDestination(scryDestinations),
+  );
+  const unassignedRevealedCardIds = $derived<readonly string[]>(
+    scryRevealed
+      .filter((entry) => entry.currentDestinationId === null)
+      .map((entry) => String(entry.cardId)),
+  );
+  /**
+   * When a remainder destination exists, unassigned revealed cards are
+   * surfaced inside that destination row (matching the engine's submit
+   * semantics — "everything unplaced lands here"). The bottom revealed
+   * strip is then redundant and is hidden. Without a remainder destination
+   * the strip remains the only source-of-truth for the reveal pool.
+   */
   const revealedScryEntries = $derived(
-    selectionState.entries.filter(
-      (entry) => entry.kind === 'scry-card' && Boolean(entry.cardId),
-    ),
+    remainderDestination ? [] : scryRevealed,
   );
+  const canConfirm = $derived(view.submission.canSubmit);
+  const helpMessage = $derived(m['sim.actions.scry.dragHint']({}));
   const isScryCardDragActive = $derived(activeScryDragCardId !== null);
 
   function isMissingProviderError(error: unknown): boolean {
@@ -286,7 +323,7 @@
   function getEntryCard(
     cardId: string | undefined,
   ): LorcanaCardSnapshot | null {
-    return cardId ? (cardSnapshots[cardId] ?? null) : null;
+    return cardId ? (cardSnapshotsById[cardId] ?? null) : null;
   }
 
   function handleCardPreviewEnter(card: LorcanaCardSnapshot | null): void {
@@ -401,7 +438,11 @@
   }
 
   function handleCardTap(cardId: string): void {
-    const nextDestinationId = getScryTapDestination(selectionState, cardId);
+    const nextDestinationId = getScryTapDestination(
+      scryDestinations,
+      scryRevealed,
+      cardId,
+    );
     if (nextDestinationId) {
       onAssignCard?.(cardId, nextDestinationId);
     }
@@ -444,11 +485,11 @@
     }
 
     const sourceDestinationId = findScryCardDestinationId(
-      selectionState,
+      scryRevealed,
       draggedCardId,
     );
     const targetDestination = findScryDestination(
-      selectionState,
+      scryDestinations,
       dropTarget.destinationId,
     );
     if (!targetDestination) {
@@ -458,12 +499,33 @@
     if (sourceDestinationId !== targetDestination.id) {
       if (
         !canAssignScryCardToDestination(
-          selectionState,
+          scryDestinations,
+          scryRevealed,
           draggedCardId,
           targetDestination.id,
         )
       ) {
-        return;
+        // Target is at max capacity. Try to make room by evicting the
+        // currently-assigned card(s) back to the remainder destination so a
+        // drag becomes a "replace" instead of a silent reject.
+        const remainder = getScryRemainderDestination(scryDestinations);
+        if (!remainder || remainder.id === targetDestination.id) {
+          return;
+        }
+
+        const max = targetDestination.max ?? Infinity;
+        const evictCount = Math.max(
+          0,
+          targetDestination.currentCardIds.length - max + 1,
+        );
+        const evictees = targetDestination.currentCardIds
+          .map((cardId) => String(cardId))
+          .filter((cardId) => cardId !== draggedCardId)
+          .slice(-evictCount);
+
+        for (const evictedCardId of evictees) {
+          onAssignCard?.(evictedCardId, remainder.id);
+        }
       }
 
       const assigned =
@@ -486,7 +548,9 @@
       }
 
       const targetIndex = desiredOrder.indexOf(draggedCardId);
-      const currentIndex = targetDestination.cards.length;
+      // After the assignment dispatch, the dragged card is appended to the
+      // destination, so its post-assignment index is the new last position.
+      const currentIndex = targetDestination.currentCardIds.length;
       if (targetIndex >= 0) {
         moveCardToIndex(
           targetDestination.id,
@@ -511,8 +575,8 @@
       draggedCardId,
       actualBeforeCardId,
     );
-    const currentIndex = targetDestination.cards.findIndex(
-      (card) => card.cardId === draggedCardId,
+    const currentIndex = targetDestination.currentCardIds.findIndex(
+      (cardId) => String(cardId) === draggedCardId,
     );
     const targetIndex = desiredOrder?.indexOf(draggedCardId) ?? -1;
     if (!desiredOrder || currentIndex < 0 || targetIndex < 0) {
@@ -571,18 +635,18 @@
   });
 
   $effect(() => {
-    selectionState;
+    void activePrompt?.requestId;
     isMinimized = false;
     void centerOverlay();
   });
 
   $effect(() => {
-    selectionState.destinations;
-    isMobileLayout;
+    void scryDestinations;
+    void isMobileLayout;
 
     const cleanups: Array<() => void> = [];
 
-    for (const destination of selectionState.destinations) {
+    for (const destination of scryDestinations) {
       const destId = destination.id;
       const container = rowContainerElements[destId];
       if (!container) {
@@ -669,7 +733,7 @@
         <div class="scry-overlay__header-text">
           <div class="scry-overlay__title-line">
             <div class="scry-overlay__title-block">
-              <h2 class="scry-overlay__title">{selectionState.title}</h2>
+              <h2 class="scry-overlay__title">{overlayTitle}</h2>
               {#if scryHeaderSubtitle && !isMinimized}
                 <p class="scry-overlay__subtitle">{scryHeaderSubtitle}</p>
               {/if}
@@ -698,7 +762,7 @@
               sideOffset={6}
               class="z-[99] rounded-md border border-white/10 bg-slate-950/95 px-2 py-1 text-[0.65rem] text-slate-200 shadow-lg"
             >
-              {selectionState.message}
+              {helpMessage}
             </Tooltip.Content>
           </Tooltip.Root>
         {/if}
@@ -733,21 +797,30 @@
   {#if !isMinimized}
     <div class="scry-overlay__card">
       <div class="scry-overlay__body">
-        {#each selectionState.destinations as destination (destination.id)}
+        {#each scryDestinations as destination (destination.id)}
           {@const rowDroppable = createSafeDroppable(
             buildScryZoneDropId(destination.id),
             false,
           )}
-          {@const isRemainderRow = destination.rule.remainder}
-          {@const remainderDestination =
-            getScryRemainderDestination(selectionState)}
-          {@const displayCards = destination.orderingEnabled
-            ? destination.cards.toReversed()
-            : destination.cards}
+          {@const isRemainderRow = destination.remainder}
+          {@const assignedDisplayCards = (destination.orderingEnabled
+            ? destination.currentCardIds.toReversed()
+            : destination.currentCardIds
+          ).map((cardId) => String(cardId))}
+          {@const unassignedDisplayCards = isRemainderRow
+            ? unassignedRevealedCardIds.filter(
+                (cardId) => !assignedDisplayCards.includes(cardId),
+              )
+            : []}
+          {@const displayCards = [
+            ...assignedDisplayCards,
+            ...unassignedDisplayCards,
+          ]}
           {@const canDropDraggedHere =
             activeScryDragCardId !== null &&
             canAssignScryCardToDestination(
-              selectionState,
+              scryDestinations,
+              scryRevealed,
               activeScryDragCardId,
               destination.id,
             )}
@@ -771,7 +844,6 @@
                     <h3>
                       {destination.label ?? getScryZoneLabel(destination.zone)}
                     </h3>
-                    <span class="scry-row__detail">{destination.detail}</span>
                   </div>
                   {#if isRemainderRow}
                     <Tooltip.Root>
@@ -813,7 +885,7 @@
               </div>
             </header>
 
-            {#if destination.orderingEnabled && destination.cards.length >= 2}
+            {#if destination.orderingEnabled && destination.currentCardIds.length >= 2}
               <div class="scry-row__order-label">
                 {destination.zone === 'deck-bottom'
                   ? '← Drawn last'
@@ -839,58 +911,64 @@
 
               <div
                 class="scry-row__cards"
-                class:scry-row__cards--empty={destination.cards.length === 0}
+                class:scry-row__cards--empty={displayCards.length === 0}
                 data-testid={`scry-row-cards-${destination.id}`}
                 {@attach attachRowContainer(destination.id)}
               >
-                {#if destination.cards.length === 0}
+                {#if displayCards.length === 0}
                   <div class="scry-row__placeholder">
                     <span class="scry-row__placeholder-title"
-                      >Drop card here</span
+                      >{m['prompt.scry.drop-card-here']({})}</span
                     >
                     <span class="scry-row__placeholder-detail">
                       {destination.orderingEnabled
-                        ? 'Cards placed here can be reordered.'
-                        : 'Cards placed here stay grouped in this row.'}
+                        ? m['prompt.scry.cards-reorderable']({})
+                        : m['prompt.scry.cards-grouped']({})}
                     </span>
                   </div>
                 {/if}
 
-                {#each displayCards as cardEntry, cardIndex (cardEntry.id)}
-                  {@const card = getEntryCard(cardEntry.cardId)}
+                {#each displayCards as cardId, cardIndex (cardId)}
+                  {@const revealedCard = scryRevealed.find(
+                    (rc) => String(rc.cardId) === cardId,
+                  )}
+                  {@const card = getEntryCard(cardId)}
+                  {@const fallbackLabel = revealedCard?.label ?? cardId}
+                  {@const isEligibleForChoice =
+                    revealedCard !== undefined &&
+                    revealedCard.eligibleDestinationIds.some((id) => {
+                      const target = findScryDestination(scryDestinations, id);
+                      return target !== null && !target.remainder;
+                    })}
                   {@const cardDroppable = createScryCardSlotDroppable(
                     destination.id,
-                    cardEntry.cardId ?? '',
+                    cardId,
                     destination.orderingEnabled,
                   )}
                   {@const draggable = createSafeDraggable(
-                    buildScryDragId(cardEntry.cardId ?? ''),
-                    !cardEntry.cardId,
+                    buildScryDragId(cardId),
+                    false,
                   )}
 
                   <div
                     class="scry-card-slot"
                     class:scry-card-slot--mobile-controls={destination.orderingEnabled}
                   >
-                    {#if destination.orderingEnabled && cardEntry.cardId}
+                    {#if destination.orderingEnabled}
                       <div class="scry-card-slot__controls">
                         <button
                           type="button"
                           class="scry-card-shift-button"
-                          aria-label={`Move ${cardEntry.label} left`}
-                          data-testid={`reorder-${destination.id}-${cardEntry.cardId}-left`}
+                          aria-label={`Move ${fallbackLabel} left`}
+                          data-testid={`reorder-${destination.id}-${cardId}-left`}
                           disabled={!canMoveCard(
                             cardIndex,
-                            destination.cards.length,
+                            displayCards.length,
                             'up',
                           )}
                           onclick={(event) => {
                             event.stopPropagation();
-                            onReorderCard?.(
-                              destination.id,
-                              cardEntry.cardId!,
-                              'down',
-                            );
+                            onReorderCard?.(destination.id, cardId, 'down');
                           }}
                         >
                           <ChevronLeftIcon class="size-3.5" />
@@ -898,20 +976,16 @@
                         <button
                           type="button"
                           class="scry-card-shift-button"
-                          aria-label={`Move ${cardEntry.label} right`}
-                          data-testid={`reorder-${destination.id}-${cardEntry.cardId}-right`}
+                          aria-label={`Move ${fallbackLabel} right`}
+                          data-testid={`reorder-${destination.id}-${cardId}-right`}
                           disabled={!canMoveCard(
                             cardIndex,
-                            destination.cards.length,
+                            displayCards.length,
                             'down',
                           )}
                           onclick={(event) => {
                             event.stopPropagation();
-                            onReorderCard?.(
-                              destination.id,
-                              cardEntry.cardId!,
-                              'up',
-                            );
+                            onReorderCard?.(destination.id, cardId, 'up');
                           }}
                         >
                           <ChevronRightIcon class="size-3.5" />
@@ -924,13 +998,15 @@
                       tabindex="0"
                       class="scry-card"
                       class:scry-card--remainder={isRemainderRow}
+                      class:scry-card--eligible={isRemainderRow &&
+                        isEligibleForChoice}
+                      class:scry-card--ineligible={isRemainderRow &&
+                        !isEligibleForChoice}
                       class:scry-card--drop-target={cardDroppable.isDropTarget &&
                         (activeScryDragCardId === null || canDropDraggedHere)}
-                      data-testid={`destination-card-${destination.id}-${cardEntry.cardId}`}
-                      onclick={() =>
-                        cardEntry.cardId && handleCardTap(cardEntry.cardId)}
-                      onkeydown={(e) =>
-                        handleScryCardKeydown(cardEntry.cardId, e)}
+                      data-testid={`destination-card-${destination.id}-${cardId}`}
+                      onclick={() => handleCardTap(cardId)}
+                      onkeydown={(e) => handleScryCardKeydown(cardId, e)}
                       {@attach cardDroppable.attach}
                       {@attach draggable.attach}
                     >
@@ -946,10 +1022,7 @@
                         </div>
                       {:else}
                         <div class="scry-card__fallback">
-                          <p class="scry-card__title">{cardEntry.label}</p>
-                          {#if cardEntry.detail}
-                            <p class="scry-card__detail">{cardEntry.detail}</p>
-                          {/if}
+                          <p class="scry-card__title">{fallbackLabel}</p>
                         </div>
                       {/if}
                     </div>
@@ -973,7 +1046,7 @@
               {/if}
             </div>
 
-            {#if destination.orderingEnabled && destination.cards.length >= 2}
+            {#if destination.orderingEnabled && destination.currentCardIds.length >= 2}
               <div class="scry-row__order-label">
                 {destination.zone === 'deck-bottom'
                   ? 'Drawn first →'
@@ -1007,15 +1080,13 @@
 
             <div class="scry-row__cards-shell">
               <div class="scry-row__cards" data-testid="scry-revealed-cards">
-                {#each revealedScryEntries as entry (entry.id)}
-                  {@const card = getEntryCard(entry.cardId)}
-                  {@const assignedElsewhere = Boolean(
-                    entry.cardId &&
-                      findScryCardDestinationId(selectionState, entry.cardId),
-                  )}
+                {#each revealedScryEntries as entry (entry.cardId)}
+                  {@const cardId = String(entry.cardId)}
+                  {@const card = getEntryCard(cardId)}
+                  {@const assignedElsewhere = entry.currentDestinationId !== null}
                   {@const draggable = createSafeDraggable(
-                    buildScryDragId(entry.cardId ?? ''),
-                    !entry.cardId,
+                    buildScryDragId(cardId),
+                    false,
                   )}
 
                   <div class="scry-card-slot">
@@ -1024,10 +1095,9 @@
                       tabindex="0"
                       class="scry-card scry-card--unassigned"
                       class:scry-card--assigned-in-strip={assignedElsewhere}
-                      data-testid={`revealed-scry-card-${entry.cardId}`}
-                      onclick={() =>
-                        entry.cardId && handleCardTap(entry.cardId)}
-                      onkeydown={(e) => handleScryCardKeydown(entry.cardId, e)}
+                      data-testid={`revealed-scry-card-${cardId}`}
+                      onclick={() => handleCardTap(cardId)}
+                      onkeydown={(e) => handleScryCardKeydown(cardId, e)}
                       {@attach draggable.attach}
                     >
                       {#if card}
@@ -1043,9 +1113,6 @@
                       {:else}
                         <div class="scry-card__fallback">
                           <p class="scry-card__title">{entry.label}</p>
-                          {#if entry.detail}
-                            <p class="scry-card__detail">{entry.detail}</p>
-                          {/if}
                         </div>
                       {/if}
                     </div>
@@ -1068,7 +1135,7 @@
         <button
           type="button"
           class="scry-footer-button scry-footer-button--primary"
-          disabled={!selectionState.canConfirm}
+          disabled={!canConfirm}
           data-testid="scry-confirm-button"
           onclick={onConfirm}
         >
@@ -1556,6 +1623,27 @@
 
   .scry-card--remainder {
     background: rgba(56, 88, 62, 0.26);
+  }
+
+  /* Cards in the remainder zone get eligibility hints so the chooser can
+     tell at a glance which ones a non-remainder destination will accept. */
+  .scry-card--eligible {
+    border-color: rgba(255, 215, 130, 0.7);
+    box-shadow:
+      0 0 0 2px rgba(255, 215, 130, 0.32),
+      0 8px 22px rgba(255, 215, 130, 0.18);
+  }
+
+  .scry-card--eligible:hover {
+    border-color: rgba(255, 222, 150, 0.9);
+    box-shadow:
+      0 0 0 2px rgba(255, 222, 150, 0.45),
+      0 12px 28px rgba(255, 215, 130, 0.28);
+  }
+
+  .scry-card--ineligible {
+    opacity: 0.55;
+    filter: saturate(0.6);
   }
 
   .scry-row--unassigned {

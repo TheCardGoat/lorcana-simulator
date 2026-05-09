@@ -40,7 +40,7 @@ export const buzzLightyearJungleRanger: CharacterCard = {
   abilities: [
     shift(5),
     {
-      id: "KHv-1",
+      id: "KHv-2",
       name: "TAKE CHARGE",
       type: "triggered",
       text: "TAKE CHARGE When you play this character, you may return an action card with cost 7 or less from your discard to your hand.",
@@ -54,10 +54,10 @@ export const buzzLightyearJungleRanger: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           type: "return-from-discard",
-          cardType: "action",
           target: "CONTROLLER",
-          filter: {
-            type: "cost-comparison",
+          count: 1,
+          cardType: "action",
+          costRestriction: {
             comparison: "less-or-equal",
             value: 7,
           },
@@ -65,7 +65,7 @@ export const buzzLightyearJungleRanger: CharacterCard = {
       },
     },
     {
-      id: "KHv-2",
+      id: "KHv-3",
       name: "ADVANCED TRAINING",
       type: "triggered",
       text: "ADVANCED TRAINING Whenever you play an action, chosen character gets +1 {L} this turn.",
@@ -82,13 +82,7 @@ export const buzzLightyearJungleRanger: CharacterCard = {
         stat: "lore",
         modifier: 1,
         duration: "this-turn",
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
-        },
+        target: "CHOSEN_CHARACTER",
       },
     },
   ],

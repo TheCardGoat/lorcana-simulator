@@ -112,6 +112,8 @@ describe("LorcanaEngineBase.previewChallenge", () => {
       defenderDamageDealt: 2,
       attackerWouldBeBanished: false,
       defenderWouldBeBanished: false,
+      attackerDamageIsReduced: false,
+      defenderDamageIsReduced: false,
     });
   });
 

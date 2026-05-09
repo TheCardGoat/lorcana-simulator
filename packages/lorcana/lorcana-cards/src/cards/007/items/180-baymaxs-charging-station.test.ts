@@ -52,10 +52,8 @@ describe("Baymax's Charging Station", () => {
     });
 
     expect(testEngine.asPlayerOne().playCard(thunderboltWonderDog)).toBeSuccessfulCommand();
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine.asPlayerOne().resolvePendingByCard(baymaxsChargingStation),
-    ).toBeSuccessfulCommand();
+    // Shift was not used — condition fails, engine auto-cancels the bag effect (CRD 6.2.7).
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
     expect(testEngine.asPlayerOne().getCardZone(drawnCard)).toBe("deck");
   });

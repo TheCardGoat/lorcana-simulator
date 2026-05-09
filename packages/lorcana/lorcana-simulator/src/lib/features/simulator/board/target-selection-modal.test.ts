@@ -92,6 +92,19 @@ describe("target selection modal helpers", () => {
     ).toBe(false);
   });
 
+  it("forces the modal when a Bodyguard entry-mode choice is required (hand-zone card)", () => {
+    // Bodyguard cards played from hand require an exerted/ready choice that the
+    // board-click flow cannot present — the modal must open to show the choice UI.
+    expect(
+      shouldUseTargetSelectionModal(
+        createSelectionState({
+          allowedZones: ["hand"],
+          playCardEntryModeChoice: { selected: null },
+        }),
+      ),
+    ).toBe(true);
+  });
+
   it("auto-opens only for a new session key", () => {
     expect(shouldAutoOpenTargetSelectionModal("resolution:1", null)).toBe(true);
     expect(shouldAutoOpenTargetSelectionModal("resolution:1", "resolution:1")).toBe(false);

@@ -55,7 +55,7 @@ export const lateGameFixture: LorcanaSimulatorFixture = createFixture({
     inkwell: 9,
     lore: 19,
     play: [
-      maleficentSorceress,
+      { card: maleficentSorceress, exerted: true },
       elsaGlovesOff,
       peterPansShadowNotSewnOn,
       mauiDemigod,

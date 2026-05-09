@@ -21,15 +21,19 @@ export const metamorphosis: ActionCard = {
   abilities: [
     {
       type: "action",
+      text: "Play a character with Shift from your discard for free.",
       effect: {
         type: "play-card",
         cardType: "character",
         cost: "free",
         from: "discard",
         playMethod: "shift",
-        filter: {
-          cardType: "character",
-        },
+        filter: [
+          {
+            type: "has-keyword",
+            keyword: "Shift",
+          },
+        ],
       },
     },
   ],

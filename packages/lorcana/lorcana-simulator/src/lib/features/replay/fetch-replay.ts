@@ -4,7 +4,7 @@
  * Fetches compressed replay data from the game server API and decompresses it.
  */
 
-import { getGameServerOrigin } from "$lib/config/public-url-config.js";
+import { getApiOrigin } from "$lib/config/public-url-config.js";
 import { requestArrayBuffer } from "$lib/data/transport/http-client.js";
 import type { GameAnalyticsSummary } from "@/features/simulator/post-game/notes-api.js";
 
@@ -74,8 +74,8 @@ export interface PersistedReplayData {
  * Uses the /data endpoint which returns gzipped JSON directly (or redirects to S3).
  */
 export async function fetchReplayBlob(gameId: string): Promise<ArrayBuffer> {
-  const origin = getGameServerOrigin();
-  const url = `${origin}/v1/play/replays/${encodeURIComponent(gameId)}/data`;
+  const origin = getApiOrigin();
+  const url = `${origin}/v1/games/lorcana/play/replays/${encodeURIComponent(gameId)}/data`;
   console.debug("[fetchReplayBlob] fetching", { gameId, url });
   try {
     return await requestArrayBuffer(url, undefined, `Failed to fetch replay for ${gameId}`);
@@ -90,9 +90,7 @@ export async function fetchReplayBlob(gameId: string): Promise<ArrayBuffer> {
  * Uses the browser-native DecompressionStream API.
  */
 export async function decompressReplayBlob(compressed: ArrayBuffer): Promise<PersistedReplayData> {
-  const stream = new Blob([compressed])
-    .stream()
-    .pipeThrough(new DecompressionStream("gzip") as ReadableWritablePair<Uint8Array, Uint8Array>);
+  const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream("gzip"));
 
   const decompressed = await new Response(stream).text();
   return JSON.parse(decompressed) as PersistedReplayData;

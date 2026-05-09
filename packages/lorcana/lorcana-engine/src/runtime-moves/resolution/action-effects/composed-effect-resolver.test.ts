@@ -7,6 +7,7 @@ import { resolveActionEffect } from "./composed-effect-resolver";
 type TestCardDefinition = {
   id: string;
   cardType: "character" | "item" | "location" | "action";
+  name?: string;
   strength?: number;
   willpower?: number;
   lore?: number;
@@ -145,6 +146,9 @@ function createResolverTestContext(args?: {
         [PLAYER_TWO]: 0,
       },
       pendingEffects: [],
+      turnMetadata: {
+        cardsPlayedThisTurn: [],
+      },
     },
     playerId: PLAYER_ONE,
 
@@ -504,11 +508,11 @@ describe("resolveActionEffect", () => {
     expect(ctx.G.lore[PLAYER_ONE]).toBe(2);
   });
 
-  it("suspends ordered put-on-bottom effects until explicit order is provided", () => {
+  it("auto-resolves ordered put-on-bottom effects when the target is all matching cards", () => {
     const source = "source" as CardInstanceId;
     const firstTarget = "first-target" as CardInstanceId;
     const secondTarget = "second-target" as CardInstanceId;
-    const { ctx } = createResolverTestContext({
+    const { ctx, state } = createResolverTestContext({
       definitions: {
         [source]: { id: "source", cardType: "action" },
         [firstTarget]: { id: "first-target", cardType: "character", strength: 2, willpower: 3 },
@@ -541,18 +545,12 @@ describe("resolveActionEffect", () => {
       {},
     );
 
-    expect(result.status).toBe("suspended");
-    expect(ctx.G.pendingEffects).toHaveLength(1);
-    expect(ctx.G.pendingEffects?.[0]).toMatchObject({
-      chooserId: PLAYER_ONE,
-      kind: "target-selection",
-      selectionContext: {
-        kind: "target-selection",
-        ordered: true,
-        chooserId: PLAYER_ONE,
-        cardCandidateIds: [firstTarget, secondTarget],
-      },
-    });
+    expect(result.status).toBe("resolved");
+    expect(ctx.G.pendingEffects).toHaveLength(0);
+    expect(state.moveCalls).toEqual([
+      { cardId: secondTarget, zone: "deck", playerId: PLAYER_TWO },
+      { cardId: firstTarget, zone: "deck", playerId: PLAYER_TWO },
+    ]);
   });
 
   it("preserves the provided bottom-first order for ordered put-on-bottom effects", () => {
@@ -1342,6 +1340,46 @@ describe("resolveActionEffect", () => {
       const sel = result.pendingEffect.selectionContext;
       expect(sel?.kind === "target-selection" ? sel.allowedZones : undefined).toEqual(["hand"]);
     }
+  });
+
+  it("deterministically plays a same-name card when multiple matching copies exist", () => {
+    const source = "source" as CardInstanceId;
+    const chosenCard = "chosen-card" as CardInstanceId;
+    const copyA = "copy-a" as CardInstanceId;
+    const copyB = "copy-b" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [chosenCard]: { id: "chosen-card", cardType: "character", name: "Floodborn Friend" },
+        [copyA]: { id: "copy-a", cardType: "character", name: "Floodborn Friend", cost: 2 },
+        [copyB]: { id: "copy-b", cardType: "character", name: "Floodborn Friend", cost: 2 },
+      },
+      zoneCards: {
+        [`hand:${PLAYER_ONE}`]: [copyA, copyB],
+      },
+    });
+
+    const result = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "play-card",
+        from: "hand",
+        cardType: "character",
+        cost: "free",
+        filter: {
+          sameNameAsChosenCard: true,
+        },
+      },
+      {
+        eventSnapshot: {
+          chosenCardId: chosenCard,
+        },
+      },
+    );
+
+    expect(result.status).toBe("resolved");
+    expect(state.moveCalls).toEqual([{ cardId: copyB, playerId: PLAYER_ONE, zone: "play" }]);
   });
 
   it("restores event snapshot after if-you-do play-card so chosen-card-cost offset uses the banished card (Retro Evolution Device)", () => {

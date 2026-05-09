@@ -1,6 +1,6 @@
 import type { ServerLoadEvent } from "@sveltejs/kit";
-import { getApiOrigin, getGameServerOrigin } from "$lib/config/public-url-config.js";
-import { getServerApiOrigin, getServerGameServerOrigin } from "$lib/server/fetch-with-cf.js";
+import { getApiOrigin } from "$lib/config/public-url-config.js";
+import { getServerApiOrigin } from "$lib/server/fetch-with-cf.js";
 import { serverJson, serverJsonOrNull } from "$lib/data/server/server-json.js";
 
 export interface GameContextParticipant {
@@ -16,6 +16,7 @@ export interface GameContextParticipant {
     playmat?: string;
   };
   isMobile?: boolean;
+  subscriptionTier?: string;
 }
 
 export interface GameContextMatch {
@@ -82,10 +83,9 @@ export async function load(event: ServerLoadEvent): Promise<GamePageData> {
   }
 
   // Server mode — fetch match context and user settings in parallel
-  const publicGameServerOrigin = getGameServerOrigin();
-  const gameApiOrigin = getServerGameServerOrigin(publicGameServerOrigin);
+  const generalApi = getServerApiOrigin(getApiOrigin());
   const authApiOrigin = getServerApiOrigin(getApiOrigin());
-  const contextUrl = `${gameApiOrigin}/v1/play/matches/${matchId}/games/${gameId}/context`;
+  const contextUrl = `${generalApi}/v1/games/lorcana/play/matches/${matchId}/games/${gameId}/context`;
   const settingsUrl = `${authApiOrigin}/v1/users/me/settings`;
 
   const cookie = request.headers.get("cookie") ?? "";

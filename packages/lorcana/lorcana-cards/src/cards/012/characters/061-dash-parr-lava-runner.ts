@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { rush } from "../../../helpers/abilities/rush";
 import { dashParrLavaRunnerI18n } from "./061-dash-parr-lava-runner.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const dashParrLavaRunner: CharacterCard = {
   id: "vhe",
@@ -40,8 +40,8 @@ export const dashParrLavaRunner: CharacterCard = {
       type: "static",
       text: "RECORD TIME This character can quest the turn he's played.",
       effect: {
-        type: "gain-keyword",
-        keyword: "QuestWhileDrying",
+        type: "restriction",
+        restriction: "can-quest-turn-played",
         target: "SELF",
       },
     },

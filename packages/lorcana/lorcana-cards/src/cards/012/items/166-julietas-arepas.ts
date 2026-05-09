@@ -45,7 +45,10 @@ export const julietasArepas: ItemCard = {
       },
       effect: {
         type: "remove-damage",
-        amount: { type: "up-to", value: 2 },
+        amount: {
+          type: "up-to",
+          value: 2,
+        },
         target: {
           selector: "chosen",
           count: 1,

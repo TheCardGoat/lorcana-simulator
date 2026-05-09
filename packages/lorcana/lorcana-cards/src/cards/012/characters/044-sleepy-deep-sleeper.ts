@@ -18,9 +18,12 @@ export const sleepyDeepSleeper: CharacterCard = {
   willpower: 2,
   lore: 1,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_74d958eba8d84933bb8d416153a757d0",
+  },
   text: [
     {
-      title: "Pleasant Dreams",
+      title: "PLEASANT DREAMS",
       description:
         "When this character is banished, if you have a Seven Dwarfs or Princess character in play, you may draw a card.",
     },

@@ -7,7 +7,7 @@
 
 @font-face {
   font-family: "The Bystander Collection Sans Medium";
-  src: local("The Bystander Collection Sans Medium");
+  src: url("./assets/fonts/lorcana/the-bystander-collection-sans-medium.woff2") format("woff2");
   font-style: normal;
   font-weight: 500;
   font-display: swap;
@@ -15,7 +15,7 @@
 
 @font-face {
   font-family: "Brandon Text Condensed Bold";
-  src: local("Brandon Text Condensed Bold");
+  src: url("./assets/fonts/lorcana/brandon-text-condensed-bold.woff2") format("woff2");
   font-style: normal;
   font-weight: 700;
   font-display: swap;
@@ -23,7 +23,7 @@
 
 @font-face {
   font-family: "Brandon Text Condensed Black";
-  src: local("Brandon Text Condensed Black");
+  src: url("./assets/fonts/lorcana/brandon-text-condensed-black.woff2") format("woff2");
   font-style: normal;
   font-weight: 900;
   font-display: swap;
@@ -31,7 +31,7 @@
 
 @font-face {
   font-family: "Brandon Text Condensed Black Italic";
-  src: local("Brandon Text Condensed Black Italic");
+  src: url("./assets/fonts/lorcana/brandon-text-condensed-black-italic.woff2") format("woff2");
   font-style: italic;
   font-weight: 900;
   font-display: swap;
@@ -39,7 +39,7 @@
 
 @font-face {
   font-family: "Brandon Text Condensed Medium Italic";
-  src: local("Brandon Text Condensed Medium Italic");
+  src: url("./assets/fonts/lorcana/brandon-text-condensed-medium-italic.woff2") format("woff2");
   font-style: italic;
   font-weight: 500;
   font-display: swap;
@@ -48,8 +48,7 @@
 @font-face {
   font-family: "Bogle";
   src:
-    local("Bogle"),
-    local("BBH Sans Bogle"),
+    url("./assets/fonts/lorcana/bogle.woff2") format("woff2"),
     url("./assets/fonts/lorcana/bbh-sans-bogle.woff2") format("woff2");
   font-style: normal;
   font-weight: 400;
@@ -58,9 +57,7 @@
 
 @font-face {
   font-family: "BBH Sans Bogle";
-  src:
-    local("BBH Sans Bogle"),
-    url("./assets/fonts/lorcana/bbh-sans-bogle.woff2") format("woff2");
+  src: url("./assets/fonts/lorcana/bbh-sans-bogle.woff2") format("woff2");
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -137,6 +134,11 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+}
+
+html {
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 html,

@@ -214,15 +214,16 @@ function parseShiftNameTargetFromText(
   shiftLabel?: string,
 ): string | undefined {
   const patterns = [
-    /on top of (?:one of )?your characters named ([^.)]+)/i,
-    /on top of a character named ([^.)]+)/i,
+    /on top of (?:one of )?your characters named ([^)]+)/i,
+    /on top of a character named ([^)]+)/i,
   ];
 
   for (const text of extractShiftTextParts(cardDef, shiftKeyword, shiftLabel)) {
     for (const pattern of patterns) {
       const match = text.match(pattern);
       if (match?.[1]) {
-        return match[1].trim();
+        // Strip trailing sentence-ending period (e.g. "Mr. Incredible." → "Mr. Incredible")
+        return match[1].replace(/\.\s*$/, "").trim();
       }
     }
   }
@@ -488,6 +489,8 @@ export function getSingerThresholdForInstance(args: {
   if (baseThreshold == null) {
     return null;
   }
+  const keywordSingerValue = getKeywordSingerThreshold(singerDef) ?? 0;
+  const printedCost = getCharacterCost(singerDef);
 
   const rawState = framework.state as {
     priority?: unknown;
@@ -573,7 +576,13 @@ export function getSingerThresholdForInstance(args: {
       )
     : 0;
 
-  return Math.max(baseThreshold, grantedSingerThreshold) + staticModifier + continuousModifier;
+  // Per rule 8.11: a "+N cost to sing songs" modifier raises the modified printed
+  // cost, and a Singer character can sing songs up to max(Singer value, modified
+  // printed cost). The `singer-threshold` stat modifier encodes "+N cost to sing".
+  const singerValue = Math.max(keywordSingerValue, grantedSingerThreshold);
+  const costToSingModifier = staticModifier + continuousModifier;
+  const modifiedPrintedCost = printedCost + costToSingModifier;
+  return Math.max(baseThreshold, singerValue, modifiedPrintedCost);
 }
 
 /** Sing Together N from keyword data when available, else from card text fallback. */

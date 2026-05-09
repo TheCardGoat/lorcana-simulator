@@ -95,6 +95,56 @@ describe("shouldUseResolutionTargetOverlay", () => {
     expect(shouldUseResolutionTargetOverlay(state)).toBe(false);
   });
 
+  it("keeps multi-character move-to-location prompts on the inline board surface", () => {
+    const state: AvailableMovesSelectionState = {
+      mode: "resolution-target",
+      sessionKey: "resolution:move-to-location",
+      sourceCardId: "source",
+      categoryId: "unknown",
+      categoryLabel: "Resolve effect",
+      title: "Effect",
+      message: "Choose characters to move, then choose a location.",
+      canBack: false,
+      canCancel: true,
+      canConfirm: false,
+      entries: [],
+      effectType: "move-to-location",
+      target: null,
+      allowedZones: ["play"],
+      candidateCardIds: ["character-a", "location-a"],
+      candidatePlayerIds: [],
+      viewerSide: "playerOne",
+      candidateEntries: [],
+      activeSlotIndex: 0,
+      slots: [
+        {
+          id: "subject",
+          label: "Character to move",
+          cardType: "character",
+          targetId: null,
+          targetLabel: null,
+          targetCardId: null,
+          locked: false,
+        },
+        {
+          id: "location",
+          label: "Move to location",
+          cardType: "location",
+          targetId: null,
+          targetLabel: null,
+          targetCardId: null,
+          locked: false,
+        },
+      ],
+      amountSelection: null,
+      selectedTargetLabels: [],
+      minimumSelections: 1,
+      maximumSelections: 5,
+    };
+
+    expect(shouldUseResolutionTargetOverlay(state)).toBe(false);
+  });
+
   it("keeps generic target prompts on the legacy dialog", () => {
     const state: AvailableMovesSelectionState = {
       mode: "resolution-target",

@@ -77,6 +77,14 @@ export interface ReturnFromDiscardEffect {
   /** Legacy singular filter entrypoint. Prefer `filters`. */
   filter?: CardSelectionFilter | CardFilter | CardFilter[];
   filters?: readonly CardFilter[];
+  /**
+   * Convenience cost restriction (e.g. "return an action card with cost 4 or less").
+   * Equivalent to a `cost-comparison` entry in `filters`.
+   */
+  costRestriction?: {
+    comparison: "less-or-equal" | "greater-or-equal" | "equal";
+    value: number;
+  };
 }
 
 /**
@@ -105,10 +113,14 @@ export interface PutIntoInkwellEffect {
   position?: "top" | "bottom";
   /** Who chooses the card */
   chosenBy?: "you" | "opponent" | "TARGET";
+  /** Player who makes the chooser-decision (alias for chosenBy resolved via target). */
+  chooser?: PlayerTarget;
   /** Legacy singular filter entrypoint. Prefer `filters`. */
   filter?: CardSelectionFilter | CardFilter | CardFilter[];
   /** Filter for which cards can be chosen (when source is chosen-character etc) */
   filters?: readonly CardFilter[];
+  /** Upper bound on how many cards may be placed into the inkwell (e.g. "up to 5"). */
+  maxCards?: AmountExpr;
 }
 
 /**
@@ -191,8 +203,15 @@ export interface PlayCardEffect {
   free?: boolean;
   /** Target for the play effect */
   target?: string;
-  /** How the card enters play — "shift" invokes the full Shift stacking mechanic */
-  playMethod?: "shift" | "standard";
+  /**
+   * How the card enters play.
+   * - "shift": always invokes the full Shift stacking mechanic; requires a legal in-play shift base.
+   * - "standard": always plays the card normally without shifting.
+   * - "either": the controller chooses at resolution time. If a legal shift base for the chosen
+   *   source card is included in the selection, the card is played via Shift; otherwise it falls
+   *   back to a standard play. Use for printed text like "play or shift" where the player chooses.
+   */
+  playMethod?: "shift" | "standard" | "either";
   /** Where to send the card after its effects resolve instead of the default discard */
   afterPlay?: "bottom-of-deck";
 }

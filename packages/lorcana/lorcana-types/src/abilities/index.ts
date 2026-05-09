@@ -123,6 +123,7 @@ export type {
   // Legacy resolution (deprecated)
   ResolutionCondition,
   ResourceCountCondition,
+  RevealedIsCardTypeCondition,
   RevealedMatchesNamedCondition,
   TargetAggregateComparisonCondition,
   TargetAggregateOperand,
@@ -270,6 +271,7 @@ export type {
   RevealRoute,
   RevealRouteDestination,
   RevealHandEffect,
+  RevealInkwellEffect,
   RevealUntilMatchEffect,
   // Reveal effects
   RevealTopCardEffect,

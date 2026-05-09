@@ -34,8 +34,8 @@ export const pizzaPlanetSpaceport: LocationCard = {
   abilities: [
     {
       id: "AzD-1",
-      name: "YOU ARE CLEAR TO ENTER",
-      text: "YOU ARE CLEAR TO ENTER Your Toy characters can move here for free.",
+      name: "YOU ARE CLEARED TO ENTER",
+      text: "YOU ARE CLEARED TO ENTER Your Toy characters can move here for free.",
       type: "static",
       effect: {
         type: "move-cost-reduction",

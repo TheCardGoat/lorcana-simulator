@@ -1,14 +1,19 @@
 import type { Condition } from "@tcg/lorcana-types";
-import type { CardPlayedPayload } from "../../../types";
-import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
-import {
-  evaluateCondition,
-  type ConditionEvaluationContext,
-} from "../../../rules/condition-evaluator";
+import type { CardPlayedPayload, LorcanaG } from "../../../types";
+import type { ActionResolutionInput } from "./types";
+import type { CardRuntimeReadAPI, DeepReadonly, FrameworkReadAPI } from "../../../core/runtime";
+import { evaluateCondition } from "../../../rules/condition-evaluator";
+import { buildConditionContext } from "../../../rules/condition-context";
+
+type ActionConditionRuntimeContext = {
+  G: DeepReadonly<LorcanaG>;
+  framework: FrameworkReadAPI;
+  cards: CardRuntimeReadAPI;
+};
 
 export function evaluateActionCondition(
   condition: Condition | undefined,
-  ctx: PlayCardExecutionContext,
+  ctx: ActionConditionRuntimeContext,
   cardPlayed: CardPlayedPayload,
   resolutionInput: ActionResolutionInput,
 ): boolean {
@@ -16,15 +21,13 @@ export function evaluateActionCondition(
     return true;
   }
 
-  const evaluationContext: ConditionEvaluationContext = {
-    framework: ctx.framework as any,
-    cards: ctx.cards as any,
-    G: ctx.G,
+  const evaluationContext = buildConditionContext({
+    ctx,
     playerId: cardPlayed.playerId,
     sourceCardId: cardPlayed.cardId,
     cardPlayed,
     resolutionInput,
-  };
+  });
 
   return evaluateCondition(condition, evaluationContext);
 }

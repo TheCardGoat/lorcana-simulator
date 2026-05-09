@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { evasive } from "../../../helpers/abilities/evasive";
 import { gaetanMoliereCleverBurrowerI18n } from "./080-gaetan-moliere-clever-burrower.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const gaetanMoliereCleverBurrower: CharacterCard = {
   id: "btJ",
@@ -36,7 +36,7 @@ export const gaetanMoliereCleverBurrower: CharacterCard = {
   abilities: [
     evasive,
     {
-      id: "btJ-1",
+      id: "btJ-2",
       name: "UNEARTH",
       type: "triggered",
       text: "UNEARTH Whenever this character quests, you may draw 2 cards, then choose and discard 2 cards.",
@@ -59,9 +59,8 @@ export const gaetanMoliereCleverBurrower: CharacterCard = {
             {
               type: "discard",
               amount: 2,
-              chosen: true,
-              from: "hand",
               target: "CONTROLLER",
+              chosen: true,
             },
           ],
         },

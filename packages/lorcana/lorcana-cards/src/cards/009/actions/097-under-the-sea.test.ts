@@ -69,7 +69,7 @@ describe("Under the Sea", () => {
     expect(testEngine.asPlayerTwo().getCardZone(tinkerBellPeterPansAlly)).toBe("play");
   });
 
-  it("suspends for the player who played the song when multiple qualifying characters are present", () => {
+  it("puts multiple qualifying characters on the bottom without target selection", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [underTheSea],
@@ -81,18 +81,10 @@ describe("Under the Sea", () => {
     );
 
     expect(testEngine.asPlayerOne().playCard(underTheSea)).toBeSuccessfulCommand();
-
-    const weakAId = testEngine.findCardInstanceId(weakCharacterA, "play", PLAYER_TWO);
-    const weakBId = testEngine.findCardInstanceId(weakCharacterB, "play", PLAYER_TWO);
-
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({ targets: [weakCharacterA, weakCharacterB] }),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asServer().getState().G.pendingEffects).toHaveLength(0);
 
     expect(testEngine.asPlayerTwo().getCardZone(weakCharacterA)).toBe("deck");
     expect(testEngine.asPlayerTwo().getCardZone(weakCharacterB)).toBe("deck");
-    expect(weakAId).toBeDefined();
-    expect(weakBId).toBeDefined();
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_TWO).slice(0, 2)).toEqual([
       weakCharacterA.id,
       weakCharacterB.id,

@@ -89,6 +89,7 @@ export type {
 export type {
   CostIncreaseEffect,
   CostReductionEffect,
+  DamageSourceStatOverrideEffect,
   DrawUntilHandSizeEffect,
   EntersPlayEffect,
   GainKeywordEffect,
@@ -103,6 +104,7 @@ export type {
   RevealUntilMatchEffect,
   RestrictionEffect,
   RevealHandEffect,
+  RevealInkwellEffect,
   RevealTopCardEffect,
   SearchDeckEffect,
   SelfPlayConditionEffect,

@@ -13,6 +13,7 @@ import type {
   PlayCardExecutionContext,
 } from "./types";
 import { handleUnsupportedActionEffect } from "./unsupported-action-effect";
+import { matchesCardFilterArray } from "./card-filter-match-utils";
 import { isDiscardZoneKey, recordDiscardExitThisTurn } from "../../state/turn-metrics";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import {
@@ -43,7 +44,6 @@ import {
   hasStaticCardRestriction,
 } from "../../rules/static-ability-utils";
 import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
-import { buildStaticEffectRegistry } from "../../../rules/static-effect-registry";
 import type { StaticEffectRegistry } from "../../../rules/static-effect-registry";
 import { createProjectionState } from "../../../rules/derived-state";
 import {
@@ -158,6 +158,21 @@ function isContextDependentPlayCardFilter(effect: PlayCardEffect): boolean {
   return false;
 }
 
+function isDeterministicNameRestrictedPlayCardFilter(effect: PlayCardEffect): boolean {
+  const filter =
+    effect.filter &&
+    !Array.isArray(effect.filter) &&
+    !("type" in effect.filter && typeof effect.filter.type === "string")
+      ? (effect.filter as PlayCardFilterLike)
+      : undefined;
+
+  return (
+    typeof filter?.name === "string" ||
+    filter?.sameNameAsChosenCard === true ||
+    filter?.sameInstanceAsSource === true
+  );
+}
+
 function resolveSourceCards(
   ctx: PlayCardExecutionContext,
   cardPlayed: CardPlayedPayload,
@@ -195,7 +210,7 @@ function resolveSourceCards(
     return underCards;
   }
 
-  if (from === "discard") {
+  if (from === "discard" || from === "inkwell") {
     const cardsInZone = ctx.framework.zones.getCards({
       zone: from,
       playerId: sourcePlayerId,
@@ -238,8 +253,8 @@ function resolveSourceCards(
   // Explicit target selection is validated against the combined pool.
   if (Array.isArray(from)) {
     const supportedZones = from.filter(
-      (zone): zone is "hand" | "discard" | "deck" =>
-        zone === "hand" || zone === "discard" || zone === "deck",
+      (zone): zone is "hand" | "discard" | "deck" | "inkwell" =>
+        zone === "hand" || zone === "discard" || zone === "deck" || zone === "inkwell",
     );
     const allCards: CardInstanceId[] = [];
     for (const zone of supportedZones) {
@@ -452,7 +467,26 @@ function matchesPlayableCardCriteria(
       ? (effect.filter as CardSelectionFilter)
       : undefined;
 
-  return matchesPlayCardFilter(ctx, cardPlayed, cardId, definition, filter, resolutionInput);
+  if (!matchesPlayCardFilter(ctx, cardPlayed, cardId, definition, filter, resolutionInput)) {
+    return false;
+  }
+
+  // Handle CardFilter[] format — e.g. [{ type: "has-keyword", keyword: "Shift" }]
+  if (Array.isArray(effect.filter)) {
+    if (
+      !matchesCardFilterArray(
+        effect.filter,
+        definition as {
+          abilities?: Array<{ type?: string; keyword?: string }>;
+          classifications?: string[];
+        },
+      )
+    ) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export function getEntersWithDamageAmount(definition: CardDefinitionLike | undefined): number {
@@ -565,15 +599,13 @@ function cardEntersPlayExerted(
     return true;
   }
 
-  const freshRegistry = buildStaticEffectRegistry(
-    createProjectionState(ctx.framework.state, ctx.G),
-    getDefinitionByInstanceId,
-  );
+  // Section 3 ensures `staticEffectsVersion` reflects the current state, so
+  // the cached registry is up-to-date for the `enters-play-exerted` check.
   return hasStaticCardRestriction({
     state,
     cardId,
     restriction: "enters-play-exerted",
-    registry: freshRegistry,
+    registry: getOrBuildMoveRegistry(ctx),
   });
 }
 
@@ -664,14 +696,21 @@ export function resolvePlayCardEffect(
 
     const from = effect.from ?? "hand";
     let chosenCardId: CardInstanceId;
-    if (from === "discard") {
+    if (from === "discard" || from === "hand" || from === "inkwell") {
       const explicitChoice = currentSelectedTargets.filter((id) => playableCards.includes(id));
       if (explicitChoice.length === 1) {
         chosenCardId = explicitChoice[0]!;
       } else if (playableCards.length === 1) {
-        // Name/instance-restricted effects have only one legal candidate — auto-select it.
+        // Only one legal candidate — auto-select it.
         chosenCardId = playableCards[0]!;
+      } else if (isDeterministicNameRestrictedPlayCardFilter(effect)) {
+        // Name-restricted filters can intentionally resolve without a picker
+        // even when multiple copies match. Preserve the historical
+        // deterministic fallback for those unambiguous card identities.
+        chosenCardId = playableCards[playableCards.length - 1]!;
       } else {
+        // Multiple candidates and no explicit selection: skip. The selection-context
+        // builder will have opened a picker (for bags or pending-effect with 2+ cards).
         continue;
       }
     } else {
@@ -826,7 +865,16 @@ export function resolvePlayCardEffect(
         finalizeResolvedActionCard(ctx, cardPlayed);
       }
 
-      const nestedActionResolutionInput = clearCurrentSelectionTargets(resolutionInput);
+      const nestedActionResolutionInput = clearCurrentSelectionTargets({
+        ...resolutionInput,
+        eventSnapshot: resolutionInput.eventSnapshot
+          ? {
+              ...resolutionInput.eventSnapshot,
+              revealedCardIds: undefined,
+              revealWindowIds: undefined,
+            }
+          : undefined,
+      });
       resolveActionCardEffects(
         ctx,
         replayedActionPayload,
@@ -849,19 +897,17 @@ export function resolvePlayCardEffect(
       }
       continue;
     }
-    if (effect.playMethod === "shift") {
-      const shiftTarget = currentSelectedTargets.find((id) => {
-        const zoneKey = ctx.framework.zones.getCardZone(id);
-        return typeof zoneKey === "string" && zoneKey.startsWith("play:");
-      });
-      if (!shiftTarget) {
-        continue;
-      }
-      const chosenDef = ctx.cards.getDefinition(chosenCardId) as LorcanaCardDefinition | undefined;
-      if (!chosenDef) {
-        continue;
-      }
-      const shiftRules = getShiftRules(chosenDef);
+    const chosenDefForShift = ctx.cards.getDefinition(chosenCardId) as
+      | LorcanaCardDefinition
+      | undefined;
+    const inPlaySelection = currentSelectedTargets.find((id) => {
+      const zoneKey = ctx.framework.zones.getCardZone(id);
+      return typeof zoneKey === "string" && zoneKey.startsWith("play:");
+    });
+    const legalShiftBase = ((): CardInstanceId | undefined => {
+      if (!chosenDefForShift) return undefined;
+      const shiftRules = getShiftRules(chosenDefForShift);
+      if (!shiftRules) return undefined;
       const myCharsInPlay = ctx.framework.zones.getCards({
         zone: "play",
         playerId,
@@ -871,9 +917,44 @@ export function resolvePlayCardEffect(
         myCharsInPlay,
         (id) => ctx.cards.getDefinition(id) as LorcanaCardDefinition | undefined,
       );
-      if (!validTargets.includes(shiftTarget as CardInstanceId)) {
-        continue;
+      if (
+        inPlaySelection !== undefined &&
+        validTargets.includes(inPlaySelection as CardInstanceId)
+      ) {
+        return inPlaySelection as CardInstanceId;
       }
+      // For plays from non-hand zones (e.g. Metamorphosis playing from discard),
+      // auto-select the shift base when there is exactly one legal candidate.
+      // The player chose the discard-pile card but isn't separately prompted for
+      // a shift target, so unambiguous auto-selection is correct here.
+      // For plays from hand, player agency over whether to shift vs. play standard
+      // must be preserved — we never auto-select in that case.
+      if (inPlaySelection === undefined && validTargets.length === 1 && effect.from !== "hand") {
+        return validTargets[0];
+      }
+      return undefined;
+    })();
+
+    const shouldShiftRoute = ((): boolean => {
+      if (effect.playMethod === "shift") {
+        // Strict shift: only shift; if no legal base, the play fails (existing behavior).
+        return legalShiftBase !== undefined;
+      }
+      if (effect.playMethod === "either") {
+        // Player choice: shift if a legal base was selected, otherwise fall through to standard.
+        return legalShiftBase !== undefined;
+      }
+      return false;
+    })();
+
+    if (effect.playMethod === "shift" && legalShiftBase === undefined) {
+      // Strict shift mode requires a legal in-play base. Without one, the effect cannot resolve.
+      continue;
+    }
+
+    if (shouldShiftRoute) {
+      const shiftTarget = legalShiftBase!;
+      const chosenDef = chosenDefForShift!;
 
       ctx.framework.zones.moveCard(chosenCardId, { zone: "play", playerId });
       if (isDiscardZoneKey(sourceZoneKey)) {
@@ -925,7 +1006,7 @@ export function resolvePlayCardEffect(
       effect.entersExerted === true ||
         cardEntersPlayExerted(ctx, chosenCardId, definition, playerId as PlayerId, registry) ||
         (cardType === "character" &&
-          resolutionInput.eventSnapshot?.autoExertBodyguardOnNestedPlay === true &&
+          resolutionInput.enterPlayExerted === true &&
           hasBodyguardKeyword(definition)),
       costType,
     );
@@ -1044,7 +1125,15 @@ export function executeScryActionCardPlay(
     subjectCardId: actionCardId,
   });
 
-  const nestedInput = clearCurrentSelectionTargets(resolutionInput);
+  // Strip selection targets, destinations, and the event snapshot from the outer scry's
+  // resolution context. Destinations and revealedCardIds belong to the outer (Robin Hood)
+  // scry — leaving them would make this action's own scry handler treat the outer
+  // destinations/looked-at cards as its own, skipping suspension or using the wrong cards.
+  const nestedInput = {
+    ...clearCurrentSelectionTargets(resolutionInput),
+    destinations: undefined,
+    eventSnapshot: undefined,
+  };
   resolveActionCardEffects(
     ctx,
     actionPayload,

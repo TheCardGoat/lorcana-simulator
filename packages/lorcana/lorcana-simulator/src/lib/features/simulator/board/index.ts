@@ -11,7 +11,7 @@ export { default as ItemZone } from "./ItemZone.svelte";
 export { default as PlayArea } from "./PlayArea.svelte";
 export { default as PlayerBoard } from "./PlayerBoard.svelte";
 export { default as PlayZone } from "./PlayZone.svelte";
-export { default as PlayZoneLocationEntry } from "./PlayZoneLocationEntry.svelte";
+export { default as PlayZoneLocationCluster } from "./PlayZoneLocationCluster.svelte";
 export { default as SeatLane } from "@/features/simulator/board/SeatLane.svelte";
 export { default as TabletopBoard } from "./TabletopBoard.svelte";
 export { default as TurnActionRail } from "./TurnActionRail.svelte";

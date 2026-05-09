@@ -19,6 +19,11 @@ function getMeasurementId(): string | undefined {
   return id;
 }
 
+/** True when a GA4 measurement ID is configured for this build. */
+export function isAnalyticsConfigured(): boolean {
+  return Boolean(getMeasurementId());
+}
+
 // biome-ignore lint/style/noArguments: GA4 requires the native Arguments object in dataLayer — plain arrays break consent mode and event dispatch
 function gtag(..._args: unknown[]): void {
   if (typeof window === "undefined") return;
@@ -65,12 +70,27 @@ export function loadGtag(): void {
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
   script.onload = () => console.log("[gtag] script loaded successfully");
-  script.onerror = (e) => console.error("[gtag] script failed to load", e);
+  script.onerror = (e) => {
+    console.error("[gtag] script failed to load", e);
+    // Best-effort: dataLayer may exist even if the script never loads — push a
+    // diagnostic event so a downstream tag manager / debug harness can see it.
+    gtag("event", "app_exception", {
+      source: "gtag_script",
+      code: "script_load_failed",
+      fatal: "false",
+    });
+  };
   document.head.appendChild(script);
 
   // Initialize gtag
   gtag("js", new Date());
-  gtag("config", measurementId, { send_page_view: false });
+  // Privacy: anonymize IP, disable Google Signals & ad personalization for EU/GDPR.
+  gtag("config", measurementId, {
+    send_page_view: false,
+    anonymize_ip: true,
+    allow_google_signals: false,
+    allow_ad_personalization_signals: false,
+  });
   console.log("[gtag] loadGtag: initialization complete");
 }
 

@@ -1,5 +1,6 @@
 import type { CardInstanceId, PlayerId } from "#core";
 import type {
+  CardFilter,
   CardSelectionFilter,
   ComparisonOperator,
   ReturnFromDiscardEffect,
@@ -10,6 +11,7 @@ import { recordDiscardExitThisTurn } from "../../state/turn-metrics";
 import { resolveTargetPlayerIds } from "./player-target-resolver";
 import { emitTriggeredLorcanaEvent } from "../../../triggered-abilities";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
+import { matchesCardFilterArray } from "./card-filter-match-utils";
 
 type DiscardCardDefinition = {
   actionSubtype?: string;
@@ -86,6 +88,7 @@ export function hasReturnFromDiscardCandidates(
   ctx: DiscardCandidatesContext,
   controllerId: PlayerId,
   effect: ReturnFromDiscardEffect,
+  sourceCardId?: CardInstanceId,
 ): boolean {
   const discardCards = ctx.framework.zones.getCards({
     zone: "discard",
@@ -93,7 +96,7 @@ export function hasReturnFromDiscardCandidates(
   }) as CardInstanceId[];
 
   for (const cardId of discardCards) {
-    if (matchesReturnFilter(ctx as PlayCardExecutionContext, cardId, effect)) {
+    if (matchesReturnFilter(ctx as PlayCardExecutionContext, cardId, effect, sourceCardId)) {
       return true;
     }
   }
@@ -239,14 +242,92 @@ function resolveCostComparisonMax(effect: ReturnFromDiscardEffect): number | und
   return undefined;
 }
 
+function matchesCostRestriction(
+  effect: ReturnFromDiscardEffect,
+  cardCost: number | undefined,
+): boolean {
+  const restriction = effect.costRestriction;
+  if (!restriction) {
+    return true;
+  }
+  if (cardCost === undefined || !Number.isFinite(cardCost)) {
+    return false;
+  }
+  switch (restriction.comparison) {
+    case "less-or-equal":
+      return cardCost <= restriction.value;
+    case "greater-or-equal":
+      return cardCost >= restriction.value;
+    case "equal":
+      return cardCost === restriction.value;
+    default:
+      return false;
+  }
+}
+
+function matchesSourceFilter(
+  effect: ReturnFromDiscardEffect,
+  candidateId: CardInstanceId,
+  sourceCardId: CardInstanceId | undefined,
+): boolean {
+  for (const candidate of getEffectFilterCandidates(effect)) {
+    if (
+      candidate &&
+      typeof candidate === "object" &&
+      "type" in candidate &&
+      (candidate as { type?: unknown }).type === "source"
+    ) {
+      const ref = (candidate as { ref?: unknown }).ref;
+      if (ref === "other") {
+        // Exclude the source card itself. If we don't know the source, fail
+        // closed for safety — better to skip than to allow self-return.
+        if (sourceCardId === undefined || candidateId === sourceCardId) {
+          return false;
+        }
+      } else if (ref === "self") {
+        if (sourceCardId === undefined || candidateId !== sourceCardId) {
+          return false;
+        }
+      }
+      // "trigger-source" is a future expansion (event-based); ignore for now.
+    }
+  }
+  return true;
+}
+
 function matchesReturnFilter(
   ctx: PlayCardExecutionContext,
   cardId: CardInstanceId,
   effect: ReturnFromDiscardEffect,
+  sourceCardId?: CardInstanceId,
 ): boolean {
   const cardDefinition = ctx.cards.getDefinition(cardId) as DiscardCardDefinition | undefined;
   if (!cardDefinition) {
     return false;
+  }
+
+  if (!matchesSourceFilter(effect, cardId, sourceCardId)) {
+    return false;
+  }
+
+  // Handle typed CardFilter format — both array form and single-object form.
+  // e.g. [{ type: "has-classification", classification: "Robot" }] or
+  //      { type: "has-classification", classification: "Pirate" }
+  if (Array.isArray(effect.filter)) {
+    if (!matchesCardFilterArray(effect.filter as CardFilter[], cardDefinition)) {
+      return false;
+    }
+  } else if (
+    effect.filter &&
+    typeof effect.filter === "object" &&
+    "type" in effect.filter &&
+    typeof effect.filter.type === "string" &&
+    // The source filter is handled above; it is not a CardFilter.
+    (effect.filter as { type: string }).type !== "source"
+  ) {
+    if (!matchesCardFilterArray([effect.filter as CardFilter], cardDefinition)) {
+      return false;
+    }
   }
 
   const filter =
@@ -299,6 +380,10 @@ function matchesReturnFilter(
     return false;
   }
 
+  if (!matchesCostRestriction(effect, cardDefinition.cost)) {
+    return false;
+  }
+
   if (filter?.classification && !Array.isArray(cardDefinition.classifications)) {
     return false;
   }
@@ -335,13 +420,16 @@ function moveToDestination(
   switch (resolvedDestination) {
     case "top-of-deck":
       ctx.framework.zones.moveCard(cardId, { zone: "deck", playerId });
+      ctx.cards.clearMeta(cardId);
       return;
     case "play":
       ctx.framework.zones.moveCard(cardId, { zone: "play", playerId });
+      ctx.cards.clearMeta(cardId);
       return;
     case "hand":
     default:
       ctx.framework.zones.moveCard(cardId, { zone: "hand", playerId });
+      ctx.cards.clearMeta(cardId);
   }
 }
 
@@ -366,9 +454,10 @@ export function resolveReturnFromDiscardEffect(
     return;
   }
 
+  const sourceCardId = cardPlayed.cardId;
   const candidateCards = targetPlayerIds.flatMap((playerId) =>
     (ctx.framework.zones.getCards({ zone: "discard", playerId }) as CardInstanceId[]).filter(
-      (cardId) => matchesReturnFilter(ctx, cardId, effect),
+      (cardId) => matchesReturnFilter(ctx, cardId, effect, sourceCardId),
     ),
   );
   if (candidateCards.length === 0) {

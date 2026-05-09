@@ -47,13 +47,8 @@ describe("Pete - Ghost of Christmas Future", () => {
       const handBefore = testEngine.asPlayerOne().getZonesCardCount().hand;
       expect(testEngine.asPlayerOne().quest(peteGhostOfChristmasFuture)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(peteGhostOfChristmasFuture, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       // Hand should be unchanged
       expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(handBefore);
@@ -85,13 +80,8 @@ describe("Pete - Ghost of Christmas Future", () => {
 
       expect(testEngine.asPlayerOne().quest(peteGhostOfChristmasFuture)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(peteGhostOfChristmasFuture, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
     it("with 1 card under him, looks at 1 card and player can put it in hand", () => {

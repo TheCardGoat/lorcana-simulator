@@ -58,7 +58,7 @@ export const ednaModeFashionDesigner: CharacterCard = {
                 owner: "any",
                 zones: ["play"],
                 cardTypes: ["item"],
-                filter: [
+                filters: [
                   {
                     type: "cost-comparison",
                     comparison: "less-or-equal",

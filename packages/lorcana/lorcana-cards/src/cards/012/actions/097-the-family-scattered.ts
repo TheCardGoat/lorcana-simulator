@@ -49,7 +49,8 @@ export const theFamilyScattered: ActionCard = {
           },
           {
             type: "put-on-top",
-            source: {
+            chosenBy: "opponent",
+            target: {
               selector: "chosen",
               count: 1,
               owner: "opponent",

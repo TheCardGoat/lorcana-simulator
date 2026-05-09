@@ -113,6 +113,104 @@ function createCardPlayedPayload(cardId: CardInstanceId, playerId: PlayerId): Ca
 }
 
 describe("buildResolutionSelectionContext", () => {
+  it("derives sensible choice labels when optionLabels are omitted", () => {
+    const source = "source" as CardInstanceId;
+    const { ctx } = createMinimalSelectionTestContext({
+      [source]: { id: "source", cardType: "action" },
+    });
+
+    const selection = buildResolutionSelectionContext({
+      origin: "pending-effect",
+      requestId: "req-choice-labels",
+      sourceCardId: source,
+      chooserId: PLAYER_ONE,
+      cardPlayed: createCardPlayedPayload(source, PLAYER_ONE),
+      effect: {
+        type: "choice",
+        options: [
+          {
+            type: "sequence",
+            steps: [
+              { type: "draw", amount: 1, target: "CONTROLLER" },
+              {
+                type: "gain-keyword",
+                keyword: "Evasive",
+                target: "CHOSEN_CHARACTER_OF_YOURS",
+              },
+            ],
+          },
+          {
+            type: "banish",
+            target: "CHOSEN_DAMAGED_CHARACTER",
+          },
+          {
+            type: "deal-damage",
+            amount: 2,
+            target: "CHOSEN_CHARACTER",
+          },
+          {
+            type: "remove-damage",
+            amount: { type: "up-to", value: 3 },
+            target: "CHOSEN_CHARACTER",
+          },
+          {
+            type: "conditional",
+            condition: { type: "always" },
+            then: {
+              type: "put-on-bottom",
+              target: "CHOSEN_CHARACTER",
+            },
+          },
+        ],
+      },
+      resolutionInput: {},
+      ctx,
+    });
+
+    expect(selection?.kind).toBe("choice-selection");
+    if (selection?.kind !== "choice-selection") {
+      throw new Error("Expected choice-selection");
+    }
+    expect(selection.options.map((option) => option.label)).toEqual([
+      "Draw a card. Chosen character gains Evasive.",
+      "Banish chosen card.",
+      "Deal 2 damage to chosen character.",
+      "Remove up to 3 damage.",
+      "Put chosen card on the bottom of their deck.",
+    ]);
+  });
+
+  it("falls back to generic choice labels for unrecognized option shapes", () => {
+    const source = "source" as CardInstanceId;
+    const { ctx } = createMinimalSelectionTestContext({
+      [source]: { id: "source", cardType: "action" },
+    });
+
+    const selection = buildResolutionSelectionContext({
+      origin: "pending-effect",
+      requestId: "req-choice-generic-label",
+      sourceCardId: source,
+      chooserId: PLAYER_ONE,
+      cardPlayed: createCardPlayedPayload(source, PLAYER_ONE),
+      effect: {
+        type: "choice",
+        options: [
+          {
+            type: "future-effect",
+          },
+        ],
+      },
+      resolutionInput: {},
+      ctx,
+    });
+
+    expect(selection?.kind).toBe("choice-selection");
+    if (selection?.kind !== "choice-selection") {
+      throw new Error("Expected choice-selection");
+    }
+    expect(selection.options[0]?.label).toBe("Option 1");
+  });
+
   it("builds scry-selection when amount is AmountExpr but revealedCardIds supply the count (THE-883)", () => {
     const source = "pete-source" as CardInstanceId;
     const looked1 = "looked-card-1" as CardInstanceId;

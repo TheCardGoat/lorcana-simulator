@@ -5,7 +5,7 @@ import { authSession } from "$lib/auth/session.svelte.js";
 import { fetchPlayerStats } from "@/features/match-history/api/player-stats-api.js";
 import type { PlayerStats } from "@/features/match-history/types.js";
 import { getGatewayWsUrl } from "$lib/config/public-url-config.js";
-import { trackEvent } from "$lib/analytics/analytics.js";
+import { analyticsErrorFields, trackEvent } from "$lib/analytics/analytics.js";
 import { m } from "$lib/i18n/messages.js";
 import { initSoundService, playSound } from "@/features/simulator/animations/sound-service.js";
 import { PlayerSettingsStore } from "@/features/settings/player-settings-store.svelte.js";
@@ -329,7 +329,6 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
   #initialGatewayTicket: string | null = null;
   #initialGatewayAuthToken: string | null = null;
   #initialMatchmakingStatus: MatchmakingStatusResponse | null = null;
-  #initialActiveMatchId: string | null = null;
 
   constructor(options: MatchmakingLobbyControllerOptions, deps: ControllerDeps) {
     this.initialLeaderboards = options.initialLeaderboards ?? null;
@@ -341,7 +340,6 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
     this.#initialGatewayTicket = options.gatewayTicket ?? null;
     this.#initialGatewayAuthToken = options.gatewayAuthToken ?? null;
     this.#initialMatchmakingStatus = options.initialMatchmakingStatus ?? null;
-    this.#initialActiveMatchId = options.initialActiveMatchId ?? null;
     this.playerContext = new deps.MatchmakingPlayerContextState(options.initialContext ?? null);
     this.queueStore = new deps.MatchmakingQueueStore();
     // Hydrate queue/match state immediately from SSR data so the first render
@@ -356,10 +354,6 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
     }
     this.#syncQueuedSelectionFromStore();
 
-    if (this.queueStore.status === "queued" || this.queueStore.status === "match_ready") {
-      this.#startQueuePolling();
-    }
-
     this.liveMatchesStore = new deps.LiveMatchesStore(options.initialLiveMatches ?? null);
     this.queueStatsStore = new deps.QueueStatsStore(options.initialQueueStats ?? null);
     this.playerSettings = new deps.PlayerSettingsStore();
@@ -367,6 +361,10 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
       updateUserVisualSettings(update).catch(() => {});
     });
     this.#gateway = this.#createGateway();
+
+    if (this.queueStore.status === "queued" || this.queueStore.status === "match_ready") {
+      this.#startQueuePolling();
+    }
 
     $effect(() => {
       const format = this.selectedQueueFormat;
@@ -1101,7 +1099,10 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
       this.importDialogOpen = false;
       this.#resetImportDeckForm();
     } catch (error) {
-      this.#deps.trackEvent("deck_import_error", { error: "import_failed" });
+      this.#deps.trackEvent("deck_import_error", {
+        error: "import_failed",
+        ...analyticsErrorFields(error),
+      });
       this.importDeckError = error instanceof Error ? error.message : "Failed to import deck.";
     } finally {
       this.importDeckSubmitting = false;
@@ -1118,13 +1119,11 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
 
     try {
       this.#deps.trackEvent("legacy_import_start");
-      const context = await this.#deps.importLegacyDecksForProfile();
-      await this.playerContext.loadProfileDecks(activeProfile.gameProfileId, { force: true });
-
-      const importedProfile = context.profiles.find(
-        (p) => p.gameProfileId === activeProfile.gameProfileId,
-      );
-      const deckCount = importedProfile?.decks?.length ?? 0;
+      await this.#deps.importLegacyDecksForProfile(activeProfile.gameProfileId);
+      const decks = await this.playerContext.loadProfileDecks(activeProfile.gameProfileId, {
+        force: true,
+      });
+      const deckCount = decks.length;
 
       if (deckCount > 0) {
         this.#deps.trackEvent("legacy_import_complete");
@@ -1135,7 +1134,10 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
         this.importLegacyError = this.#t("sim.matchmaking.selectedDeck.empty.importLegacyNoDecks");
       }
     } catch (error) {
-      this.#deps.trackEvent("legacy_import_error", { error: "import_failed" });
+      this.#deps.trackEvent("legacy_import_error", {
+        error: "import_failed",
+        ...analyticsErrorFields(error),
+      });
       this.importLegacyError =
         error instanceof Error
           ? error.message
@@ -1276,6 +1278,11 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
   }
 
   #createGateway(ticket?: string, token?: string): GatewayClientStore {
+    console.debug("[matchmaking-lobby] createGateway()", {
+      hasTicket: !!ticket,
+      hasToken: !!token,
+      caller: new Error().stack?.split("\n")[2]?.trim() ?? "unknown",
+    });
     return new this.#deps.GatewayClientStore(
       this.#gatewayWsUrl,
       ticket,

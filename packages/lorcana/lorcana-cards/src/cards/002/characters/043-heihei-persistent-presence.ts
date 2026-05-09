@@ -54,6 +54,5 @@ export const heiheiPersistentPresence: CharacterCard = {
       text: "HE'S BACK! When this character is banished in a challenge, return this card from your discard to your hand.",
     },
   ],
-  missingTests: true,
   i18n: heiheiPersistentPresenceI18n,
 };

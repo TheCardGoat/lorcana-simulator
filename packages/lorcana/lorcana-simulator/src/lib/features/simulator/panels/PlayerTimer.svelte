@@ -46,11 +46,6 @@
 	{/if}
 	<div class="timer-main">
 		<span class="timer-value">{view.formattedTime}</span>
-		{#if view.timeoutCount > 0}
-			<span class="timeout-badge" title="Timeouts: {view.timeoutCount}">
-				{view.timeoutCount}
-			</span>
-		{/if}
 	</div>
 </div>
 

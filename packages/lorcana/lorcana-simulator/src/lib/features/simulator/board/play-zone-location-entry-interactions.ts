@@ -5,6 +5,13 @@ interface ActionSelectionSessionLike {
   phase: string;
 }
 
+interface ResolutionSelectionSessionLike {
+  context: {
+    kind: string;
+    cardCandidateIds?: readonly string[];
+  };
+}
+
 interface HandlePlayZoneLocationEntryDirectSelectionOptions {
   card: LorcanaCardSnapshot;
   event: Pick<MouseEvent, "stopPropagation">;
@@ -21,6 +28,18 @@ export function isPlayZoneLocationEntryDirectSelectionMode(
       actionSelectionSession.phase === "choose-target") &&
     (actionSelectionSession.categoryId === "challenge" ||
       actionSelectionSession.categoryId === "move-to-location"),
+  );
+}
+
+export function isPlayZoneLocationEntryResolutionSelectionMode(
+  resolutionSelectionSession: ResolutionSelectionSessionLike | null | undefined,
+  cardId: string,
+): boolean {
+  return Boolean(
+    resolutionSelectionSession?.context.kind === "target-selection" &&
+    resolutionSelectionSession.context.cardCandidateIds?.some(
+      (candidateId) => String(candidateId) === cardId,
+    ),
   );
 }
 

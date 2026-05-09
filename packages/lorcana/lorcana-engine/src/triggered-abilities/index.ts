@@ -45,14 +45,12 @@ import {
   countDamagedCharactersInPlay,
   evaluateCondition,
 } from "../rules/condition-evaluator";
-import type {
-  ConditionEvaluationContext,
-  PlayZoneCardTypeCache,
-} from "../rules/condition-evaluator";
+import type { PlayZoneCardTypeCache } from "../rules/condition-evaluator";
+import { buildConditionContext } from "../rules/condition-context";
 import type { LorcanaCardDerived } from "../types/projected-board";
 import { projectLorcanaCardDerived } from "../projection/card-derived";
 import { createProjectionState } from "../rules/derived-state";
-import { buildStaticEffectRegistry } from "../rules/static-effect-registry";
+import { getOrBuildMoveRegistry } from "../runtime-moves/rules/move-registry-cache";
 
 export type TriggerWindow =
   | "challenge-declaration"
@@ -612,25 +610,42 @@ function collectTriggeredCandidatesFromCard(args: {
       continue;
     }
 
-    candidates.push({
-      abilityId:
-        typeof payload.id === "string" && payload.id.length > 0
-          ? payload.id
-          : `${sourceId}:temporary-trigger:${abilityKey}`,
-      controllerId,
-      sourceId,
-      cardPlayed: sourcePayload,
-      ability: {
-        id: payload.id,
-        name: payload.name,
-        trigger: payload.trigger,
-        sourceZones: payload.sourceZones,
-        condition: payload.condition,
-        effect: payload.effect,
-        ...(payload.autoResolve === true ? { autoResolve: true } : {}),
-      },
-      resolutionInput: {},
-    });
+    const baseAbilityId =
+      typeof payload.id === "string" && payload.id.length > 0
+        ? payload.id
+        : `${sourceId}:temporary-trigger:${abilityKey}`;
+
+    // When multiple source cards have granted the same triggered ability to this
+    // card (e.g. two Medallion Weights each granting "draw-when-challenging"),
+    // instanceSourceIds accumulates each granting card's ID. Produce one candidate
+    // per instance so they aren't collapsed by deduplication in
+    // finalizeResolutionBoundary (which keys on sourceId:controllerId:abilityId).
+    const instanceSourceIds: string[] = Array.isArray(
+      (payload as Record<string, unknown>).instanceSourceIds,
+    )
+      ? ((payload as Record<string, unknown>).instanceSourceIds as string[])
+      : [];
+
+    const instances = instanceSourceIds.length > 1 ? instanceSourceIds : [undefined];
+
+    for (const instanceId of instances) {
+      candidates.push({
+        abilityId: instanceId !== undefined ? `${baseAbilityId}:${instanceId}` : baseAbilityId,
+        controllerId,
+        sourceId,
+        cardPlayed: sourcePayload,
+        ability: {
+          id: instanceId !== undefined ? `${baseAbilityId}:${instanceId}` : baseAbilityId,
+          name: payload.name,
+          trigger: payload.trigger,
+          sourceZones: payload.sourceZones,
+          condition: payload.condition,
+          effect: payload.effect,
+          ...(payload.autoResolve === true ? { autoResolve: true } : {}),
+        },
+        resolutionInput: {},
+      });
+    }
   }
 
   return candidates;
@@ -851,14 +866,12 @@ function queryMatchesSubject(
         }
         case "strength-comparison": {
           const baseStrength = definition.cardType === "character" ? definition.strength : 0;
-          // Build a fresh registry from the current state so static modifiers (e.g. Grumpy's +1)
-          // are included when the subject card has just entered play.
+          // Section 3 invalidates `staticEffectsVersion` on play (zone change → "play"),
+          // so the cached registry includes static modifiers (e.g. Grumpy's +1) for
+          // a card that has just entered play. Previous fresh-build workaround removed.
+          const freshRegistry = getOrBuildMoveRegistry(ctx);
           const getDefById = (id: CardInstanceId) =>
             ctx.cards.getDefinition(id) as LorcanaCardDefinition | undefined;
-          const freshRegistry = buildStaticEffectRegistry(
-            createProjectionState(ctx.framework.state, ctx.G),
-            getDefById,
-          );
           const runtimeCard = ctx.cards.require(subjectCardId) as DerivedRuntimeCard;
           const projected = projectLorcanaCardDerived({
             definition,
@@ -882,12 +895,52 @@ function queryMatchesSubject(
           break;
         }
         case "cost-comparison": {
-          const cost = Number(definition.cost ?? 0);
+          // Two semantics share this filter:
+          //   - "with cost N" → printed cost (default; e.g. Stitch — Rock
+          //     Star's Adoring Fans matches by the card's printed ink cost,
+          //     even when shifted in for less).
+          //   - "pay N {I} or less to play" → paid ink (opt-in via
+          //     costSource: "paid"; e.g. Buzz Lightyear's Secret Mission,
+          //     Jessie's YODEL-AY-HEE-HOO!, Babyhead's Tighten the Bolts).
+          // Without the discriminator, shift plays would incorrectly fire
+          // "with cost N" triggers whenever the shift cost happened to land
+          // in the trigger band.
+          const filterCostSource =
+            "costSource" in filter && filter.costSource ? filter.costSource : "printed";
+          // For costSource: "paid", missing `inkPaid` means the card was
+          // played for free (or via a non-ink cost) and the player paid
+          // 0 ink — NOT that we should fall back to printed cost. A card
+          // played free should still satisfy a "pay 2 or less" trigger.
+          // For costSource: "printed" (or unspecified), use printed cost.
+          const inkPaidCandidate =
+            typeof event.cardPlayed?.inkPaid === "number" &&
+            Number.isFinite(event.cardPlayed.inkPaid)
+              ? event.cardPlayed.inkPaid
+              : undefined;
+          const cost =
+            filterCostSource === "paid" ? (inkPaidCandidate ?? 0) : Number(definition.cost ?? 0);
           if (typeof filter.value !== "number") {
             return false;
           }
           const comparisonValue = filter.value;
           if (!compareOperator(cost, String(filter.comparison ?? "equal"), comparisonValue)) {
+            return false;
+          }
+          break;
+        }
+        case "has-classification": {
+          const snapshotClassifications = event.eventSnapshot?.classificationsBeforeBanish;
+          const classifications: readonly string[] = Array.isArray(snapshotClassifications)
+            ? [...snapshotClassifications]
+            : (() => {
+                const projected = getDerivedRuntimeCard(ctx, subjectCardId);
+                const definitionClassifications =
+                  "classifications" in definition
+                    ? (definition.classifications as string[])
+                    : undefined;
+                return projected?.classifications ?? definitionClassifications ?? [];
+              })();
+          if (!classifications.includes(filter.classification)) {
             return false;
           }
           break;
@@ -1061,10 +1114,7 @@ function restrictionsMatch(
   return restrictions.every((restriction: TriggerRestriction) => {
     switch (restriction.type) {
       case "during-turn": {
-        const activePlayer =
-          restriction.whose === "your"
-            ? resolveTurnPlayerForTriggerRestrictions(ctx)
-            : ctx.framework.state.currentPlayer;
+        const activePlayer = resolveTurnPlayerForTriggerRestrictions(ctx);
         return relationMatches(activePlayer, candidate.controllerId, restriction.whose);
       }
       case "from-location":
@@ -1310,7 +1360,9 @@ function evaluateTriggeredAbilityCondition(args: {
       const activePlayer =
         condition.whose === "your"
           ? resolveTurnPlayerForTriggerRestrictions(ctx)
-          : ctx.framework.state.currentPlayer;
+          : ((ctx.framework.state.priority.holder ?? ctx.framework.state.currentPlayer) as
+              | PlayerId
+              | undefined);
       return relationMatches(activePlayer, candidate.controllerId, condition.whose);
     }
     case "your-turn":
@@ -1346,30 +1398,49 @@ function evaluateTriggeredAbilityCondition(args: {
       return typeof snapshotCount === "number" && snapshotCount > 0;
     }
     case "turn-metric": {
+      // For draw events with a "cards-drawn-by-player" metric, we can eagerly evaluate
+      // using the per-event snapshot count. This correctly handles batch draws: each
+      // individual draw event carries the count at draw time rather than the batch-updated
+      // game state, avoiding false positives/negatives from concurrent draw increments.
+      if (
+        triggerEvent === "draw" &&
+        condition.metric === "cards-drawn-by-player" &&
+        condition.comparison
+      ) {
+        const snapshotCount = resolutionInput.eventSnapshot?.drawCountForPlayerThisTurn;
+        const drawingPlayerId = resolutionInput.triggerContext?.playerId;
+        if (snapshotCount !== undefined && drawingPlayerId !== undefined) {
+          const controllerId = candidate.controllerId;
+          const drawerIsOpponent = drawingPlayerId !== controllerId;
+          const drawerIsController = drawingPlayerId === controllerId;
+          const scopeMatchesDrawer =
+            (condition.playerScope === "opponent" && drawerIsOpponent) ||
+            ((condition.playerScope === "you" || condition.playerScope === undefined) &&
+              drawerIsController) ||
+            (condition.playerScope === "any" && ctx.framework.state.playerIds.length <= 2);
+          if (scopeMatchesDrawer) {
+            return compareOperator(
+              snapshotCount,
+              condition.comparison.operator,
+              condition.comparison.value,
+            );
+          }
+        }
+      }
+
       // For end-turn triggers, evaluate turn-metric conditions eagerly at trigger time
       // because the turn state is fully settled. For other triggers (e.g. play events),
       // defer to resolution time since metrics may not be fully updated yet.
       if (triggerEvent !== "end-turn") {
         return true;
       }
-      const conditionCtx: ConditionEvaluationContext = {
-        framework: {
-          state: {
-            priority: ctx.framework.state.priority,
-            status: ctx.framework.state.status,
-            _zonesPrivate: ctx.framework.state._zonesPrivate,
-            playerIds: ctx.framework.state.playerIds,
-            currentPlayer: ctx.framework.state.currentPlayer,
-          },
-          zones: ctx.framework.zones as unknown as ConditionEvaluationContext["framework"]["zones"],
-        },
-        cards: ctx.cards as ConditionEvaluationContext["cards"],
-        G: ctx.G,
+      const conditionCtx = buildConditionContext({
+        ctx,
         playerId: candidate.controllerId,
         sourceCardId: candidate.sourceId,
         resolutionInput,
         zoneTypeCache,
-      };
+      });
       return evaluateCondition(condition, conditionCtx);
     }
     case "target-query":
@@ -1390,24 +1461,13 @@ function evaluateTriggeredAbilityCondition(args: {
     case "stat-threshold": {
       // Board-state "if" conditions must be checked at trigger time per Lorcana rules:
       // if the condition is not met when the event occurs, the ability should not trigger.
-      const conditionCtx: ConditionEvaluationContext = {
-        framework: {
-          state: {
-            priority: ctx.framework.state.priority,
-            status: ctx.framework.state.status,
-            _zonesPrivate: ctx.framework.state._zonesPrivate,
-            playerIds: ctx.framework.state.playerIds,
-            currentPlayer: ctx.framework.state.currentPlayer,
-          },
-          zones: ctx.framework.zones as unknown as ConditionEvaluationContext["framework"]["zones"],
-        },
-        cards: ctx.cards as ConditionEvaluationContext["cards"],
-        G: ctx.G,
+      const conditionCtx = buildConditionContext({
+        ctx,
         playerId: candidate.controllerId,
         sourceCardId: candidate.sourceId,
         resolutionInput,
         zoneTypeCache,
-      };
+      });
       return evaluateCondition(condition, conditionCtx);
     }
     case "used-shift":
@@ -1525,10 +1585,26 @@ function triggerMatchesEvent(
     return false;
   }
 
-  // Per CRD 2.0 Rule 6.2.7: The secondary "intervening if" condition (ability.condition)
-  // is checked during RESOLUTION, not when the trigger fires. The trigger always fires
-  // when the trigger event occurs; the condition is re-evaluated at bag resolution time
-  // in resolve-bag.ts. Returning true here allows the ability to be enqueued correctly.
+  // Board-state conditions on ability.condition (e.g. has-character-count,
+  // has-character-with-classification) are also evaluated at trigger time.
+  // evaluateTriggeredAbilityCondition returns true for non-board-state types
+  // (turn-metric, your-turn, used-shift, etc.), so they are not affected here
+  // and continue to be checked only at resolution time per CRD 2.0 Rule 6.2.7.
+  const abilityCondition = candidate.ability.condition;
+  if (
+    abilityCondition &&
+    !evaluateTriggeredAbilityCondition({
+      ctx,
+      candidate,
+      condition: abilityCondition,
+      resolutionInput: resolvedResolutionInput,
+      triggerEvent,
+      zoneTypeCache,
+    })
+  ) {
+    return false;
+  }
+
   return true;
 }
 
@@ -1693,7 +1769,7 @@ function enqueueMatchedTrigger(
           : undefined,
   };
 
-  return enqueueBagEffect(ctx, {
+  const entry = enqueueBagEffect(ctx, {
     kind: "triggered-ability",
     abilityId: candidate.abilityId,
     abilityIndex: candidate.abilityIndex,
@@ -1710,6 +1786,7 @@ function enqueueMatchedTrigger(
     occurrenceIndex,
     resolutionInput,
   });
+  return entry;
 }
 
 function enqueueDueDelayedRegistrations(
@@ -1947,15 +2024,19 @@ function pruneFailedConditionBagEffects(ctx: TriggerRuntimeContext): void {
     // can't change during bag resolution.
     if ((item.condition as { type?: string }).type !== "turn-metric") continue;
 
-    const condCtx: ConditionEvaluationContext = {
-      framework: ctx.framework as ConditionEvaluationContext["framework"],
-      cards: ctx.cards as ConditionEvaluationContext["cards"],
-      G: ctx.G,
+    // NOTE: this site historically omitted `zoneTypeCache` and `registry`. The
+    // canonical builder defaults `registry` to `getOrBuildMoveRegistry(ctx)`,
+    // which is more correct than passing `undefined` — ability evaluation that
+    // depends on static effects (e.g. granted abilities, stat-modified targets)
+    // can now resolve. `zoneTypeCache` remains intentionally absent because
+    // bag-prune runs once per item, not per zone-batch.
+    const condCtx = buildConditionContext({
+      ctx,
       playerId: item.controllerId,
       sourceCardId: item.sourceId,
       cardPlayed: item.cardPlayed,
       resolutionInput: item.resolutionInput ?? {},
-    };
+    });
 
     try {
       if (!evaluateCondition(item.condition, condCtx)) {

@@ -114,8 +114,15 @@
 
         <div>
           <dt class="text-slate-400">Auth</dt>
-          <dd class="mt-0.5 font-medium">
-            {gateway.authenticated ? "Authenticated" : "Anonymous"}
+          <dd class="mt-0.5 font-medium capitalize">
+            {gateway.authenticated ? "Verified" : gateway.authMethod}
+          </dd>
+        </div>
+
+        <div>
+          <dt class="text-slate-400">Since</dt>
+          <dd class="mt-0.5 tabular-nums font-medium">
+            {new Date(gateway.statusChangedAt).toLocaleTimeString()}
           </dd>
         </div>
 
@@ -148,6 +155,13 @@
           <div class="col-span-2">
             <dt class="text-red-400">Error</dt>
             <dd class="mt-0.5 text-red-300">{gateway.error}</dd>
+          </div>
+        {/if}
+
+        {#if gateway.serverInitiatedClose}
+          <div class="col-span-2">
+            <dt class="text-amber-400">Deploy</dt>
+            <dd class="mt-0.5 text-amber-300">Server update in progress</dd>
           </div>
         {/if}
       </dl>

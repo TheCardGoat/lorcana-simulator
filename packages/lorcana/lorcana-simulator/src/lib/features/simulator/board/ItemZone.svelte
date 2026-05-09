@@ -107,7 +107,7 @@ $effect(() => {
 		return;
 	}
 
-	items.length;
+	void items.length;
 
 	const container = itemContainerEl;
 	const resizeObserver =
@@ -149,6 +149,7 @@ $effect(() => {
   <div class="item-zone-cards">
     <div class="item-cards" bind:this={itemContainerEl}>
       {#each items as card (card.cardId)}
+        {@const actionState = sidebar.getActionSessionCardState(card.cardId)}
         <div class="item-card">
           <LorcanaCard
             {card}
@@ -157,11 +158,12 @@ $effect(() => {
             hoverShowActions
             isMasked={false}
             isSelected={
-              sidebar.getActionSessionCardState(card.cardId).isSelected ||
+              actionState.isSelected ||
               simulatorCardContext.previewCard?.cardId === card.cardId
             }
-            isPlayable={sidebar.getActionSessionCardState(card.cardId).isSelectable}
-            isInvalidTarget={sidebar.getActionSessionCardState(card.cardId).isInvalidTarget}
+            isPlayable={actionState.isSelectable}
+            isValidTarget={actionState.isSelectable}
+            isInvalidTarget={actionState.isInvalidTarget}
             isExerted={card.readyState === "exerted"}
             damage={card.damage ?? 0}
           />

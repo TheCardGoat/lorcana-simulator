@@ -26,7 +26,7 @@ export const nathanielFlintNotoriousPirate: CharacterCard = {
     {
       title: "PREDATORY INSTINCT",
       description:
-        "You can't play this character unless an opposing character was damaged this turn.",
+        "You can't play this character unless an opposing character took damage this turn.",
     },
   ],
   classifications: ["Storyborn", "Villain", "Alien", "Pirate", "Captain"],
@@ -43,7 +43,7 @@ export const nathanielFlintNotoriousPirate: CharacterCard = {
       },
       id: "1ub-1",
       name: "PREDATORY INSTINCT",
-      text: "PREDATORY INSTINCT You can't play this character unless an opposing character was damaged this turn.",
+      text: "PREDATORY INSTINCT You can't play this character unless an opposing character took damage this turn.",
       type: "static",
     },
   ],

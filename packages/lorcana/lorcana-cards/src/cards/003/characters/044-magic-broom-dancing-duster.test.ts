@@ -38,13 +38,8 @@ describe("Magic Broom - Dancing Duster", () => {
 
       expect(testEngine.asPlayerOne().playCard(magicBroomDancingDuster)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued when trigger fires, Sorcerer condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(magicBroomDancingDuster, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       // No Sorcerer in play — no effect applied
       expect(testEngine.isExerted(opponentCharacter)).toBe(false);
     });
@@ -201,13 +196,8 @@ describe("Magic Broom - Dancing Duster", () => {
 
       expect(testEngine.asPlayerOne().playCard(magicBroomDancingDuster)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued when trigger fires, Sorcerer condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(magicBroomDancingDuster, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       // No Sorcerer in play — no effect applied
       expect(testEngine.isExerted(opponentCharacter)).toBe(false);
     });

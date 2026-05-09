@@ -64,6 +64,13 @@ export const beastAggressiveLord: CharacterCard = {
         event: "challenge",
         on: "SELF",
         timing: "whenever",
+        // Printed text: "Whenever he challenges ANOTHER CHARACTER...".
+        // Without this restriction, the +1/-1 lore transfer fires when Beast
+        // challenges a location too (player report 2026-05-06: "Beast
+        // challenged my Pizza Planet location. I lost one Lore and my
+        // opponent gained one Lore. Since Beast challenged a location, this
+        // should not have happened.").
+        restrictions: [{ type: "defender-is-character" }],
       },
       type: "triggered",
     },

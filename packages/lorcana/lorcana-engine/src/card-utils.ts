@@ -195,9 +195,10 @@ export function hasBodyguard(card: LorcanaCardDefinition): boolean {
  * Check if a card offers the player the option to enter play exerted on play.
  *
  * This covers printed "This character may enter play exerted" text that is not
- * part of the Bodyguard keyword. When this is true, the engine treats
- * `playCard(..., { resolveOptional: true })` as the player's choice to have
- * the card enter play exerted.
+ * part of the Bodyguard keyword. Direct play-card moves still accept
+ * `resolveOptional: true` for their existing entry-mode shortcut; effect
+ * resolution uses the explicit `enterPlayExerted` field so optional free-play
+ * acceptance stays separate from the entry-mode choice.
  */
 export function hasMayEnterPlayExertedOption(card: LorcanaCardDefinition): boolean {
   if (!Array.isArray(card.abilities)) {

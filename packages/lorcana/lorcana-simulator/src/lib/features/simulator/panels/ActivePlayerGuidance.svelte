@@ -8,6 +8,7 @@
   import { maybeUseSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
   import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
   import NamedCardSearchInput from "@/features/simulator/panels/NamedCardSearchInput.svelte";
+  import CardTextWithSymbols from "@/design-system/simulator/cards/CardTextWithSymbols.svelte";
 
   interface ActivePlayerGuidanceProps {
     items?: ActivePlayerGuidanceItem[];
@@ -55,6 +56,10 @@
     ) {
       simulatorCardContext.setExternalPreviewCard(null);
     }
+  }
+
+  function hasSelectedTargetSlot(item: ActivePlayerGuidanceItem): boolean {
+    return item.targetSlots?.some((slot) => slot.selected) ?? false;
   }
 </script>
 
@@ -136,10 +141,28 @@
             {/if}
           </p>
 
-          {#if item.abilityDescription}
+          {#if item.abilityDescription && !hasSelectedTargetSlot(item)}
             <p class="guidance-ability-description">
-              {item.abilityDescription}
+              <CardTextWithSymbols text={item.abilityDescription} />
             </p>
+          {/if}
+
+          {#if item.targetSlots && item.targetSlots.length > 0 && hasSelectedTargetSlot(item)}
+            <div class="guidance-target-slots" aria-label="Selected targets">
+              {#each item.targetSlots as slot (slot.id)}
+                <div
+                  class="guidance-target-slot"
+                  class:guidance-target-slot--active={slot.active}
+                  class:guidance-target-slot--selected={slot.selected}
+                >
+                  <span class="guidance-target-slot__label">{slot.label}</span>
+                  <span class="guidance-target-slot__detail">{slot.detail}</span>
+                  <span class="guidance-target-slot__status">
+                    {slot.selected ? "Selected" : slot.active ? "Choosing now" : "Next"}
+                  </span>
+                </div>
+              {/each}
+            </div>
           {/if}
 
           {#if item.namedCardSearch}
@@ -386,6 +409,70 @@
     white-space: pre-line;
   }
 
+  .guidance-target-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.35rem;
+  }
+
+  .guidance-target-slot {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.42rem;
+    padding: 0.34rem 0.48rem;
+    border-radius: 8px;
+    border: 1px solid rgba(130, 178, 235, 0.24);
+    background: rgba(5, 16, 30, 0.56);
+  }
+
+  .guidance-target-slot--active {
+    border-color: rgba(251, 191, 36, 0.72);
+    background: rgba(120, 69, 8, 0.32);
+    box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.18);
+  }
+
+  .guidance-target-slot--selected:not(.guidance-target-slot--active) {
+    border-color: rgba(94, 234, 212, 0.42);
+    background: rgba(13, 82, 76, 0.28);
+  }
+
+  .guidance-target-slot__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3rem;
+    min-height: 1.55rem;
+    border-radius: 6px;
+    background: rgba(148, 163, 184, 0.14);
+    color: #eaf4ff;
+    font-size: 0.68rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .guidance-target-slot__detail {
+    min-width: 0;
+    color: #f8fbff;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .guidance-target-slot__status {
+    color: rgba(191, 219, 254, 0.72);
+    font-size: 0.63rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
   .guidance-actions {
     display: flex;
     align-items: center;
@@ -470,6 +557,10 @@
       font-size: 0.82rem;
       line-height: 1.15;
       white-space: normal;
+    }
+
+    .guidance-target-slots {
+      grid-template-columns: 1fr;
     }
 
     .guidance-actions {

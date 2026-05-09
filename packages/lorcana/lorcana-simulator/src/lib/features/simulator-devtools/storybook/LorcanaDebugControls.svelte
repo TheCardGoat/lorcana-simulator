@@ -19,6 +19,7 @@
         stateId: number | null;
         serializedState: string;
         serializedBoardProjection: string;
+        serializedInteractionPrompt: string;
         onViewChange: (view: LorcanaSimulatorView) => void;
         onFixtureChange?: (fixtureId: string) => void;
         onSwapPlayers: () => void;
@@ -26,7 +27,7 @@
         onRefresh: () => void;
         onRunAnimation: (animation: SimulatorDebugAnimationRequest) => boolean;
         onRunQuestAnimation?: (cardId: string, player: SimulatorDebugAnimationPlayer, loreGained: number) => boolean;
-        onRunChallengeAnimation?: (attackerId: string, defenderId: string, player: SimulatorDebugAnimationPlayer, preview: { attackerDamageDealt: number; defenderDamageDealt: number; defenderKind: "character" | "location"; attackerWouldBeBanished: boolean; defenderWouldBeBanished: boolean }) => boolean;
+        onRunChallengeAnimation?: (attackerId: string, defenderId: string, player: SimulatorDebugAnimationPlayer, preview: { attackerDamageDealt: number; defenderDamageDealt: number; defenderKind: "character" | "location"; attackerWouldBeBanished: boolean; defenderWouldBeBanished: boolean; attackerDamageIsReduced: boolean; defenderDamageIsReduced: boolean }) => boolean;
     }
 
     const {
@@ -36,6 +37,7 @@
         stateId,
         serializedState,
         serializedBoardProjection,
+        serializedInteractionPrompt,
         onViewChange,
         onFixtureChange,
         onSwapPlayers,
@@ -87,6 +89,7 @@
                 {stateId}
                 {serializedState}
                 {serializedBoardProjection}
+                {serializedInteractionPrompt}
                 {onViewChange}
                 {onFixtureChange}
                 {onReset}

@@ -23,9 +23,9 @@ export const jessieLivelyCowgirl: CharacterCard = {
   },
   text: [
     {
-      title: "PART OF A FAMILY",
+      title: "PART OF",
       description:
-        "Whenever this character quests, if you have 2 or more other Toy characters in play, you may draw a card.",
+        "A FAMILY Whenever this character quests, if you have 2 or more other Toy characters in play, you may draw a card.",
     },
     {
       title: "YODEL-AY-HEE-HOO!",
@@ -76,6 +76,7 @@ export const jessieLivelyCowgirl: CharacterCard = {
               type: "cost-comparison",
               comparison: "less-or-equal",
               value: 2,
+              costSource: "paid",
             },
           ],
         },

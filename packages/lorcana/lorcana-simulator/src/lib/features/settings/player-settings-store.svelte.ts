@@ -5,9 +5,9 @@ export type CardPreviewMode = "disabled" | "immediate" | "delayed";
 export type PrimaryClickAction = "challenge" | "quest" | "none";
 export type AnimationSpeed = "off" | "fast" | "normal" | "slow";
 export type HotkeyMode = "off" | "confirm-only" | "on";
+export type CardInfoMode = "detailed" | "quick";
 
 const PLAYER_LOCALE_STORAGE_KEY = "lorcana.simulator.playerLocale";
-const SKIP_ACTION_CONFIRMATION_STORAGE_KEY = "lorcana.simulator.skipActionConfirmation";
 const HOTKEYS_ENABLED_STORAGE_KEY = "lorcana.simulator.hotkeysEnabled";
 const CARD_PREVIEW_DELAY_STORAGE_KEY = "lorcana.simulator.cardPreviewDelay";
 const PRIMARY_CLICK_ACTION_STORAGE_KEY = "lorcana.simulator.primaryClickAction";
@@ -17,9 +17,9 @@ const ACCESSIBLE_MOBILE_CONTROLS_STORAGE_KEY = "lorcana.simulator.accessibleMobi
 const SHOW_ZONE_COUNTERS_STORAGE_KEY = "lorcana.simulator.showZoneCounters";
 const SELECTED_PLAYMAT_STORAGE_KEY = "lorcana.simulator.selectedPlaymat";
 const SELECTED_CARD_BACK_STORAGE_KEY = "lorcana.simulator.selectedCardBack";
+const CARD_INFO_MODE_STORAGE_KEY = "lorcana.simulator.cardInfoMode";
 
 export const DEFAULT_PLAYER_SETTINGS = {
-  skipActionConfirmation: false,
   hotkeyMode: "confirm-only" as HotkeyMode,
   cardPreviewMode: "immediate" as CardPreviewMode,
   primaryClickAction: "challenge" as PrimaryClickAction,
@@ -29,8 +29,8 @@ export const DEFAULT_PLAYER_SETTINGS = {
   showZoneCounters: false,
   selectedPlaymat: "default",
   selectedCardBack: "default",
+  cardInfoMode: "detailed" as CardInfoMode,
 } satisfies {
-  skipActionConfirmation: boolean;
   hotkeyMode: HotkeyMode;
   cardPreviewMode: CardPreviewMode;
   primaryClickAction: PrimaryClickAction;
@@ -40,6 +40,7 @@ export const DEFAULT_PLAYER_SETTINGS = {
   showZoneCounters: boolean;
   selectedPlaymat: string;
   selectedCardBack: string;
+  cardInfoMode: CardInfoMode;
 };
 
 /** Shape of the gameplaySettings object returned by GET /v1/users/me/settings */
@@ -48,11 +49,11 @@ export interface ServerGameplaySettings {
   hotkeyMode?: HotkeyMode;
   cardPreviewMode?: CardPreviewMode;
   primaryClickAction?: PrimaryClickAction;
-  skipActionConfirmation?: boolean;
   soundVolume?: number;
   accessibleMobileControls?: boolean;
   showZoneCounters?: boolean;
   selectedLocale?: string;
+  cardInfoMode?: CardInfoMode;
 }
 
 export type SaveToServerFn = (settings: {
@@ -76,7 +77,7 @@ export type SaveVisualSettingsToServerFn = (settings: {
  */
 export class PlayerSettingsStore {
   selectedLocale = $state<SupportedLocale>(getLocale());
-  skipActionConfirmation = $state<boolean>(DEFAULT_PLAYER_SETTINGS.skipActionConfirmation);
+  skipActionConfirmation = $state(true);
   hotkeyMode = $state<HotkeyMode>(DEFAULT_PLAYER_SETTINGS.hotkeyMode);
   cardPreviewMode = $state<CardPreviewMode>(DEFAULT_PLAYER_SETTINGS.cardPreviewMode);
   primaryClickAction = $state<PrimaryClickAction>(DEFAULT_PLAYER_SETTINGS.primaryClickAction);
@@ -86,6 +87,7 @@ export class PlayerSettingsStore {
   showZoneCounters = $state<boolean>(DEFAULT_PLAYER_SETTINGS.showZoneCounters);
   selectedPlaymat = $state(DEFAULT_PLAYER_SETTINGS.selectedPlaymat);
   selectedCardBack = $state(DEFAULT_PLAYER_SETTINGS.selectedCardBack);
+  cardInfoMode = $state<CardInfoMode>(DEFAULT_PLAYER_SETTINGS.cardInfoMode);
 
   #saveToServer: SaveToServerFn | null = null;
   #saveVisualSettingsToServer: SaveVisualSettingsToServerFn | null = null;
@@ -142,13 +144,6 @@ export class PlayerSettingsStore {
       this.primaryClickAction = serverSettings.primaryClickAction;
       localStorage.setItem(PRIMARY_CLICK_ACTION_STORAGE_KEY, serverSettings.primaryClickAction);
     }
-    if (serverSettings.skipActionConfirmation !== undefined) {
-      this.skipActionConfirmation = serverSettings.skipActionConfirmation;
-      localStorage.setItem(
-        SKIP_ACTION_CONFIRMATION_STORAGE_KEY,
-        serverSettings.skipActionConfirmation ? "true" : "false",
-      );
-    }
     if (serverSettings.soundVolume !== undefined) {
       this.soundVolume = Math.max(0, Math.min(100, Math.round(serverSettings.soundVolume)));
       localStorage.setItem(SOUND_VOLUME_STORAGE_KEY, String(this.soundVolume));
@@ -167,6 +162,10 @@ export class PlayerSettingsStore {
         serverSettings.showZoneCounters ? "true" : "false",
       );
     }
+    if (serverSettings.cardInfoMode === "detailed" || serverSettings.cardInfoMode === "quick") {
+      this.cardInfoMode = serverSettings.cardInfoMode;
+      localStorage.setItem(CARD_INFO_MODE_STORAGE_KEY, serverSettings.cardInfoMode);
+    }
     if (
       serverSettings.selectedLocale &&
       locales.includes(serverSettings.selectedLocale as SupportedLocale)
@@ -182,13 +181,6 @@ export class PlayerSettingsStore {
 
   /** Hydrate every field from localStorage. Call once after construction. */
   initialize(): void {
-    const storedSkipActionConfirmation = localStorage.getItem(SKIP_ACTION_CONFIRMATION_STORAGE_KEY);
-    if (storedSkipActionConfirmation === "true") {
-      this.skipActionConfirmation = true;
-    } else if (storedSkipActionConfirmation === "false") {
-      this.skipActionConfirmation = false;
-    }
-
     const storedHotkeysEnabled = localStorage.getItem(HOTKEYS_ENABLED_STORAGE_KEY);
     if (
       storedHotkeysEnabled === "off" ||
@@ -274,6 +266,11 @@ export class PlayerSettingsStore {
     if (storedCardBack) {
       this.selectedCardBack = storedCardBack;
     }
+
+    const storedCardInfoMode = localStorage.getItem(CARD_INFO_MODE_STORAGE_KEY);
+    if (storedCardInfoMode === "detailed" || storedCardInfoMode === "quick") {
+      this.cardInfoMode = storedCardInfoMode;
+    }
   }
 
   // ── Handlers ────────────────────────────────────────────────────────
@@ -286,12 +283,6 @@ export class PlayerSettingsStore {
     setLocale(nextLocale, { reload: false });
     localStorage.setItem(PLAYER_LOCALE_STORAGE_KEY, nextLocale);
     this.#scheduleSave({ selectedLocale: nextLocale });
-  };
-
-  handleSkipActionConfirmationToggle = (enabled: boolean): void => {
-    this.skipActionConfirmation = enabled;
-    localStorage.setItem(SKIP_ACTION_CONFIRMATION_STORAGE_KEY, enabled ? "true" : "false");
-    this.#scheduleSave({ skipActionConfirmation: enabled });
   };
 
   handleHotkeyModeChange = (mode: HotkeyMode): void => {
@@ -341,6 +332,12 @@ export class PlayerSettingsStore {
     this.selectedPlaymat = id;
     localStorage.setItem(SELECTED_PLAYMAT_STORAGE_KEY, id);
     this.#saveVisualSettingsToServer?.({ visualSettings: { playmat: id } });
+  };
+
+  handleCardInfoModeChange = (mode: CardInfoMode): void => {
+    this.cardInfoMode = mode;
+    localStorage.setItem(CARD_INFO_MODE_STORAGE_KEY, mode);
+    this.#scheduleSave({ cardInfoMode: mode });
   };
 
   handleCardBackChange = (id: string): void => {

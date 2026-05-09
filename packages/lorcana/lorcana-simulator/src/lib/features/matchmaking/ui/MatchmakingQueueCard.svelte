@@ -31,6 +31,7 @@
   import ShieldAlert from '@lucide/svelte/icons/shield-alert';
   import Trophy from '@lucide/svelte/icons/trophy';
   import Users from '@lucide/svelte/icons/users';
+  import WifiOff from '@lucide/svelte/icons/wifi-off';
   import X from '@lucide/svelte/icons/x';
 
   interface Props {
@@ -427,16 +428,39 @@
       {/if}
 
       {#if status === 'queued'}
-        <div class="rounded-xl border border-sky-400/20 bg-sky-400/8 p-4">
+        <div
+          class={cn(
+            'rounded-xl border p-4 transition-colors duration-300',
+            wsConnected
+              ? 'border-sky-400/20 bg-sky-400/8'
+              : 'border-amber-400/25 bg-amber-400/8',
+          )}
+        >
           <div class="flex items-center gap-3">
-            <Loader
-              class="size-5 shrink-0 animate-spin text-sky-300"
-              aria-hidden="true"
-            />
+            {#if wsConnected}
+              <Loader
+                class="size-5 shrink-0 animate-spin text-sky-300"
+                aria-hidden="true"
+              />
+            {:else}
+              <WifiOff
+                class="size-5 shrink-0 text-amber-400"
+                aria-hidden="true"
+              />
+            {/if}
             <div class="min-w-0 flex-1">
-              <p class="text-sm font-semibold text-sky-100">
-                {m['sim.matchmaking.queue.searching']({})}
-              </p>
+              {#if wsConnected}
+                <p class="text-sm font-semibold text-sky-100">
+                  {m['sim.matchmaking.queue.searching']({})}
+                </p>
+              {:else}
+                <p class="text-sm font-semibold text-amber-200">
+                  Connection lost — still in queue
+                </p>
+                <p class="mt-0.5 text-xs text-amber-300/70">
+                  Reconnecting automatically…
+                </p>
+              {/if}
               <p class="mt-0.5 text-xs text-slate-300">
                 {m['sim.matchmaking.matchmaking.queueSummary']({
                   format: m[
@@ -519,7 +543,10 @@
           </div>
           <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10">
             <div
-              class="h-full rounded-full bg-sky-400/60 transition-all duration-1000"
+              class={cn(
+                'h-full rounded-full transition-all duration-1000',
+                wsConnected ? 'bg-sky-400/60' : 'bg-amber-400/50',
+              )}
               style={`width: ${progressPercent}%`}
             ></div>
           </div>

@@ -58,6 +58,5 @@ export const jafarDreadnought: CharacterCard = {
       text: "NOW WHERE WERE WE? During your turn, whenever this character banishes another character in a challenge, you may draw a card.",
     },
   ],
-  missingTests: true,
   i18n: jafarDreadnoughtI18n,
 };

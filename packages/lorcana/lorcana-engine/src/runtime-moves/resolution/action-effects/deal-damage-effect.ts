@@ -125,6 +125,7 @@ function applyDamage(
     changed = true;
 
     // Emit "damage" trigger event so "whenever this character takes damage" abilities fire.
+    // Also emit "deal-damage" so "whenever one of your actions deals damage" abilities fire.
     // The eventSnapshot.triggerAmount carries the damage dealt for use with { type: "trigger-amount" }.
     emitTriggeredLorcanaEvent(
       ctx,
@@ -136,16 +137,29 @@ function applyDamage(
         sourceId: cardPlayed.cardId,
         damageType: "effect",
       },
-      {
-        event: "damage",
-        subjectCardId: targetId,
-        triggerSourceCardId: cardPlayed.cardId,
-        playerId: ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined,
-        eventSnapshot: {
-          triggerAmount: appliedDamage,
-          damageDealt: appliedDamage,
+      [
+        {
+          event: "damage",
+          subjectCardId: targetId,
+          triggerSourceCardId: cardPlayed.cardId,
+          playerId: ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined,
+          eventSnapshot: {
+            triggerAmount: appliedDamage,
+            damageDealt: appliedDamage,
+          },
         },
-      },
+        {
+          event: "deal-damage",
+          subjectCardId: targetId,
+          triggerSourceCardId: cardPlayed.cardId,
+          sourceCardType: cardPlayed.cardType,
+          playerId: ctx.framework.zones.getCardOwner(targetId) as PlayerId | undefined,
+          eventSnapshot: {
+            triggerAmount: appliedDamage,
+            damageDealt: appliedDamage,
+          },
+        },
+      ],
     );
 
     // Use projected (effective) willpower from the runtime card, which accounts for

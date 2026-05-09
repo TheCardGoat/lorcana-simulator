@@ -26,13 +26,8 @@ describe("Razoul - Menacing Guard", () => {
 
       expect(testEngine.asPlayerOne().playCard(razoulMenacingGuard)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(razoulMenacingGuard, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
     it("triggers and allows banishing chosen item when Jafar is in play", () => {

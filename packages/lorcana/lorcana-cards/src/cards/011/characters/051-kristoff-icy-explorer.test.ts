@@ -40,13 +40,8 @@ describe("Kristoff - Icy Explorer", () => {
 
       expect(testEngine.asPlayerOne().playCard(kristoffIcyExplorer)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(kristoffIcyExplorer, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
     it("should trigger when Anna is in play and put own discard card on bottom of deck", () => {
@@ -125,8 +120,8 @@ describe("Kristoff - Icy Explorer", () => {
     it("regression: resolveBag with empty targets drains when Anna is NOT in play", () => {
       // Repro of player report: Kristoff solo on the board (no Anna), player
       // clicks "Resolve triggered ability" which submits `{ targets: [] }`.
-      // Previously this errored with RESOLVE_BAG_TARGETS_REQUIRED and the bag
-      // was stuck. The intervening-if condition (no Anna) should drain instead.
+      // With the new trigger-time condition check, the ability never enters
+      // the bag when Anna is NOT in play, so there's nothing to drain.
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [kristoffIcyExplorer],
         inkwell: kristoffIcyExplorer.cost,
@@ -135,12 +130,7 @@ describe("Kristoff - Icy Explorer", () => {
       });
 
       expect(testEngine.asPlayerOne().playCard(kristoffIcyExplorer)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      expect(
-        testEngine.asPlayerOne().resolvePendingByCard(kristoffIcyExplorer, { targets: [] }),
-      ).toBeSuccessfulCommand();
-
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne().getCardZone(discardFodder)).toBe("discard");
     });
@@ -157,12 +147,6 @@ describe("Kristoff - Icy Explorer", () => {
       });
 
       expect(testEngine.asPlayerOne().playCard(kristoffIcyExplorer)).toBeSuccessfulCommand();
-      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
-
-      expect(
-        testEngine.asPlayerOne().resolvePendingByCard(kristoffIcyExplorer, { targets: [] }),
-      ).toBeSuccessfulCommand();
-
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 

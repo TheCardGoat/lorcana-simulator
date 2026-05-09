@@ -64,6 +64,7 @@
   const isDeckVault = $derived(page.url.pathname.includes('/deck-vault'));
   const isMatchHistoryPage = $derived(page.url.pathname.includes('/match-history'));
   const isReplaysPage = $derived(page.url.pathname.includes('/replays'));
+  const isSeasonPage = $derived(page.url.pathname.includes('/season'));
   const isLobbyPage = $derived(
     page.url.pathname === '/matchmaking' ||
       page.url.pathname === '/matchmaking/',
@@ -154,6 +155,19 @@
           }}
         >
           {m['sim.matchmaking.header.utilityQueues']({})}
+        </Button>
+        <span class={HERO_NAV_DIVIDER_CLASS} aria-hidden="true"></span>
+        <Button
+          variant="ghost"
+          size="sm"
+          class={cn(
+            HERO_NAV_SEGMENT_BTN,
+            isSeasonPage && 'bg-white/10 text-white',
+          )}
+          aria-pressed={isSeasonPage}
+          onclick={() => void goto('/matchmaking/season/wilds-unknown')}
+        >
+          Season
         </Button>
         {#if isAuthenticated}
           <span

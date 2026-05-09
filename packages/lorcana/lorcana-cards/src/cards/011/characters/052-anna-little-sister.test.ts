@@ -3,6 +3,7 @@ import {
   LorcanaMultiplayerTestEngine,
   PLAYER_ONE,
   PLAYER_TWO,
+  createMockAction,
   createMockCharacter,
 } from "@tcg/lorcana-engine/testing";
 import { annaLittleSister } from "./052-anna-little-sister";
@@ -14,6 +15,12 @@ const discardFodder = createMockCharacter({
   strength: 1,
   willpower: 1,
   lore: 1,
+});
+
+const actionFodder = createMockAction({
+  id: "anna-little-sister-action-fodder",
+  name: "Action Fodder",
+  cost: 1,
 });
 
 describe("Anna - Little Sister", () => {
@@ -71,6 +78,27 @@ describe("Anna - Little Sister", () => {
 
       // Card should be moved from opponent's discard to opponent's deck
       expect(testEngine.asPlayerTwo().getCardZone(discardFodder)).toBe("deck");
+    });
+
+    it("should put a non-character card from discard on bottom of its owner's deck", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [annaLittleSister],
+        inkwell: annaLittleSister.cost,
+        discard: [actionFodder],
+        deck: 10,
+      });
+
+      const actionId = testEngine.findCardInstanceId(actionFodder, "discard", PLAYER_ONE);
+
+      expect(testEngine.asPlayerOne().playCard(annaLittleSister)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(annaLittleSister, {
+          resolveOptional: true,
+          targets: [actionId],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(actionFodder)).toBe("deck");
     });
 
     it("should be optional - can decline the ability", () => {

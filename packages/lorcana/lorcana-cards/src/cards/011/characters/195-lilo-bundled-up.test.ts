@@ -2,6 +2,8 @@ import { describe, expect, it } from "bun:test";
 import {
   LorcanaMultiplayerTestEngine,
   PLAYER_TWO,
+  createMockAction,
+  createMockCharacter,
   createMockLocation,
 } from "@tcg/lorcana-engine/testing";
 import { heiheiBoatSnack } from "@tcg/lorcana-cards/cards/001";
@@ -134,5 +136,64 @@ describe("Lilo - Bundled Up", () => {
       testEngine.asPlayerTwo().challenge(heiheiBoatSnack, liloBundledUp),
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getDamage(liloBundledUp)).toBe(0);
+  });
+
+  it("regression: prevents the first damage moved onto Lilo via a move-damage effect during opponent's turn", () => {
+    // Move-damage must emit a put-damage replaceable event for the destination so
+    // Lilo's EXTRA LAYERS prevent-damage replacement can fire. Players reported the
+    // damage being placed on Lilo without first triggering her shield.
+    const damagedCharacter = createMockCharacter({
+      id: "lilo-bug-damaged",
+      name: "Damaged Donor",
+      cost: 2,
+      strength: 1,
+      willpower: 5,
+      lore: 1,
+    });
+    const moveDamageAction = createMockAction({
+      id: "lilo-bug-move-damage",
+      name: "Shift The Pain",
+      cost: 1,
+      abilities: [
+        {
+          id: "lilo-bug-move-damage-1",
+          name: "MOVE",
+          text: "Move 1 damage from chosen character to chosen opposing character.",
+          type: "action",
+          effect: {
+            type: "move-damage",
+            amount: 1,
+            from: "CHOSEN_CHARACTER_OF_YOURS",
+            to: "CHOSEN_OPPOSING_CHARACTER",
+          },
+        },
+      ],
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: liloBundledUp, isDrying: false }],
+      },
+      {
+        play: [{ card: damagedCharacter, damage: 3, isDrying: false }],
+        hand: [moveDamageAction],
+        inkwell: moveDamageAction.cost,
+      },
+    );
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerTwo().playCard(moveDamageAction, {
+        targets: {
+          kind: "move-damage",
+          from: [damagedCharacter],
+          to: [liloBundledUp],
+        },
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getDamage(liloBundledUp)).toBe(0);
+    expect(testEngine.asPlayerOne().getCardZone(liloBundledUp)).toBe("play");
   });
 });

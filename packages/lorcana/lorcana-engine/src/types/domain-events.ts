@@ -8,13 +8,14 @@
 import type { EventAPI, GameEvent } from "#core";
 import type { CardInstanceId, PlayerId } from "#core";
 import type { Classification } from "@tcg/lorcana-types";
+import { getLogger } from "@logtape/logtape";
+const logger = getLogger("domain-events");
 
 // =============================================================================
 // Event Payload Interfaces
 // =============================================================================
 
 export interface DynamicAmountEventSnapshot {
-  autoExertBodyguardOnNestedPlay?: boolean;
   lastEffectPerformed?: boolean;
   triggerBatchKey?: string;
   triggerAmount?: number;
@@ -36,6 +37,13 @@ export interface DynamicAmountEventSnapshot {
   discardedCardIds?: ReadonlyArray<CardInstanceId>;
   /** Number of cards drawn during the current effect sequence (accumulated across multiple draw steps) */
   drawnCount?: number;
+  /**
+   * Per-draw snapshot: how many cards the drawing player has drawn this turn
+   * at the moment this specific draw event was emitted. Used to evaluate
+   * "cards-drawn-by-player" turn-metric conditions per event rather than
+   * against the batch-updated game state.
+   */
+  drawCountForPlayerThisTurn?: number;
   namedCardName?: string;
   chosenCardId?: CardInstanceId;
   chosenCardCost?: number;
@@ -51,6 +59,17 @@ export interface DynamicAmountEventSnapshot {
     cardId: CardInstanceId;
     chooserId: PlayerId;
   }>;
+  /**
+   * Card IDs that were explicitly targeted in earlier steps of the current
+   * effect sequence. Used by {@link requireDifferentTargets} to exclude prior
+   * targets from the candidate pool when a staged sequence resolves each step
+   * as a separate pending effect (e.g. Three Arrows: step 1 deals 2 damage to
+   * a chosen character, step 2 may deal 1 damage to *another* chosen character).
+   *
+   * Accumulated across multiple steps — each resolving step appends its
+   * targets to preserve the full prior-target set.
+   */
+  previouslyTargetedCardIds?: ReadonlyArray<CardInstanceId>;
 }
 
 export interface CardExertedPayload {
@@ -82,6 +101,13 @@ export type DamageDealtPayload =
       damage: number;
       isManual: true;
     };
+
+export interface DamageMovedPayload {
+  sourceCharacterId: CardInstanceId;
+  targetId: CardInstanceId;
+  amount: number;
+  abilitySourceId: CardInstanceId;
+}
 
 export type CardMovedPayload =
   | {
@@ -197,8 +223,14 @@ export interface CardInkedPayload {
   from: string;
   to: string;
   exerted?: boolean;
-  /** Card name preserved for log rendering when the card is face-down in the inkwell */
-  cardName?: string;
+  /**
+   * When true, the inked card's identity is hidden from non-owner viewers in
+   * the move log (the cardId is wrapped in PrivateField). Set by effect-driven
+   * inks from private zones (hand, deck) where the opponent never sees the
+   * card. Manual ink (the turn action) leaves this unset so the public record
+   * matches the game-server reveal at ink time.
+   */
+  private?: boolean;
 }
 
 export interface DeckShuffledPayload {
@@ -274,6 +306,7 @@ export interface LorcanaDomainEventMap {
   cardReturnedToHand: CardReturnedToHandPayload;
   putCardUnder: PutCardUnderPayload;
   cardLeftDiscard: CardLeftDiscardPayload;
+  damageMoved: DamageMovedPayload;
 }
 
 /**
@@ -310,5 +343,11 @@ export function emitLorcanaDomainEvent<TType extends LorcanaDomainEventType>(
   customType: TType,
   data: LorcanaDomainEventPayload<TType>,
 ): void {
-  events.emit(createLorcanaDomainEvent(customType, data) as unknown as GameEvent);
+  const lorcanaDomainEvent = createLorcanaDomainEvent(customType, data) as unknown as GameEvent;
+  // Don't log the full payload — many domain events contain card IDs and
+  // fields that are private/hidden from some viewers (e.g. cardsDrawn.cardIds,
+  // cardInked.private). Logging at TRACE was a leak risk and added significant
+  // log volume; emit only the discriminator for tracing purposes.
+  logger.trace("lorcana.domain_event customType={customType}", { customType });
+  events.emit(lorcanaDomainEvent);
 }

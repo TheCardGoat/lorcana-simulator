@@ -219,6 +219,8 @@ export interface ReadyEffect {
   target?: CharacterTarget | ItemTarget | LocationTarget;
   /** Restriction after readying */
   restriction?: "cant-quest" | "cant-challenge" | "cant-quest-or-challenge";
+  /** Filter constraining which target is eligible (e.g. "Super" classification). */
+  filter?: readonly CardFilter[];
 }
 
 /**

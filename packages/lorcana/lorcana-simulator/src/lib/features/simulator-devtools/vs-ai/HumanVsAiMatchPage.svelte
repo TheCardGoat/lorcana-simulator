@@ -44,30 +44,31 @@
   let shouldRedirect = $state(!storedConfig);
   const onboarding = new VsAiOnboardingState();
 
-  const orchestrator = (() => {
-    if (!storedConfig) return null;
-    try {
-      return new HumanVsAiOrchestrator(
-        { ...storedConfig, seed: createAutomatedMatchSeed() },
-        onStateChange ? { onStateChange } : undefined,
-      );
-    } catch (error) {
+  let orchestrator: HumanVsAiOrchestrator | null = null;
+
+  if (storedConfig) {
+    void HumanVsAiOrchestrator.create(
+      { ...storedConfig, seed: createAutomatedMatchSeed() },
+      onStateChange ? { onStateChange } : undefined,
+    ).then((result) => {
+      orchestrator = result;
+    }).catch((error) => {
       loadError = error instanceof Error ? error.message : "Unable to initialize match.";
-      return null;
-    }
-  })();
+    });
+  }
 
   const scopedReadModel = $derived.by(() => {
-    if (!orchestrator) {
+    const current = orchestrator;
+    if (!current) {
       return undefined;
     }
 
     return {
       getMoveLog: (limit?: number) =>
-        orchestrator.readModel.getMoveLog(limit, orchestrator.state.currentPerspective),
+        current.readModel.getMoveLog(limit, current.state.currentPerspective),
       subscribeStateUpdates:
-        "subscribeStateUpdates" in orchestrator.readModel
-          ? orchestrator.readModel.subscribeStateUpdates?.bind(orchestrator.readModel)
+        "subscribeStateUpdates" in current.readModel
+          ? current.readModel.subscribeStateUpdates?.bind(current.readModel)
           : undefined,
     };
   });

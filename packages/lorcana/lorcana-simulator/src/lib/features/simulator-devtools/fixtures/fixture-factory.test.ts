@@ -1,6 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import type { TestInitialState } from "@tcg/lorcana-engine/testing";
-import { createFixture, type LorcanaSimulatorFixtureInput } from "./fixture-factory.js";
+import {
+  createFixture,
+  createFixtureFromDeckList,
+  type LorcanaSimulatorFixtureInput,
+} from "./fixture-factory.js";
 
 function buildFixtureInput(
   playerOneDeck: TestInitialState["deck"] | string,
@@ -35,9 +39,23 @@ function getDisplayName(card: { name: string; version?: string }): string {
   return card.version ? `${card.name} - ${card.version}` : card.name;
 }
 
-describe("createFixture decklist string support", () => {
-  it("resolves valid decklist strings into expanded card arrays", () => {
-    const fixture = createFixture(
+describe("createFixture rejects string deck lists", () => {
+  it("throws when both decks are strings", () => {
+    expect(() =>
+      createFixture(buildFixtureInput("2 Sail The Azurite Sea", "1 Sail The Azurite Sea")),
+    ).toThrow(/createFixtureFromDeckList instead/i);
+  });
+
+  it("throws when one deck is a string", () => {
+    expect(() => createFixture(buildFixtureInput("2 Sail The Azurite Sea", 60))).toThrow(
+      /createFixtureFromDeckList instead/i,
+    );
+  });
+});
+
+describe("createFixtureFromDeckList", () => {
+  it("resolves valid decklist strings into expanded card arrays", async () => {
+    const fixture = await createFixtureFromDeckList(
       buildFixtureInput("2 Sail The Azurite Sea\n1 Grab your Bow", "1 Sail The Azurite Sea"),
     );
 
@@ -47,16 +65,18 @@ describe("createFixture decklist string support", () => {
     expect((fixture.playerTwo.deck as unknown[]).length).toBe(1);
   });
 
-  it("resolves punctuation/case variants like API decklist lookup", () => {
-    const fixture = createFixture(buildFixtureInput("1 Grab your Bow", "1 Grab your Bow"));
+  it("resolves punctuation/case variants like API decklist lookup", async () => {
+    const fixture = await createFixtureFromDeckList(
+      buildFixtureInput("1 Grab your Bow", "1 Grab your Bow"),
+    );
     const card = (fixture.playerOne.deck as Array<{ name: string; version?: string }>)[0];
 
     expect(card).toBeDefined();
     expect(getDisplayName(card)).toBe("Grab Your Bow");
   });
 
-  it("uses latest set then lower rarity for ambiguous names", () => {
-    const fixture = createFixture(
+  it("uses latest set then lower rarity for ambiguous names", async () => {
+    const fixture = await createFixtureFromDeckList(
       buildFixtureInput(
         "1 Under The Sea\n1 Into The Unknown",
         "1 Under The Sea\n1 Into The Unknown",
@@ -71,36 +91,36 @@ describe("createFixture decklist string support", () => {
     expect(intoTheUnknown?.rarity).toBe("common");
   });
 
-  it("fails fast on malformed decklist lines", () => {
-    expect(() =>
-      createFixture(
+  it("fails fast on malformed decklist lines", async () => {
+    await expect(
+      createFixtureFromDeckList(
         buildFixtureInput(
           "1 Sail The Azurite Sea\nthis line is malformed",
           "1 Sail The Azurite Sea\nthis line is malformed",
         ),
       ),
-    ).toThrow(/malformed/i);
+    ).rejects.toThrow(/malformed/i);
   });
 
-  it("fails fast on unknown card names", () => {
-    expect(() =>
-      createFixture(
+  it("fails fast on unknown card names", async () => {
+    await expect(
+      createFixtureFromDeckList(
         buildFixtureInput(
           "1 Definitely Not A Real Lorcana Card",
           "1 Definitely Not A Real Lorcana Card",
         ),
       ),
-    ).toThrow(/unknown card name/i);
+    ).rejects.toThrow(/unknown card name/i);
   });
 
-  it("rejects mixed string/non-string deck input types", () => {
-    expect(() => createFixture(buildFixtureInput("1 Sail The Azurite Sea", 60))).toThrow(
-      /mismatched deck input types/i,
-    );
+  it("rejects mixed string/non-string deck input types", async () => {
+    await expect(
+      createFixtureFromDeckList(buildFixtureInput("1 Sail The Azurite Sea", 60)),
+    ).rejects.toThrow(/mismatched deck input types/i);
   });
 
-  it("keeps existing non-string deck values unchanged", () => {
-    const fixture = createFixture(buildFixtureInput(60, 40));
+  it("keeps existing non-string deck values unchanged", async () => {
+    const fixture = await createFixtureFromDeckList(buildFixtureInput(60, 40));
     expect(fixture.playerOne.deck).toBe(60);
     expect(fixture.playerTwo.deck).toBe(40);
   });

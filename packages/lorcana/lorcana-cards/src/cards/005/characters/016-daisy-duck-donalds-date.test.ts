@@ -99,6 +99,33 @@ describe("Daisy Duck - Donald's Date", () => {
     expect(reveals.some((r) => r.cardIDs.includes(actionInstanceId))).toBe(true);
   });
 
+  it("reveals the scried card to Daisy's controller (P1) while the opponent resolves BIG PRIZE", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [daisyDuckDonaldsDate],
+        deck: [donaldDuckBuccaneer, donaldDuckCoinCollector, donaldDuckBoisterousFowl],
+      },
+      {
+        deck: [topCharacter],
+      },
+    );
+
+    // P1 quests with Daisy — BIG PRIZE suspends awaiting P2's scry decision
+    expect(testEngine.asPlayerOne().quest(daisyDuckDonaldsDate)).toBeSuccessfulCommand();
+
+    // While the scry is pending, the top card of P2's deck must be visible to P1
+    // (Daisy's controller) because the card text says "each opponent reveals the top card".
+    const topCardInstanceId = testEngine.findCardInstanceId(topCharacter, "deck", PLAYER_TWO);
+    const reveals = testEngine.getAuthoritativeState().ctx.zones.reveals.active;
+    const revealForCard = reveals.find((r) => r.cardIDs.includes(topCardInstanceId));
+    expect(revealForCard).toBeDefined();
+    // The reveal must be visible to PLAYER_ONE (the controller), not only PLAYER_TWO (the chooser)
+    expect(
+      revealForCard!.visibleTo === "all" ||
+        (revealForCard!.visibleTo as string[]).includes(PLAYER_ONE),
+    ).toBe(true);
+  });
+
   it("prompts the opponent (not the controller) when Daisy's owner is the other player", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {

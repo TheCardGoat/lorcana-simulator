@@ -8,10 +8,10 @@ export interface AutomatedMatchSimulationPreparation {
   nextConfig?: AutomatedMatchConfig;
 }
 
-export function prepareAutomatedMatchSimulation(
+export async function prepareAutomatedMatchSimulation(
   config: AutomatedMatchConfig,
-): AutomatedMatchSimulationPreparation {
-  const errors = validateAutomatedMatchConfig(config);
+): Promise<AutomatedMatchSimulationPreparation> {
+  const errors = await validateAutomatedMatchConfig(config);
   if (errors.playerOneDeckText || errors.playerTwoDeckText) {
     return {
       errors,
@@ -34,7 +34,7 @@ export async function simulateAutomatedMatch(args: {
   storage?: AutomatedMatchStorage;
   viewerPath: string;
 }): Promise<AutomatedMatchSimulationPreparation> {
-  const preparation = prepareAutomatedMatchSimulation(args.config);
+  const preparation = await prepareAutomatedMatchSimulation(args.config);
   if (!preparation.nextConfig) {
     return preparation;
   }

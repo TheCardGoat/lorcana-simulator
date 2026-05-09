@@ -13,7 +13,11 @@ import {
   emitTriggeredLorcanaEvent,
   snapshotTriggeredCandidatesForCard,
 } from "../../effects/triggered-abilities";
-import { recordBanishedCharacterThisTurn } from "../../state/turn-metrics";
+import {
+  recordBanishedCharacterThisTurn,
+  recordDamageRemovedThisTurn,
+} from "../../state/turn-metrics";
+import { queueTriggeredEvent } from "../../../triggered-abilities";
 
 export function isMoveDamageEffect(effect: unknown): effect is MoveDamageEffect {
   return (
@@ -173,6 +177,22 @@ function applyMoveDamage(
         setCardDamage(ctx, sourceId, sourceDamage - moved);
         movedTotal += moved;
         remaining -= moved;
+        queueTriggeredEvent(ctx, {
+          event: "remove-damage",
+          playerId: ctx.framework.state.currentPlayer,
+          subjectCardId: sourceId,
+          triggerSourceCardId: cardPlayed.cardId,
+          eventSnapshot: {
+            healedAmount: moved,
+            triggerAmount: moved,
+          },
+        });
+        emitTriggeredLorcanaEvent(ctx, "damageMoved", {
+          sourceCharacterId: sourceId,
+          targetId: destinationId,
+          amount: moved,
+          abilitySourceId: cardPlayed.cardId,
+        });
       }
     }
   } else {
@@ -199,12 +219,55 @@ function applyMoveDamage(
       if (moved > 0) {
         setCardDamage(ctx, sourceId, sourceDamage - moved);
         movedTotal += moved;
+        queueTriggeredEvent(ctx, {
+          event: "remove-damage",
+          playerId: ctx.framework.state.currentPlayer,
+          subjectCardId: sourceId,
+          triggerSourceCardId: cardPlayed.cardId,
+          eventSnapshot: {
+            healedAmount: moved,
+            triggerAmount: moved,
+          },
+        });
+        emitTriggeredLorcanaEvent(ctx, "damageMoved", {
+          sourceCharacterId: sourceId,
+          targetId: destinationId,
+          amount: moved,
+          abilitySourceId: cardPlayed.cardId,
+        });
       }
     }
   }
 
   if (movedTotal > 0) {
-    const newDamage = destinationDamage + movedTotal;
+    // Per release-notes ruling: moving damage counts as removing damage from
+    // the source. Track it on the turn metric so abilities keying off
+    // "damage-removed-by-player this turn" (e.g. Isabela — Such a Lovely
+    // Voice's New Motif, Julieta's Arepas — That Did the Trick) see this
+    // as a remove event in addition to the queued remove-damage triggered
+    // events above.
+    recordDamageRemovedThisTurn(ctx, cardPlayed.playerId, movedTotal);
+
+    // The destination "takes" the moved damage. Emit a put-damage replaceable
+    // event so prevent-damage replacements (e.g. Lilo — Bundled Up EXTRA LAYERS)
+    // can fire. If a replacement reduces the amount to 0, no damage lands on
+    // the destination (source damage removal still stands).
+    const replacedPut = applyReplacementEffects(ctx, {
+      kind: "put-damage",
+      eventId: `move-damage-destination:${cardPlayed.cardId}:${destinationId}`,
+      sourceId: cardPlayed.cardId,
+      controllerId: cardPlayed.playerId,
+      targetId: destinationId,
+      amount: movedTotal,
+    });
+    const applied = replacedPut.amount;
+    if (applied <= 0) {
+      if (resolutionInput.eventSnapshot) {
+        resolutionInput.eventSnapshot.healedAmount = movedTotal;
+      }
+      return;
+    }
+    const newDamage = destinationDamage + applied;
     setCardDamage(ctx, destinationId, newDamage);
 
     // Check for lethal damage on the destination and banish if needed
@@ -234,7 +297,7 @@ function applyMoveDamage(
           {
             cardId: destinationId,
             sourceId: cardPlayed.cardId,
-            snapshot: { damageDealt: movedTotal, keywordsBeforeBanish, subjectAtLocationId },
+            snapshot: { damageDealt: applied, keywordsBeforeBanish, subjectAtLocationId },
             reason: "lethal damage",
           },
           {

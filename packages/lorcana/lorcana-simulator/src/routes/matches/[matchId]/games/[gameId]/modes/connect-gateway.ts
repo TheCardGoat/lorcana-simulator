@@ -67,8 +67,10 @@ export async function connectAndJoin(params: {
   const { ticket, authToken, gameId, role, matchType, userId, gameProfileId, onMessage } = params;
 
   let resolveJoined!: (msg: Record<string, unknown>) => void;
-  const joinedPromise = new Promise<Record<string, unknown>>((resolve) => {
+  let rejectJoined!: (errorMsg: string) => void;
+  const joinedPromise = new Promise<Record<string, unknown>>((resolve, reject) => {
     resolveJoined = resolve;
+    rejectJoined = reject;
   });
 
   const pendingMessages: Record<string, unknown>[] = [];
@@ -90,6 +92,13 @@ export async function connectAndJoin(params: {
         // buffer everything else until game_joined arrives.
         if (ERROR_TYPES.has(msg.type as string)) {
           onMessage(msg as Record<string, unknown>);
+          // Fail the join immediately instead of waiting for the 10-second timeout.
+          // The caller will surface the real error message rather than "Timeout".
+          const errorMsg =
+            typeof (msg as unknown as { message?: unknown }).message === "string"
+              ? (msg as unknown as { message: string }).message
+              : "Server error — could not join game";
+          rejectJoined(errorMsg);
         } else {
           pendingMessages.push(msg as Record<string, unknown>);
         }
@@ -138,14 +147,26 @@ export async function connectAndJoin(params: {
     mode: role === "spectator" ? "spectator" : matchType === "ranked" ? "ranked" : "practice",
   });
 
-  const joinedMsg = await Promise.race([
-    joinedPromise,
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), JOIN_TIMEOUT_MS)),
+  type JoinResult = { ok: true; msg: Record<string, unknown> } | { ok: false; error: string };
+
+  const joinResult = await Promise.race<JoinResult>([
+    joinedPromise
+      .then((msg) => ({ ok: true as const, msg }))
+      .catch((err: unknown) => ({
+        ok: false as const,
+        error: typeof err === "string" ? err : "Server error — could not join game",
+      })),
+    new Promise<JoinResult>((resolve) =>
+      setTimeout(
+        () => resolve({ ok: false, error: "Timeout waiting to join game." }),
+        JOIN_TIMEOUT_MS,
+      ),
+    ),
   ]);
 
-  if (!joinedMsg) {
-    return { gateway, joinedMsg: null, pendingMessages, error: "Timeout waiting to join game." };
+  if (!joinResult.ok) {
+    return { gateway, joinedMsg: null, pendingMessages, error: joinResult.error };
   }
 
-  return { gateway, joinedMsg, pendingMessages, error: null };
+  return { gateway, joinedMsg: joinResult.msg, pendingMessages, error: null };
 }

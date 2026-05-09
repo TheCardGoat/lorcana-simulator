@@ -14,6 +14,7 @@ export const escapePlan: ActionCard = {
   rarity: "rare",
   cost: 5,
   inkable: false,
+
   externalIds: {
     lorcast: "crd_85de0815b3344000a8f380b6ceefc07e",
   },
@@ -37,7 +38,10 @@ export const escapePlan: ActionCard = {
         type: "turn-metric",
         metric: "discard-cards-entered",
         ownerScope: "you",
-        comparison: { operator: "gte", value: 2 },
+        comparison: {
+          operator: "gte",
+          value: 2,
+        },
       },
       sourceZones: ["hand"],
     },

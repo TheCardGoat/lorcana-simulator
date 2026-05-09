@@ -33,7 +33,10 @@ import * as runtime from "./runtime.js";
  *      If your framework handles URL localization itself (e.g., TanStack Router's `rewrite` option), use the original
  *      request instead to avoid redirect loops.
  *   - `locale`: The determined locale for this request.
- * @param {{ onRedirect:(response: Response) => void }} [callbacks] - Callbacks to handle events from middleware
+ * @param {{
+ *   effectiveRequestUrl?: string | URL | ((request: Request) => string | URL),
+ *   onRedirect?: (response: Response) => void
+ * }} [options] - Options to control middleware behavior. `effectiveRequestUrl` sets the effective request URL used for route matching, URL-based locale detection, redirects, and `getUrlOrigin()`.
  * @returns {Promise<Response>}
  *
  * @example
@@ -88,91 +91,115 @@ import * as runtime from "./runtime.js";
  * }
  * ```
  */
-export async function paraglideMiddleware(request, resolve, callbacks) {
-    if (!runtime.disableAsyncLocalStorage && !runtime.serverAsyncLocalStorage) {
-      const { AsyncLocalStorage } = await import("async_hooks");
-      runtime.overwriteServerAsyncLocalStorage(new AsyncLocalStorage());
-    } else if (!runtime.serverAsyncLocalStorage) {
-      runtime.overwriteServerAsyncLocalStorage(createMockAsyncLocalStorage());
-    }
-    if (runtime.isExcludedByRouteStrategy(request.url)) {
-        const locale = runtime.baseLocale;
-        const origin = new URL(request.url).origin;
-        const newRequest = cloneRequestWithFallback(request);
-        /** @type {Set<string>} */
-        const messageCalls = new Set();
-        return /** @type {Response} */ (await runtime.serverAsyncLocalStorage?.run({ locale, origin, messageCalls }, () => resolve({ locale, request: newRequest })));
-    }
-    const strategy = runtime.getStrategyForUrl(request.url);
-    const decision = await runtime.shouldRedirect({ request });
-    const locale = decision.locale;
-    const origin = new URL(request.url).origin;
-    // if the client makes a request to a URL that doesn't match
-    // the localizedUrl, redirect the client to the localized URL
-    if (request.headers.get("Sec-Fetch-Dest") === "document" &&
-        decision.shouldRedirect &&
-        decision.redirectUrl) {
-        // Create headers object with Vary header if preferredLanguage strategy is used
-        /** @type {Record<string, string>} */
-        const headers = {};
-        if (strategy.includes("preferredLanguage")) {
-            headers["Vary"] = "Accept-Language";
-        }
-        const response = new Response(null, {
-            status: 307,
-            headers: {
-                Location: decision.redirectUrl.href,
-                ...headers,
-            },
-        });
-        callbacks?.onRedirect(response);
-        return response;
-    }
-    // If the strategy includes "url", we need to de-localize the URL
-    // before passing it to the server middleware.
-    //
-    // The middleware is responsible for mapping a localized URL to the
-    // de-localized URL e.g. `/en/about` to `/about`. Otherwise,
-    // the server can't render the correct page.
-    let newRequest;
-    if (strategy.includes("url")) {
-        newRequest = new Request(runtime.deLocalizeUrl(request.url), request);
-    }
-    else {
-        newRequest = cloneRequestWithFallback(request);
-    }
-    // the message functions that have been called in this request
+export async function paraglideMiddleware(request, resolve, options) {
+  if (!runtime.disableAsyncLocalStorage && !runtime.serverAsyncLocalStorage) {
+    const { AsyncLocalStorage } = await import("async_hooks");
+    runtime.overwriteServerAsyncLocalStorage(new AsyncLocalStorage());
+  } else if (!runtime.serverAsyncLocalStorage) {
+    runtime.overwriteServerAsyncLocalStorage(createMockAsyncLocalStorage());
+  }
+  const url = resolveMiddlewareUrl(request, options?.effectiveRequestUrl);
+  const origin = url.origin;
+  if (runtime.isExcludedByRouteStrategy(url.href)) {
+    const locale = runtime.baseLocale;
+    const newRequest = cloneRequestWithFallback(request, url);
     /** @type {Set<string>} */
     const messageCalls = new Set();
-    const response = await runtime.serverAsyncLocalStorage?.run({ locale, origin, messageCalls }, () => resolve({ locale, request: newRequest }));
-    // Only modify HTML responses
-    if (runtime.experimentalMiddlewareLocaleSplitting &&
-        response.headers.get("Content-Type")?.includes("html")) {
-        const body = await response.text();
-        const messages = [];
-        // using .values() to avoid polyfilling in older projects. else the following error is thrown
-        // Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
-        for (const messageCall of Array.from(messageCalls)) {
-            const [id, locale] = 
-            /** @type {[string, import("./runtime.js").Locale]} */ (messageCall.split(":"));
-            messages.push(`${id}: ${compiledBundles[id]?.[locale]}`);
-        }
-        // Prevent translated content from terminating the inline script tag.
-        const escapedMessages = messages.join(",").replace(/<\/(script)/gi, "<\\/$1");
-        const script = `<script>globalThis.__paraglide = globalThis.__paraglide ?? {}; globalThis.__paraglide.ssr = { ${escapedMessages} }</script>`;
-        // Insert the script before the closing head tag
-        const newBody = body.replace("</head>", `${script}</head>`);
-        // Create a new response with the modified body
-        // Clone all headers except Content-Length which will be set automatically
-        const newHeaders = new Headers(response.headers);
-        newHeaders.delete("Content-Length"); // Let the browser calculate the correct length
-        return new Response(newBody, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: newHeaders,
-        });
+    return /** @type {Response} */ (
+      await runtime.serverAsyncLocalStorage?.run({ locale, origin, messageCalls }, () =>
+        resolve({ locale, request: newRequest }),
+      )
+    );
+  }
+  const strategy = runtime.getStrategyForUrl(url.href);
+  const decision = await runtime.shouldRedirect({ request, effectiveRequestUrl: url });
+  const locale = decision.locale;
+  // if the client makes a request to a URL that doesn't match
+  // the localizedUrl, redirect the client to the localized URL
+  if (
+    request.headers.get("Sec-Fetch-Dest") === "document" &&
+    decision.shouldRedirect &&
+    decision.redirectUrl
+  ) {
+    // Create headers object with Vary header if preferredLanguage strategy is used
+    /** @type {Record<string, string>} */
+    const headers = {};
+    if (strategy.includes("preferredLanguage")) {
+      headers["Vary"] = "Accept-Language";
     }
+    const response = new Response(null, {
+      status: 307,
+      headers: {
+        Location: decision.redirectUrl.href,
+        ...headers,
+      },
+    });
+    options?.onRedirect?.(response);
     return response;
+  }
+  // If the strategy includes "url", we need to de-localize the URL
+  // before passing it to the server middleware.
+  //
+  // The middleware is responsible for mapping a localized URL to the
+  // de-localized URL e.g. `/en/about` to `/about`. Otherwise,
+  // the server can't render the correct page.
+  let newRequest;
+  if (strategy.includes("url")) {
+    newRequest = cloneRequestWithFallback(request, runtime.deLocalizeUrl(url));
+  } else {
+    newRequest = cloneRequestWithFallback(request, url);
+  }
+  // the message functions that have been called in this request
+  /** @type {Set<string>} */
+  const messageCalls = new Set();
+  const response = await runtime.serverAsyncLocalStorage?.run(
+    { locale, origin, messageCalls },
+    () => resolve({ locale, request: newRequest }),
+  );
+  // Only modify HTML responses
+  if (
+    runtime.experimentalMiddlewareLocaleSplitting &&
+    response.headers.get("Content-Type")?.includes("html")
+  ) {
+    const body = await response.text();
+    const messages = [];
+    // using .values() to avoid polyfilling in older projects. else the following error is thrown
+    // Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+    for (const messageCall of Array.from(messageCalls)) {
+      const [id, locale] =
+        /** @type {[string, import("./runtime.js").Locale]} */ (messageCall.split(":"));
+      messages.push(`${id}: ${compiledBundles[id]?.[locale]}`);
+    }
+    // Prevent translated content from terminating the inline script tag.
+    const escapedMessages = messages.join(",").replace(/<\/(script)/gi, "<\\/$1");
+    const script = `<script>globalThis.__paraglide = globalThis.__paraglide ?? {}; globalThis.__paraglide.ssr = { ${escapedMessages} }</script>`;
+    // Insert the script before the closing head tag
+    const newBody = body.replace("</head>", `${script}</head>`);
+    // Create a new response with the modified body
+    // Clone all headers except Content-Length which will be set automatically
+    const newHeaders = new Headers(response.headers);
+    newHeaders.delete("Content-Length"); // Let the browser calculate the correct length
+    return new Response(newBody, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: newHeaders,
+    });
+  }
+  return response;
+}
+/**
+ * @param {Request} request
+ * @param {string | URL | ((request: Request) => string | URL) | undefined} effectiveRequestUrl
+ * @returns {URL}
+ */
+function resolveMiddlewareUrl(request, effectiveRequestUrl) {
+  if (typeof effectiveRequestUrl === "function") {
+    return new URL(effectiveRequestUrl(request), request.url);
+  }
+  if (typeof effectiveRequestUrl === "string" || effectiveRequestUrl instanceof URL) {
+    return new URL(effectiveRequestUrl, request.url);
+  }
+  return new URL(request.url);
 }
 /**
  * Some metaframeworks (NextJS) require a new Request object.
@@ -182,22 +209,37 @@ export async function paraglideMiddleware(request, resolve, callbacks) {
  * implementations that cannot be cloned with `new Request(request)`.
  * https://github.com/opral/paraglide-js/issues/573
  *
+ * Effective request URL overrides behind proxies:
+ * https://github.com/opral/paraglide-js/issues/652
+ *
  * @param {Request} request
+ * @param {string | URL} [url]
  * @returns {Request}
  */
-function cloneRequestWithFallback(request) {
+function cloneRequestWithFallback(request, url = request.url) {
+  const targetUrl = typeof url === "string" ? url : url.href;
+  if (targetUrl === request.url) {
     try {
-        // Clone first so building a new Request does not consume the original body stream.
-        return new Request(request.clone());
+      // Clone first so building a new Request does not consume the original body stream.
+      return new Request(request.clone());
+    } catch {
+      try {
+        return new Request(request);
+      } catch {
+        return request;
+      }
     }
-    catch {
-        try {
-            return new Request(request);
-        }
-        catch {
-            return request;
-        }
+  }
+  try {
+    // Clone first so building a new Request does not consume the original body stream.
+    return new Request(targetUrl, request.clone());
+  } catch {
+    try {
+      return new Request(targetUrl, request);
+    } catch {
+      return request;
     }
+  }
 }
 /**
  * Creates a mock AsyncLocalStorage implementation for environments where
@@ -210,22 +252,21 @@ function cloneRequestWithFallback(request) {
  * @returns {import("./runtime.js").ParaglideAsyncLocalStorage}
  */
 function createMockAsyncLocalStorage() {
-    /** @type {any} */
-    let currentStore = undefined;
-    return {
-        getStore() {
-            return currentStore;
-        },
-        async run(store, callback) {
-            currentStore = store;
-            try {
-                return await callback();
-            }
-            finally {
-                currentStore = undefined;
-            }
-        },
-    };
+  /** @type {any} */
+  let currentStore = undefined;
+  return {
+    getStore() {
+      return currentStore;
+    },
+    async run(store, callback) {
+      currentStore = store;
+      try {
+        return await callback();
+      } finally {
+        currentStore = undefined;
+      }
+    },
+  };
 }
 // Used in generated server.js when async local storage is disabled.
 void createMockAsyncLocalStorage;

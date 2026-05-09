@@ -210,6 +210,59 @@ describe("Mulan - Elite Archer", () => {
       expect(testEngine.asPlayerOne().getDamage(bystander2)).toBe(0);
     });
 
+    it("still fires when Mulan dies in the same challenge that dealt the damage", () => {
+      // Reproduces the 2026-05-06 player report (cluster C8): "The Mulan Elite
+      // Archer trigger has not been happening when she dies in a challenge."
+      //
+      // Per Lorcana rules, a triggered ability that fires from an event still
+      // resolves even if its source has since left play — challenge damage is
+      // dealt simultaneously, so Mulan's `deal-damage` event is recorded
+      // before the lethal banish step. TRIPLE SHOT must still queue and be
+      // resolvable, with the splash damage applied to the chosen targets.
+      const lethalDefender = createMockCharacter({
+        id: "mea-lethal-defender",
+        name: "Lethal Defender",
+        version: "Test",
+        cost: 6,
+        strength: 6, // ≥ Mulan's willpower (6) — Mulan banishes from challenge
+        willpower: 5, // ≥ Mulan's strength (2) so defender survives → confirms
+        // we're isolating the "attacker dies, defender survives" flavour, not
+        // mutual destruction (which is its own story).
+        lore: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: mulanEliteArcher, isDrying: false }],
+          deck: 1,
+        },
+        {
+          play: [{ card: lethalDefender, exerted: true }, { card: bystander1 }],
+          deck: 1,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(mulanEliteArcher, lethalDefender),
+      ).toBeSuccessfulCommand();
+
+      // Mulan is in discard from lethal challenge damage.
+      expect(testEngine.asPlayerOne().getCardZone(mulanEliteArcher)).toBe("discard");
+
+      // TRIPLE SHOT still has to queue — `deal-damage` was emitted before
+      // the lethal banish, so the trigger candidates included Mulan.
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThan(0);
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(mulanEliteArcher, {
+          targets: [bystander1],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // The splash applies the same amount Mulan dealt (her base strength = 2).
+      expect(testEngine.asPlayerTwo().getDamage(bystander1)).toBe(mulanEliteArcher.strength);
+    });
+
     it("does NOT trigger during opponent's turn", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

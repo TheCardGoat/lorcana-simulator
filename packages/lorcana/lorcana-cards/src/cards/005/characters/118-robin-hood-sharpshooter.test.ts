@@ -5,6 +5,14 @@ import {
   createMockSong,
 } from "@tcg/lorcana-engine/testing";
 import { robinHoodSharpshooter } from "./118-robin-hood-sharpshooter";
+import {
+  aladdinPrinceAli,
+  healingGlow,
+  mickeyMouseTrueFriend,
+  simbaProtectiveCub,
+  tinkerBellPeterPansAlly,
+} from "../../001";
+import { visionOfTheFuture } from "../actions/160-vision-of-the-future";
 
 const actionCardCostFive = createMockSong({
   id: "robin-action-5",
@@ -57,6 +65,52 @@ describe("Robin Hood - Sharpshooter", () => {
       expect(testEngine.asPlayerOne().getCardZone(deckFillerA)).toBe("discard");
       expect(testEngine.asPlayerOne().getCardZone(deckFillerB)).toBe("discard");
       expect(testEngine.asPlayerOne().getCardZone(deckFillerC)).toBe("discard");
+    });
+
+    it("resolves the played action's own effect when Vision of the Future is played for free", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        deck: [
+          aladdinPrinceAli,
+          healingGlow,
+          mickeyMouseTrueFriend,
+          simbaProtectiveCub,
+          tinkerBellPeterPansAlly,
+          visionOfTheFuture,
+          deckFillerA,
+          deckFillerB,
+          deckFillerC,
+        ],
+        play: [{ card: robinHoodSharpshooter, isDrying: false }],
+      });
+
+      expect(testEngine.asPlayerOne().quest(robinHoodSharpshooter)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(robinHoodSharpshooter),
+      ).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          destinations: [
+            { zone: "play", cards: [visionOfTheFuture] },
+            { zone: "discard", cards: [deckFillerA, deckFillerB, deckFillerC] },
+          ],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(1);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          destinations: [
+            { zone: "hand", cards: [mickeyMouseTrueFriend] },
+            {
+              zone: "deck-bottom",
+              cards: [simbaProtectiveCub, aladdinPrinceAli, tinkerBellPeterPansAlly, healingGlow],
+            },
+          ],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(mickeyMouseTrueFriend)).toBe("hand");
     });
 
     it("discards all 4 cards when choosing not to play an action", () => {

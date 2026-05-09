@@ -14,6 +14,7 @@ export const dangerousPlan: ActionCard = {
   rarity: "common",
   cost: 1,
   inkable: true,
+
   externalIds: {
     lorcast: "crd_6627e7f006944e7a80d5e0ac3dfa3506",
   },

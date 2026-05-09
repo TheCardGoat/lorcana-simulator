@@ -75,13 +75,12 @@ import {
   type EffectInstanceReferenceMeta,
 } from "@/features/simulator/model/pending-effect-payload.js";
 import {
-  buildResolutionTargetPromptState,
   buildSlottedTargetsFromSelection,
   getResolutionTargetPromptMessage,
   isSupportedResolutionTargetEffectType,
   type SupportedResolutionTargetEffectType,
 } from "@/features/simulator/model/resolution-target-prompt.js";
-import { SLOTTED_TARGET_SLOT_KEYS } from "@tcg/lorcana-engine";
+import { SLOTTED_TARGET_SLOT_KEYS, analyzeResolutionRequirements } from "@tcg/lorcana-engine";
 import {
   buildResolutionCopyBundle,
   buildScryOverlayHeaderHeading,
@@ -122,6 +121,7 @@ import {
   type LorcanaPlayerVisualSettings,
   type LorcanaResolvedPlayerVisualSettings,
 } from "@/features/simulator/model/player-visual-settings.js";
+import type { PlayerMatchMetadata } from "@/features/simulator/model/player-match-metadata.js";
 import { LorcanaBoardPresenter } from "@/features/simulator/presenters/board-presenter.svelte.js";
 import type {
   ActivePlayerGuidanceController,
@@ -129,9 +129,16 @@ import type {
   GuidanceAction,
   GuidanceInlineReference,
   GuidancePosition,
+  GuidanceTargetSlot,
   NamedCardSearchState,
 } from "@/features/simulator/model/active-player-guidance.js";
 import { buildResolutionAmountSelectionState } from "@/features/simulator/model/resolution-amount-selection.js";
+import {
+  buildPlayerInteractionView,
+  type PlayerInteractionView,
+  type PromptSlot,
+} from "@tcg/lorcana-interaction";
+import type { PlayerId } from "@tcg/lorcana-types";
 import type {
   BoardAnchorSnapshot,
   BoardAnchorRect,
@@ -196,6 +203,7 @@ const RAW_LOG_REGISTRY_STORAGE_KEY = "lorcana.simulator.rawLogRegistryJson";
 
 export type {
   CardPreviewMode,
+  CardInfoMode,
   PrimaryClickAction,
   AnimationSpeed,
   HotkeyMode,
@@ -204,6 +212,7 @@ export type {
 
 import type {
   CardPreviewMode,
+  CardInfoMode,
   PrimaryClickAction,
   AnimationSpeed,
   HotkeyMode,
@@ -214,6 +223,9 @@ import {
   PlayerSettingsStore,
   type ServerGameplaySettings,
 } from "@/features/settings/player-settings-store.svelte.js";
+import { getLogger } from "@logtape/logtape";
+
+const sidebarLogger = getLogger(["tcg", "simulator", "sidebar-presenter"]);
 
 export const ANIMATION_SPEED_MS: Record<AnimationSpeed, number> = {
   off: 0,
@@ -289,9 +301,25 @@ export interface PendingEffectCardReferenceView {
 export interface LorcanaGameContextValue {
   boardSnapshot: () => LorcanaProjectedBoardView | null;
   cardSnapshotsById: () => CardSnapshotMap;
+  /** Reactive view of the active engine prompt for the local viewer; `null` when no prompt or pre-game. */
+  readonly interactionView: PlayerInteractionView | null;
   resolveCardSnapshot: (cardId: string) => LorcanaCardSnapshot | null;
+  /**
+   * Resolves a card instance id to its display name via the immutable static
+   * resources. Unlike `resolveCardSnapshot`, this never reflects live board
+   * state — historical log entries always render the correct card name.
+   */
+  resolveCardName: (cardId: string) => string | null;
+  /**
+   * Returns whether the card definition is inkable. Used by event-log
+   * formatting to inject the inkable indicator next to ink moves without
+   * needing the live board projection.
+   */
+  resolveCardInkable: (cardId: string) => boolean | null;
   resolvePlayerName: (playerId: string) => string | null;
   isPlayerMobile: (playerId: string) => boolean;
+  getPlayerMmr: (playerId: string) => number | undefined;
+  getPlayerSubscriptionTier: (playerId: string) => string | undefined;
   getPlayerSummary: (side: LorcanaPlayerSide) => LorcanaPlayerSummary | null;
   executableMoves: () => ExecutableMoveEntry[];
   moveCategorySummaries: () => MoveCategorySummary[];
@@ -318,6 +346,7 @@ export interface LorcanaGameContextValue {
   pendingErrorReason: () => string | null;
   pendingMoveError: () => SimulatorMoveError | null;
   pendingResolutionAutoOpenStateId: () => number | null;
+  isOptimisticMovePending: () => boolean;
   challengeSourceCardId: () => string | null;
   challengeMode: () => boolean;
   animations: () => ResolvedBoardMoveAnimation[];
@@ -379,6 +408,8 @@ export interface LorcanaGameContextValue {
       defenderKind: "character" | "location";
       attackerWouldBeBanished: boolean;
       defenderWouldBeBanished: boolean;
+      attackerDamageIsReduced: boolean;
+      defenderDamageIsReduced: boolean;
     },
   ) => boolean;
 }
@@ -396,8 +427,7 @@ export interface SetLorcanaGameContextOptions {
   engine: LorcanaEngineBase;
   readModel?: SimulatorShellReadModel;
   playerSettings?: LorcanaPlayerSettingsMap;
-  playerDisplayNames?: Record<string, string>;
-  playerIsMobileMap?: Record<string, boolean>;
+  playerMetadataMap?: Record<string, PlayerMatchMetadata>;
   debugPerformance?: boolean;
 }
 
@@ -641,10 +671,14 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
   #engine: LorcanaEngineBase | null = null;
   #gameStartTime = Date.now();
   #gameEndTracked = false;
+  #gameJoinTracked = false;
+  #firstMoveTracked = false;
+  #mulliganTracked = false;
+  #lastTrackedMoveAt: number | null = null;
+  #matchAnalyticsContext: { mode?: string; format?: string; deckId?: string } = {};
   #readModel: SimulatorShellReadModel | undefined = undefined;
   #playerSettings: LorcanaPlayerSettingsMap = {};
-  #playerDisplayNames: Record<string, string> = {};
-  #playerIsMobile: Record<string, boolean> = {};
+  #playerMetadata: Record<string, PlayerMatchMetadata> = {};
   #unsubscribeReadModelStateUpdates: (() => void) | null = null;
   #unsubscribeProtocolErrors: (() => void) | null = null;
   #lastStateID = $state(0);
@@ -720,14 +754,12 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     engine: LorcanaEngineBase,
     readModel?: SimulatorShellReadModel,
     playerSettings: LorcanaPlayerSettingsMap = {},
-    playerDisplayNames: Record<string, string> = {},
+    playerMetadataMap: Record<string, PlayerMatchMetadata> = {},
     debugPerformance = DEBUG_PERFORMANCE_LOGS,
-    playerIsMobileMap: Record<string, boolean> = {},
   ) {
     initSoundService();
     this.#debugPerformance = debugPerformance;
-    this.#playerDisplayNames = playerDisplayNames;
-    this.#playerIsMobile = playerIsMobileMap;
+    this.#playerMetadata = playerMetadataMap;
     (globalThis as Record<string, unknown>).__TCG_DEBUG_PERFORMANCE__ = debugPerformance;
     this.syncEngine(engine, readModel, playerSettings);
   }
@@ -758,13 +790,63 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
 
   readonly boardSnapshot = (): LorcanaProjectedBoardView | null => this.#boardSnapshot;
   readonly cardSnapshotsById = (): CardSnapshotMap => this.#cardSnapshotsById;
+
+  /**
+   * Renderer-agnostic view derived from the engine's projected board.
+   * Single source of truth for what the local viewer can do — overlays,
+   * dialogs, and the dispatcher all read from this.
+   *
+   * Returns `null` during pre-game / matchmaking when there is no board
+   * yet. See `docs/player-interaction-rewrite.md` for the contract.
+   */
+  readonly interactionView = $derived.by((): PlayerInteractionView | null => {
+    const snapshot = this.#boardSnapshot;
+    if (!snapshot) return null;
+    const localOwnerSide = this.#ownerSide;
+    const localPlayerId = localOwnerSide ? this.getOwnerIdForSide(localOwnerSide) : null;
+    if (!localPlayerId) return null;
+    return buildPlayerInteractionView(snapshot, localPlayerId as PlayerId);
+  });
+
   readonly resolvePlayerName = (playerId: string): string | null => {
-    return this.#playerDisplayNames[playerId] ?? null;
+    return this.#playerMetadata[playerId]?.displayName ?? null;
   };
 
   readonly isPlayerMobile = (playerId: string): boolean => {
-    return this.#playerIsMobile[playerId] ?? false;
+    return this.#playerMetadata[playerId]?.isMobile ?? false;
   };
+
+  readonly getPlayerMmr = (playerId: string): number | undefined => {
+    return this.#playerMetadata[playerId]?.mmr;
+  };
+
+  readonly getPlayerSubscriptionTier = (playerId: string): string | undefined => {
+    return this.#playerMetadata[playerId]?.subscriptionTier;
+  };
+  readonly #resolveStaticDefinition = (cardId: string): LorcanaCardDefinition | null => {
+    const engine = this.#engine;
+    if (!engine) {
+      return null;
+    }
+    const definitionId = engine.staticResources.instances.get(cardId)?.definitionId ?? cardId;
+    return (
+      (engine.staticResources.cards.get(definitionId) as LorcanaCardDefinition | undefined) ?? null
+    );
+  };
+
+  readonly resolveCardName = (cardId: string): string | null => {
+    const definition = this.#resolveStaticDefinition(cardId);
+    if (!definition) {
+      return null;
+    }
+    return definition.version ? `${definition.name} - ${definition.version}` : definition.name;
+  };
+
+  readonly resolveCardInkable = (cardId: string): boolean | null => {
+    const definition = this.#resolveStaticDefinition(cardId);
+    return definition ? (definition.inkable ?? false) : null;
+  };
+
   readonly resolveCardSnapshot = (cardId: string): LorcanaCardSnapshot | null => {
     const snapshot = this.#cardSnapshotsById[cardId] ?? null;
     if (snapshot) {
@@ -955,6 +1037,8 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
   readonly pendingMoveError = (): SimulatorMoveError | null => this.#pendingMoveError;
   readonly pendingResolutionAutoOpenStateId = (): number | null =>
     this.#pendingResolutionAutoOpenStateId;
+  readonly isOptimisticMovePending = (): boolean =>
+    this.#engine?.isOptimisticMovePending() ?? false;
   readonly challengeSourceCardId = (): string | null => this.#challengeSourceCardId;
   readonly challengeMode = (): boolean => this.challengeModeValue;
   readonly animations = (): ResolvedBoardMoveAnimation[] => this.#activeBoardAnimations;
@@ -1001,6 +1085,12 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       this.#readModel !== nextReadModel ||
       this.#playerSettings !== nextPlayerSettings
     ) {
+      // Only reset analytics latches/timing when the engine instance itself
+      // changes (a new match). syncEngine also fires for benign refreshes
+      // where only readModel or playerSettings references change — resetting
+      // there would re-emit first-action timers and clobber game_end's
+      // duration_seconds mid-match.
+      const isEngineSwap = this.#engine !== nextEngine;
       this.#engine = nextEngine;
       this.#readModel = nextReadModel;
       this.#playerSettings = nextPlayerSettings;
@@ -1010,6 +1100,9 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       this.#resetBoardAnimations();
       this.#lastStateID = 0;
       this.#lastVisibleRevision = null;
+      if (isEngineSwap) {
+        this.#resetMatchAnalyticsState();
+      }
       this.#refreshSnapshot("engine-change");
       return;
     }
@@ -1056,6 +1149,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     params: LorcanaSimulatorMoveParams[K],
   ): void {
     const turn = this.#boardSnapshot?.turnNumber ?? 0;
+    const now = Date.now();
 
     if (moveId === "concede") {
       trackEvent("game_concede");
@@ -1066,10 +1160,61 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     } else if (moveId === "alterHand") {
       const p = params as LorcanaSimulatorMoveParams["alterHand"];
       trackEvent("game_mulligan", { cards_mulliganed: p.cardsToMulligan.length });
+      if (!this.#mulliganTracked) {
+        this.#mulliganTracked = true;
+        trackEvent("time_to_mulligan", { duration_ms: now - this.#gameStartTime });
+      }
     } else if (LorcanaGameContext.#TRACKED_MOVE_IDS.has(moveId)) {
-      trackEvent("game_move", { move_id: moveId, turn });
+      const cardId = (params as { cardId?: string }).cardId;
+      const msSincePrev =
+        this.#lastTrackedMoveAt != null ? now - this.#lastTrackedMoveAt : undefined;
+      trackEvent("game_move", {
+        move_id: moveId,
+        turn,
+        actor_side: "self",
+        ...(cardId ? { card_id: cardId } : {}),
+        ...(msSincePrev != null ? { ms_since_prev_move: msSincePrev } : {}),
+      });
+      this.#lastTrackedMoveAt = now;
+      if (!this.#firstMoveTracked) {
+        this.#firstMoveTracked = true;
+        trackEvent("time_to_first_move", { duration_ms: now - this.#gameStartTime });
+      }
     }
   }
+
+  /**
+   * Reset per-match analytics latches and timing baselines. Called from
+   * syncEngine() when a new engine instance is bound so a rematch in the same
+   * page lifecycle gets a fresh game_join / time_to_first_move /
+   * time_to_mulligan / game_end cycle.
+   */
+  #resetMatchAnalyticsState(): void {
+    this.#gameJoinTracked = false;
+    this.#firstMoveTracked = false;
+    this.#mulliganTracked = false;
+    this.#gameEndTracked = false;
+    this.#lastTrackedMoveAt = null;
+    this.#gameStartTime = Date.now();
+    // Drop stale mode/format/deckId — setMatchAnalyticsContext merges partial
+    // fields, so without an explicit reset a rematch where the caller forgets
+    // to repopulate one of these would mislabel game_end with the prior
+    // match's metadata.
+    this.#matchAnalyticsContext = {};
+  }
+
+  /**
+   * Provide match-level metadata for analytics enrichment (format, deck, mode).
+   * The match page should call this once when a game is bound to the context;
+   * absent metadata simply emits without those params (still valid GA4 events).
+   */
+  readonly setMatchAnalyticsContext = (ctx: {
+    mode?: string;
+    format?: string;
+    deckId?: string;
+  }): void => {
+    this.#matchAnalyticsContext = { ...this.#matchAnalyticsContext, ...ctx };
+  };
 
   readonly executeMove = <K extends LorcanaSimulatorMoveId>(
     moveId: K,
@@ -1345,7 +1490,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
   readonly getRelativePlayerLabel = (side: LorcanaPlayerSide): string => {
     const ownerSide = this.#ownerSide;
     const playerId = this.getOwnerIdForSide(side);
-    const displayName = playerId ? (this.#playerDisplayNames[playerId] ?? null) : null;
+    const displayName = playerId ? (this.#playerMetadata[playerId]?.displayName ?? null) : null;
 
     if (!ownerSide) {
       return side === "playerOne"
@@ -1354,8 +1499,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     }
 
     const baseLabel = side === ownerSide ? m["sim.player.you"]({}) : m["sim.player.opponent"]({});
-
-    return displayName ? `${baseLabel} (${displayName})` : baseLabel;
+    return displayName ? displayName : baseLabel;
   };
   readonly getPlayerVisualSettingsByOwnerId = (
     ownerId: string | null | undefined,
@@ -1463,6 +1607,8 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       defenderKind: "character" | "location";
       attackerWouldBeBanished: boolean;
       defenderWouldBeBanished: boolean;
+      attackerDamageIsReduced: boolean;
+      defenderDamageIsReduced: boolean;
     },
   ): boolean => {
     const opponentSide: LorcanaPlayerSide = side === "playerOne" ? "playerTwo" : "playerOne";
@@ -1555,6 +1701,8 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
         snapshots: projectedSnapshots,
         staticResources: this.#engine!.staticResources,
         authoritativeState: this.#engine!.getState(),
+        viewerPlayerId:
+          this.#ownerSide && board ? getOwnerIdForSideFromBoard(board, this.#ownerSide) : null,
       });
     });
     this.#cachedCardSnapshotStateID = board.stateID;
@@ -2421,6 +2569,19 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     this.#cardSnapshotsById = nextCardSnapshotsById;
     this.#ownerSide = getOwnerSideFromEngine(engine, nextBoardSnapshot);
 
+    // Mark when the first board snapshot for a match arrives so downstream
+    // timing events (time_to_first_move, time_to_mulligan) measure from
+    // "game state available to act" instead of context construction time.
+    // Note: game_join itself is fired upstream in the route handlers
+    // (connect-gateway.ts and match/[gameId]/+page.svelte) on the
+    // `game_joined` WS message — don't emit it here or it'd double-count.
+    // The latch is reset in #resetMatchAnalyticsState() so rematches
+    // re-baseline correctly.
+    if (!this.#gameJoinTracked) {
+      this.#gameJoinTracked = true;
+      this.#gameStartTime = Date.now();
+    }
+
     // Track game end on the first transition to "finished" status
     if (
       nextBoardSnapshot.status === "finished" &&
@@ -2436,11 +2597,14 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       } else {
         result = winner === playerId ? "win" : "loss";
       }
+      const ctx = this.#matchAnalyticsContext;
       trackEvent("game_end", {
         result,
         turns: nextBoardSnapshot.turnNumber ?? 0,
         duration_seconds: Math.round((Date.now() - this.#gameStartTime) / 1000),
-        mode: "unknown",
+        mode: ctx.mode ?? "unknown",
+        ...(ctx.format ? { format: ctx.format } : {}),
+        ...(ctx.deckId ? { deck_id: ctx.deckId } : {}),
       });
     }
     this.#lastStateID = currentStateID;
@@ -2641,6 +2805,7 @@ interface ResolutionSelectionSession {
   selectedAmount: number | null;
   selectedChoiceIndex: number | null;
   selectedOptionalValue: boolean | null;
+  selectedEnterPlayExerted: boolean | null;
   namedCardQuery: string;
   selectedNamedCard: string | null;
   scryDestinations: ScryResolutionSelection[];
@@ -2984,6 +3149,15 @@ function applySelectedCostsToMoveParams(
         exertTargets: [...session.selectedCosts.exertItems],
       } satisfies LorcanaSimulatorMoveParams["playCard"];
     }
+    if (
+      playCardParams.cost === "put-on-deck-bottom" &&
+      session.selectedCosts.putOnDeckBottom?.length
+    ) {
+      return {
+        ...playCardParams,
+        deckBottomTarget: session.selectedCosts.putOnDeckBottom[0],
+      } satisfies LorcanaSimulatorMoveParams["playCard"];
+    }
   }
 
   return move.params;
@@ -3033,6 +3207,9 @@ function shouldAutoSubmitResolutionTargetSelection(
   if (!skipActionConfirmation || !isTargetResolutionSelectionContext(session.context)) {
     return false;
   }
+  if (hasPlayCardEntryModeSelection(session.context, session.selectedTargets)) {
+    return false;
+  }
 
   return (
     session.context.minSelections === 1 &&
@@ -3041,12 +3218,294 @@ function shouldAutoSubmitResolutionTargetSelection(
   );
 }
 
+function getGuidanceTargetSlotLabel(slot: PromptSlot): string {
+  switch (slot.labelKey) {
+    case "prompt.slot.move-damage.from":
+      return "From";
+    case "prompt.slot.move-damage.to":
+      return "To";
+    case "prompt.slot.move-to-location.subject":
+      return "Character";
+    case "prompt.slot.move-to-location.location":
+      return "Location";
+    case "prompt.slot.banish-and-play.banish":
+      return "Banish";
+    case "prompt.slot.banish-and-play.play":
+      return "Play";
+    default:
+      return "Target";
+  }
+}
+
+function getGuidanceTargetSlotPlaceholder(slot: PromptSlot): string {
+  switch (slot.labelKey) {
+    case "prompt.slot.move-damage.from":
+      return "Choose damage source";
+    case "prompt.slot.move-damage.to":
+      return "Choose opposing character";
+    case "prompt.slot.move-to-location.subject":
+      return "Choose character";
+    case "prompt.slot.move-to-location.location":
+      return "Choose location";
+    case "prompt.slot.banish-and-play.banish":
+      return "Choose card to banish";
+    case "prompt.slot.banish-and-play.play":
+      return "Choose card to play";
+    default:
+      return "Choose target";
+  }
+}
+
+function buildGuidanceTargetSlots(params: {
+  slots: readonly PromptSlot[] | null | undefined;
+  activeSlotIndex: number | null | undefined;
+  cardSnapshotsById: CardSnapshotMap;
+}): GuidanceTargetSlot[] | undefined {
+  const { slots, activeSlotIndex, cardSnapshotsById } = params;
+  const visibleSlots = slots?.filter((slot) => !slot.autoResolved) ?? [];
+  if (visibleSlots.length <= 1) {
+    return undefined;
+  }
+
+  return visibleSlots.map((slot) => {
+    const targetCardId = slot.targetCardId ? String(slot.targetCardId) : null;
+    const card = targetCardId ? (cardSnapshotsById[targetCardId] ?? null) : null;
+
+    return {
+      id: `target-slot:${slot.key}:${slot.index}`,
+      label: getGuidanceTargetSlotLabel(slot),
+      detail: card?.label ?? getGuidanceTargetSlotPlaceholder(slot),
+      active: activeSlotIndex === slot.index,
+      selected: Boolean(card),
+    };
+  });
+}
+
+function buildMoveToLocationGuidanceTargetSlots(params: {
+  selectedTargets: readonly string[];
+  activeSlotIndex: number | null | undefined;
+  cardSnapshotsById: CardSnapshotMap;
+  fixedLocationId?: string | null;
+}): GuidanceTargetSlot[] | undefined {
+  const { subjectIds, locationId } = splitMoveToLocationSessionTargets(params);
+  if (subjectIds.length === 0 && locationId === null) {
+    return undefined;
+  }
+
+  const location = locationId ? (params.cardSnapshotsById[locationId] ?? null) : null;
+
+  return [
+    {
+      id: "target-slot:move-to-location:subjects",
+      label: "Characters",
+      detail:
+        subjectIds.length === 0
+          ? "Choose characters"
+          : subjectIds.length === 1
+            ? (params.cardSnapshotsById[subjectIds[0]]?.label ?? "1 selected")
+            : `${subjectIds.length} selected`,
+      active: params.activeSlotIndex === 0,
+      selected: subjectIds.length > 0,
+    },
+    {
+      id: "target-slot:move-to-location:location",
+      label: "Location",
+      detail: location?.label ?? "Choose location",
+      active: params.activeSlotIndex === 1,
+      selected: location !== null,
+    },
+  ];
+}
+
 function matchesSelectionId(candidateId: string, targetId: string): boolean {
   return candidateId === targetId || String(candidateId) === String(targetId);
 }
 
 function includesSelectionId(candidateIds: readonly string[], targetId: string): boolean {
   return candidateIds.some((candidateId) => matchesSelectionId(candidateId, targetId));
+}
+
+function getCardTargetTypes(target: LorcanaCardTarget): string[] {
+  const cardTypes = Array.isArray(target.cardTypes)
+    ? target.cardTypes.filter((cardType): cardType is string => typeof cardType === "string")
+    : [];
+  return typeof target.cardType === "string"
+    ? [...new Set([...cardTypes, target.cardType])]
+    : cardTypes;
+}
+
+function getSelectionTargetDsl(
+  context: TargetResolutionSelectionContext,
+  selectionIndex: number,
+): LorcanaCardTarget | null {
+  if (context.targetDsl.length === 0) {
+    return null;
+  }
+
+  const targetDsl = context.targetDsl[Math.min(selectionIndex, context.targetDsl.length - 1)];
+  return isCardTargetDsl(targetDsl) ? targetDsl : null;
+}
+
+/**
+ * Validate a single card against a target-DSL entry.
+ *
+ * `referenceSide` is the side the DSL's `owner: "you" | "opponent"` is
+ * interpreted RELATIVE TO — always the source card's controller, NOT the
+ * chooser. They are the same for the typical "you play X, choose one of your
+ * characters" effects but DIVERGE for `chosenBy: "opponent"` effects (Sid
+ * Phillips - Toy Surgeon, Be King Undisputed, Dinky - Has the Brains, etc.)
+ * where the controller forces the opponent to pick from THEIR OWN
+ * characters: the candidate list correctly contains the chooser's own
+ * characters, and the DSL's `owner: "opponent"` is opponent-of-the-controller,
+ * which equals the chooser. Passing `chooserSide` here used to reject every
+ * legal selection in that case → Confirm stayed greyed out → user timed out.
+ *
+ * The same convention is documented in `prompt-snapshot.ts` for the candidate
+ * list builder (see `buildCandidateEntriesFromView`).
+ */
+function cardMatchesSelectionTargetDsl(params: {
+  card: LorcanaCardSnapshot;
+  target: LorcanaCardTarget;
+  referenceSide: LorcanaPlayerSide | null;
+}): boolean {
+  const { card, target, referenceSide } = params;
+  if (
+    Array.isArray(target.zones) &&
+    target.zones.length > 0 &&
+    !target.zones.includes(card.zoneId)
+  ) {
+    return false;
+  }
+
+  const cardTypes = getCardTargetTypes(target);
+  if (
+    cardTypes.length > 0 &&
+    (typeof card.cardType !== "string" || !cardTypes.includes(card.cardType))
+  ) {
+    return false;
+  }
+
+  if (target.owner === "you" && referenceSide !== null && card.ownerSide !== referenceSide) {
+    return false;
+  }
+
+  if (target.owner === "opponent" && referenceSide !== null && card.ownerSide === referenceSide) {
+    return false;
+  }
+
+  return true;
+}
+
+function selectedTargetsMatchTargetDslSequence(params: {
+  context: TargetResolutionSelectionContext;
+  selectedTargets: readonly string[];
+  cardSnapshotsById: CardSnapshotMap;
+  referenceSide: LorcanaPlayerSide | null;
+}): boolean {
+  const { context, selectedTargets, cardSnapshotsById, referenceSide } = params;
+  if (context.expectedSlottedKind || context.targetDsl.length === 0) {
+    return true;
+  }
+
+  let cardSelectionIndex = 0;
+  for (const targetId of selectedTargets) {
+    if (!includesSelectionId(context.cardCandidateIds, targetId)) {
+      continue;
+    }
+
+    const card = cardSnapshotsById[targetId];
+    const target = getSelectionTargetDsl(context, cardSelectionIndex);
+    if (card && target && !cardMatchesSelectionTargetDsl({ card, target, referenceSide })) {
+      return false;
+    }
+    cardSelectionIndex += 1;
+  }
+
+  return true;
+}
+
+function getPlayCardEntryModeTargetId(
+  context: TargetResolutionSelectionContext,
+  selectedTargets: readonly string[],
+): string | null {
+  const entryModeCandidateIds = context.playCardEntryModeCandidateIds ?? [];
+  return (
+    selectedTargets.find((targetId) => includesSelectionId(entryModeCandidateIds, targetId)) ?? null
+  );
+}
+
+function hasPlayCardEntryModeSelection(
+  context: TargetResolutionSelectionContext,
+  selectedTargets: readonly string[],
+): boolean {
+  return getPlayCardEntryModeTargetId(context, selectedTargets) !== null;
+}
+
+function getNextEnterPlayExertedSelection(params: {
+  context: TargetResolutionSelectionContext;
+  nextSelectedTargets: readonly string[];
+  previousSelectedTargets: readonly string[];
+  previousValue: boolean | null;
+}): boolean | null {
+  const nextTargetId = getPlayCardEntryModeTargetId(params.context, params.nextSelectedTargets);
+  if (!nextTargetId) {
+    return null;
+  }
+
+  const previousTargetId = getPlayCardEntryModeTargetId(
+    params.context,
+    params.previousSelectedTargets,
+  );
+  return previousTargetId &&
+    matchesSelectionId(previousTargetId, nextTargetId) &&
+    params.previousValue !== null
+    ? params.previousValue
+    : false;
+}
+
+function splitMoveToLocationSessionTargets(params: {
+  selectedTargets: readonly string[];
+  cardSnapshotsById: CardSnapshotMap;
+  fixedLocationId?: string | null;
+}): { subjectIds: string[]; locationId: string | null } {
+  const subjectIds: string[] = [];
+  let locationId: string | null = params.fixedLocationId ?? null;
+
+  for (const targetId of params.selectedTargets) {
+    const card = params.cardSnapshotsById[targetId];
+    if (card?.cardType === "location") {
+      locationId = params.fixedLocationId ?? targetId;
+    } else {
+      subjectIds.push(targetId);
+    }
+  }
+
+  return { subjectIds, locationId };
+}
+
+function getFixedMoveToLocationSlotId(
+  slots: readonly PromptSlot[] | null | undefined,
+): string | null {
+  const locationSlot = slots?.find(
+    (slot) => slot.key === "location" && slot.autoResolved && slot.targetCardId,
+  );
+  return locationSlot?.targetCardId ? String(locationSlot.targetCardId) : null;
+}
+
+function getFixedMoveToLocationBoardId(
+  board: LorcanaProjectedBoardView | null,
+  sourceCardId: CardInstanceId,
+): string | null {
+  const cards = board?.cards as
+    | Record<string, { atLocationId?: CardInstanceId; cardType?: string }>
+    | undefined;
+  const locationId = cards?.[sourceCardId as unknown as string]?.atLocationId;
+  if (!locationId) {
+    return null;
+  }
+  return cards?.[locationId as unknown as string]?.cardType === "location"
+    ? String(locationId)
+    : null;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -3068,8 +3527,36 @@ function canDeclineResolutionSelectionSession(session: ResolutionSelectionSessio
 
   return (
     isTargetResolutionSelectionContext(session.context) &&
-    session.context.canDeclineSelection === true
+    (session.context.canDeclineSelection === true ||
+      session.context.originatesFromOptional === true)
   );
+}
+
+function canAutoResolveLeadingDrawInOptionalSequence(
+  board: LorcanaProjectedBoardView,
+  bagEffect: LorcanaProjectedBoardView["bagEffects"][number],
+): boolean {
+  const payloadRecord = asRecord(bagEffect.payload);
+  const effectRecord = asRecord(payloadRecord?.effect);
+  if (effectRecord?.type !== "sequence") {
+    return false;
+  }
+
+  const steps = Array.isArray(effectRecord.steps) ? effectRecord.steps : [];
+  const firstStep = asRecord(steps[0]);
+  if (firstStep?.type !== "draw") {
+    return false;
+  }
+
+  const requirements = analyzeResolutionRequirements(
+    firstStep as Parameters<typeof analyzeResolutionRequirements>[0],
+  );
+  if (!requirements.canAutoResolve) {
+    return false;
+  }
+
+  const controllerBoard = board.players[bagEffect.controllerId];
+  return (controllerBoard?.hand.length ?? controllerBoard?.handCount ?? 0) === 0;
 }
 
 function getResolutionDeclineLabel(session: ResolutionSelectionSession): string {
@@ -3218,6 +3705,10 @@ function buildResolutionSelectionSession(
     selectedOptionalValue:
       typeof context.currentSelection.resolveOptional === "boolean"
         ? context.currentSelection.resolveOptional
+        : null,
+    selectedEnterPlayExerted:
+      typeof context.currentSelection.enterPlayExerted === "boolean"
+        ? context.currentSelection.enterPlayExerted
         : null,
     namedCardQuery: context.currentSelection.namedCard ?? "",
     selectedNamedCard: context.currentSelection.namedCard ?? null,
@@ -3465,9 +3956,13 @@ function getCostSelectionSummary(
             ? selectableCost.count === 1
               ? "character to banish"
               : "characters to banish"
-            : selectableCost.count === 1
-              ? "item to banish"
-              : "items to banish";
+            : selectableCost.kind === "putOnDeckBottom"
+              ? selectableCost.count === 1
+                ? "Toy character to put on deck bottom"
+                : "Toy characters to put on deck bottom"
+              : selectableCost.count === 1
+                ? "item to banish"
+                : "items to banish";
   return selectedCount > 0
     ? `${selectedCount}/${selectableCost.count} ${noun} selected`
     : undefined;
@@ -3494,6 +3989,10 @@ function getChooseCostStatusMessage(
     return `Choose ${countPrefix} ${selectableCost.kind === "exertCharacters" ? "character" : "item"}${selectableCost.count === 1 ? "" : "s"}${qualifier} to exert for ${sourceCardLabel}.`;
   }
 
+  if (selectableCost.kind === "putOnDeckBottom") {
+    return `Choose ${countPrefix} Toy character${selectableCost.count === 1 ? "" : "s"} from your discard to put on bottom of your deck to play ${sourceCardLabel} for free.`;
+  }
+
   return `Choose ${countPrefix} ${selectableCost.kind === "banishCharacters" ? "character" : "item"}${selectableCost.count === 1 ? "" : "s"}${qualifier} to banish for ${sourceCardLabel}.`;
 }
 
@@ -3503,6 +4002,9 @@ function getInvalidCostSelectionReason(selectableCost: MoveOptionSelectableCost)
   }
   if (selectableCost.kind === "exertCharacters" || selectableCost.kind === "exertItems") {
     return "This card is not a valid exert cost.";
+  }
+  if (selectableCost.kind === "putOnDeckBottom") {
+    return "This card is not a valid Toy character in your discard.";
   }
   return "This card is not a valid banish cost.";
 }
@@ -3587,6 +4089,12 @@ export class LorcanaSidebarPresenter {
   }
   set cardPreviewMode(v) {
     this.#settings.cardPreviewMode = v;
+  }
+  get cardInfoMode() {
+    return this.#settings.cardInfoMode;
+  }
+  set cardInfoMode(v) {
+    this.#settings.cardInfoMode = v;
   }
   get primaryClickAction() {
     return this.#settings.primaryClickAction;
@@ -3722,6 +4230,29 @@ export class LorcanaSidebarPresenter {
       return;
     }
 
+    // Don't auto-dispatch while an optimistic move is still awaiting server
+    // confirmation. The engine would reject the second move with
+    // OPTIMISTIC_MOVE_PENDING. Leave the key unset so this effect retries once
+    // the confirmed board state arrives (which produces a fresh stateID key).
+    if (this.#game.isOptimisticMovePending()) {
+      sidebarLogger.debug(
+        "Deferring auto-resolve of {moveId} (bag={bagId}): optimistic move in flight",
+        {
+          moveId: candidate.move.moveId,
+          bagId:
+            "params" in candidate.move
+              ? (candidate.move.params as Record<string, unknown>).bagId
+              : undefined,
+        },
+      );
+      return;
+    }
+
+    sidebarLogger.debug("Auto-resolving {moveId} (key={key})", {
+      moveId: candidate.move.moveId,
+      key: candidate.key,
+    });
+
     this.#lastHandledAutoOpenResolutionKey = candidate.key;
 
     if (this.#startResolutionSelectionSessionForMove(candidate.move, candidate.context)) {
@@ -3817,6 +4348,14 @@ export class LorcanaSidebarPresenter {
     return this.#game.resolveCardSnapshot(cardId);
   }
 
+  resolveCardName(cardId: string): string | null {
+    return this.#game.resolveCardName(cardId);
+  }
+
+  resolveCardInkable(cardId: string): boolean | null {
+    return this.#game.resolveCardInkable(cardId);
+  }
+
   resolvePlayerName(playerId: string): string | null {
     return this.#game.resolvePlayerName(playerId);
   }
@@ -3906,6 +4445,74 @@ export class LorcanaSidebarPresenter {
   get resolutionSelectionSession(): ResolutionSelectionSession | null {
     return this.#resolutionSelectionSession;
   }
+
+  /**
+   * Renderer-facing view of the active engine prompt, enriched with the
+   * chooser's in-flight (typed-but-not-submitted) selection state from
+   * `#resolutionSelectionSession`. Use this from overlays and TabletopBoard
+   * mount calls; `LorcanaGameContext.interactionView` returns an engine-only
+   * view that's correct for dispatcher reads but stale for renderer copy
+   * (e.g. `submission.canSubmit` after a target click but before submit).
+   *
+   * Resolves work-log gap #18: the sidebar owns the session, so the
+   * derivation needs to live here for `pendingSelectedCardIds` /
+   * `pendingScryAssignments` to flow through to the view.
+   */
+  readonly interactionView = $derived.by((): PlayerInteractionView | null => {
+    const snapshot = this.#game.boardSnapshot();
+    if (!snapshot) return null;
+    const localOwnerSide = this.#game.ownerSide();
+    const localPlayerId = localOwnerSide ? this.#game.getOwnerIdForSide(localOwnerSide) : null;
+    if (!localPlayerId) return null;
+
+    const session = this.#resolutionSelectionSession;
+    // selectedTargets is a flat string[] that mixes CardInstanceIds and
+    // PlayerIds. Split it against the engine's candidate sets so we
+    //   (a) feed the builder typed inputs (no unsafe cast), and
+    //   (b) drop entries the engine no longer accepts as candidates —
+    //       the optimistic-merge "stale candidate" guard (gap from audit
+    //       Session 16, contract law L1: pending state must be a subset
+    //       of the engine's authoritative candidates).
+    let pendingSelectedCardIds: readonly CardInstanceId[] | undefined;
+    let pendingSelectedPlayerIds: readonly PlayerId[] | undefined;
+    if (session && isTargetResolutionSelectionContext(session.context)) {
+      const cardCandidates = new Set<string>(
+        (session.context.cardCandidateIds as readonly string[]) ?? [],
+      );
+      const playerCandidates = new Set<string>(
+        (session.context.playerCandidateIds as readonly string[]) ?? [],
+      );
+      const currentTargets = new Set<string>(session.context.currentSelection.targets ?? []);
+      const cards: CardInstanceId[] = [];
+      const players: PlayerId[] = [];
+      for (const id of session.selectedTargets) {
+        if (cardCandidates.has(id) || (currentTargets.has(id) && this.cardSnapshotsById[id])) {
+          cards.push(id as CardInstanceId);
+        } else if (playerCandidates.has(id)) {
+          players.push(id as PlayerId);
+        }
+        // else: stale (engine has refined candidates since last click) —
+        // drop silently; submission will recompute canSubmit below.
+      }
+      pendingSelectedCardIds = cards;
+      pendingSelectedPlayerIds = players;
+    }
+    const pendingScryAssignments =
+      session && session.context.kind === "scry-selection"
+        ? session.scryDestinations.map((destination) => ({
+            id: destination.id,
+            zone: destination.zone,
+            cards: destination.cards,
+          }))
+        : undefined;
+
+    return buildPlayerInteractionView(snapshot, localPlayerId as PlayerId, {
+      pendingSelectedCardIds,
+      pendingSelectedPlayerIds,
+      pendingActiveSlotIndex: session?.activeTargetSlotIndex,
+      pendingScryAssignments,
+    });
+  });
 
   #capturePendingResolutionSourceHint(move: ExecutableMoveEntry): void {
     const sourceCardId = getCardActionSourceCardId(move);
@@ -4134,6 +4741,26 @@ export class LorcanaSidebarPresenter {
     return id ? this.#game.isPlayerMobile(id) : false;
   }
 
+  get headerPlayerMmr(): number | undefined {
+    const id = this.#game.getOwnerIdForSide(this.topSide);
+    return id ? this.#game.getPlayerMmr(id) : undefined;
+  }
+
+  get footerPlayerMmr(): number | undefined {
+    const id = this.#game.getOwnerIdForSide(this.bottomSide);
+    return id ? this.#game.getPlayerMmr(id) : undefined;
+  }
+
+  get headerPlayerSubscriptionTier(): string | undefined {
+    const id = this.#game.getOwnerIdForSide(this.topSide);
+    return id ? this.#game.getPlayerSubscriptionTier(id) : undefined;
+  }
+
+  get footerPlayerSubscriptionTier(): string | undefined {
+    const id = this.#game.getOwnerIdForSide(this.bottomSide);
+    return id ? this.#game.getPlayerSubscriptionTier(id) : undefined;
+  }
+
   get pendingResolutionMoveByBagId(): Map<string, PendingResolutionMoveEntry> {
     const entries = this.pendingResolutionMoves
       .filter((move) => move.moveId === "resolveBag")
@@ -4223,7 +4850,26 @@ export class LorcanaSidebarPresenter {
         localPlayerId == null || bagChooser == null || bagChooser === localPlayerId;
       const move = this.pendingResolutionMoveByBagId.get(resolvableBagEffect.id);
 
-      if (isMandatory && isLocalChooser && move) {
+      // When selectionContext is undefined, the effect's first immediate step
+      // needs no selection (e.g. draw in a draw-then-optional sequence). Check
+      // the raw effect tree for optional/requires-decision flags to avoid
+      // auto-resolving effects that contain optional later steps.
+      let effectivelyMandatory = isMandatory;
+      if (isMandatory && bagKind === undefined) {
+        const payloadRecord = resolvableBagEffect.payload as Record<string, unknown> | undefined;
+        const rawEffect = payloadRecord?.effect;
+        if (rawEffect) {
+          const requirements = analyzeResolutionRequirements(rawEffect);
+          if (requirements.isOptional) {
+            effectivelyMandatory = canAutoResolveLeadingDrawInOptionalSequence(
+              board,
+              resolvableBagEffect,
+            );
+          }
+        }
+      }
+
+      if (effectivelyMandatory && isLocalChooser && move) {
         const context = resolvableBagEffect.selectionContext ?? null;
         const key = this.#buildAutoOpenResolutionKey(move, context);
         if (key) {
@@ -4744,14 +5390,14 @@ export class LorcanaSidebarPresenter {
           actions: [
             {
               id: "choose-first-player-one",
-              label: `${this.#game.getRelativePlayerLabel("playerOne")} ${this.#game.ownerSide() === "playerOne" ? "go" : "goes"} first`,
+              label: `${this.#game.getRelativePlayerLabel("playerOne")}`,
               onClick: () => {
                 this.executeChooseFirstPlayer("playerOne");
               },
             },
             {
               id: "choose-first-player-two",
-              label: `${this.#game.getRelativePlayerLabel("playerTwo")} ${this.#game.ownerSide() === "playerTwo" ? "go" : "goes"} first`,
+              label: `${this.#game.getRelativePlayerLabel("playerTwo")}`,
               onClick: () => {
                 this.executeChooseFirstPlayer("playerTwo");
               },
@@ -4798,6 +5444,70 @@ export class LorcanaSidebarPresenter {
         order: -1,
       },
     ];
+  }
+
+  /**
+   * Resolve the player side that the target DSL's `owner: "you" | "opponent"`
+   * is interpreted relative to — always the SOURCE CARD's controller.
+   *
+   * The lookup tries three sources in order:
+   *  1. The source card's snapshot in `cardSnapshotsById`. Fast path when the
+   *     card is in a zone the chooser's view projects (play, discard, hand).
+   *  2. The pending or bag effect's `controllerId` field. Required when the
+   *     source card sits in a zone the chooser's view does NOT project
+   *     (e.g. the controller's `limbo` — where freshly-revealed cards in
+   *     transit live, including songs played for free via scry / play-from-
+   *     deck-top effects like Powerline's MASH-UP).
+   *  3. The chooser's side. Legacy fallback. This is correct for normal
+   *     self-targeted effects (chooser === controller) but WRONG for any
+   *     `chosenBy: "opponent"` effect — the very class of effect this
+   *     helper exists to support.
+   *
+   * Without (2), Be King Undisputed / Sid Phillips / Dinky / Madam Mim
+   * forced-opponent prompts get a chooser-side reference, every legal
+   * candidate fails the owner gate in `cardMatchesSelectionTargetDsl`,
+   * `canConfirmResolutionSelection` returns false, and the prompt user
+   * times out without ever being able to confirm — see
+   * digest-2026-05-08 reports #2/#3/#4/#9/#10/#12/#14/#15/#18/#19 (Be
+   * King played for free via MASH-UP into the controller's limbo, then
+   * the opponent can't reach Confirm).
+   */
+  #resolveSelectionReferenceSide(
+    context: TargetResolutionSelectionContext,
+  ): LorcanaPlayerSide | null {
+    const board = this.boardSnapshot;
+    if (!board) {
+      return null;
+    }
+
+    const sourceCardId = context.sourceCardId as unknown as string;
+    const snapshotOwnerId = sourceCardId
+      ? this.cardSnapshotsById[sourceCardId]?.ownerId
+      : undefined;
+    const fromSnapshot = snapshotOwnerId ? getSideForOwnerId(board, snapshotOwnerId) : null;
+    if (fromSnapshot) {
+      return fromSnapshot;
+    }
+
+    const pending = sourceCardId
+      ? board.pendingEffects.find((entry) => entry.id === context.requestId)
+      : undefined;
+    const pendingControllerId = ((pending?.payload as { controllerId?: string } | null)
+      ?.controllerId ?? null) as string | null;
+    const fromPending = pendingControllerId ? getSideForOwnerId(board, pendingControllerId) : null;
+    if (fromPending) {
+      return fromPending;
+    }
+
+    const bag = sourceCardId
+      ? board.bagEffects.find((entry) => entry.id === context.requestId)
+      : undefined;
+    const fromBag = bag?.controllerId ? getSideForOwnerId(board, bag.controllerId) : null;
+    if (fromBag) {
+      return fromBag;
+    }
+
+    return getSideForOwnerId(board, context.chooserId);
   }
 
   #getResolutionSelectionCardCandidateIds(context: TargetResolutionSelectionContext): string[] {
@@ -4953,14 +5663,16 @@ export class LorcanaSidebarPresenter {
       return null;
     }
 
-    // Use the prompt's effective slot targets so that auto-resolved slots
+    // Use the view's slot targets so that auto-resolved slots
     // (e.g. from: { ref: "self" }) appear at the correct position.
     // move-damage's getSelectionMax reads selectedCardTargets[0] as the source —
     // if we pass session.selectedTargets the auto-resolved "from" card is missing
     // and the cap defaults to baseAmount or picks the wrong card.
-    const prompt = this.#getResolutionTargetPromptState(session);
-    const effectiveSelectedTargets = prompt
-      ? (prompt.slots.map((slot) => slot.targetId).filter(Boolean) as string[])
+    const slots = this.interactionView?.activePrompt?.slots;
+    const effectiveSelectedTargets = slots
+      ? (slots
+          .map((slot) => slot.targetCardId)
+          .filter((id): id is NonNullable<typeof id> => id !== null) as string[])
       : session.selectedTargets;
 
     return buildResolutionAmountSelectionState({
@@ -4981,46 +5693,15 @@ export class LorcanaSidebarPresenter {
     };
   }
 
-  #getResolutionTargetPromptState(session: ResolutionSelectionSession) {
-    if (!isTargetResolutionSelectionContext(session.context)) {
-      return null;
-    }
+  #getResolutionSelectableCardIds(context: TargetResolutionSelectionContext): string[] {
+    const interactionCandidateIds =
+      this.interactionView?.interactions.flatMap((interaction) =>
+        interaction.kind === "select-card" ? [interaction.cardId as string] : [],
+      ) ?? [];
 
-    const effectType = this.#getResolutionSelectionEffectType(session);
-    const candidateCardIds = this.#getResolutionSelectionCardCandidateIds(session.context);
-    const cardSnapshotsByIdForPrompt: Record<string, LorcanaCardSnapshot> = {
-      ...this.cardSnapshotsById,
-    };
-    for (const cardId of candidateCardIds) {
-      const card = this.resolveCardSnapshot(cardId);
-      if (card) {
-        cardSnapshotsByIdForPrompt[cardId] = card;
-      }
-    }
-    const allEntries = candidateCardIds.flatMap((cardId) => {
-      const card = cardSnapshotsByIdForPrompt[cardId] ?? null;
-      return card
-        ? [
-            {
-              id: `resolution:card:${card.cardId}`,
-              kind: "card" as const,
-              cardId: card.cardId,
-              label: card.label,
-              detail: buildAvailableMovesCardDetail(card),
-              selected: includesSelectionId(session.selectedTargets, card.cardId),
-            },
-          ]
-        : [];
-    });
-
-    return buildResolutionTargetPromptState({
-      effectType,
-      context: session.context,
-      entries: allEntries,
-      selectedTargets: session.selectedTargets,
-      cardSnapshotsById: cardSnapshotsByIdForPrompt,
-      preferredActiveSlotIndex: session.activeTargetSlotIndex,
-    });
+    return interactionCandidateIds.length > 0
+      ? interactionCandidateIds
+      : [...this.#getResolutionSelectionCardCandidateIds(context)];
   }
 
   get resolutionSelectionCandidateCards(): LorcanaCardSnapshot[] {
@@ -5029,11 +5710,7 @@ export class LorcanaSidebarPresenter {
       return [];
     }
 
-    const prompt = this.#getResolutionTargetPromptState(session);
-    const candidateIds =
-      prompt?.candidateEntries.flatMap((entry) =>
-        entry.kind === "card" && entry.cardId ? [entry.cardId] : [],
-      ) ?? this.#getResolutionSelectionCardCandidateIds(session.context);
+    const candidateIds = this.#getResolutionSelectableCardIds(session.context);
 
     return candidateIds
       .map((cardId) => this.resolveCardSnapshot(cardId))
@@ -5068,9 +5745,23 @@ export class LorcanaSidebarPresenter {
       resolutionContext &&
       isTargetResolutionSelectionContext(resolutionContext)
     ) {
-      const prompt = this.#getResolutionTargetPromptState(resolutionSession);
-      if (prompt) {
-        return getUniqueOrderedIds(prompt.slots.map((slot) => slot.targetCardId));
+      if (resolutionContext.expectedSlottedKind === "move-to-location") {
+        const { subjectIds, locationId } = splitMoveToLocationSessionTargets({
+          selectedTargets: resolutionSession.selectedTargets,
+          cardSnapshotsById: this.cardSnapshotsById,
+          fixedLocationId:
+            getFixedMoveToLocationSlotId(this.interactionView?.activePrompt?.slots) ??
+            getFixedMoveToLocationBoardId(
+              this.#game.boardSnapshot(),
+              resolutionContext.sourceCardId,
+            ),
+        });
+        return getUniqueOrderedIds([...subjectIds, ...(locationId ? [locationId] : [])]);
+      }
+
+      const slots = this.interactionView?.activePrompt?.slots;
+      if (slots) {
+        return getUniqueOrderedIds(slots.map((slot) => slot.targetCardId));
       }
 
       return resolutionSession.selectedTargets.filter((targetId) =>
@@ -5094,14 +5785,7 @@ export class LorcanaSidebarPresenter {
   get selectableActionSessionCardIds(): string[] {
     const resolutionSession = this.#resolutionSelectionSession;
     if (resolutionSession && isTargetResolutionSelectionContext(resolutionSession.context)) {
-      const prompt = this.#getResolutionTargetPromptState(resolutionSession);
-      if (prompt) {
-        return prompt.candidateEntries.flatMap((entry) =>
-          entry.kind === "card" && entry.cardId ? [entry.cardId] : [],
-        );
-      }
-
-      return [...this.#getResolutionSelectionCardCandidateIds(resolutionSession.context)];
+      return this.#getResolutionSelectableCardIds(resolutionSession.context);
     }
 
     const session = this.#actionSelectionSession;
@@ -5308,7 +5992,6 @@ export class LorcanaSidebarPresenter {
 
       if (isTargetResolutionSelectionContext(context)) {
         const effectType = this.#getResolutionSelectionEffectType(resolutionSession);
-        const prompt = this.#getResolutionTargetPromptState(resolutionSession);
         const cardCandidateIds = this.#getResolutionSelectionCardCandidateIds(context);
         const selectionTarget = buildResolutionSelectionTargetQuery({
           context,
@@ -5379,6 +6062,12 @@ export class LorcanaSidebarPresenter {
 
           return [];
         });
+        const playCardEntryModeChoice = hasPlayCardEntryModeSelection(
+          context,
+          resolutionSession.selectedTargets,
+        )
+          ? { selected: resolutionSession.selectedEnterPlayExerted }
+          : undefined;
 
         return {
           mode: "resolution-target",
@@ -5388,18 +6077,46 @@ export class LorcanaSidebarPresenter {
           categoryLabel,
           title: selectionTitle,
           message:
-            getResolutionTargetPromptMessage(effectType, prompt?.activeSlotIndex ?? null) ??
-            resolutionSession.promptMessage,
-          entries: prompt?.candidateEntries ?? [...playerEntries, ...cardEntries],
+            getResolutionTargetPromptMessage(
+              effectType,
+              this.interactionView?.activePrompt?.activeSlotIndex ?? null,
+              this.interactionView?.activePrompt?.slots?.length,
+            ) ?? resolutionSession.promptMessage,
+          entries: this.interactionView?.interactions
+            ? [
+                ...playerEntries,
+                ...this.interactionView.interactions.flatMap((interaction) => {
+                  if (interaction.kind !== "select-card") return [];
+                  const card = this.cardSnapshotsById[interaction.cardId as unknown as string];
+                  if (!card) return [];
+                  return [
+                    {
+                      id: `resolution:card:${interaction.cardId}`,
+                      kind: "card" as const,
+                      cardId: interaction.cardId as unknown as string,
+                      label: card.label,
+                      // The view's interactions don't carry per-card selection
+                      // state — selection is owned by the session. Read it from
+                      // there so this entry list reflects the chooser's clicks.
+                      selected: includesSelectionId(
+                        resolutionSession.selectedTargets,
+                        interaction.cardId as unknown as string,
+                      ),
+                    },
+                  ];
+                }),
+              ]
+            : [...playerEntries, ...cardEntries],
           effectType,
           target: selectionTarget,
           allowedZones: [...context.allowedZones],
           candidateCardIds: [...cardCandidateIds],
           candidatePlayerIds: [...context.playerCandidateIds],
           viewerSide: this.ownerSide,
-          candidateEntries: prompt?.candidateEntries ?? [...playerEntries, ...cardEntries],
-          activeSlotIndex: prompt?.activeSlotIndex ?? null,
-          slots: prompt?.slots ?? [],
+          candidateEntries: [...playerEntries, ...cardEntries],
+          playCardEntryModeChoice,
+          activeSlotIndex: this.interactionView?.activePrompt?.activeSlotIndex ?? null,
+          slots: [],
           amountSelection: this.#getResolutionAmountSelectionState(resolutionSession),
           selectedTargetLabels,
           minimumSelections: context.minSelections,
@@ -5767,8 +6484,21 @@ export class LorcanaSidebarPresenter {
     isConfirmPending: boolean;
   } {
     const session = this.#actionSelectionSession;
-    const isSelected = this.selectedActionSessionCardIds.includes(cardId);
-    const isSelectable = this.selectableActionSessionCardIds.includes(cardId);
+    const resolutionSession = this.#resolutionSelectionSession;
+    const isResolutionTarget =
+      resolutionSession !== null &&
+      resolutionSession.phase !== "executing" &&
+      isTargetResolutionSelectionContext(resolutionSession.context) &&
+      includesSelectionId(
+        this.#getResolutionSelectionCardCandidateIds(resolutionSession.context),
+        cardId,
+      );
+    const isResolutionSelected =
+      resolutionSession !== null &&
+      isTargetResolutionSelectionContext(resolutionSession.context) &&
+      includesSelectionId(resolutionSession.selectedTargets, cardId);
+    const isSelected = this.selectedActionSessionCardIds.includes(cardId) || isResolutionSelected;
+    const isSelectable = this.selectableActionSessionCardIds.includes(cardId) || isResolutionTarget;
     const isInvalidTarget = this.invalidActionSessionCardIds.includes(cardId);
     const isConfirmPending = session !== null && session.phase === "confirm" && isSelected;
 
@@ -6288,11 +7018,21 @@ export class LorcanaSidebarPresenter {
       const canDecline = canDeclineResolutionSelectionSession(resolutionSession);
       const selectedCount = resolutionSession.selectedTargets.length;
       const minSelections = resolutionSession.context.minSelections;
+      const activePrompt = this.interactionView?.activePrompt;
       // Display uses the printed max (e.g. "up to 2") so the counter matches
-      // the card text, even if fewer candidates currently exist on board.
-      const displayMaxSelections =
-        resolutionSession.context.declaredMaxSelections ?? resolutionSession.context.maxSelections;
+      // the card text, but never exceed the actual candidate count — otherwise
+      // a card like Leviathan ("any number, total cost ≤ 10") would show
+      // "Confirm (1/10)" when only 3 opponents are in play, making players
+      // think they must select 10 targets before confirming.
+      const displayMaxSelections = Math.min(
+        resolutionSession.context.declaredMaxSelections ?? resolutionSession.context.maxSelections,
+        resolutionSession.context.maxSelections,
+      );
       const isOptional = minSelections === 0;
+      const needsEntryModeChoice = hasPlayCardEntryModeSelection(
+        resolutionSession.context,
+        resolutionSession.selectedTargets,
+      );
       // For "up to N" with nothing picked, the confirm action IS a skip. Show
       // "Skip" so the affordance is obvious; otherwise show "Confirm (selected/max)"
       // so the player can see how many of the allowed targets they've chosen.
@@ -6311,6 +7051,24 @@ export class LorcanaSidebarPresenter {
           message: resolutionSession.promptMessage,
           abilityDescription: resolutionSession.abilityDescription ?? undefined,
           inlineReference: resolutionSession.promptInlineReference ?? undefined,
+          targetSlots:
+            resolutionSession.context.expectedSlottedKind === "move-to-location"
+              ? buildMoveToLocationGuidanceTargetSlots({
+                  selectedTargets: resolutionSession.selectedTargets,
+                  activeSlotIndex: activePrompt?.activeSlotIndex,
+                  cardSnapshotsById: this.cardSnapshotsById,
+                  fixedLocationId:
+                    getFixedMoveToLocationSlotId(activePrompt?.slots) ??
+                    getFixedMoveToLocationBoardId(
+                      this.#game.boardSnapshot(),
+                      resolutionSession.context.sourceCardId,
+                    ),
+                })
+              : buildGuidanceTargetSlots({
+                  slots: activePrompt?.slots,
+                  activeSlotIndex: activePrompt?.activeSlotIndex,
+                  cardSnapshotsById: this.cardSnapshotsById,
+                }),
           actions: [
             ...(canDecline
               ? [
@@ -6318,6 +7076,22 @@ export class LorcanaSidebarPresenter {
                     id: "resolution-selection-decline",
                     label: getResolutionDeclineLabel(resolutionSession),
                     onClick: this.rejectActiveResolutionSelection,
+                  } satisfies GuidanceAction,
+                ]
+              : []),
+            ...(needsEntryModeChoice
+              ? [
+                  {
+                    id: "resolution-selection-play-ready",
+                    label: "Play Ready",
+                    onClick: () => this.selectResolutionEnterPlayExerted(false),
+                    emphasis: resolutionSession.selectedEnterPlayExerted === false,
+                  } satisfies GuidanceAction,
+                  {
+                    id: "resolution-selection-play-exerted",
+                    label: "Play Exerted",
+                    onClick: () => this.selectResolutionEnterPlayExerted(true),
+                    emphasis: resolutionSession.selectedEnterPlayExerted === true,
                   } satisfies GuidanceAction,
                 ]
               : []),
@@ -6796,14 +7570,72 @@ export class LorcanaSidebarPresenter {
     }
 
     if (isTargetResolutionSelectionContext(context)) {
-      const prompt = this.#getResolutionTargetPromptState(session);
-      if (prompt) {
+      if (context.expectedSlottedKind === "move-to-location") {
+        const fixedLocationId =
+          getFixedMoveToLocationSlotId(this.interactionView?.activePrompt?.slots) ??
+          getFixedMoveToLocationBoardId(this.#game.boardSnapshot(), context.sourceCardId);
+        const { subjectIds, locationId } = splitMoveToLocationSessionTargets({
+          selectedTargets: session.selectedTargets,
+          cardSnapshotsById: this.cardSnapshotsById,
+          fixedLocationId,
+        });
+        const resolvedSubjectIds =
+          subjectIds.length > 0
+            ? subjectIds
+            : ((context.currentSelection.targets ?? []) as string[]);
+        const totalSelectionCount = resolvedSubjectIds.length + (locationId ? 1 : 0);
+        const confirmedSelectionCount = context.currentSelection.targets?.length ?? 0;
+        const userSelectionCount = Math.max(
+          0,
+          session.selectedTargets.length - confirmedSelectionCount,
+        );
+        return (
+          resolvedSubjectIds.length > 0 &&
+          locationId !== null &&
+          totalSelectionCount >= context.minSelections &&
+          (context.maxSelections <= 0 || userSelectionCount <= context.maxSelections)
+        );
+      }
+
+      // Block confirmation when an "up-to" amount selection has resolved to
+      // a 0-damage cap (e.g. user picked an undamaged character as the
+      // move-damage source). The engine would silently advance the prompt
+      // with amount=0 and apply no patches — players see a "hung" prompt and
+      // retry endlessly. Replay mgGuD8kTITPMhvIEL3wO5ZG turn 22 (Luisa
+      // Madrigal — "I CAN TAKE IT"): the user activated the ability three
+      // times in a row, each time submitting an undamaged friendly source
+      // and watching nothing happen. Forcing the user to pick a damaged
+      // source — or decline the optional — keeps the UX honest.
+      //
+      // Only gate when the player has an escape hatch (a damaged candidate
+      // they could pick instead, or a Cancel/Skip option). Otherwise we
+      // would deadlock a mandatory prompt where every eligible source is
+      // undamaged: rules-wise an "up to N" with no available damage is a
+      // valid 0-damage resolution and must remain confirmable.
+      const amountSelection = this.#getResolutionAmountSelectionState(session);
+      if (amountSelection && amountSelection.max === 0) {
+        const canDecline =
+          context.canDeclineSelection === true || context.originatesFromOptional === true;
+        const hasDamagedAlternative = context.cardCandidateIds.some((candidateId) => {
+          if (session.selectedTargets.includes(candidateId)) {
+            return false;
+          }
+          const damage = this.cardSnapshotsById[candidateId]?.damage ?? 0;
+          return typeof damage === "number" && Number.isFinite(damage) && damage > 0;
+        });
+        if (canDecline || hasDamagedAlternative) {
+          return false;
+        }
+      }
+
+      const slots = this.interactionView?.activePrompt?.slots;
+      if (slots) {
         // When maxSelections < total slots (e.g. move-damage with from: ALL_CHARACTERS),
         // only the last `maxSelections` slots are required user selections.
         // The earlier slots may be filled as context but should not block confirmation.
         const requiredSlots =
-          context.maxSelections > 0 ? prompt.slots.slice(-context.maxSelections) : prompt.slots;
-        const selectionCount = requiredSlots.filter((slot) => slot.targetId).length;
+          context.maxSelections > 0 ? slots.slice(-context.maxSelections) : slots;
+        const selectionCount = requiredSlots.filter((slot) => slot.targetCardId).length;
         return selectionCount >= context.minSelections && selectionCount <= requiredSlots.length;
       }
 
@@ -6813,7 +7645,42 @@ export class LorcanaSidebarPresenter {
           includesSelectionId(this.#getResolutionSelectionCardCandidateIds(context), targetId) ||
           includesSelectionId(context.playerCandidateIds, targetId),
       );
+      if (
+        !selectedTargetsMatchTargetDslSequence({
+          context,
+          selectedTargets: validSelections,
+          cardSnapshotsById: this.cardSnapshotsById,
+          // The DSL's `owner: "you" | "opponent"` is interpreted relative to
+          // the source card's controller, not the chooser. See
+          // `cardMatchesSelectionTargetDsl` JSDoc for why this matters
+          // (forced-opponent banish prompts: Sid Phillips, Be King
+          // Undisputed, Dinky - Has the Brains). The chooser fallback below
+          // is the LAST RESORT — it only matches the controller for
+          // self-targeted effects, and gives the wrong answer for forced-
+          // opponent prompts. We therefore prefer (in order):
+          //   1. The source card's snapshot ownerId.
+          //   2. The pending/bag effect's `controllerId` field, which is
+          //      the source card's controller. This fallback is critical
+          //      for cards played indirectly into limbo zones the
+          //      chooser's view doesn't project (e.g. Be King Undisputed
+          //      played for free via Powerline's MASH-UP scry —
+          //      digest-2026-05-08 reports #2/#3/#4/#9/#10/#12/#14/#15/
+          //      #18/#19, gameId mggXgny0UumOSRY-6TCxg_B turn 13).
+          //   3. The chooser side (legacy fallback, almost always wrong
+          //      for `chosenBy: "opponent"` effects but correct for
+          //      self-targeted effects where chooser === controller).
+          referenceSide: this.#resolveSelectionReferenceSide(context),
+        })
+      ) {
+        return false;
+      }
       const selectionCount = validSelections.length;
+      if (
+        hasPlayCardEntryModeSelection(context, validSelections) &&
+        typeof session.selectedEnterPlayExerted !== "boolean"
+      ) {
+        return false;
+      }
       return (
         selectionCount >= context.minSelections &&
         (context.maxSelections <= 0 || selectionCount <= context.maxSelections)
@@ -6946,10 +7813,8 @@ export class LorcanaSidebarPresenter {
     }
 
     const isCandidate =
-      includesSelectionId(
-        this.#getResolutionSelectionCardCandidateIds(session.context),
-        targetId,
-      ) || includesSelectionId(session.context.playerCandidateIds, targetId);
+      includesSelectionId(this.#getResolutionSelectableCardIds(session.context), targetId) ||
+      includesSelectionId(session.context.playerCandidateIds, targetId);
     if (!isCandidate) {
       return false;
     }
@@ -6972,6 +7837,12 @@ export class LorcanaSidebarPresenter {
     this.#resolutionSelectionSession = this.#normalizeResolutionSelectionSession({
       ...session,
       selectedTargets: nextSelectedTargets,
+      selectedEnterPlayExerted: getNextEnterPlayExertedSelection({
+        context: session.context,
+        nextSelectedTargets,
+        previousSelectedTargets: session.selectedTargets,
+        previousValue: session.selectedEnterPlayExerted,
+      }),
     });
     this.#game.setPendingError(null);
     if (
@@ -6993,35 +7864,166 @@ export class LorcanaSidebarPresenter {
       return false;
     }
 
-    const prompt = this.#getResolutionTargetPromptState(session);
-    if (!prompt || prompt.activeSlotIndex === null) {
+    // Read slot machinery from the engine-derived view rather than the
+    // legacy presenter. The view's `activeSlotIndex` is slot-key-aligned
+    // (matches `SLOTTED_TARGET_SLOT_KEYS`); the simulator session's
+    // `selectedTargets[]` is user-pick-ordered (skips auto-resolved
+    // slots). We convert by subtracting `autoResolvedSlotCount`.
+    const view = this.interactionView;
+    const activePrompt = view?.activePrompt;
+
+    // When the engine view is not yet available (e.g. in test stubs or before
+    // the board hydrates), fall back to a local effect-type check. Supported
+    // slotted effect types must use assign-not-toggle so that re-clicking the
+    // same card on the board re-assigns the slot rather than deselecting it
+    // (the slotted UX uses explicit clear, not double-click).
+    if (!view && session.context.expectedSlottedKind !== "move-to-location") {
+      const effectType = this.#getResolutionSelectionEffectType(session);
+      if (effectType) {
+        // Use slot-assign at position 0 (the first user-selectable slot).
+        // autoResolvedFromSlots is 0 for all single-target effects; the
+        // move-damage case is handled by the interactionView path above.
+        const candidateIds = this.#getResolutionSelectionCardCandidateIds(session.context);
+        if (!includesSelectionId(candidateIds, targetId)) {
+          return false;
+        }
+        const nextSelectedTargets = [...session.selectedTargets];
+        nextSelectedTargets[0] = targetId;
+        const nextSession = this.#normalizeResolutionSelectionSession({
+          ...session,
+          activeTargetSlotIndex: null,
+          selectedTargets: nextSelectedTargets,
+          selectedEnterPlayExerted: getNextEnterPlayExertedSelection({
+            context: session.context,
+            nextSelectedTargets,
+            previousSelectedTargets: session.selectedTargets,
+            previousValue: session.selectedEnterPlayExerted,
+          }),
+        });
+        this.#resolutionSelectionSession = nextSession;
+        this.#game.setPendingError(null);
+        if (
+          shouldAutoSubmitResolutionTargetSelection(
+            this.#resolutionSelectionSession,
+            this.skipActionConfirmation,
+          ) &&
+          this.canConfirmResolutionSelection
+        ) {
+          return this.confirmResolutionSelection();
+        }
+        return true;
+      }
       return this.toggleResolutionTargetSelection(targetId);
     }
 
-    const candidateIds = prompt.candidateEntries.flatMap((entry) =>
-      entry.kind === "card" && entry.cardId ? [entry.cardId] : [],
-    );
+    if (
+      (!activePrompt || activePrompt.activeSlotIndex === null) &&
+      session.context.expectedSlottedKind !== "move-to-location"
+    ) {
+      return this.toggleResolutionTargetSelection(targetId);
+    }
+
+    const candidateIds = this.#getResolutionSelectableCardIds(session.context);
     if (!includesSelectionId(candidateIds, targetId)) {
       return false;
     }
 
-    // prompt.activeSlotIndex is the visual slot index, but session.selectedTargets
-    // is indexed without the leading auto-resolved slots (e.g. from: { ref: "self" }).
-    // Subtract the offset so we write to the correct raw storage position.
-    const rawSlotIndex = prompt.activeSlotIndex - prompt.autoResolvedFromSlots;
+    if (session.context.expectedSlottedKind === "move-to-location") {
+      const card = this.cardSnapshotsById[targetId];
+      if (!card) {
+        return false;
+      }
+
+      const { subjectIds, locationId } = splitMoveToLocationSessionTargets({
+        selectedTargets: session.selectedTargets,
+        cardSnapshotsById: this.cardSnapshotsById,
+        fixedLocationId:
+          getFixedMoveToLocationSlotId(activePrompt?.slots) ??
+          getFixedMoveToLocationBoardId(this.#game.boardSnapshot(), session.context.sourceCardId),
+      });
+      const fixedLocationId =
+        getFixedMoveToLocationSlotId(activePrompt?.slots) ??
+        getFixedMoveToLocationBoardId(this.#game.boardSnapshot(), session.context.sourceCardId);
+      const boardCards = this.#game.boardSnapshot()?.cards as
+        | Record<string, { cardType?: string }>
+        | undefined;
+      const [onlyTargetDsl] = session.context.targetDsl;
+      const onlyTargetCardTypes =
+        onlyTargetDsl && typeof onlyTargetDsl === "object" && "cardTypes" in onlyTargetDsl
+          ? onlyTargetDsl.cardTypes
+          : undefined;
+      const isLocation =
+        card.cardType === "location" ||
+        boardCards?.[targetId]?.cardType === "location" ||
+        (session.context.targetDsl.length === 1 &&
+          Array.isArray(onlyTargetCardTypes) &&
+          onlyTargetCardTypes.includes("location"));
+      const currentSelectionTargets = session.context.currentSelection.targets ?? [];
+      const baseSubjectIds =
+        subjectIds.length > 0
+          ? subjectIds
+          : currentSelectionTargets.filter(
+              (selectedTargetId) => !matchesSelectionId(selectedTargetId, targetId),
+            );
+      const selectionCount = subjectIds.length + (locationId && !fixedLocationId ? 1 : 0);
+      const userSelectedLocationIds = locationId && !fixedLocationId ? [locationId] : [];
+      const nextSelectedTargets = isLocation
+        ? [...baseSubjectIds, targetId]
+        : subjectIds.includes(targetId)
+          ? [
+              ...subjectIds.filter((selectedTargetId) => selectedTargetId !== targetId),
+              ...userSelectedLocationIds,
+            ]
+          : session.context.maxSelections > 0 && selectionCount >= session.context.maxSelections
+            ? session.selectedTargets
+            : [...subjectIds, targetId, ...userSelectedLocationIds];
+
+      const nextSession = this.#normalizeResolutionSelectionSession({
+        ...session,
+        activeTargetSlotIndex: isLocation ? 1 : 0,
+        selectedTargets: nextSelectedTargets,
+        selectedEnterPlayExerted: getNextEnterPlayExertedSelection({
+          context: session.context,
+          nextSelectedTargets,
+          previousSelectedTargets: session.selectedTargets,
+          previousValue: session.selectedEnterPlayExerted,
+        }),
+      });
+      this.#resolutionSelectionSession = nextSession;
+      this.#game.setPendingError(null);
+      if (
+        isLocation &&
+        shouldAutoSubmitResolutionTargetSelection(
+          this.#resolutionSelectionSession,
+          this.skipActionConfirmation,
+        ) &&
+        this.canConfirmResolutionSelection
+      ) {
+        return this.confirmResolutionSelection();
+      }
+      return true;
+    }
+
+    if (!activePrompt || activePrompt.activeSlotIndex === null) {
+      return false;
+    }
+
+    const rawSlotIndex = activePrompt.activeSlotIndex - activePrompt.autoResolvedSlotCount;
     const nextSelectedTargets = [...session.selectedTargets];
     nextSelectedTargets[rawSlotIndex] = targetId;
-    const nextSession = {
+    const nextSession = this.#normalizeResolutionSelectionSession({
       ...session,
       activeTargetSlotIndex: null,
       selectedTargets: nextSelectedTargets,
-    };
-    const nextPrompt = this.#getResolutionTargetPromptState(nextSession);
-
-    this.#resolutionSelectionSession = this.#normalizeResolutionSelectionSession({
-      ...nextSession,
-      activeTargetSlotIndex: nextPrompt?.activeSlotIndex ?? null,
+      selectedEnterPlayExerted: getNextEnterPlayExertedSelection({
+        context: session.context,
+        nextSelectedTargets,
+        previousSelectedTargets: session.selectedTargets,
+        previousValue: session.selectedEnterPlayExerted,
+      }),
     });
+
+    this.#resolutionSelectionSession = nextSession;
     this.#game.setPendingError(null);
     if (
       shouldAutoSubmitResolutionTargetSelection(
@@ -7042,9 +8044,9 @@ export class LorcanaSidebarPresenter {
       return false;
     }
 
-    const prompt = this.#getResolutionTargetPromptState(session);
-    const slot = prompt?.slots[slotIndex];
-    if (!prompt || !slot || slot.locked) {
+    const slots = this.interactionView?.activePrompt?.slots;
+    const slot = slots?.[slotIndex];
+    if (!slots || !slot) {
       return false;
     }
 
@@ -7141,6 +8143,24 @@ export class LorcanaSidebarPresenter {
     };
     this.#game.setPendingError(null);
     return true;
+  };
+
+  selectResolutionEnterPlayExerted = (value: boolean): boolean => {
+    const session = this.#resolutionSelectionSession;
+    if (
+      !session ||
+      !isTargetResolutionSelectionContext(session.context) ||
+      !hasPlayCardEntryModeSelection(session.context, session.selectedTargets)
+    ) {
+      return false;
+    }
+
+    this.#resolutionSelectionSession = {
+      ...session,
+      selectedEnterPlayExerted: value,
+    };
+    this.#game.setPendingError(null);
+    return this.canConfirmResolutionSelection ? this.confirmResolutionSelection() : true;
   };
 
   submitResolutionOptional = (value: boolean): boolean => {
@@ -7327,18 +8347,56 @@ export class LorcanaSidebarPresenter {
                   session.context.originatesFromOptional === true
                     ? { resolveOptional: true }
                     : {}),
+                  ...(isTargetResolutionSelectionContext(session.context) &&
+                  hasPlayCardEntryModeSelection(session.context, session.selectedTargets) &&
+                  typeof session.selectedEnterPlayExerted === "boolean"
+                    ? { enterPlayExerted: session.selectedEnterPlayExerted }
+                    : {}),
                   targets: (() => {
-                    const prompt = this.#getResolutionTargetPromptState(session);
                     const ctx = session.context;
                     const maxSel = isTargetResolutionSelectionContext(ctx) ? ctx.maxSelections : 0;
-                    const flat =
-                      prompt && maxSel > 0 && session.selectedTargets.length > maxSel
-                        ? session.selectedTargets.slice(-maxSel)
-                        : [...session.selectedTargets];
+                    const slots = this.interactionView?.activePrompt?.slots ?? null;
 
                     // Engine opted into slotted serialization for this pending
                     // effect — convert once both slots are filled, otherwise
                     // fall through to the flat path (engine accepts both).
+                    if (
+                      isTargetResolutionSelectionContext(ctx) &&
+                      ctx.expectedSlottedKind === "move-to-location"
+                    ) {
+                      const { subjectIds, locationId } = splitMoveToLocationSessionTargets({
+                        selectedTargets: session.selectedTargets,
+                        cardSnapshotsById: this.cardSnapshotsById,
+                        fixedLocationId:
+                          getFixedMoveToLocationSlotId(this.interactionView?.activePrompt?.slots) ??
+                          getFixedMoveToLocationBoardId(
+                            this.#game.boardSnapshot(),
+                            ctx.sourceCardId,
+                          ),
+                      });
+                      const resolvedSubjectIds =
+                        subjectIds.length > 0
+                          ? subjectIds
+                          : ((ctx.currentSelection.targets ?? []) as string[]);
+                      const totalSelectionCount = resolvedSubjectIds.length + (locationId ? 1 : 0);
+                      if (
+                        locationId &&
+                        resolvedSubjectIds.length > 0 &&
+                        totalSelectionCount >= ctx.minSelections
+                      ) {
+                        return {
+                          kind: "move-to-location",
+                          subject: resolvedSubjectIds as CardInstanceId[],
+                          location: [locationId as CardInstanceId],
+                        };
+                      }
+                    }
+
+                    const flat =
+                      slots && maxSel > 0 && session.selectedTargets.length > maxSel
+                        ? session.selectedTargets.slice(-maxSel)
+                        : [...session.selectedTargets];
+
                     if (
                       isTargetResolutionSelectionContext(ctx) &&
                       ctx.expectedSlottedKind &&
@@ -8627,12 +9685,7 @@ export class LorcanaSidebarPresenter {
   };
 
   handleSkipActionConfirmationToggle = (enabled: boolean): void => {
-    this.#settings.handleSkipActionConfirmationToggle(enabled);
-    this.#game.setStatusMessage(
-      enabled
-        ? m["sim.settings.skipActionConfirmationEnabled"]({})
-        : m["sim.settings.skipActionConfirmationDisabled"]({}),
-    );
+    void enabled;
   };
 
   handleHotkeyModeChange = (mode: HotkeyMode): void => {
@@ -8648,6 +9701,10 @@ export class LorcanaSidebarPresenter {
 
   handleCardPreviewModeChange = (mode: CardPreviewMode): void => {
     this.#settings.handleCardPreviewModeChange(mode);
+  };
+
+  handleCardInfoModeChange = (mode: CardInfoMode): void => {
+    this.#settings.handleCardInfoModeChange(mode);
   };
 
   handlePrimaryClickActionChange = (action: PrimaryClickAction): void => {
@@ -8699,9 +9756,8 @@ export function setLorcanaGameContext(value: SetLorcanaGameContextOptions): Lorc
     value.engine,
     value.readModel,
     value.playerSettings,
-    value.playerDisplayNames,
+    value.playerMetadataMap,
     value.debugPerformance,
-    value.playerIsMobileMap,
   );
   onDestroy(() => {
     context.destroy();

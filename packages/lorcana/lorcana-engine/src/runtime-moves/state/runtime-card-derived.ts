@@ -37,6 +37,11 @@ export function createLorcanaRuntimeCardDeriver(
       const definitionId = staticResources.instances.get(instanceId)?.definitionId;
       return definitionId ? staticResources.cards.get(definitionId) : undefined;
     };
+    // Fallback fresh build kept on purpose: this deriver is invoked from paths
+    // that don't carry a `MoveRegistryCtx` (e.g. projection / card-query API
+    // construction). When no `registry` is passed, build directly from the raw
+    // `state` rather than routing through `getOrBuildMoveRegistry`, which
+    // requires a `framework.state` snapshot we don't have here.
     const effectiveRegistry =
       registry ?? buildStaticEffectRegistry(state, getDefinitionByInstanceId);
     const projected = getOrBuildDerivedLorcanaCardProjection({

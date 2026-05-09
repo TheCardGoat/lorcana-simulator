@@ -104,10 +104,14 @@ import {
   analyzeEffectTargets,
   analyzeResolutionRequirements,
   analyzeTargetSelectionAvailability,
-  shouldSkipEffectWithNoValidTargets,
   type ActionTargetResolutionContext,
 } from "./targeting/targeting-service";
+import { shouldSkipEffectWithNoValidTargets } from "./targeting/runtime/optional-skip-analysis";
 import { buildResolutionSelectionContext } from "./runtime-moves/resolution/action-effects/selection-context";
+import { isScryEffect } from "./runtime-moves/resolution/action-effects/scry-effect";
+import { evaluateActionCondition } from "./runtime-moves/resolution/action-effects/action-condition-evaluator";
+import { cloneActionResolutionInput } from "./runtime-moves/resolution/action-effects/pending-action-effects";
+import type { ActionResolutionInput } from "./runtime-moves/resolution/action-effects/types";
 import { getNextBagResolver } from "./runtime-moves/effects/triggered-abilities";
 import { getActivePlayFromUnderPermissions } from "./runtime-moves/effects/play-from-under-permissions";
 import {
@@ -144,6 +148,28 @@ function isOrLikeEffectRecord(
   }
   const record = effect as Record<string, unknown>;
   return record.type === "or";
+}
+
+function hasDeferredNonControllerDecision(effect: unknown): boolean {
+  if (!effect || typeof effect !== "object") {
+    return false;
+  }
+
+  if (Array.isArray(effect)) {
+    return effect.some((entry) => hasDeferredNonControllerDecision(entry));
+  }
+
+  const record = effect as Record<string, unknown>;
+  if (
+    record.chosenBy === "opponent" ||
+    record.chosenBy === "TARGET" ||
+    record.chooser === "OPPONENT" ||
+    record.chooser === "EACH_OPPONENT"
+  ) {
+    return true;
+  }
+
+  return Object.values(record).some((value) => hasDeferredNonControllerDecision(value));
 }
 
 /**
@@ -229,6 +255,7 @@ export type ResolutionExecutionOptions = {
   amount?: number;
   namedCard?: string;
   resolveOptional?: boolean;
+  enterPlayExerted?: boolean;
   choiceIndex?: number;
   destinations?: PlayCardDestinationInput[];
   bagIndex?: number;
@@ -282,6 +309,8 @@ export interface ChallengePreviewResult {
   defenderDamageDealt: number;
   attackerWouldBeBanished: boolean;
   defenderWouldBeBanished: boolean;
+  attackerDamageIsReduced: boolean;
+  defenderDamageIsReduced: boolean;
 }
 
 const ACTIVATION_DISCOVERY_PENDING_CODES = new Set([
@@ -467,15 +496,15 @@ export abstract class LorcanaEngineBase {
 
     const banishCharacterCount = ability.cost?.banishCharacter ? 1 : 0;
     if (banishCharacterCount > 0) {
-      const validationContext = buildValidationContext(
-        this.getState() as LorcanaMatchState,
+      const validationContext = buildValidationContext({
+        state: this.getState() as LorcanaMatchState,
         playerId,
-        { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-        lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
-        this.getResolvedStaticResources(),
-        !!this.getState().ctx.status.gameEnded,
-        "preflight",
-      );
+        input: { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+        config: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+        staticResources: this.getResolvedStaticResources(),
+        gameEnded: !!this.getState().ctx.status.gameEnded,
+        validationMode: "preflight",
+      });
       const candidateCardIds = getBanishCharacterCostCandidateIds(
         validationContext,
         playerId as PlayerId,
@@ -656,6 +685,21 @@ export abstract class LorcanaEngineBase {
       return false;
     }
 
+    // CRD 6.2.7: If the ability's intervening-if condition will fail at resolution,
+    // the effect will be skipped in execute() — no player input is needed.
+    if (
+      bagEffect.condition !== undefined &&
+      bagEffect.condition !== null &&
+      !evaluateActionCondition(
+        bagEffect.condition as Parameters<typeof evaluateActionCondition>[0],
+        ctx as unknown as Parameters<typeof evaluateActionCondition>[1],
+        bagEffect.cardPlayed,
+        cloneActionResolutionInput(bagEffect.resolutionInput as ActionResolutionInput),
+      )
+    ) {
+      return false;
+    }
+
     // CR 6.1.5.2: If an "or" effect has only one currently legal option, the choice is forced
     // and no player decision is needed — auto-resolve to the only legal branch.
     if (requirements.requiresChoiceSelection && isOrLikeEffectRecord(bagEffect.effect)) {
@@ -665,16 +709,78 @@ export abstract class LorcanaEngineBase {
       }
     }
 
-    if (requirements.isOptional) {
-      if (
-        shouldSkipEffectWithNoValidTargets(
-          bagEffect.effect,
-          playerId,
-          ctx,
-          bagEffect.sourceId as CardInstanceId,
-        )
-      ) {
+    // For scry effects, requiresDestinationSelection is set statically (no runtime amount check).
+    // At runtime, if the deck is empty or the variable amount resolves to 0, the effect fizzles —
+    // no player decision is needed.
+    if (requirements.requiresDestinationSelection && isScryEffect(bagEffect.effect)) {
+      const deckSize = ctx.framework.zones.getCards({
+        zone: "deck",
+        playerId: bagEffect.cardPlayed.playerId,
+      }).length;
+      if (deckSize === 0) {
         return false;
+      }
+
+      // When the scry amount is derived from cards-under-self, resolve it now.
+      // Other amount types (fixed numbers, etc.) are not checked here.
+      const amountExpr = (bagEffect.effect as { amount?: unknown }).amount;
+      if (
+        amountExpr !== null &&
+        typeof amountExpr === "object" &&
+        (amountExpr as Record<string, unknown>).type === "cards-under-self"
+      ) {
+        const cardsUnder = ctx.cards.require(bagEffect.sourceId).meta?.cardsUnder;
+        if (!Array.isArray(cardsUnder) || cardsUnder.length === 0) {
+          return false;
+        }
+      }
+    }
+
+    if (
+      shouldSkipEffectWithNoValidTargets(
+        bagEffect.effect,
+        playerId,
+        ctx,
+        bagEffect.sourceId as CardInstanceId,
+        "bag-decision",
+      )
+    ) {
+      return false;
+    }
+
+    if (requirements.isOptional) {
+      // Special case: a top-level sequence whose first step is mandatory and
+      // auto-resolvable, with the optional being a *later* step (e.g. Woody
+      // Jungle Guide: "draw a card. Then, you may play a character..."). When
+      // the chooser's hand is empty, the optional cannot have any candidates
+      // until the leading draw resolves — so partially auto-drain the
+      // mandatory step(s) and let the optional surface a pending decision
+      // afterwards. When the hand already has cards, leave the trigger in the
+      // bag for the player to resolve manually with their chosen targets.
+      const effectRecord = bagEffect.effect as unknown as
+        | Record<string, unknown>
+        | null
+        | undefined;
+      if (effectRecord?.type === "sequence") {
+        const steps = Array.isArray(effectRecord.steps) ? effectRecord.steps : [];
+        const firstStep = steps[0];
+        if (firstStep && typeof firstStep === "object") {
+          const firstStepRequirements = analyzeResolutionRequirements(firstStep as Effect);
+          const firstStepType = (firstStep as { type?: unknown }).type;
+          if (
+            firstStepRequirements.canAutoResolve &&
+            firstStepType === "draw" &&
+            !hasDeferredNonControllerDecision(firstStep)
+          ) {
+            const handCards = ctx.framework.zones.getCards({
+              zone: "hand",
+              playerId: bagEffect.controllerId as PlayerId,
+            });
+            if (handCards.length === 0) {
+              return false;
+            }
+          }
+        }
       }
       return true;
     }
@@ -719,15 +825,15 @@ export abstract class LorcanaEngineBase {
       return undefined;
     }
 
-    const validationContext = buildValidationContext(
-      state as unknown as LorcanaMatchState,
+    const validationContext = buildValidationContext({
+      state: state as unknown as LorcanaMatchState,
       playerId,
-      { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
-      this.getResolvedStaticResources(),
-      !!state.ctx.status.gameEnded,
-      "preflight",
-    );
+      input: { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+      config: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      staticResources: this.getResolvedStaticResources(),
+      gameEnded: !!state.ctx.status.gameEnded,
+      validationMode: "preflight",
+    });
     if (
       getNextBagResolver(
         validationContext as unknown as Parameters<typeof getNextBagResolver>[0],
@@ -803,15 +909,15 @@ export abstract class LorcanaEngineBase {
 
     for (let attempts = 0; attempts < maxAutoResolveAttempts; attempts += 1) {
       const state = this.getState();
-      const validationContext = buildValidationContext(
-        state as LorcanaMatchState,
+      const validationContext = buildValidationContext({
+        state: state as LorcanaMatchState,
         playerId,
-        { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-        lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
-        this.getResolvedStaticResources(),
-        !!state.ctx.status.gameEnded,
-        "preflight",
-      );
+        input: { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+        config: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+        staticResources: this.getResolvedStaticResources(),
+        gameEnded: !!state.ctx.status.gameEnded,
+        validationMode: "preflight",
+      });
       const nextResolver = getNextBagResolver(
         validationContext as unknown as Parameters<typeof getNextBagResolver>[0],
       );
@@ -924,7 +1030,7 @@ export abstract class LorcanaEngineBase {
     options: { skipAutoBagDrain?: boolean } = {},
   ): CommandResult {
     logger.debug(
-      "Executing move {moveId} player={playerId} prevStateID={prevStateID} input={input}",
+      "Executing move {moveId} player={playerId} prevStateID={prevStateID} input={input.args}",
       { moveId, playerId, input, prevStateID, options },
     );
     const engineResult = this.executeMoveViaEngine(moveId, input, {
@@ -1331,6 +1437,10 @@ export abstract class LorcanaEngineBase {
     return this.engine.getStateID();
   }
 
+  isOptimisticMovePending(): boolean {
+    return this.engine.isOptimisticMovePending ?? false;
+  }
+
   getActiveEffects(): EngineActiveEffectProjection[] {
     return this.getBoard().activeEffects ?? [];
   }
@@ -1700,15 +1810,15 @@ export abstract class LorcanaEngineBase {
   }
 
   private buildChallengeIntentContext(playerId: PlayerId) {
-    return buildValidationContext(
-      this.getState() as LorcanaMatchState,
-      String(playerId),
-      { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
-      this.getResolvedStaticResources(),
-      !!this.getState().ctx.status.gameEnded,
-      "preflight",
-    );
+    return buildValidationContext({
+      state: this.getState() as LorcanaMatchState,
+      playerId: String(playerId),
+      input: { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+      config: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      staticResources: this.getResolvedStaticResources(),
+      gameEnded: !!this.getState().ctx.status.gameEnded,
+      validationMode: "preflight",
+    });
   }
 
   private getCachedEligibleChallengeAttackers(playerId: string): CardInstanceId[] {
@@ -1903,14 +2013,14 @@ export abstract class LorcanaEngineBase {
       return null;
     }
 
-    const previewContext = buildValidationContext(
-      this.getState() as LorcanaMatchState,
-      String(actorId),
-      moveInput,
-      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
-      this.getResolvedStaticResources(),
-      this.hasGameEnded(),
-    );
+    const previewContext = buildValidationContext({
+      state: this.getState() as LorcanaMatchState,
+      playerId: String(actorId),
+      input: moveInput,
+      config: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      staticResources: this.getResolvedStaticResources(),
+      gameEnded: this.hasGameEnded(),
+    });
     const result = computeChallengeDamageResult(
       previewContext as unknown as Parameters<typeof computeChallengeDamageResult>[0],
       attackerId,
@@ -1931,6 +2041,8 @@ export abstract class LorcanaEngineBase {
       defenderDamageDealt: result.defenderToAttackerDamage,
       attackerWouldBeBanished: result.attackerLethal,
       defenderWouldBeBanished: result.defenderLethal,
+      attackerDamageIsReduced: result.attackerDamageIsReduced,
+      defenderDamageIsReduced: result.defenderDamageIsReduced,
     };
   }
 
@@ -2335,6 +2447,9 @@ export abstract class LorcanaEngineBase {
     if (typeof opts.resolveOptional === "boolean") {
       params.resolveOptional = opts.resolveOptional;
     }
+    if (typeof opts.enterPlayExerted === "boolean") {
+      params.enterPlayExerted = opts.enterPlayExerted;
+    }
     if (resolvedDestinations) {
       params.destinations = resolvedDestinations;
     }
@@ -2579,8 +2694,12 @@ export abstract class LorcanaEngineBase {
       return true;
     }
 
-    // When using "standard" cost and the card is a song,
-    // also check if it can be played by singing (exerting a character).
+    // When using "standard" cost, also try alternate-cost play paths the UI offers:
+    //  - Songs: sung by exerting a character.
+    //  - Shift: played by paying the shift cost (often non-ink, e.g. Diablo - Devoted
+    //    Herald's "Discard an action card" cost). canPlayCard must return true for
+    //    these even when the player has no available ink, otherwise the simulator
+    //    hides the Play CTA — see daily digest 2026-05-08 reports #25/#27/#28/#29.
     if (cost === "standard") {
       const cardDef = this.getCardDefinitionByInstanceId(playableCardId) as LorcanaCard;
       if (isSongCard(cardDef)) {
@@ -2591,6 +2710,31 @@ export abstract class LorcanaEngineBase {
           songPlayOptions.singTogetherOption !== null
         ) {
           return true;
+        }
+      }
+
+      if (hasShift(cardDef)) {
+        const playerId = this.getScopedPlayerId() ?? String(this.getActivePlayer() ?? "");
+        const shiftRules = getShiftRules(cardDef);
+        const normalizedPlayerId = normalizeBoardPlayerId(playerId, this.getBoard().playerOrder);
+        const playerBoard = normalizedPlayerId
+          ? this.getBoard().players[normalizedPlayerId]
+          : undefined;
+        if (shiftRules && playerBoard) {
+          const selectableCosts = this.getSelectableCostsForShift(playerId, cardDef);
+          if (this.hasSufficientSelectableCosts(selectableCosts)) {
+            const playCandidates = playerBoard.play.map((pid) => pid as CardInstanceId);
+            const shiftTargets = resolveShiftTargetCandidates(
+              shiftRules,
+              playCandidates,
+              (cid) => this.getCardDefinitionByInstanceId(cid) as LorcanaCard,
+            );
+            if (
+              shiftTargets.some((targetId) => this.canDiscoverShiftPlay(playableCardId, targetId))
+            ) {
+              return true;
+            }
+          }
         }
       }
     }
@@ -2864,15 +3008,15 @@ export abstract class LorcanaEngineBase {
       return undefined;
     }
 
-    const validationContext = buildValidationContext(
-      this.getState() as LorcanaMatchState,
-      String(playerId),
-      { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
-      this.getResolvedStaticResources(),
-      !!this.getState().ctx.status.gameEnded,
-      "preflight",
-    );
+    const validationContext = buildValidationContext({
+      state: this.getState() as LorcanaMatchState,
+      playerId: String(playerId),
+      input: { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+      config: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      staticResources: this.getResolvedStaticResources(),
+      gameEnded: !!this.getState().ctx.status.gameEnded,
+      validationMode: "preflight",
+    });
 
     const selectionContext = buildResolutionSelectionContext({
       origin: "pending-effect",
@@ -2965,15 +3109,15 @@ export abstract class LorcanaEngineBase {
       return false;
     }
 
-    const validationContext = buildValidationContext(
-      this.getState() as LorcanaMatchState,
-      String(ownerId),
-      { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
-      this.getResolvedStaticResources(),
-      !!this.getState().ctx.status.gameEnded,
-      "preflight",
-    );
+    const validationContext = buildValidationContext({
+      state: this.getState() as LorcanaMatchState,
+      playerId: String(ownerId),
+      input: { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+      config: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      staticResources: this.getResolvedStaticResources(),
+      gameEnded: !!this.getState().ctx.status.gameEnded,
+      validationMode: "preflight",
+    });
 
     const targetAnalysis = analyzeEffectTargets(
       actionAbility.effect,
@@ -3410,6 +3554,9 @@ export abstract class LorcanaEngineBase {
     if (typeof opts.resolveOptional === "boolean") {
       params.resolveOptional = opts.resolveOptional;
     }
+    if (typeof opts.enterPlayExerted === "boolean") {
+      params.enterPlayExerted = opts.enterPlayExerted;
+    }
     if (Array.isArray(opts.destinations)) {
       params.destinations = resolvedDestinations ?? [];
     }
@@ -3560,6 +3707,9 @@ export abstract class LorcanaEngineBase {
       ...(resolvedOpts?.resolveOptional !== undefined
         ? { resolveOptional: resolvedOpts.resolveOptional }
         : {}),
+      ...(resolvedOpts?.enterPlayExerted !== undefined
+        ? { enterPlayExerted: resolvedOpts.enterPlayExerted }
+        : {}),
       ...(resolvedOpts?.choiceIndex !== undefined ? { choiceIndex: resolvedOpts.choiceIndex } : {}),
       ...(resolvedDestinations !== undefined ? { destinations: resolvedDestinations } : {}),
       ...(resolvedOpts?.preventAutoResolveTriggeredEffects !== undefined
@@ -3567,12 +3717,7 @@ export abstract class LorcanaEngineBase {
             preventAutoResolveTriggeredEffects: resolvedOpts.preventAutoResolveTriggeredEffects,
           }
         : {}),
-      eventSnapshot: {
-        ...resolvedOpts?.eventSnapshot,
-        autoExertBodyguardOnNestedPlay:
-          resolvedOpts?.resolveOptional === true ||
-          resolvedOpts?.eventSnapshot?.autoExertBodyguardOnNestedPlay === true,
-      },
+      ...(resolvedOpts?.eventSnapshot ? { eventSnapshot: resolvedOpts.eventSnapshot } : {}),
     };
 
     const result = this.playCardByInstance(
@@ -4580,15 +4725,15 @@ export abstract class LorcanaEngineBase {
       return null;
     }
 
-    const validationContext = buildValidationContext(
-      this.getState() as LorcanaMatchState,
-      String(clientPlayerId),
-      { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
-      this.getResolvedStaticResources(),
-      !!this.getState().ctx.status.gameEnded,
-      "preflight",
-    );
+    const validationContext = buildValidationContext({
+      state: this.getState() as LorcanaMatchState,
+      playerId: String(clientPlayerId),
+      input: { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+      config: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      staticResources: this.getResolvedStaticResources(),
+      gameEnded: !!this.getState().ctx.status.gameEnded,
+      validationMode: "preflight",
+    });
 
     const analysis = analyzeEffectTargets(
       bagEffect.payload as Effect,
@@ -4616,15 +4761,15 @@ export abstract class LorcanaEngineBase {
       return null;
     }
 
-    const validationContext = buildValidationContext(
-      this.getState() as LorcanaMatchState,
-      String(clientPlayerId),
-      { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-      lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
-      this.getResolvedStaticResources(),
-      !!this.getState().ctx.status.gameEnded,
-      "preflight",
-    );
+    const validationContext = buildValidationContext({
+      state: this.getState() as LorcanaMatchState,
+      playerId: String(clientPlayerId),
+      input: { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+      config: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+      staticResources: this.getResolvedStaticResources(),
+      gameEnded: !!this.getState().ctx.status.gameEnded,
+      validationMode: "preflight",
+    });
 
     const definition = this.getCardDefinitionByInstanceId(cardId);
     if (!definition) {

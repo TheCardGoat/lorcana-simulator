@@ -1,7 +1,8 @@
 import { resolveLorcanaDeckListText } from "@tcg/lorcana-cards";
-import { getGameServerOrigin } from "$lib/config/public-url-config.js";
+import { getApiOrigin } from "$lib/config/public-url-config.js";
 import { requestJson } from "$lib/data/transport/http-client.js";
 import type { PracticeMatchCreationResponse } from "./types.js";
+import { getServerApiOrigin } from "@/server/fetch-with-cf";
 
 export interface HistoricDeckEntry {
   cardPublicId: string;
@@ -17,8 +18,9 @@ interface CreatePracticeMatchParams {
 export async function createPracticeMatch(
   params: CreatePracticeMatchParams,
 ): Promise<PracticeMatchCreationResponse> {
+  const generalApi = getServerApiOrigin(getApiOrigin());
   return requestJson<PracticeMatchCreationResponse>(
-    `${getGameServerOrigin()}/v1/play/practice/`,
+    `${generalApi}/v1/games/lorcana/play/practice/`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

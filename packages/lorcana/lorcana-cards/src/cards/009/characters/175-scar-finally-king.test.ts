@@ -235,6 +235,53 @@ describe("Scar - Finally King", () => {
       expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(0);
     });
 
+    it("can be resolved when Scar is exerted at end of turn with no ally in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scarFinallyKing, exerted: true }],
+          deck: 10,
+        },
+        { deck: 5 },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(scarFinallyKing, {
+          resolveOptional: false,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(10);
+      expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+      expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(0);
+    });
+
+    it("accepting the optional with no ally in play resolves to no-op", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [{ card: scarFinallyKing, exerted: true }],
+          deck: 10,
+        },
+        { deck: 5 },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(scarFinallyKing, {
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getZonesCardCount().deck).toBe(10);
+      expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
+      expect(testEngine.asPlayerOne().getZonesCardCount().discard).toBe(0);
+    });
+
     it("regression: presents the optional trigger when Scar is exerted at end of turn", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
