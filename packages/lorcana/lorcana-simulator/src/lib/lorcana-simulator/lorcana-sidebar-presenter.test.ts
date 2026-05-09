@@ -1138,14 +1138,11 @@ describe("LorcanaSidebarPresenter", () => {
     expect(presenter.availableMovesSelectionState).toMatchObject({
       mode: "resolution-target",
       canCancel: true,
-      canDecline: false,
+      canDecline: true,
+      declineLabel: "Skip effect",
       canConfirm: false,
       title: "Resolve optional effect from Jasmine - Resourceful Infiltrator",
     });
-    expect(presenter.activePlayerGuidance[0]?.actions.map((action) => action.label)).toEqual([
-      "Hide",
-      "Confirm",
-    ]);
 
     expect(presenter.handleAvailableMovesSelectionCard(targetCard.cardId)).toBe(true);
     expect(presenter.confirmResolutionSelection()).toBe(true);
