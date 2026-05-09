@@ -76,11 +76,11 @@ describe("automated match setup actions", () => {
     expect(navigate).toHaveBeenCalledWith("/sandbox/simulator/ai-match/viewer");
   });
 
-  it("blocks simulate when validation fails", () => {
+  it("blocks simulate when validation fails", async () => {
     const config = createConfig();
     config.playerOneDeckText = "1 Definitely Not A Real Lorcana Card";
 
-    const result = prepareAutomatedMatchSimulation(config);
+    const result = await prepareAutomatedMatchSimulation(config);
 
     expect(result.nextConfig).toBeUndefined();
     expect(result.errors.playerOneDeckText).toMatch(/unknown card name/i);

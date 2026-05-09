@@ -38,20 +38,7 @@ export async function serverFetch(url: string, init?: RequestInit): Promise<Resp
     headers.set("X-Internal-Token", internalToken);
   }
 
-  console.info("[server-fetch] {*}", {
-    url,
-    method: init?.method ?? "GET",
-    hasCfToken: !!(clientId && clientSecret),
-    hasInternalToken: !!internalToken,
-    hasApiKey: headers.has("X-API-Key"),
-  });
-
   const response = await fetch(url, { ...init, headers });
-
-  console.info("[server-fetch] response {*}", {
-    url,
-    status: response.status,
-  });
 
   return response;
 }

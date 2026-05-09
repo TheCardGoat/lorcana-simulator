@@ -28,6 +28,8 @@ import type {
   LorcanaProjectedPlayerBoard,
 } from "../types";
 import { buildResolutionSelectionContext } from "../runtime-moves/resolution/action-effects/selection-context";
+import { getLegalOrOptionIndices } from "../runtime-moves/resolution/action-effects/composed-effect-resolver";
+import type { ActionResolutionInput } from "../runtime-moves/resolution/action-effects/types";
 import { getActivePlayFromUnderPermissions } from "../runtime-moves/effects/play-from-under-permissions";
 import type { ResolutionSelectionRuntimeContext } from "../runtime-moves/resolution/action-effects/selection-context";
 import {
@@ -45,6 +47,12 @@ import { buildZoneRegistry } from "../core/runtime/zone-registry";
 import { lorcanaRuntimeZones } from "../zones";
 
 export type LorcanaBoardProjection = EngineBoardProjection;
+
+const EMPTY_QUERY_API = {
+  getActionIntents: () => [],
+  getLegalActions: () => [],
+  explainIllegal: () => undefined,
+};
 
 function resolveTurnPlayer(state: LorcanaMatchState): PlayerId | null {
   return resolveTurnOwnerId(state.ctx, state.G) ?? null;
@@ -95,6 +103,9 @@ function createSelectionRuntimeContext(
       ? (staticResources.cards.get(defId) as LorcanaCardDefinition | undefined)
       : undefined;
   };
+  // Projection paths run outside move execution, so `state` is the raw
+  // projection state rather than a `MoveRegistryCtx`. Build directly — the
+  // cached registry would require a `framework.state` snapshot we don't have.
   const selectionRegistry = buildStaticEffectRegistry(state, selectionGetDefn);
   const rawCards = createCardQueryAPIForState(
     state,
@@ -212,6 +223,7 @@ function buildVisibleCard(args: {
     hasEvasive: runtimeCard.hasEvasive,
     hasQuestRestriction: runtimeCard.hasQuestRestriction,
     fullName: runtimeCard.fullName,
+    cardType: runtimeCard.definition.cardType,
     keywords: runtimeCard.keywords,
     keywordValues: runtimeCard.keywordValues,
     classifications: runtimeCard.classifications,
@@ -748,6 +760,8 @@ export function projectLorcanaBoardView(
     },
     G: state.G,
   };
+  // Same projection-path rationale as the earlier site in this file: no
+  // `MoveRegistryCtx` available here, so build directly.
   const registry = buildStaticEffectRegistry(derivedStateCtx, getDefinitionByInstanceId);
 
   const rawCards = createCardQueryAPIForState(
@@ -848,6 +862,21 @@ export function projectLorcanaBoardView(
         }
       : undefined,
     bagEffects: (state.G.triggeredAbilities?.bag?.items ?? []).map((entry) => {
+      const effectRecord = entry.effect as unknown as Record<string, unknown> | null;
+      const legalChoiceIndices =
+        effectRecord?.type === "or"
+          ? getLegalOrOptionIndices(
+              {
+                ...selectionRuntimeContext,
+                G: state.G,
+                playerId: entry.controllerId,
+                query: EMPTY_QUERY_API,
+              },
+              entry.cardPlayed,
+              entry.effect as never,
+              entry.resolutionInput as ActionResolutionInput,
+            )
+          : undefined;
       const selectionContext = buildResolutionSelectionContext({
         origin: "bag",
         requestId: entry.id,
@@ -858,6 +887,7 @@ export function projectLorcanaBoardView(
         condition: entry.condition,
         resolutionInput: entry.resolutionInput,
         ctx: selectionRuntimeContext,
+        legalChoiceIndices,
       });
       return {
         id: entry.id,

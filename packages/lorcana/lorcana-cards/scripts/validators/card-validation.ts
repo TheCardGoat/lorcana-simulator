@@ -145,6 +145,33 @@ export function validateFullNameCanonicalId(
 }
 
 /**
+ * Validate that existing TypeScript card source files have IDs consistent with
+ * the newly-generated canonical cards. Catches divergence when canonical-cards.json
+ * is updated without regenerating the TypeScript files.
+ *
+ * @param existingCardFiles Map of printingId → shortId as read from the existing
+ *   TypeScript source (e.g. from parsing `id: "xyz"` in each .ts card file).
+ * @param generatedCanonicalCards The canonical cards just produced by this run.
+ * Returns array of error messages (empty if valid).
+ */
+export function validateSourceIdsMatchCanonical(
+  existingCardFiles: Record<string, string>,
+  generatedCanonicalCards: Record<string, CanonicalCard>,
+): string[] {
+  const errors: string[] = [];
+  for (const [printingId, sourceId] of Object.entries(existingCardFiles)) {
+    const canonicalCard = generatedCanonicalCards[printingId];
+    if (!canonicalCard) continue; // new card not yet in source — skip
+    if (canonicalCard.id !== sourceId) {
+      errors.push(
+        `Source file for ${printingId} (${displayName(canonicalCard)}) has id "${sourceId}" but canonical-cards.json requires "${canonicalCard.id}". Re-run generate-cards.ts to sync.`,
+      );
+    }
+  }
+  return errors;
+}
+
+/**
  * Validate that every card has a unique id (no two cards share the same id).
  * Each printing must have a distinct id (e.g. set1-104 vs set1-211-enchanted).
  * Returns array of error messages (empty if valid).

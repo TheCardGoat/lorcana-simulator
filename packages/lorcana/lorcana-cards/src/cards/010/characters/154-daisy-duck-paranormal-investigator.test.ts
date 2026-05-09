@@ -7,6 +7,14 @@ import {
 } from "@tcg/lorcana-engine/testing";
 import { daisyDuckParanormalInvestigator } from "./154-daisy-duck-paranormal-investigator";
 
+const allyCharacter = createMockCharacter({
+  id: "daisy-support-ally",
+  name: "Support Ally",
+  cost: 2,
+  strength: 1,
+  willpower: 3,
+});
+
 const opponentInkwellCard = createMockCharacter({
   id: "daisy-paranormal-investigator-opponent-ink-card",
   name: "Opponent Ink Card",
@@ -150,6 +158,32 @@ describe.skip("Daisy Duck - Paranormal Investigator", () => {
         exerted: true,
         zone: "inkwell",
       }),
+    );
+  });
+});
+
+describe("Daisy Duck - Paranormal Investigator — Support", () => {
+  it("gives exactly +4 strength (Daisy's base strength) to chosen ally when questing", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: daisyDuckParanormalInvestigator, isDrying: false }, allyCharacter],
+        deck: 1,
+      },
+      { deck: 1 },
+    );
+
+    expect(testEngine.asPlayerOne().quest(daisyDuckParanormalInvestigator)).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(daisyDuckParanormalInvestigator, {
+        resolveOptional: true,
+        targets: [allyCharacter],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardStrength(allyCharacter)).toBe(
+      allyCharacter.strength + daisyDuckParanormalInvestigator.strength,
     );
   });
 });

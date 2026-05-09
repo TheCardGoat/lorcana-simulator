@@ -62,10 +62,23 @@ export const cinderellaDreamComeTrue: CharacterCard = {
               type: "put-into-inkwell",
               exerted: false,
             },
+            // Printed text: "...put a card from your hand into your inkwell
+            // facedown TO draw a card." The draw is the consequence of the
+            // put — when the put fails (e.g. empty hand), the draw must not
+            // happen. Mirrors the pattern used by Edna Mode, Fashion Designer
+            // (012/#054 NO CAPES!) and the engine's `if-you-do` conditional
+            // gate. Without this gate, accepting the optional with an empty
+            // hand still drew a card (player report 2026-05-06).
             {
-              amount: 1,
-              target: "CONTROLLER",
-              type: "draw",
+              type: "conditional",
+              condition: {
+                type: "if-you-do",
+              },
+              then: {
+                amount: 1,
+                target: "CONTROLLER",
+                type: "draw",
+              },
             },
           ],
         },

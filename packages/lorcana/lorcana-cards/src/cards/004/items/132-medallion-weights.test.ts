@@ -13,7 +13,7 @@ const trainedAttacker = createMockCharacter({
   name: "Trained Attacker",
   cost: 2,
   strength: 1,
-  willpower: 4,
+  willpower: 6,
 });
 
 const challengeDummy = createMockCharacter({
@@ -23,6 +23,8 @@ const challengeDummy = createMockCharacter({
   strength: 1,
   willpower: 3,
 });
+
+const medallionWeights2 = { ...medallionWeights, id: "Tcn-2" as typeof medallionWeights.id };
 
 describe("Medallion Weights", () => {
   it("gives the chosen character +2 strength and lets you draw when they challenge another character this turn", () => {
@@ -57,5 +59,38 @@ describe("Medallion Weights", () => {
 
     expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(1);
     expect(testEngine.asPlayerTwo().getCardZone(challengeDummy)).toBe("discard");
+  });
+
+  it("stacks: two Medallion Weights activations on the same character each fire a separate draw trigger", () => {
+    // Regression for BUG-008: activating two Medallion Weights on the same character
+    // should register two independent draw-on-challenge triggers, not just one.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        inkwell: 4,
+        deck: 2,
+        play: [medallionWeights, medallionWeights2, trainedAttacker],
+      },
+      {
+        deck: 2,
+        play: [{ card: challengeDummy, exerted: true, isDrying: false }],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(medallionWeights, { targets: [trainedAttacker] }),
+    ).toBeSuccessfulCommand();
+    expect(
+      testEngine.asPlayerOne().activateAbility(medallionWeights2, { targets: [trainedAttacker] }),
+    ).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().challenge(trainedAttacker, challengeDummy),
+    ).toBeSuccessfulCommand();
+
+    // Both Medallion Weights fired: expect 2 bag effects queued
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
+
+    testEngine.asPlayerOne().resolveAllBagEffects();
+    expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(2);
   });
 });

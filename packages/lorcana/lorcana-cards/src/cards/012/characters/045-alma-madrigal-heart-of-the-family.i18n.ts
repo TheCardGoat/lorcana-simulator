@@ -6,9 +6,9 @@ export const almaMadrigalHeartOfTheFamilyI18n: Record<Languages, I18nProperties>
     version: "Heart of the Family",
     text: [
       {
-        title: "FIND A WAY",
+        title: "FIND",
         description:
-          "Whenever this character quests, move up to 1 damage from chosen character of yours to chosen opposing character.",
+          "A WAY Whenever this character quests, move up to 1 damage from chosen character of yours to chosen opposing character.",
       },
     ],
   },

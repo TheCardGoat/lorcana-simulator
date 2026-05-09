@@ -100,12 +100,7 @@ describe("Ariel - Ethereal Voice (Iconic)", () => {
     });
 
     expect(testEngine.asPlayerOne().playCard(firstSong)).toBeSuccessfulCommand();
-    // Per CRD 6.2.7: ability IS enqueued; condition (card under) checked at resolution
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine
-        .asPlayerOne()
-        .resolvePendingByCard(arielEtherealVoiceIconic, { resolveOptional: true }),
-    ).toBeSuccessfulCommand();
+    // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
   });
 });

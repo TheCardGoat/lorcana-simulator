@@ -36,8 +36,16 @@ export const bullseyeLoyalHorse: CharacterCard = {
       condition: {
         type: "or",
         conditions: [
-          { type: "has-named-character", controller: "you", name: "Woody" },
-          { type: "has-named-character", controller: "you", name: "Jessie" },
+          {
+            type: "has-named-character",
+            controller: "you",
+            name: "Woody",
+          },
+          {
+            type: "has-named-character",
+            controller: "you",
+            name: "Jessie",
+          },
         ],
       },
       effect: {

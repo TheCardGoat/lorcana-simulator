@@ -97,13 +97,8 @@ describe("Treasure Guardian - Foreboding Sentry", () => {
         testEngine.asPlayerOne().playCard(treasureGuardianForebodingSentry),
       ).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(treasureGuardianForebodingSentry, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne().getZonesCardCount().hand).toBe(0);
     });
   });

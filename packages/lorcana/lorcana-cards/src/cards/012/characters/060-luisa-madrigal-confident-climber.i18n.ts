@@ -11,7 +11,7 @@ export const luisaMadrigalConfidentClimberI18n: Record<Languages, I18nProperties
       {
         title: "I CAN TAKE IT 1",
         description:
-          "{E} — Move up to 1 damage from chosen character of yours to this character. Then, if this character has 3 or more damage, move all damage from this character to chosen opposing character.",
+          "{I} — Move up to 1 damage from chosen character of yours to this character. Then, if this character has 3 or more damage, move all damage from this character to chosen opposing character.",
       },
     ],
   },

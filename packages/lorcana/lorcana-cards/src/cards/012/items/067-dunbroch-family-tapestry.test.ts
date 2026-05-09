@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  PLAYER_TWO,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
 import { dunbrochFamilyTapestry } from "./067-dunbroch-family-tapestry";
 
 const playerOneDiscardedCharacter = createMockCharacter({
@@ -92,5 +96,50 @@ describe("DunBroch Family Tapestry", () => {
     expect(testEngine.asPlayerTwo().getZonesCardCount("player_two").deck).toBe(
       playerTwoInitialDeck,
     );
+  });
+
+  describe("release notes ruling", () => {
+    it("an opponent with no character cards in discard does NOT shuffle their deck (top-card order is preserved)", () => {
+      // Q&A: If a player has no character cards in their discard, the
+      // shuffle does not happen for them. Verify the top card of the
+      // opponent's deck is unchanged after MEND THE BOND resolves.
+      const opponentTopCard = createMockCharacter({
+        id: "dunbroch-release-opp-top",
+        name: "Opp Top",
+        cost: 1,
+      });
+      const opponentDeckCardA = createMockCharacter({
+        id: "dunbroch-release-opp-a",
+        name: "Opp A",
+        cost: 1,
+      });
+      const opponentDeckCardB = createMockCharacter({
+        id: "dunbroch-release-opp-b",
+        name: "Opp B",
+        cost: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [dunbrochFamilyTapestry],
+          deck: 3,
+        },
+        {
+          // Opponent's discard is empty.
+          deck: [opponentTopCard, opponentDeckCardA, opponentDeckCardB],
+        },
+      );
+
+      const opponentTopBefore = testEngine.getCardDefinitionIdsInZone("deck", PLAYER_TWO)[0];
+      expect(opponentTopBefore).toBe(opponentTopCard.id);
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(dunbrochFamilyTapestry),
+      ).toBeSuccessfulCommand();
+
+      // Opponent's top card unchanged → no shuffle happened for them.
+      const opponentTopAfter = testEngine.getCardDefinitionIdsInZone("deck", PLAYER_TWO)[0];
+      expect(opponentTopAfter).toBe(opponentTopCard.id);
+    });
   });
 });

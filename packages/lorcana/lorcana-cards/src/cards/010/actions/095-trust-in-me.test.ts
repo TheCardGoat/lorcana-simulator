@@ -6,6 +6,34 @@ import { balooFriendAndGuardian, duckworthGhostButler } from "../characters";
 import { trustInMe } from "./095-trust-in-me";
 
 describe("Trust In Me", () => {
+  it("exposes derived mode labels when optionLabels are not authored", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [trustInMe],
+        inkwell: trustInMe.cost,
+        play: [balooFriendAndGuardian],
+      },
+      {
+        play: [duckworthGhostButler],
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(trustInMe).success).toBe(true);
+
+    const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
+    expect(pendingEffects).toHaveLength(1);
+    const selectionContext = pendingEffects[0]?.selectionContext;
+    expect(selectionContext?.kind).toBe("choice-selection");
+    if (selectionContext?.kind !== "choice-selection") {
+      throw new Error("expected choice-selection context");
+    }
+
+    expect(selectionContext.options.map((option) => option.label)).toEqual([
+      "Chosen character gets -1 lore.",
+      "Discard 2 cards.",
+    ]);
+  });
+
   it("gives each opposing character -1 lore until the start of your next turn", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {

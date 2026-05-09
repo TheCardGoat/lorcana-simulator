@@ -9,6 +9,10 @@ declare global {
     interface Locals {
       user: AuthUser | null;
       session: AuthSession | null;
+      /** ISO 3166-1 alpha-2 country code from `cf-ipcountry`, or null when unknown. */
+      country: string | null;
+      /** True when the visitor's country falls under EU/EEA/UK GDPR. */
+      gdprStrict: boolean;
     }
     // interface PageData {}
     // interface PageState {}

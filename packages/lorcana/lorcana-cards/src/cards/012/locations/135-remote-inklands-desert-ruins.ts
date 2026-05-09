@@ -22,7 +22,7 @@ export const remoteInklandsDesertRuins: LocationCard = {
   },
   text: [
     {
-      title: "ERODING WINDS",
+      title: "ERODING WINGS",
       description: "At the start of your turn, put the top card of your deck into your discard.",
     },
     {

@@ -48,7 +48,6 @@ export interface AbilityActivatedWithDiscardCostLogValues extends AbilityActivat
 export interface CardInkedLogValues {
   playerId: PlayerId;
   cardId: CardInstanceId;
-  cardName?: string;
 }
 
 export interface ScryCountLogValues {
@@ -60,6 +59,17 @@ export interface ScryDetailLogValues {
   playerId: PlayerId;
   count: number;
   lookedAt: CardInstanceId[];
+}
+
+export interface LookAtInkwellLogValues {
+  playerId: PlayerId;
+  count: number;
+}
+
+export interface LookAtInkwellDetailLogValues {
+  playerId: PlayerId;
+  count: number;
+  cardIds: CardInstanceId[];
 }
 
 export interface PlayCardLogValues {
@@ -169,7 +179,9 @@ export interface ResolveDiscardChoiceLogValues {
   targets: LogTargetId[];
 }
 
-export interface ResolveTargetSelectionLogValues extends ResolveDiscardChoiceLogValues {}
+export interface ResolveTargetSelectionLogValues extends ResolveDiscardChoiceLogValues {
+  effectType?: string;
+}
 
 export interface ResolveChoiceSelectionLogValues {
   playerId: PlayerId;
@@ -180,6 +192,14 @@ export interface ResolveChoiceSelectionLogValues {
 export interface ResolveOptionalSelectionLogValues {
   playerId: PlayerId;
   sourceCardId: CardInstanceId;
+}
+
+export interface ResolveOptionalSelectionTargetsLogValues extends ResolveOptionalSelectionLogValues {
+  targets: LogTargetId[];
+}
+
+export interface ResolveOptionalSelectionTargetsNamedLogValues extends ResolveOptionalSelectionTargetsLogValues {
+  abilityName: string;
 }
 
 export interface ResolveNameCardSelectionLogValues {
@@ -196,8 +216,8 @@ export interface ResolveScrySelectionLogValues {
 export interface ScryDestinationEntry {
   zone: string;
   cardIds: CardInstanceId[];
-  cardNames: string[];
-  inkTypes?: (string[] | undefined)[];
+  /** When true, the cards in this destination were revealed publicly to all players. */
+  revealed?: boolean;
 }
 
 export interface ResolveScrySelectionDetailLogValues extends ResolveScrySelectionLogValues {
@@ -245,6 +265,19 @@ export interface CombatDamageLogValues {
 export interface EffectDamageLogValues {
   playerId: PlayerId;
   sourceId: CardInstanceId;
+  targetId: CardInstanceId;
+  amount: number;
+}
+
+export interface MovedDamageLogValues {
+  playerId: PlayerId;
+  sourceId: CardInstanceId;
+  targetId: CardInstanceId;
+  amount: number;
+}
+
+export interface PreventedDamageLogValues {
+  playerId: PlayerId;
   targetId: CardInstanceId;
   amount: number;
 }
@@ -301,12 +334,15 @@ export interface CardsMilledLogValues {
   amount: number;
 }
 
+export interface CardsPutOnBottomLogValues {
+  playerId: PlayerId;
+  cardIds: CardInstanceId[];
+}
+
 export interface PlayCardShiftLogValues {
   playerId: PlayerId;
   cardId: CardInstanceId;
   shiftTargetId: CardInstanceId;
-  /** Captured at shift resolution so logs stay readable after the target moves to limbo (hidden projection). */
-  shiftTargetName?: string;
 }
 
 export interface OutcomeCardInkedLogValues {
@@ -337,6 +373,8 @@ export interface LorcanaLogMessageMap {
   "lorcana.card.inked": CardInkedLogValues;
   "lorcana.scry.count": ScryCountLogValues;
   "lorcana.scry.detail": ScryDetailLogValues;
+  "lorcana.effect.lookAtInkwell": LookAtInkwellLogValues;
+  "lorcana.effect.lookAtInkwell.detail": LookAtInkwellDetailLogValues;
   "lorcana.move.playCard": PlayCardLogValues;
   "lorcana.move.quest": QuestLogValues;
   "lorcana.move.questWithAll": QuestWithAllLogValues;
@@ -363,6 +401,8 @@ export interface LorcanaLogMessageMap {
   "lorcana.effect.resolve.targetSelection": ResolveTargetSelectionLogValues;
   "lorcana.effect.resolve.choiceSelection": ResolveChoiceSelectionLogValues;
   "lorcana.effect.resolve.optionalSelection.accepted": ResolveOptionalSelectionLogValues;
+  "lorcana.effect.resolve.optionalSelection.accepted.targets": ResolveOptionalSelectionTargetsLogValues;
+  "lorcana.effect.resolve.optionalSelection.accepted.targets.named": ResolveOptionalSelectionTargetsNamedLogValues;
   "lorcana.effect.resolve.optionalSelection.rejected": ResolveOptionalSelectionLogValues;
   "lorcana.effect.resolve.nameCardSelection": ResolveNameCardSelectionLogValues;
   "lorcana.effect.resolve.scrySelection": ResolveScrySelectionLogValues;
@@ -372,6 +412,8 @@ export interface LorcanaLogMessageMap {
   "lorcana.effect.resolve.choiceSelection.withReveal": ResolveChoiceWithRevealLogValues;
   "lorcana.outcome.combatDamage": CombatDamageLogValues;
   "lorcana.outcome.effectDamage": EffectDamageLogValues;
+  "lorcana.outcome.damageMoved": MovedDamageLogValues;
+  "lorcana.outcome.damagePrevented": PreventedDamageLogValues;
   "lorcana.outcome.cardBanished": CardBanishedLogValues;
   "lorcana.outcome.cardsDrawn": CardsDrawnLogValues;
   "lorcana.outcome.cardsDrawn.detail": CardsDrawnDetailLogValues;
@@ -382,6 +424,7 @@ export interface LorcanaLogMessageMap {
   "lorcana.outcome.cardExerted": OutcomeCardExertedLogValues;
   "lorcana.outcome.cardReadied": OutcomeCardReadiedLogValues;
   "lorcana.outcome.cardsMilled": CardsMilledLogValues;
+  "lorcana.outcome.cardsPutOnBottom": CardsPutOnBottomLogValues;
   "lorcana.move.playCard.shift": PlayCardShiftLogValues;
   "lorcana.move.playCard.sing": PlayCardSingLogValues;
   "lorcana.outcome.cardInked": OutcomeCardInkedLogValues;
@@ -389,6 +432,68 @@ export interface LorcanaLogMessageMap {
 }
 
 export type LorcanaLogMessageKey = keyof LorcanaLogMessageMap & string;
+
+/**
+ * Subset of LorcanaLogMessageKey for entries that correspond to a direct player or system action
+ * and MUST produce a MoveLog. Every member is handled in move-log-factory.ts's
+ * convertProjectedEntry — TypeScript enforces exhaustiveness via the assertNever default there.
+ *
+ * Keys absent from this type are derived outcomes or private detail variants that are never the
+ * primary action entry (e.g. lorcana.outcome.*, lorcana.setup.done, *.detail overrides).
+ */
+export type ActionLogMessageKey =
+  | "lorcana.setup.firstPlayerChosen"
+  | "lorcana.setup.mulligan.count"
+  | "lorcana.ability.activated"
+  | "lorcana.ability.activated.named"
+  | "lorcana.ability.activated.named.discardCost"
+  | "lorcana.ability.activated.discardCost"
+  | "lorcana.card.inked"
+  | "lorcana.effect.lookAtInkwell"
+  | "lorcana.effect.lookAtInkwell.detail"
+  | "lorcana.move.playCard"
+  | "lorcana.move.playCard.shift"
+  | "lorcana.move.playCard.sing"
+  | "lorcana.move.quest"
+  | "lorcana.move.questWithAll"
+  | "lorcana.move.challenge"
+  | "lorcana.move.moveCharacterToLocation"
+  | "lorcana.move.passTurn"
+  | "lorcana.move.concede"
+  | "lorcana.move.forfeitGame"
+  | "lorcana.system.turnSkipped"
+  | "lorcana.system.playerDropped"
+  | "lorcana.bag.resolve.completed"
+  | "lorcana.bag.resolve.completed.named"
+  | "lorcana.bag.resolve.completed.targets"
+  | "lorcana.bag.resolve.completed.targets.named"
+  | "lorcana.bag.resolve.skipped"
+  | "lorcana.bag.resolve.skipped.named"
+  | "lorcana.bag.resolve.pending"
+  | "lorcana.bag.resolve.pending.named"
+  | "lorcana.bag.resolve.pending.named.targets"
+  | "lorcana.bag.resolve.cancelled"
+  | "lorcana.bag.resolve.cancelled.named"
+  | "lorcana.effect.cancelled"
+  | "lorcana.effect.resolve.discardChoice"
+  | "lorcana.effect.resolve.targetSelection"
+  | "lorcana.effect.resolve.choiceSelection"
+  | "lorcana.effect.resolve.choiceSelection.withReveal"
+  | "lorcana.effect.resolve.optionalSelection.accepted"
+  | "lorcana.effect.resolve.optionalSelection.accepted.targets"
+  | "lorcana.effect.resolve.optionalSelection.accepted.targets.named"
+  | "lorcana.effect.resolve.optionalSelection.rejected"
+  | "lorcana.effect.resolve.nameCardSelection"
+  | "lorcana.effect.resolve.scrySelection"
+  | "lorcana.effect.resolve.scrySelection.detail"
+  | "lorcana.effect.resolve.revealTopCard"
+  | "lorcana.effect.resolve.revealTopCard.autoBottom";
+
+// Compile-time assertion: every ActionLogMessageKey must be a valid LorcanaLogMessageKey.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type _ActionLogMessageKeySubsetCheck = ActionLogMessageKey extends LorcanaLogMessageKey
+  ? true
+  : never;
 
 export type LorcanaLogMessage<TKey extends LorcanaLogMessageKey = LorcanaLogMessageKey> =
   TKey extends LorcanaLogMessageKey
@@ -412,6 +517,8 @@ export const LORCANA_LOG_TRANSLATION_KEYS = {
   "lorcana.card.inked": "lorcana.card.inked",
   "lorcana.scry.count": "lorcana.scry.count",
   "lorcana.scry.detail": "lorcana.scry.detail",
+  "lorcana.effect.lookAtInkwell": "lorcana.effect.lookAtInkwell",
+  "lorcana.effect.lookAtInkwell.detail": "lorcana.effect.lookAtInkwell.detail",
   "lorcana.move.playCard": "lorcana.move.playCard",
   "lorcana.move.quest": "lorcana.move.quest",
   "lorcana.move.questWithAll": "lorcana.move.questWithAll",
@@ -439,6 +546,10 @@ export const LORCANA_LOG_TRANSLATION_KEYS = {
   "lorcana.effect.resolve.choiceSelection": "lorcana.effect.resolve.choiceSelection",
   "lorcana.effect.resolve.optionalSelection.accepted":
     "lorcana.effect.resolve.optionalSelection.accepted",
+  "lorcana.effect.resolve.optionalSelection.accepted.targets":
+    "lorcana.effect.resolve.optionalSelection.accepted.targets",
+  "lorcana.effect.resolve.optionalSelection.accepted.targets.named":
+    "lorcana.effect.resolve.optionalSelection.accepted.targets.named",
   "lorcana.effect.resolve.optionalSelection.rejected":
     "lorcana.effect.resolve.optionalSelection.rejected",
   "lorcana.effect.resolve.nameCardSelection": "lorcana.effect.resolve.nameCardSelection",
@@ -451,6 +562,8 @@ export const LORCANA_LOG_TRANSLATION_KEYS = {
     "lorcana.effect.resolve.choiceSelection.withReveal",
   "lorcana.outcome.combatDamage": "lorcana.outcome.combatDamage",
   "lorcana.outcome.effectDamage": "lorcana.outcome.effectDamage",
+  "lorcana.outcome.damageMoved": "lorcana.outcome.damageMoved",
+  "lorcana.outcome.damagePrevented": "lorcana.outcome.damagePrevented",
   "lorcana.outcome.cardBanished": "lorcana.outcome.cardBanished",
   "lorcana.outcome.cardsDrawn": "lorcana.outcome.cardsDrawn",
   "lorcana.outcome.cardsDrawn.detail": "lorcana.outcome.cardsDrawn.detail",
@@ -461,6 +574,7 @@ export const LORCANA_LOG_TRANSLATION_KEYS = {
   "lorcana.outcome.cardExerted": "lorcana.outcome.cardExerted",
   "lorcana.outcome.cardReadied": "lorcana.outcome.cardReadied",
   "lorcana.outcome.cardsMilled": "lorcana.outcome.cardsMilled",
+  "lorcana.outcome.cardsPutOnBottom": "lorcana.outcome.cardsPutOnBottom",
   "lorcana.move.playCard.shift": "lorcana.move.playCard.shift",
   "lorcana.move.playCard.sing": "lorcana.move.playCard.sing",
   "lorcana.outcome.cardInked": "lorcana.outcome.cardInked",
@@ -479,6 +593,8 @@ export const LORCANA_LOG_TRANSLATION_VALUE_KEYS = {
   "lorcana.card.inked": ["cardId"],
   "lorcana.scry.count": ["count"],
   "lorcana.scry.detail": ["count", "lookedAt"],
+  "lorcana.effect.lookAtInkwell": ["count"],
+  "lorcana.effect.lookAtInkwell.detail": ["count", "cardIds"],
   "lorcana.move.playCard": ["cardId"],
   "lorcana.move.quest": ["cardId", "loreGained"],
   "lorcana.move.questWithAll": ["count", "cardIds", "loreGained"],
@@ -505,6 +621,12 @@ export const LORCANA_LOG_TRANSLATION_VALUE_KEYS = {
   "lorcana.effect.resolve.targetSelection": ["sourceCardId", "targets"],
   "lorcana.effect.resolve.choiceSelection": ["sourceCardId", "choiceIndex"],
   "lorcana.effect.resolve.optionalSelection.accepted": ["sourceCardId"],
+  "lorcana.effect.resolve.optionalSelection.accepted.targets": ["sourceCardId", "targets"],
+  "lorcana.effect.resolve.optionalSelection.accepted.targets.named": [
+    "sourceCardId",
+    "abilityName",
+    "targets",
+  ],
   "lorcana.effect.resolve.optionalSelection.rejected": ["sourceCardId"],
   "lorcana.effect.resolve.nameCardSelection": ["sourceCardId", "namedCard"],
   "lorcana.effect.resolve.scrySelection": ["sourceCardId"],
@@ -518,6 +640,8 @@ export const LORCANA_LOG_TRANSLATION_VALUE_KEYS = {
   ],
   "lorcana.outcome.combatDamage": ["attackerId", "defenderId", "attackerDamage", "defenderDamage"],
   "lorcana.outcome.effectDamage": ["sourceId", "targetId", "amount"],
+  "lorcana.outcome.damageMoved": ["sourceId", "targetId", "amount"],
+  "lorcana.outcome.damagePrevented": ["targetId", "amount"],
   "lorcana.outcome.cardBanished": ["cardId"],
   "lorcana.outcome.cardsDrawn": ["amount"],
   "lorcana.outcome.cardsDrawn.detail": ["amount", "cardIds"],
@@ -528,6 +652,7 @@ export const LORCANA_LOG_TRANSLATION_VALUE_KEYS = {
   "lorcana.outcome.cardExerted": ["cardId"],
   "lorcana.outcome.cardReadied": ["cardId"],
   "lorcana.outcome.cardsMilled": ["amount"],
+  "lorcana.outcome.cardsPutOnBottom": ["cardIds"],
   "lorcana.move.playCard.shift": ["cardId", "shiftTargetId"],
   "lorcana.move.playCard.sing": ["cardId", "singerIds"],
   "lorcana.outcome.cardInked": ["cardId"],

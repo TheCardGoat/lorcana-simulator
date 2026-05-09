@@ -12,9 +12,14 @@
   import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
   import {ZONE_IMAGE_FORMATS} from "@/design-system/simulator/cards/card-image-format.js";
   import HotkeyCardBadge from "@/features/simulator/hotkeys/HotkeyCardBadge.svelte";
-  import { buildOrderedPlayZoneEntries } from "@/features/simulator/hotkeys/board-order.js";
-  import PlayZoneLocationEntry from "./PlayZoneLocationEntry.svelte";
+  import {
+    buildOrderedPlayZoneEntries,
+    type OrderedPlayZoneEntry,
+  } from "@/features/simulator/hotkeys/board-order.js";
+  import PlayZoneLocationCluster from "./PlayZoneLocationCluster.svelte";
   import PlayZoneCardBands from "./PlayZoneCardBands.svelte";
+  import ManualCorrectionMenu from "./ManualCorrectionMenu.svelte";
+  import ManualDamageControls from "./ManualDamageControls.svelte";
   import {
     createCardAnchorId,
     createZoneAnchorId,
@@ -27,24 +32,13 @@
   import {
     handlePlayZoneLocationEntryDirectSelection,
     isPlayZoneLocationEntryDirectSelectionMode,
+    isPlayZoneLocationEntryResolutionSelectionMode,
   } from "./play-zone-location-entry-interactions.js";
   import {
     createOptionalDroppable,
+    createOptionalDraggable,
     useLorcanaSimulatorDndContext,
   } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
-
-  interface PlayZoneAssociation {
-    clusterId: string;
-    role: "location" | "occupant";
-    clusterSize: number;
-    isClusterStart: boolean;
-    isClusterEnd: boolean;
-  }
-
-  interface PlayZoneEntry {
-    card: LorcanaCardSnapshot;
-    association?: PlayZoneAssociation;
-  }
 
   interface BoardZoneProps {
     layoutMode?: SimulatorLayoutMode;
@@ -79,7 +73,9 @@
       .filter((card) => !card.cardType || !excludeCardTypes.includes(card.cardType))
       .filter((card) => !inFlightCardIds.has(card.cardId)),
   );
-  const playEntries = $derived.by<PlayZoneEntry[]>(() => buildOrderedPlayZoneEntries(cards, seat));
+  const playEntries = $derived.by<OrderedPlayZoneEntry[]>(() =>
+    buildOrderedPlayZoneEntries(cards, seat),
+  );
   const isMasked = $derived(board.isZoneMasked(playerSide, zoneId));
   const challengeMode = $derived(
     sidebar.actionSelectionSession?.categoryId === "challenge" &&
@@ -98,8 +94,19 @@
     isPlayZoneLocationEntryDirectSelectionMode(sidebar.actionSelectionSession),
   );
 
-  function handleDirectCardSelection(selectedCard: LorcanaCardSnapshot, event: MouseEvent): void {
-    handlePlayZoneLocationEntryDirectSelection({
+  function handleDirectCardSelection(selectedCard: LorcanaCardSnapshot, event: MouseEvent): boolean {
+    if (
+      isPlayZoneLocationEntryResolutionSelectionMode(
+        sidebar.resolutionSelectionSession,
+        selectedCard.cardId,
+      )
+    ) {
+      event.stopPropagation();
+      sidebar.handleAvailableMovesSelectionCard(selectedCard.cardId);
+      return true;
+    }
+
+    return handlePlayZoneLocationEntryDirectSelection({
       card: selectedCard,
       event,
       directSelectionMode: isDirectSelectionMode,
@@ -152,53 +159,71 @@
       {:else}
         <div class="cards-content">
           <div class="cards-grid">
-            {#each playEntries as entry (entry.card.cardId)}
-              {#if entry.association}
-                <PlayZoneLocationEntry
-                  card={entry.card}
-                  association={entry.association}
+            {#each playEntries as entry (entry.kind === "card" ? entry.card.cardId : entry.location.cardId)}
+              {#if entry.kind === "locationCluster"}
+                <PlayZoneLocationCluster
+                  location={entry.location}
+                  occupants={entry.occupants}
                   {seat}
                   {playerSide}
                   {zoneId}
                   {isMasked}
-                  hotkey={hotkeyBindings.get(entry.card.cardId)}
+                  {hotkeyBindings}
                 />
               {:else}
+                {@const actionState = sidebar.getActionSessionCardState(entry.card.cardId)}
+                {@const draggable = createOptionalDraggable({ card: entry.card })}
+                {@const ownCharDropState = dnd.getOwnCharacterDropState(entry.card.cardId)}
                 <div
                   class="card-slot"
+                  class:card-slot--dragging={dnd.draggedCardId === entry.card.cardId}
+                  class:card-slot--shift-target={ownCharDropState !== "none" && dnd.isShiftDragActive}
+                  class:card-slot--shift-target-hovered={ownCharDropState === "valid" && dnd.isShiftDragActive}
+                  class:card-slot--sing-target={ownCharDropState !== "none" && dnd.isSingDragActive}
+                  class:card-slot--sing-target-hovered={ownCharDropState === "valid" && dnd.isSingDragActive}
                   data-card-id={entry.card.cardId}
                   data-player-seat={seat}
                   data-player-side={playerSide}
                   data-player-id={entry.card.ownerId}
                   data-zone-id={entry.card.zoneId}
                   data-board-anchor-id={createCardAnchorId(playerSide, zoneId, entry.card.cardId)}
+                  {@attach draggable.attach}
                 >
+                  {#if ownCharDropState !== "none" && (dnd.isShiftDragActive || dnd.isSingDragActive)}
+                    <div class="card-slot__drop-hint" aria-hidden="true">
+                      {dnd.isShiftDragActive ? m["sim.dnd.shift.dropHint"]({}) : m["sim.dnd.sing.dropHint"]({})}
+                    </div>
+                  {/if}
                   {#if hotkeyBindings.has(entry.card.cardId)}
                     <HotkeyCardBadge hotkey={hotkeyBindings.get(entry.card.cardId)!} />
                   {/if}
                   <PlayZoneCardBands card={entry.card} section="top" />
-                  <div class="card-slot__card-wrapper">
-                    <LorcanaCard
-                      card={entry.card}
-                      useContainerSize
-                      imageFormat={ZONE_IMAGE_FORMATS.play}
-                      hoverShowActions
-                      hideStatBadges
-                      hideSupplementalBadges
-                      onSelect={(selectedCard, event) => handleDirectCardSelection(selectedCard, event)}
-                      isSelected={
-                        sidebar.getActionSessionCardState(entry.card.cardId).isSelected ||
-                        simulatorCardContext.previewCard?.cardId === entry.card.cardId
-                      }
-                      isMasked={isMasked}
-                      isPlayable={sidebar.getActionSessionCardState(entry.card.cardId).isSelectable}
-                      isInvalidTarget={sidebar.getActionSessionCardState(entry.card.cardId).isInvalidTarget}
-                      isBanishedPreview={sidebar.getChallengePreviewCardState(entry.card.cardId).wouldBeBanished}
-                      isExerted={entry.card.readyState === "exerted"}
-                      isDrying={entry.card.isDrying ?? false}
-                      damage={entry.card.damage ?? 0}
-                    />
-                  </div>
+                  <ManualDamageControls card={entry.card} />
+                  <ManualCorrectionMenu card={entry.card}>
+                    <div class="card-slot__card-wrapper">
+                      <LorcanaCard
+                        card={entry.card}
+                        useContainerSize
+                        imageFormat={ZONE_IMAGE_FORMATS.play}
+                        hoverShowActions
+                        hideStatBadges
+                        hideSupplementalBadges
+                        onSelect={(selectedCard, event) => handleDirectCardSelection(selectedCard, event)}
+                        isSelected={
+                          actionState.isSelected ||
+                          simulatorCardContext.previewCard?.cardId === entry.card.cardId
+                        }
+                        isMasked={isMasked}
+                        isPlayable={actionState.isSelectable}
+                        isValidTarget={actionState.isSelectable}
+                        isInvalidTarget={actionState.isInvalidTarget}
+                        isBanishedPreview={sidebar.getChallengePreviewCardState(entry.card.cardId).wouldBeBanished}
+                        isExerted={entry.card.readyState === "exerted"}
+                        isDrying={entry.card.isDrying ?? false}
+                        damage={entry.card.damage ?? 0}
+                      />
+                    </div>
+                  </ManualCorrectionMenu>
                   <PlayZoneCardBands card={entry.card} section="bottom" />
                 </div>
               {/if}
@@ -240,6 +265,7 @@
     flex-direction: column;
     gap: 0.25rem;
     transition: all 200ms ease;
+    touch-action: pan-y;
   }
 
   .board-zone--opponent {
@@ -287,15 +313,13 @@
     container-name: play-zone;
 
     flex: 1;
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
     min-height: 0;
     min-width: 0;
     margin: calc(var(--play-card-effect-bleed) * -1);
     padding: var(--play-card-effect-bleed);
     overflow-x: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
+    touch-action: pan-y;
     scrollbar-gutter: stable;
     scrollbar-width: auto;
     scrollbar-color: var(--play-scrollbar-thumb) var(--play-scrollbar-track);
@@ -315,7 +339,16 @@
     --play-band-overlap: 0.5;
     --play-band-visible-top: calc(var(--play-band-height-top) * (1 - var(--play-band-overlap)));
     --play-band-visible-bottom: calc(var(--play-band-height-bottom) * (1 - var(--play-band-overlap)));
+    --play-card-target-height: calc(
+      (
+        100cqh
+        - var(--play-card-effect-bleed) * 2
+        - var(--play-band-visible-top)
+        - var(--play-band-visible-bottom)
+      ) * 0.6667
+    );
     --card-art-height: min(
+      var(--play-card-target-height),
       calc(
         100cqh
         - var(--play-card-effect-bleed) * 2
@@ -362,15 +395,15 @@
   }
 
   .cards-grid {
-    display: grid;
-    grid-template-columns:
-      repeat(auto-fit, minmax(min(100%, var(--slot-width)), var(--slot-width)));
+    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     align-content: start;
-    gap: var(--play-grid-gap);
-    padding: 0 0.5rem 0.5rem;
+    align-items: center;
+    gap: 0 var(--play-grid-gap);
     width: 100%;
     min-height: min-content;
+    touch-action: pan-y;
   }
 
   /* Sparse state (1–4 cards): raise the width cap so cards grow to fill
@@ -389,7 +422,6 @@
 
   .cards-content {
     display: flex;
-    flex: 1 0 auto;
     flex-direction: column;
     justify-content: flex-start;
     width: 100%;
@@ -397,7 +429,8 @@
   }
 
   .board-zone[data-player-seat="top"] .cards-content {
-    justify-content: flex-end;
+    flex-direction: column-reverse;
+    justify-content: flex-start;
   }
 
   .board-zone[data-player-seat="top"] .cards-grid {
@@ -407,10 +440,59 @@
   .card-slot {
     position: relative;
     display: flex;
+    flex: 0 0 var(--slot-width);
     flex-direction: column;
     align-items: center;
     width: var(--slot-width);
     height: var(--slot-height);
+  }
+
+  .card-slot--dragging {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .card-slot__drop-hint {
+    position: absolute;
+    top: calc(var(--play-band-visible-top) + 0.3rem);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 8;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.18rem 0.48rem;
+    font-size: 0.56rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: opacity 120ms ease;
+  }
+
+  .card-slot--shift-target .card-slot__drop-hint {
+    background: rgba(8, 17, 27, 0.82);
+    border: 1px solid rgba(147, 197, 253, 0.55);
+    color: rgba(191, 219, 254, 0.96);
+  }
+
+  .card-slot--shift-target-hovered .card-slot__drop-hint {
+    background: rgba(29, 58, 105, 0.92);
+    border-color: rgba(147, 197, 253, 0.9);
+    box-shadow: 0 0 8px rgba(147, 197, 253, 0.35);
+  }
+
+  .card-slot--sing-target .card-slot__drop-hint {
+    background: rgba(8, 17, 27, 0.82);
+    border: 1px solid rgba(216, 180, 254, 0.55);
+    color: rgba(233, 213, 255, 0.96);
+  }
+
+  .card-slot--sing-target-hovered .card-slot__drop-hint {
+    background: rgba(59, 29, 105, 0.92);
+    border-color: rgba(216, 180, 254, 0.9);
+    box-shadow: 0 0 8px rgba(216, 180, 254, 0.35);
   }
 
   /* Desktop: wider gap when there's room. */

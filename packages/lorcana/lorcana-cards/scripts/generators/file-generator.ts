@@ -266,12 +266,17 @@ function deriveCardCopyLimit(rulesText?: string): number | "no-limit" | undefine
     return "no-limit";
   }
 
-  const limitedMatch = rulesText.match(/you may have up to (\d+) copies of\b/i);
-  if (!limitedMatch) {
-    return undefined;
+  const upToMatch = rulesText.match(/you may have up to (\d+) copies of\b/i);
+  if (upToMatch) {
+    return Number.parseInt(upToMatch[1], 10);
   }
 
-  return Number.parseInt(limitedMatch[1], 10);
+  const onlyMatch = rulesText.match(/you may only have (\d+) cop(?:y|ies) of\b/i);
+  if (onlyMatch) {
+    return Number.parseInt(onlyMatch[1], 10);
+  }
+
+  return undefined;
 }
 
 /**
@@ -977,14 +982,52 @@ export function organizeCardsForFileGeneration(
 const createdDirs = new Set<string>();
 
 /**
+ * Tracks paths whose existing on-disk content was replaced with different
+ * content during this generator run. Pre-existing files written with
+ * identical content are not recorded. A Set is used so that if the same
+ * file is written more than once in a run, it's only counted/reported
+ * once. Reset between runs by callers via `resetOverwrittenFiles()`.
+ */
+const overwrittenFiles = new Set<string>();
+
+/**
+ * Reset overwrite tracking. MUST be called once at the start of each
+ * generator run to clear state from any previous run in the same
+ * process. The tracker is module-level; without a reset, subsequent
+ * runs would inherit stale entries.
+ */
+export function resetOverwrittenFiles(): void {
+  overwrittenFiles.clear();
+}
+
+/**
+ * Read the list of files whose existing content was replaced this run.
+ * Each path appears at most once, regardless of how many times the
+ * generator wrote to it.
+ */
+export function getOverwrittenFiles(): readonly string[] {
+  return Array.from(overwrittenFiles);
+}
+
+/**
  * Write a file, creating directories as needed
- * Uses caching to reduce filesystem operations
+ * Uses caching to reduce filesystem operations.
+ * Records the path in `overwrittenFiles` when an existing file's content
+ * is replaced with different content (so callers can warn/log about
+ * destructive overwrites — e.g. hand-edited card source files).
  */
 function writeFile(filePath: string, content: string): void {
   const dir = path.dirname(filePath);
   if (!createdDirs.has(dir)) {
     fs.mkdirSync(dir, { recursive: true });
     createdDirs.add(dir);
+  }
+  if (fs.existsSync(filePath)) {
+    const existing = fs.readFileSync(filePath, "utf-8");
+    if (existing !== content && !overwrittenFiles.has(filePath)) {
+      overwrittenFiles.add(filePath);
+      console.log(`  ✏️  Overwriting existing file: ${path.relative(process.cwd(), filePath)}`);
+    }
   }
   fs.writeFileSync(filePath, content, "utf-8");
 }

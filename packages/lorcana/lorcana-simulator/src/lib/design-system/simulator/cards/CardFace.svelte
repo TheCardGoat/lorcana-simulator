@@ -39,6 +39,7 @@ interface CardFaceProps {
 	isGhost?: boolean;
 	isDraggable?: boolean;
 	isPlayable?: boolean;
+	isValidTarget?: boolean;
 	isInvalidTarget?: boolean;
 	isBanishedPreview?: boolean;
 	isQuesting?: boolean;
@@ -64,6 +65,7 @@ let {
 	isGhost = false,
 	isDraggable = false,
 	isPlayable = false,
+	isValidTarget = false,
 	isInvalidTarget = false,
 	isBanishedPreview = false,
 	isQuesting = false,
@@ -225,6 +227,7 @@ const damageIndicatorClass = $derived(
   class:card-face--ghost={isGhost}
   class:card-face--draggable={isDraggable}
   class:card-face--playable={isPlayable}
+  class:card-face--valid-target={isValidTarget}
   class:card-face--invalid-target={isInvalidTarget}
   class:card-face--questing={isQuesting}
   class:card-face--drying={isDrying}
@@ -357,8 +360,16 @@ const damageIndicatorClass = $derived(
   {/if}
 
   <!-- Playable Glow -->
-  {#if isPlayable}
+  {#if isPlayable && !isValidTarget}
     <div class="playable-glow absolute -inset-0.5 pointer-events-none animate-playable-pulse"></div>
+  {/if}
+
+  <!-- Valid Target Indicator -->
+  {#if isValidTarget && !isSelected}
+    <div
+      class="valid-target-indicator absolute -inset-1 pointer-events-none z-20"
+      aria-hidden="true"
+    ></div>
   {/if}
 
 </div>
@@ -371,6 +382,8 @@ const damageIndicatorClass = $derived(
     --selected-glow: rgba(245, 158, 11, 0.6);
     --playable-highlight: rgba(250, 204, 21, 0.95);
     --playable-glow: rgba(250, 204, 21, 0.58);
+    --valid-target-highlight: rgba(56, 189, 248, 0.95);
+    --valid-target-glow: rgba(56, 189, 248, 0.5);
     --questing-glow: rgba(255, 215, 0, 0.4);
     --card-corner-radius: 0.42rem;
     --card-overlay-radius: 0.58rem;
@@ -434,7 +447,8 @@ const damageIndicatorClass = $derived(
 
   .questing-overlay,
   .selection-indicator,
-  .playable-glow {
+  .playable-glow,
+  .valid-target-indicator {
     border-radius: var(--card-overlay-radius);
   }
 
@@ -456,6 +470,10 @@ const damageIndicatorClass = $derived(
       0 0 25px var(--selected-glow),
       inset 0 0 0 2px rgba(245, 158, 11, 0.9);
     border-color: #f59e0b;
+  }
+
+  .selection-indicator {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(251, 191, 36, 0.08));
   }
 
   /* Exerted State */
@@ -497,6 +515,31 @@ const damageIndicatorClass = $derived(
   .playable-glow {
     background: linear-gradient(135deg, rgba(250, 204, 21, 0.28), rgba(245, 158, 11, 0.14));
     opacity: 0.78;
+  }
+
+  /* Valid Target State */
+  .card-face--valid-target:not(.card-face--selected) .card-frame {
+    border: 2px solid var(--valid-target-highlight);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.3),
+      0 0 16px var(--valid-target-glow),
+      inset 0 0 0 1px rgba(186, 230, 253, 0.65);
+  }
+
+  .valid-target-indicator {
+    border: 2px dashed rgba(186, 230, 253, 0.95);
+    box-shadow: 0 0 18px rgba(56, 189, 248, 0.42);
+    animation: valid-target-breathe 1.6s ease-in-out infinite;
+  }
+
+  @keyframes valid-target-breathe {
+    0%,
+    100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 
   /* Questing State */
@@ -554,6 +597,7 @@ const damageIndicatorClass = $derived(
     .card-image-wrapper,
     .art-placeholder,
     .playable-glow,
+    .valid-target-indicator,
     .selection-indicator,
     .questing-overlay span,
     .card-face--questing .card-frame,

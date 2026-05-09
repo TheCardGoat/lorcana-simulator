@@ -115,10 +115,25 @@ export function createCardQueryAPI(
   const actorPlayerId = options?.actorPlayerId;
   const deriveRuntimeCard = options.deriveRuntimeCard;
   const cacheViews = options.cacheViews ?? true;
+  // Auto-bust the per-API view cache whenever the underlying _stateID advances.
+  // The cache is short-lived (one cardsApi instance), but defensively keying it on
+  // _stateID ensures any future caller that reuses an API across a state mutation
+  // observes fresh values instead of stale projections.
   const cardViewCache = new Map<CardInstanceId, RuntimeView>();
+  let cardViewCacheStateID: number | undefined;
+
+  const readCurrentStateID = (): number | undefined => {
+    const candidate = (state.ctx as { _stateID?: unknown })._stateID;
+    return typeof candidate === "number" && Number.isFinite(candidate) ? candidate : undefined;
+  };
 
   const buildCardView = (cardId: CardInstanceId): RuntimeView => {
     if (cacheViews) {
+      const currentStateID = readCurrentStateID();
+      if (currentStateID !== cardViewCacheStateID) {
+        cardViewCache.clear();
+        cardViewCacheStateID = currentStateID;
+      }
       const cached = cardViewCache.get(cardId);
       if (cached) {
         return cached;

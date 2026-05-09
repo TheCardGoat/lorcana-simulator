@@ -108,7 +108,7 @@
   }
 
   .revealed-card__label {
-    font-size: 0.48rem;
+    font-size: clamp(0.56rem, 1.45vw, 0.62rem);
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;

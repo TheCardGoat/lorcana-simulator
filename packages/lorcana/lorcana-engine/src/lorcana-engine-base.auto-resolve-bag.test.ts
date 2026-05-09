@@ -938,6 +938,64 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
   });
 
+  describe("scry with cards-under-self amount (bagEffectNeedsPlayerDecision runtime override)", () => {
+    const cardsUnderScryWatcher = createMockCharacter({
+      id: "cards-under-scry-watcher",
+      name: "Cards Under Scry Watcher",
+      cost: 2,
+      lore: 1,
+      abilities: [
+        {
+          id: "cards-under-scry-watcher-1",
+          name: "Cards Under Scry",
+          text: "Whenever this character quests, look at the top card of your deck for each card under this character. Put each character card into your hand and the rest on the bottom of your deck.",
+          type: "triggered",
+          trigger: { event: "quest", on: "SELF", timing: "whenever" },
+          effect: {
+            type: "scry",
+            amount: { type: "cards-under-self" },
+            destinations: [
+              { zone: "hand", min: 0, filter: { type: "card-type", cardType: "character" } },
+              { zone: "deck-bottom", remainder: true },
+            ],
+          },
+        },
+      ],
+    });
+
+    it("auto-drains the bag when the deck is empty (no cards to reveal)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [
+          {
+            card: cardsUnderScryWatcher,
+            cardsUnder: [createMockCharacter({ id: "under-1", name: "Under", cost: 1 })],
+          },
+        ],
+        deck: [], // empty deck — engine should auto-drain without waiting for player
+      });
+
+      expect(testEngine.asPlayerOne().quest(cardsUnderScryWatcher)).toBeSuccessfulCommand();
+
+      // Engine detects deckSize=0 and auto-drains the bag; no pending decision left.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getPendingEffects().length).toBe(0);
+    });
+
+    it("auto-drains the bag when cards-under-self resolves to 0 (no cards under)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [cardsUnderScryWatcher], // no cards stacked under
+        deck: 3,
+      });
+
+      // The triggered ability has no has-card-under condition here, so the bag IS created.
+      // bagEffectNeedsPlayerDecision should detect scryAmount=0 and return false → auto-drain.
+      expect(testEngine.asPlayerOne().quest(cardsUnderScryWatcher)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getPendingEffects().length).toBe(0);
+    });
+  });
+
   it("does not queue bag effects when their trigger condition fails", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [simpleAction],
@@ -953,19 +1011,12 @@ describe("LorcanaEngineBase bag auto-resolution", () => {
     ).toBeSuccessfulCommand();
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
 
-    // Per CRD 6.2.7: ability IS enqueued when trigger fires, condition is checked at resolution.
-    // Non-turn-metric conditions (like target-query) stay in the bag because another bag item
-    // could change the game state to satisfy the condition.
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine
-        .asPlayerOne()
-        .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
-          resolveOptional: true,
-        }),
-    ).toBeSuccessfulCommand();
+    // Board-state conditions (like target-query checking hand size) are evaluated
+    // at trigger time. Since playing the action reduced the hand below 3 cards,
+    // the condition fails and the ability is not queued.
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
-    // Condition (>= 3 cards in hand) failed at resolution — no additional lore gained
+    // No additional lore gained — condition was false at trigger time
     expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(1);
   });
 });

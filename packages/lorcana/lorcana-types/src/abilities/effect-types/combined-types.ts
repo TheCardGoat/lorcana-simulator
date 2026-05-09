@@ -55,6 +55,7 @@ import type {
 import type {
   CostIncreaseEffect,
   CostReductionEffect,
+  DamageSourceStatOverrideEffect,
   DrawUntilHandSizeEffect,
   EntersPlayEffect,
   GainKeywordEffect,
@@ -69,6 +70,7 @@ import type {
   RevealUntilMatchEffect,
   RestrictionEffect,
   RevealHandEffect,
+  RevealInkwellEffect,
   RevealTopCardEffect,
   SearchDeckEffect,
   SelfPlayConditionEffect,
@@ -139,6 +141,7 @@ export type Effect =
   | ModifyStatEffect
   | StatFloorEffect
   | SetStatEffect
+  | DamageSourceStatOverrideEffect
   // Keywords
   | GainKeywordEffect
   | LoseKeywordEffect
@@ -162,6 +165,7 @@ export type Effect =
   | RepeatEffect
   // Reveal/Search
   | RevealHandEffect
+  | RevealInkwellEffect
   | SearchDeckEffect
   | RevealUntilMatchEffect
   | LookAtCardsEffect
@@ -232,6 +236,7 @@ export type Effect =
 export type StaticEffect =
   | ModifyStatEffect
   | StatFloorEffect
+  | DamageSourceStatOverrideEffect
   | GainKeywordEffect
   | LoseKeywordEffect
   | RestrictionEffect

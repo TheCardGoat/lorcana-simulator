@@ -35,6 +35,9 @@ export const plutoGuardDog: CharacterCard = {
   abilities: [
     bodyguard,
     {
+      condition: {
+        type: "no-damage",
+      },
       effect: {
         modifier: 4,
         stat: "strength",

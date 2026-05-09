@@ -184,6 +184,71 @@ describe("Cheshire Cat - Inexplicable", () => {
       expect(testEngine.asPlayerTwo().getDamage(calhounMarineSergeant)).toBe(1);
     });
 
+    it("auto-declines when no opposing characters are in play (THE-1035 G-01)", () => {
+      // With no opposing characters in play, the optional has no valid 'to' targets
+      // and should auto-decline without hanging.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [cheshireCatInexplicable],
+          inkwell: 2,
+          deck: [deckFiller],
+        },
+        {
+          play: [],
+          deck: 5,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(cheshireCatInexplicable),
+      ).toBeSuccessfulCommand();
+
+      // No opposing characters → optional auto-declines; bag should be empty.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
+    it("does not freeze when source character has zero damage (THE-1035 G-02)", () => {
+      const undamagedSource = createMockCharacter({
+        id: "cheshire-undamaged-source",
+        name: "Undamaged Source",
+        cost: 2,
+        strength: 2,
+        willpower: 4,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [cheshireCatInexplicable, undamagedSource],
+          inkwell: 2,
+          deck: [deckFiller],
+        },
+        {
+          play: [opposingTarget],
+          deck: 5,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(cheshireCatInexplicable),
+      ).toBeSuccessfulCommand();
+
+      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
+      if (bagEffect) {
+        // Player can still accept and pick the undamaged source (amount = 0 = no-op).
+        expect(
+          testEngine.asPlayerOne().resolvePendingByCard(bagEffect.sourceId, {
+            resolveOptional: true,
+            targets: [undamagedSource, opposingTarget],
+            amount: 0,
+          }),
+        ).toBeSuccessfulCommand();
+      }
+
+      // Target should have 0 damage regardless.
+      expect(testEngine.asPlayerOne().getDamage(opposingTarget)).toBe(0);
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
     it("can decline the optional ability", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

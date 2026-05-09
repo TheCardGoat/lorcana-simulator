@@ -21,7 +21,7 @@ export const devilsEyeDiamond: ItemCard = {
   text: [
     {
       title: "THE PRICE OF POWER",
-      description: "{E} — If one of your characters was damaged this turn, gain 1 lore.",
+      description: "{E} — If one of your characters took damage this turn, gain 1 lore.",
     },
   ],
   abilities: [
@@ -47,7 +47,7 @@ export const devilsEyeDiamond: ItemCard = {
       },
       id: "136-1",
       name: "THE PRICE OF POWER",
-      text: "THE PRICE OF POWER {E} — If one of your characters was damaged this turn, gain 1 lore.",
+      text: "THE PRICE OF POWER {E} — If one of your characters took damage this turn, gain 1 lore.",
       type: "activated",
     },
   ],

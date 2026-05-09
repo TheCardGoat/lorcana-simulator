@@ -49,6 +49,7 @@ export const babyheadLeaderOfSidsToys: CharacterCard = {
               type: "cost-comparison",
               comparison: "less-or-equal",
               value: 2,
+              costSource: "paid",
             },
           ],
         },
@@ -77,7 +78,12 @@ export const babyheadLeaderOfSidsToys: CharacterCard = {
         event: "banish",
         on: "YOUR_OTHER_CHARACTERS",
         timing: "whenever",
-        restrictions: [{ type: "during-turn", whose: "your" }],
+        restrictions: [
+          {
+            type: "during-turn",
+            whose: "your",
+          },
+        ],
       },
       effect: {
         type: "draw",

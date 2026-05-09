@@ -59,6 +59,21 @@ export interface SetStatEffect {
 }
 
 /**
+ * Override which stat a character uses as its damage-dealing stat during a
+ * challenge. By default, challenging characters deal damage equal to their
+ * {S} (strength); this effect substitutes a different stat (e.g. {W}).
+ *
+ * @example "During challenges, your characters deal damage with their {W} instead of their {S}."
+ */
+export interface DamageSourceStatOverrideEffect {
+  type: "damage-source-stat-override";
+  /** The stat to use as the damage-dealing value during a challenge. */
+  stat: "willpower" | "lore";
+  target: CharacterTarget;
+  condition?: Condition;
+}
+
+/**
  * Apply a continuous floor to a characteristic after all modifiers are combined.
  *
  * @example "Your characters' strength can't be reduced below their printed value"
@@ -146,17 +161,36 @@ export interface RestrictionEffect {
     // Extended restrictions for card text coverage
     | "doesnt-ready" // Character doesn't ready (alias for cant-ready)
     | "ready-only-one-character" // Can't ready more than 1 character at start of turn
-    | "challenge-limit"; // Limits the number of challenges per turn (e.g. only one character can challenge)
+    | "challenge-limit" // Limits the number of challenges per turn (e.g. only one character can challenge)
+    | "can-quest-turn-played"; // Character may quest the turn it is played (questing equivalent of Rush)
   /**
    * For "challenge-limit" restrictions: the maximum number of challenges allowed per turn.
    * When omitted, defaults to 1.
    */
   limit?: number;
+  /** Minimum card cost for play restrictions (e.g. cant-play-actions with cost 4 or more) */
+  minCost?: number;
+  /**
+   * Convenience cost restriction (e.g. "actions with cost 4 or more"). Equivalent
+   * to `minCost`/`maxCost` depending on the comparison.
+   */
+  costRestriction?: {
+    comparison: "less-or-equal" | "greater-or-equal" | "equal";
+    value: number;
+  };
   target?: CharacterTarget | LocationTarget | ItemTarget | PlayerTarget;
   duration?: EffectDuration;
   /** Condition for when the restriction applies */
   condition?: Condition;
   linkedToSource?: boolean;
+  /**
+   * Escape clause allowing the controller to bypass the restriction by paying a
+   * cost each time the restricted action is taken. Currently honored only for
+   * `cant-quest`, `cant-challenge`, and `cant-quest-or-challenge` on `SELF`
+   * (e.g., RC, Remote-Controlled Car — "can't quest or challenge unless you
+   * pay 1 {I}").
+   */
+  bypass?: { cost: { ink: number } };
   /**
    * For "cant-be-challenged" restrictions: filter describing which attackers
    * are prevented from challenging this character.
@@ -226,7 +260,7 @@ export interface CostReductionEffect {
   amount?: AmountExpr;
   /** Alternative field for reduction amount */
   reduction?: { ink: AmountExpr };
-  cardType?: CardType | "song";
+  cardType?: CardType | "song" | (CardType | "song")[];
   classification?: Classification | Classification[];
   /** Restrict reduction to cards with this specific name */
   name?: string;
@@ -236,9 +270,10 @@ export interface CostReductionEffect {
    * When set, the reduction only applies when playing a card via the specified method.
    * - "shift": only reduces the Shift cost
    * - "standard": only reduces the standard play cost
+   * - "either": reduces both Shift and standard play costs (wildcard; equivalent to omitting the field).
    * When omitted, applies to all play methods.
    */
-  playMethod?: "shift" | "standard";
+  playMethod?: "shift" | "standard" | "either";
   /** When set, the reduction only applies to cards with this exact name */
   cardName?: string;
 }
@@ -271,6 +306,16 @@ export interface RevealTopCardEffect {
 export interface PutOnTopEffect {
   type: "put-on-top";
   source?: "revealed" | CardTarget;
+  /**
+   * Newer target shape, mirroring `PutOnBottomEffect`. Use this when the
+   * effect targets cards in play (or any other zone) and a controller other
+   * than the resolving player needs to make the choice.
+   */
+  target?: CharacterTarget | ItemTarget | LocationTarget | CardTarget;
+  chooser?: PlayerTarget;
+  chosenBy?: "you" | "opponent" | "TARGET";
+  ordering?: "player-choice";
+  orderBy?: "owner" | "controller";
 }
 
 export interface DrawUntilHandSizeEffect {
@@ -329,6 +374,15 @@ export interface PropertyModificationEffect {
  */
 export interface RevealHandEffect {
   type: "reveal-hand";
+  target: PlayerTarget;
+}
+
+/**
+ * Reveal inkwell effect — privately shows the owner all cards in their inkwell.
+ * Used by cards like Pongo - Dear Old Dad ("look at the cards in your inkwell").
+ */
+export interface RevealInkwellEffect {
+  type: "reveal-inkwell";
   target: PlayerTarget;
 }
 

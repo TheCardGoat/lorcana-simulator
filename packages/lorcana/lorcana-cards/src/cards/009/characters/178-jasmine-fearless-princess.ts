@@ -53,7 +53,6 @@ export const jasmineFearlessPrincess: CharacterCard = {
     },
     {
       cost: {
-        exert: true,
         discardCards: 1,
         discardChosen: true,
       },

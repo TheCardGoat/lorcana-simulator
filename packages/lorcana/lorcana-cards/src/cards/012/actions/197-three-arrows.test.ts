@@ -45,4 +45,57 @@ describe("Three Arrows", () => {
 
     expect(testEngine.asPlayerTwo().getDamage(target2)).toBe(1);
   });
+
+  it("rejects targeting the same character for the optional second step", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [threeArrows],
+        inkwell: threeArrows.cost,
+      },
+      {
+        play: [target1],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(threeArrows, { targets: [target1] }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getDamage(target1)).toBe(2);
+
+    expect(
+      testEngine.asPlayerOne().resolvePendingEffect(threeArrows, {
+        resolveOptional: true,
+        targets: [target1],
+      }),
+    ).not.toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getDamage(target1)).toBe(2);
+  });
+
+  it("does not deal additional damage when the optional is declined", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [threeArrows],
+        inkwell: threeArrows.cost,
+      },
+      {
+        play: [target1, target2],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(threeArrows, { targets: [target1] }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getDamage(target1)).toBe(2);
+
+    expect(
+      testEngine.asPlayerOne().resolvePendingEffect(threeArrows, {
+        resolveOptional: false,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getDamage(target2)).toBe(0);
+  });
 });

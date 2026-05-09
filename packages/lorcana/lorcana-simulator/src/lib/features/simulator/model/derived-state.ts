@@ -572,7 +572,7 @@ function buildEntriesForAvailableMove(
           });
         }
 
-        // Alternative cost entries (sacrifice / exert items)
+        // Alternative cost entries (sacrifice / exert items / put-toy-on-deck-bottom)
         const cardDef =
           typeof engine.getCardDefinitionByInstanceId === "function"
             ? (engine.getCardDefinitionByInstanceId(cardId) as
@@ -585,6 +585,9 @@ function buildEntriesForAvailableMove(
           );
           const hasExertItemsCost = cardDef.abilities.some(
             (a) => a.type === "action" && a.alternativeCost === "exert-4-items",
+          );
+          const hasPutToyOnDeckBottomCost = cardDef.abilities.some(
+            (a) => a.type === "action" && a.alternativeCost === "put-toy-character-on-deck-bottom",
           );
 
           if (hasSacrificeCost || hasExertItemsCost) {
@@ -675,6 +678,54 @@ function buildEntriesForAvailableMove(
                     },
                   });
                 }
+              }
+            }
+          }
+
+          if (hasPutToyOnDeckBottomCost) {
+            const board = engine.getBoard();
+            const clientPlayerId = engine.getClientPlayerId();
+            const playerBoard = clientPlayerId ? board.players[clientPlayerId] : null;
+
+            if (playerBoard) {
+              const toyCharacterDiscardIds = (playerBoard.discard ?? [])
+                .filter((did) => {
+                  const dDef = engine.getCardDefinitionByInstanceId(did as CardInstanceId) as
+                    | { cardType?: string; classifications?: string[] }
+                    | undefined;
+                  if (dDef?.cardType !== "character") return false;
+                  return (dDef.classifications ?? []).includes("Toy");
+                })
+                .map(String);
+              if (toyCharacterDiscardIds.length > 0) {
+                const putOnDeckBottomLabel = getMoveOptionLabel(
+                  "playCard",
+                  { cardId: id, cost: "put-on-deck-bottom" },
+                  cards,
+                );
+                entries.push({
+                  id: `playCard:${id}:put-on-deck-bottom`,
+                  label: putOnDeckBottomLabel,
+                  moveId: "playCard",
+                  params: {
+                    cardId: id,
+                    cost: "put-on-deck-bottom",
+                  } as LorcanaSimulatorMoveParams["playCard"],
+                  presentation: {
+                    kind: "targeted",
+                    categoryId: "play-card",
+                    categoryLabel: getMoveCategoryLabel("playCard"),
+                    optionLabel: "Put Toy on Deck Bottom",
+                    selectableCosts: [
+                      {
+                        kind: "putOnDeckBottom" as const,
+                        count: 1,
+                        candidateCardIds: toyCharacterDiscardIds as CardInstanceId[],
+                        zone: "discard" as const,
+                      },
+                    ],
+                  },
+                });
               }
             }
           }

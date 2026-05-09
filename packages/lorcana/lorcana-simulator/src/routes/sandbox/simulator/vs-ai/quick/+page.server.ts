@@ -222,7 +222,7 @@ export async function load(event: ServerLoadEvent): Promise<QuickMatchErrorData>
   logger.trace("deck decoded", { length: decoded.length, lineCount: decoded.split("\n").length });
 
   // Step 2: Sanitize deck text
-  const { sanitizedText, unknownCards } = sanitizeDeckText(decoded);
+  const { sanitizedText, unknownCards } = await sanitizeDeckText(decoded);
   if (!sanitizedText) {
     logger.trace("sanitize produced empty text");
     return { status: "deck-error", reason: "invalid" };
@@ -256,7 +256,7 @@ export async function load(event: ServerLoadEvent): Promise<QuickMatchErrorData>
   let serverGameId: string | undefined;
   const publicApiOrigin = getApiOrigin();
   const apiOrigin = getServerApiOrigin(publicApiOrigin);
-  const apiUrl = `${apiOrigin}/v1/play/quick-match`;
+  const apiUrl = `${apiOrigin}/v1/games/lorcana/play/quick-match`;
   const requestDebugContext = collectRequestDebugContext(event);
   const cookie = request.headers.get("cookie") ?? "";
   const startedAt = Date.now();

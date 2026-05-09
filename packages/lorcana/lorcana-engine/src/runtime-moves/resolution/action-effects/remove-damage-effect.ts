@@ -70,6 +70,7 @@ export function resolveRemoveDamageEffect(
         triggerSourceCardId: cardPlayed.cardId,
         eventSnapshot: {
           healedAmount: resolvedHealAmount,
+          triggerAmount: resolvedHealAmount,
         },
       });
 

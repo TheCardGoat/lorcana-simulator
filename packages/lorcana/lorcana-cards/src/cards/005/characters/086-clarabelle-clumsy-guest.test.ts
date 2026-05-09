@@ -59,5 +59,24 @@ describe("Clarabelle - Clumsy Guest", () => {
 
       expect(testEngine.asPlayerTwo().getCardZone(chosenItem)).toBe("play");
     });
+
+    it("does not leave a pending optional prompt when the 2 ink cost cannot be paid", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [clarabelleClumsyGuest],
+          inkwell: clarabelleClumsyGuest.cost,
+          deck: 2,
+        },
+        {
+          play: [chosenItem],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(clarabelleClumsyGuest)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getPendingEffects()).toEqual([]);
+      expect(testEngine.asPlayerTwo().getCardZone(chosenItem)).toBe("play");
+    });
   });
 });

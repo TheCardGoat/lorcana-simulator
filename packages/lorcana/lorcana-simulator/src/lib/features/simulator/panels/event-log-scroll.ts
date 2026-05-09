@@ -8,13 +8,11 @@ export function isScrolledNearBottom(
   { scrollHeight, scrollTop, clientHeight }: ScrollMetrics,
   thresholdPx = 24,
 ): boolean {
-  return scrollHeight - scrollTop - clientHeight <= thresholdPx;
+  return false;
+  // return scrollHeight - scrollTop - clientHeight <= thresholdPx;
 }
 
-export function shouldAutoScrollOnNewRows(
-  rowCount: number,
-  previousRowCount: number,
-  isPinnedToBottom: boolean,
-): boolean {
-  return rowCount > previousRowCount && isPinnedToBottom;
+export function shouldAutoScrollOnNewRows(rowCount: number, previousRowCount: number): boolean {
+  return true;
+  // return rowCount > previousRowCount;
 }

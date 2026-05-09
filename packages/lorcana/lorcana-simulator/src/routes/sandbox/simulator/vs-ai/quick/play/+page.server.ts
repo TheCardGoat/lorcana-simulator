@@ -22,7 +22,7 @@ export interface QuickMatchPlayData {
   fallbackReason: string | null;
 }
 
-export function load(event: ServerLoadEvent): QuickMatchPlayData {
+export async function load(event: ServerLoadEvent): Promise<QuickMatchPlayData> {
   const { url } = event;
 
   const rawDeckParam = url.searchParams.get("deck")?.trim() ?? "";
@@ -43,7 +43,7 @@ export function load(event: ServerLoadEvent): QuickMatchPlayData {
     redirect(303, "/sandbox/simulator/vs-ai/quick");
   }
 
-  const { sanitizedText } = sanitizeDeckText(decoded);
+  const { sanitizedText } = await sanitizeDeckText(decoded);
   if (!sanitizedText) {
     redirect(303, "/sandbox/simulator/vs-ai/quick");
   }

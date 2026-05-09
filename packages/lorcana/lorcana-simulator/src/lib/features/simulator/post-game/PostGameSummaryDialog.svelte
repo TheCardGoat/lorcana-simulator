@@ -3,6 +3,7 @@
     Bug,
     ChevronDown,
     Download,
+    Flag,
     LoaderCircle,
     Lock,
     MessageSquarePlus,
@@ -60,6 +61,7 @@
     onNextGame?: (() => void) | null;
     onOpenBugReport?: () => void;
     onOpenFeedback?: () => void;
+    onOpenPlayerReport?: () => void;
   }
 
   let {
@@ -78,6 +80,7 @@
     onNextGame = null,
     onOpenBugReport,
     onOpenFeedback,
+    onOpenPlayerReport,
   }: PostGameSummaryDialogProps = $props();
 
   let activeSection = $state<PostGameSectionId>("overview");
@@ -782,7 +785,7 @@
       </div>
 
       <Dialog.Footer class="post-game-footer">
-        {#if onOpenBugReport || onOpenFeedback}
+        {#if onOpenBugReport || onOpenFeedback || onOpenPlayerReport}
           <div class="post-game-feedback-prompt">
             <span class="post-game-feedback-prompt__label">{m["sim.postGame.feedbackPrompt.label"]({})}</span>
             <div class="post-game-feedback-prompt__actions">
@@ -804,6 +807,16 @@
                 >
                   <MessageSquarePlus class="size-3.5 shrink-0" />
                   {m["sim.support.shareFeedbackLabel"]({})}
+                </button>
+              {/if}
+              {#if onOpenPlayerReport}
+                <button
+                  type="button"
+                  class="post-game-feedback-btn post-game-feedback-btn--report"
+                  onclick={onOpenPlayerReport}
+                >
+                  <Flag class="size-3.5 shrink-0" />
+                  {m["sim.player.report.openAria"]({})}
                 </button>
               {/if}
             </div>
@@ -879,9 +892,21 @@
                 Go to Next Game →
               {/if}
             </Button>
-          {:else}
+          {:else if !matchContext || matchContext.matchCompleted || matchContext.format === "best_of_1"}
             <Button onclick={handleReturn} disabled={leavingMatch}>
               {m["sim.postGame.returnToMatchmaking"]({})}
+            </Button>
+          {:else}
+            <!--
+              Game finished locally (board flipped to "finished") but the server
+              has not yet confirmed match progression — neither nextGameId nor
+              matchCompleted is set. Show a disabled "Finalizing…" placeholder
+              so the user can't misclick "Back to matchmaking" during the
+              persistence window (~1–3s).
+            -->
+            <Button disabled>
+              <LoaderCircle class="mr-1.5 size-3.5 animate-spin" />
+              Finalizing match…
             </Button>
           {/if}
         {/if}
@@ -1335,6 +1360,7 @@
     gap: 0.65rem;
     justify-content: flex-end;
     flex-wrap: wrap;
+    align-items: end;
   }
 
   :global(.post-game-footer) {

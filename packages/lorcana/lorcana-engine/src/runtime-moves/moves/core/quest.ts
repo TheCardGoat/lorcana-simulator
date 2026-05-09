@@ -17,13 +17,19 @@ import {
 } from "../../../types";
 import { normalizeTargetDescriptor, resolveCandidateTargets } from "../../../targeting/runtime";
 import { hasKeyword } from "../../../card-utils";
-import { createProjectionState, getEffectiveLore } from "../../../rules/derived-state";
+import {
+  createProjectionState,
+  getEffectiveLore,
+  getEffectiveWillpower,
+} from "../../../rules/derived-state";
 import { getEffectsForCard } from "../../../rules/static-effect-registry";
 import {
   hasStaticSelfRestriction,
   hasStaticCardRestriction,
   hasOpponentStaticPlayRestriction,
+  getStaticSelfRestrictionBypass,
 } from "../../rules/static-ability-utils";
+import { getAvailableInk, spendInk } from "../../rules/play-card-rules";
 import {
   hasTemporaryKeyword,
   hasTemporaryLostKeyword,
@@ -31,9 +37,15 @@ import {
   hasTemporaryRestriction,
 } from "../../effects/temporary-effects";
 import {
-  EFFECT_PENDING_ERROR_CODE,
-  hasPendingActionEffectResolution,
-} from "../../resolution/action-effects/pending-action-effects";
+  applyStaticRestrictionBypass,
+  buildStaticContexts,
+  exertCard,
+  gainLore,
+  getCardDefinition,
+  hasAnyPendingEffects,
+  isCardInPlayZone,
+  validateNoPendingEffects,
+} from "../../../operations";
 import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import type { PlayCardExecutionContext } from "../../resolution/action-effects/types";
 import { validateExertCost } from "../../rules/play-card-rules";
@@ -51,17 +63,6 @@ const QUEST_TARGET_DSL = {
   cardTypes: ["character"],
 } as const;
 
-function getCardDefinitionFromContext(
-  ctx: {
-    cards: {
-      getDefinition: (cardId: string) => unknown;
-    };
-  },
-  cardId: string,
-): LorcanaCard | undefined {
-  return ctx.cards.getDefinition(cardId) as LorcanaCard | undefined;
-}
-
 type QuestValidationReadContext = Pick<
   MoveValidationContext<MoveInput>,
   "G" | "framework" | "cards"
@@ -78,22 +79,19 @@ function validateQuestCard(
   ctx: QuestReadableContext,
   cardId: CardInstanceId,
 ): RuntimeValidationResult {
-  const registry = getOrBuildMoveRegistry(ctx);
+  const { registry, projectionState } = buildStaticContexts(ctx);
+  const getCardWillpowerByInstanceId = (id: CardInstanceId) =>
+    getEffectiveWillpower(
+      ctx.cards.getDefinition(id) as any,
+      projectionState,
+      id,
+      (innerId) => ctx.cards.getDefinition(innerId) as any,
+      registry,
+    );
 
-  if (hasPendingActionEffectResolution(ctx)) {
-    return {
-      valid: false,
-      error: "Cannot quest while an action effect is pending",
-      errorCode: EFFECT_PENDING_ERROR_CODE,
-    };
-  }
-
-  if (hasPendingBagItems(ctx)) {
-    return {
-      valid: false,
-      error: "Cannot quest while bag effects are pending",
-      errorCode: "BAG_PENDING",
-    };
+  const pendingFailure = validateNoPendingEffects(ctx, { actionLabel: "quest" });
+  if (pendingFailure) {
+    return pendingFailure;
   }
 
   const currentPlayer = ctx.framework.state.currentPlayer!;
@@ -103,7 +101,7 @@ function validateQuestCard(
     return { valid: false, error: "Character not in play", errorCode: "NOT_IN_PLAY" };
   }
 
-  const cardDef = getCardDefinitionFromContext(ctx, cardId);
+  const cardDef = getCardDefinition(ctx, cardId);
   if (cardDef && cardDef.cardType !== "character") {
     return { valid: false, error: "Only characters can quest", errorCode: "NOT_A_CHARACTER" };
   }
@@ -113,9 +111,16 @@ function validateQuestCard(
   if (!exertValidation.valid) {
     if (
       exertValidation.errorCode === "CARD_DRYING" &&
-      getEffectsForCard(registry, cardId, "gain-keyword").some(
+      (getEffectsForCard(registry, cardId, "gain-keyword").some(
         (e) => e.payload.keyword === "QuestWhileDrying",
-      )
+      ) ||
+        hasStaticSelfRestriction({
+          state: ctx.framework.state,
+          cardId,
+          restriction: "can-quest-turn-played",
+          getDefinitionByInstanceId: (instanceId) =>
+            getCardDefinition(ctx, instanceId) as LorcanaCard | undefined,
+        }))
     ) {
       // Card has an ability granting quest-while-drying (e.g. RECORD TIME) — allow it
     } else {
@@ -143,10 +148,7 @@ function validateQuestCard(
   }
   if (
     hasTemporaryRestriction(questMeta, currentTurn, "cant-quest", {
-      isSourceInPlay: (sourceId) => {
-        const zoneKey = ctx.framework.zones.getCardZone(sourceId);
-        return typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"));
-      },
+      isSourceInPlay: (sourceId) => isCardInPlayZone(ctx, sourceId),
     })
   ) {
     return {
@@ -162,14 +164,31 @@ function validateQuestCard(
       cardId,
       restriction: "cant-quest",
       getDefinitionByInstanceId: (instanceId) =>
-        getCardDefinitionFromContext(ctx, instanceId) as LorcanaCard | undefined,
+        getCardDefinition(ctx, instanceId) as LorcanaCard | undefined,
+      getCardWillpowerByInstanceId,
     })
   ) {
-    return {
-      valid: false,
-      error: "Character cannot quest due to a static restriction",
-      errorCode: "CANT_QUEST_RESTRICTED",
-    };
+    const bypass = getStaticSelfRestrictionBypass({
+      state: ctx.framework.state,
+      cardId,
+      restriction: "cant-quest",
+      getDefinitionByInstanceId: (instanceId) =>
+        getCardDefinition(ctx, instanceId) as LorcanaCard | undefined,
+    });
+    if (!bypass) {
+      return {
+        valid: false,
+        error: "Character cannot quest due to a static restriction",
+        errorCode: "CANT_QUEST_RESTRICTED",
+      };
+    }
+    if (getAvailableInk(ctx, currentPlayer as PlayerId) < bypass.cost.ink) {
+      return {
+        valid: false,
+        error: "Not enough ink to pay the quest bypass cost",
+        errorCode: "CANT_QUEST_RESTRICTED",
+      };
+    }
   }
 
   if (
@@ -223,10 +242,25 @@ function isPlayerBlockedFromGainingLore(
 }
 
 function executeQuestCard(ctx: PlayCardExecutionContext, cardId: CardInstanceId): number {
-  const currentPlayer = ctx.framework.state.currentPlayer!;
-  const registry = getOrBuildMoveRegistry(ctx);
+  const currentPlayer: PlayerId = ctx.framework.state.currentPlayer!;
+  const { registry, projectionState: execProjectionState } = buildStaticContexts(ctx);
+  const getCardWillpowerByInstanceId = (id: CardInstanceId) =>
+    getEffectiveWillpower(
+      ctx.cards.getDefinition(id) as any,
+      execProjectionState,
+      id,
+      (innerId) => ctx.cards.getDefinition(innerId) as any,
+      registry,
+    );
 
-  ctx.cards.patchMeta(cardId, { state: "exerted" });
+  applyStaticRestrictionBypass(ctx, {
+    cardId,
+    restriction: "cant-quest",
+    playerId: currentPlayer as PlayerId,
+    getCardWillpowerByInstanceId,
+  });
+
+  exertCard(ctx, cardId);
 
   const loreValue = getEffectiveLore(
     ctx.cards.getDefinition(cardId) as any,
@@ -236,11 +270,10 @@ function executeQuestCard(ctx: PlayCardExecutionContext, cardId: CardInstanceId)
     registry,
   );
 
-  const blocked = isPlayerBlockedFromGainingLore(ctx, currentPlayer as PlayerId);
+  const blocked = isPlayerBlockedFromGainingLore(ctx, currentPlayer);
   const effectiveLoreGain = blocked ? 0 : loreValue;
 
-  const previousLore = Number(ctx.G.lore[currentPlayer as PlayerId] ?? 0);
-  ctx.G.lore[currentPlayer as PlayerId] = previousLore + effectiveLoreGain;
+  gainLore(ctx, currentPlayer, effectiveLoreGain);
   ctx.G.turnMetadata.charactersQuesting.push(cardId);
 
   emitTriggeredLorcanaEvent(
@@ -321,11 +354,7 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
   },
 
   available: (ctx) => {
-    if (hasPendingActionEffectResolution(ctx)) {
-      return false;
-    }
-
-    if (hasPendingBagItems(ctx)) {
+    if (hasAnyPendingEffects(ctx)) {
       return false;
     }
 
@@ -335,7 +364,7 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
       controllerId: ctx.playerId as PlayerId,
       // Must not have quested this turn
       extraPredicate: (cardId) => {
-        const cardDef = getCardDefinitionFromContext(ctx, cardId);
+        const cardDef = getCardDefinition(ctx, cardId);
 
         // Must not be exerted; must not be drying (cardMeta)
         const meta = ctx.cards.require(cardId).meta;
@@ -348,7 +377,14 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
             cardId as CardInstanceId,
             "gain-keyword",
           ).some((e) => e.payload.keyword === "QuestWhileDrying");
-          if (!hasQuestWhileDrying) return false;
+          const hasCanQuestTurnPlayed = hasStaticSelfRestriction({
+            state: ctx.framework.state,
+            cardId: cardId as CardInstanceId,
+            restriction: "can-quest-turn-played",
+            getDefinitionByInstanceId: (instanceId) =>
+              getCardDefinition(ctx, instanceId) as LorcanaCard | undefined,
+          });
+          if (!hasQuestWhileDrying && !hasCanQuestTurnPlayed) return false;
         }
         const currentTurn = ctx.framework.state.status.turn ?? 1;
         const hasTemporaryRecklessLoss = hasTemporaryLostKeyword(meta, currentTurn, "Reckless");
@@ -366,12 +402,7 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
         }
         if (
           hasTemporaryRestriction(meta, currentTurn, "cant-quest", {
-            isSourceInPlay: (sourceId) => {
-              const zoneKey = ctx.framework.zones.getCardZone(sourceId);
-              return (
-                typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"))
-              );
-            },
+            isSourceInPlay: (sourceId) => isCardInPlayZone(ctx, sourceId),
           })
         ) {
           return false;
@@ -382,10 +413,22 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
             cardId: cardId as CardInstanceId,
             restriction: "cant-quest",
             getDefinitionByInstanceId: (instanceId) =>
-              getCardDefinitionFromContext(ctx, instanceId) as LorcanaCard | undefined,
+              getCardDefinition(ctx, instanceId) as LorcanaCard | undefined,
           })
         ) {
-          return false;
+          const bypass = getStaticSelfRestrictionBypass({
+            state: ctx.framework.state,
+            cardId: cardId as CardInstanceId,
+            restriction: "cant-quest",
+            getDefinitionByInstanceId: (instanceId) =>
+              getCardDefinition(ctx, instanceId) as LorcanaCard | undefined,
+          });
+          if (!bypass) {
+            return false;
+          }
+          if (getAvailableInk(ctx, ctx.playerId as PlayerId) < bypass.cost.ink) {
+            return false;
+          }
         }
 
         if (
@@ -409,20 +452,9 @@ export const quest: LorcanaMoveDefinition<"quest"> = {
 
 export const questWithAll: LorcanaMoveDefinition<"questWithAll"> = {
   validate: (ctx): RuntimeValidationResult => {
-    if (hasPendingActionEffectResolution(ctx)) {
-      return {
-        valid: false,
-        error: "Cannot quest while an action effect is pending",
-        errorCode: EFFECT_PENDING_ERROR_CODE,
-      };
-    }
-
-    if (hasPendingBagItems(ctx)) {
-      return {
-        valid: false,
-        error: "Cannot quest while bag effects are pending",
-        errorCode: "BAG_PENDING",
-      };
+    const pendingFailure = validateNoPendingEffects(ctx, { actionLabel: "quest" });
+    if (pendingFailure) {
+      return pendingFailure;
     }
 
     if (getQuestableCharacterIds(ctx).length === 0) {
@@ -460,11 +492,7 @@ export const questWithAll: LorcanaMoveDefinition<"questWithAll"> = {
   },
 
   available: (ctx) => {
-    if (hasPendingActionEffectResolution(ctx)) {
-      return false;
-    }
-
-    if (hasPendingBagItems(ctx)) {
+    if (hasAnyPendingEffects(ctx)) {
       return false;
     }
 

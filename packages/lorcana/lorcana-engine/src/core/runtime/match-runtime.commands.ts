@@ -21,7 +21,9 @@ import { validateCommand } from "./match-runtime.validation";
 import {
   buildExecutionContext as buildExecutionContextFromUtils,
   buildLifecycleContext as buildLifecycleContextFromUtils,
+  createFrameworkStateSnapshot,
 } from "./match-runtime.utils";
+import { defaultRegistryProvider } from "../../runtime-moves/rules/registry-provider";
 import type { MatchStaticResources } from "./static-resources";
 import { createRuntimeState, createRuntimeStateWithPatches } from "./mutative";
 import { expireReveals } from "./zone-operations";
@@ -139,18 +141,18 @@ export function executeCommand(
         moveLogEntries.push(...entries);
       };
 
-      const executionContext = buildExecutionContextFromUtils(
-        draft,
-        actingPlayerId,
-        commandInput,
-        ctx.config,
-        ctx.staticResources,
-        ctx.gameEnded,
-        emitGameEvent,
-        endGameTracker,
+      const executionContext = buildExecutionContextFromUtils({
+        state: draft,
+        playerId: actingPlayerId,
+        input: commandInput,
+        config: ctx.config,
+        staticResources: ctx.staticResources,
+        gameEnded: ctx.gameEnded,
+        emit: emitGameEvent,
+        gameEndTracker: endGameTracker,
         undo,
         moveLogSink,
-      );
+      });
 
       // Step 5: Execute the move reducer
       moveDef.execute(executionContext);
@@ -160,19 +162,17 @@ export function executeCommand(
         draft,
         ctx.config.flow,
         (draftState, lifecycleGameEnded, lifecyclePlayerId) =>
-          buildLifecycleContextFromUtils(
-            draftState,
-            ctx.config,
-            ctx.staticResources,
-            lifecycleGameEnded,
-            emitGameEvent,
-            endGameTracker,
+          buildLifecycleContextFromUtils({
+            state: draftState,
+            playerId: lifecyclePlayerId,
+            config: ctx.config,
+            staticResources: ctx.staticResources,
+            gameEnded: lifecycleGameEnded,
+            emit: emitGameEvent,
+            gameEndTracker: endGameTracker,
             undo,
-            lifecyclePlayerId,
             moveLogSink,
-            undefined, // runtimeCardCache
-            true, // useSnapshotForReads: lifecycle hooks only read — no Mutative proxy overhead
-          ),
+          }),
       );
 
       // Step 8: Update clocks for new waiting state
@@ -252,6 +252,18 @@ export function executeCommand(
       // Step 9: Increment _stateID
       draft.ctx._stateID++;
       expireReveals(draft);
+
+      // Warm the move-registry cache for the post-increment state. The next
+      // consumer (validation of the next move, query API call, projection)
+      // hits a hot cache instead of paying the build cost as a latency surprise.
+      // Construct a fresh framework snapshot so the warm-up keys on the new
+      // `stateID` / `staticEffectsVersion`; the executionContext above captured
+      // these pre-increment.
+      defaultRegistryProvider.warmFor({
+        framework: { state: createFrameworkStateSnapshot(draft, endGameTracker.ended) },
+        G: draft.G,
+        cards: executionContext.cards,
+      });
 
       // Check end game condition
       const endResult = checkGameEndCondition(draft, ctx.config.flow);

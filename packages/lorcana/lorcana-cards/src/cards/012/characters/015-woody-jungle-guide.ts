@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { shift } from "../../../helpers/abilities";
 import { woodyJungleGuideI18n } from "./015-woody-jungle-guide.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const woodyJungleGuide: CharacterCard = {
   id: "1z1",
@@ -44,11 +44,19 @@ export const woodyJungleGuide: CharacterCard = {
       name: "LET'S GET MOVIN'",
       type: "triggered",
       text: "LET'S GET MOVIN' Whenever this character quests, draw a card. Then, you may play a character with cost 2 or less for free.",
-      trigger: { event: "quest", on: "SELF", timing: "whenever" },
+      trigger: {
+        event: "quest",
+        on: "SELF",
+        timing: "whenever",
+      },
       effect: {
         type: "sequence",
         steps: [
-          { type: "draw", amount: 1, target: "CONTROLLER" },
+          {
+            type: "draw",
+            amount: 1,
+            target: "CONTROLLER",
+          },
           {
             type: "optional",
             chooser: "CONTROLLER",
@@ -56,7 +64,10 @@ export const woodyJungleGuide: CharacterCard = {
               type: "play-card",
               cardType: "character",
               cost: "free",
-              costRestriction: { comparison: "less-or-equal", value: 2 },
+              costRestriction: {
+                comparison: "less-or-equal",
+                value: 2,
+              },
               from: "hand",
             },
           },
@@ -78,8 +89,13 @@ export const woodyJungleGuide: CharacterCard = {
           owner: "you",
           zones: ["play"],
           cardTypes: ["character"],
+          filter: [
+            {
+              type: "has-classification",
+              classification: "Toy",
+            },
+          ],
           excludeSelf: true,
-          filter: [{ type: "has-classification", classification: "Toy" }],
         },
       },
     },

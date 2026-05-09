@@ -7,8 +7,10 @@ import {
   grabYourSword,
   grammaTalaStoryteller,
   mickeyMouseArtfulRogue,
+  minnieMouseBelovedPrincess,
 } from "@tcg/lorcana-cards/cards/001";
 import { createFixture } from "../../fixture-factory.js";
+import { woodyJungleGuide } from "@tcg/lorcana-cards/cards/012";
 
 export const bug34RobinHoodSharpshooterFixture = createFixture({
   id: "bug-34-robin-hood-sharpshooter",
@@ -24,6 +26,8 @@ export const bug34RobinHoodSharpshooterFixture = createFixture({
       grammaTalaStoryteller,
       friendsOnTheOtherSide,
       grabYourSword,
+      woodyJungleGuide,
+      minnieMouseBelovedPrincess,
     ],
   },
   playerTwo: {

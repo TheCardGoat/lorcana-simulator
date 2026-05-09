@@ -29,13 +29,8 @@ describe("Anna - Heir to Arendelle", () => {
 
       expect(testEngine.asPlayerOne().playCard(annaHeirToArendelle)).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued when trigger fires, Elsa condition is checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(annaHeirToArendelle, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       // Elsa is not in play — no restriction applied to opponent's character
       expect(testEngine.asPlayerTwo()).not.toHaveRestriction({

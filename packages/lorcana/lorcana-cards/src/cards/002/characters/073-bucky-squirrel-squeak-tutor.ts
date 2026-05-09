@@ -60,6 +60,5 @@ export const buckySquirrelSqueakTutor: CharacterCard = {
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: buckySquirrelSqueakTutorI18n,
 };

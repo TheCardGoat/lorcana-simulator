@@ -95,6 +95,42 @@ describe("Luisa Madrigal - Confident Climber", () => {
       expect(testEngine.asPlayerTwo().getDamage(opposingCharacter)).toBe(0);
     });
 
+    it("can be activated multiple times per turn (no exert required — cost is 1 ink only)", () => {
+      // The card text across all non-English localizations shows "1 {I}" with no {E}.
+      // The English description includes "{E}" but this is a text-display artefact —
+      // the mechanical cost is ink-only.  Luisa must remain un-exerted after activation
+      // so the ability can be used again in the same turn.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: luisaMadrigalConfidentClimber, damage: 0 },
+            { card: friendlyCharacter, damage: 2 },
+          ],
+          inkwell: 2, // enough for two activations
+          deck: 5,
+        },
+        { deck: 2 },
+      );
+
+      const friendlyId = testEngine.findCardInstanceId(friendlyCharacter, "play");
+
+      // First activation — should succeed
+      expect(
+        testEngine.asPlayerOne().activateAbility(luisaMadrigalConfidentClimber),
+      ).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [friendlyId] }),
+      ).toBeSuccessfulCommand();
+
+      // Luisa should NOT be exerted after the first use (ink-only cost)
+      expect(testEngine.asPlayerOne().isExerted(luisaMadrigalConfidentClimber)).toBe(false);
+
+      // Second activation in the same turn must succeed (would fail if exert was required)
+      expect(
+        testEngine.asPlayerOne().activateAbility(luisaMadrigalConfidentClimber),
+      ).toBeSuccessfulCommand();
+    });
+
     it("cannot activate without enough ink", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

@@ -15,6 +15,7 @@ import {
   type CardSelectPayload,
 } from "@/features/simulator/context/card-interaction-context.svelte.js";
 import { SimulatorLayoutModeObserver } from "@/features/simulator/model/layout-mode.svelte.js";
+import { IsTouchInteraction } from "$lib/hooks/is-touch-interaction.svelte.js";
 
 const SIMULATOR_CARD_CONTEXT_KEY = Symbol.for("lorcana.simulator-card");
 
@@ -55,6 +56,7 @@ class SimulatorCardController implements SimulatorCardContextValue {
   readonly #sidebar = useLorcanaSidebarPresenter();
   readonly #options: SimulatorCardContextOptions;
   readonly #layout = new SimulatorLayoutModeObserver();
+  readonly #isTouchInteraction = new IsTouchInteraction();
 
   constructor(options: SimulatorCardContextOptions = {}) {
     this.#options = options;
@@ -105,7 +107,7 @@ class SimulatorCardController implements SimulatorCardContextValue {
     const hoverCard = card ?? null;
     const mode = this.#sidebar.cardPreviewMode;
 
-    if (this.shouldUseTouchInspect || mode === "disabled") {
+    if (this.shouldUseTouchInspect || this.#isTouchInteraction.current || mode === "disabled") {
       this.#delayedHoveredCard = null;
     } else if (mode === "immediate") {
       this.#delayedHoveredCard = hoverCard;
@@ -141,7 +143,7 @@ class SimulatorCardController implements SimulatorCardContextValue {
       return;
     }
 
-    if (this.#sidebar.handleActionSessionCardSelection(card)) {
+    if (this.#sidebar.handleAvailableMovesSelectionCard(card.cardId)) {
       this.selectionMode = "single";
       this.syncSelectedIds("single");
       return;
@@ -222,6 +224,13 @@ class SimulatorCardController implements SimulatorCardContextValue {
     }
 
     if (this.#sidebar.isCardSelectableForActionSession(card)) {
+      return true;
+    }
+
+    if (
+      this.#sidebar.resolutionSelectionSession &&
+      this.#sidebar.getActionSessionCardState(card.cardId).isSelectable
+    ) {
       return true;
     }
 

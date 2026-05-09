@@ -2,6 +2,7 @@ import { m } from "$lib/i18n/messages.js";
 import { getLogger } from "@logtape/logtape";
 import type { CommandResult } from "@tcg/lorcana-engine";
 import type { LorcanaEngineBase } from "@tcg/lorcana-engine";
+import { trackException } from "$lib/analytics/analytics.js";
 import type {
   LorcanaSimulatorMoveId,
   LorcanaSimulatorMoveParams,
@@ -34,6 +35,12 @@ export function dispatchSimulatorMove<K extends LorcanaSimulatorMoveId>(
       playerId,
       errorCode: result.errorCode,
       error: result.error,
+    });
+    trackException({
+      source: "move_dispatch",
+      code: result.errorCode ?? "MOVE_FAILED",
+      message: result.error ? `${moveId}: ${result.error}` : moveId,
+      fatal: false,
     });
   }
   return result;

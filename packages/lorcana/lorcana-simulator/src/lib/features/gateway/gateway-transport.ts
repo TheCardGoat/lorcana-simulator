@@ -83,9 +83,10 @@ export class GatewayTransport implements Transport {
   readonly #initialState: unknown | undefined;
 
   #messageHandler: ((message: ServerMessage) => void) | null = null;
-  #disconnectHandler: ((reason: string) => void) | null = null;
   #errorHandler: ((error: Error) => void) | null = null;
+  #disconnectHandler: ((reason: string) => void) | null = null;
   #unsubscribe: (() => void) | null = null;
+  #statusUnsubscribe: (() => void) | null = null;
   #state: ConnectionState = "DISCONNECTED";
   /** Server's authoritative state version — tracked for heartbeat state sync checks. */
   #serverStateVersion: number = 0;
@@ -101,6 +102,8 @@ export class GatewayTransport implements Transport {
    * that requires an undo proposal (ranked matches).
    */
   #pendingUndoMove: boolean = false;
+  /** A move that was in-flight when the socket dropped — retried after reconnect + state sync. */
+  #pendingRetryMove: { message: object; expectedVersion: number; isUndo?: boolean } | null = null;
   readonly #idleStore: IdleStore | undefined;
   #idleStoreCleanup: (() => void) | null = null;
 
@@ -131,6 +134,14 @@ export class GatewayTransport implements Transport {
     // Register listener for gateway messages
     this.#unsubscribe = this.#gateway.addGameMessageListener((msg) => {
       this.#handleGatewayMessage(msg);
+    });
+
+    // Watch for gateway disconnects and forward to engine.
+    this.#statusUnsubscribe = this.#gateway.addStatusChangeListener((status) => {
+      if (status === "disconnected") {
+        this.#state = "DISCONNECTED";
+        this.#disconnectHandler?.("gateway disconnected");
+      }
     });
 
     this.#state = "CONNECTED";
@@ -171,11 +182,14 @@ export class GatewayTransport implements Transport {
     }
     this.#idleStoreCleanup?.();
     this.#idleStoreCleanup = null;
+    this.#statusUnsubscribe?.();
+    this.#statusUnsubscribe = null;
     this.#unsubscribe?.();
     this.#unsubscribe = null;
     this.#state = "DISCONNECTED";
     this.#lastMoveAcceptedStateVersion = -1;
     this.#pendingUndoMove = false;
+    this.#pendingRetryMove = null;
   }
 
   send(message: ClientMessage): void {
@@ -188,14 +202,19 @@ export class GatewayTransport implements Transport {
           cmd.input?.args && typeof cmd.input.args === "object"
             ? (cmd.input.args as Record<string, unknown>)
             : {};
-
-        this.#gateway.send({
+        const prevStateID = (message as { prevStateID: number }).prevStateID;
+        const moveMsg = {
           type: "execute_move",
           ...this.#identityEcho(),
           gameId: this.#gameId,
-          expectedVersion: (message as { prevStateID: number }).prevStateID,
+          expectedVersion: prevStateID,
           moveType: cmd.move,
           payload,
+        };
+        this.#gateway.sendWithAck(moveMsg).catch((reason: string) => {
+          if (reason === "disconnected" || reason === "timeout") {
+            this.#pendingRetryMove = { message: moveMsg, expectedVersion: prevStateID };
+          }
         });
         break;
       }
@@ -219,13 +238,28 @@ export class GatewayTransport implements Transport {
 
       case "UNDO_REQUEST": {
         this.#pendingUndoMove = true;
-        this.#gateway.send({
+        const undoPrevStateID = (message as { prevStateID: number }).prevStateID;
+        const undoMsg = {
           type: "execute_move",
           ...this.#identityEcho(),
           gameId: this.#gameId,
-          expectedVersion: (message as { prevStateID: number }).prevStateID,
+          expectedVersion: undoPrevStateID,
           moveType: "undo",
           payload: {},
+        };
+        this.#gateway.sendWithAck(undoMsg).catch((reason: string) => {
+          if (reason === "disconnected" || reason === "timeout") {
+            // Do NOT clear #pendingUndoMove here. On timeout the socket may still be
+            // alive, and a delayed move_rejected (with proposal reason) must still
+            // trigger proposal escalation. #pendingUndoMove is cleared by
+            // move_accepted / move_rejected, or by #checkAndRetryPendingMove when
+            // the server snapshot confirms the undo was already applied.
+            this.#pendingRetryMove = {
+              message: undoMsg,
+              expectedVersion: undoPrevStateID,
+              isUndo: true,
+            };
+          }
         });
         break;
       }
@@ -239,12 +273,12 @@ export class GatewayTransport implements Transport {
     this.#messageHandler = handler;
   }
 
-  onDisconnect(handler: (reason: string) => void): void {
-    this.#disconnectHandler = handler;
-  }
-
   onError(handler: (error: Error) => void): void {
     this.#errorHandler = handler;
+  }
+
+  onDisconnect(handler: (reason: string) => void): void {
+    this.#disconnectHandler = handler;
   }
 
   getState(): ConnectionState {
@@ -304,6 +338,7 @@ export class GatewayTransport implements Transport {
             canUndo: false,
             state,
           } as ServerMessage);
+          this.#checkAndRetryPendingMove(stateVersion);
         }
         break;
       }
@@ -323,6 +358,7 @@ export class GatewayTransport implements Transport {
             canUndo: false,
             state,
           } as ServerMessage);
+          this.#checkAndRetryPendingMove(stateVersion);
         }
         break;
       }
@@ -358,12 +394,19 @@ export class GatewayTransport implements Transport {
           },
           animations: stateUpdateAnimations,
         } as ServerMessage);
+        this.#checkAndRetryPendingMove(stateVersion);
         break;
       }
 
       case "move_rejected": {
         const code = (msg.code as string) ?? "INVALID_MOVE";
         const reason = (msg.reason as string) ?? "";
+
+        // The server has definitively processed this move (and rejected it).
+        // Any queued reconnect-retry for the same move must be dropped — retrying
+        // a rejected move would just loop. Clear it unconditionally: the engine
+        // gates on one in-flight move at a time so the retry can only be for this move.
+        this.#pendingRetryMove = null;
 
         // When the server rejects an undo move in a ranked match because it
         // requires opponent approval, automatically escalate to a proposal instead
@@ -445,6 +488,46 @@ export class GatewayTransport implements Transport {
 
   #deliverMessage(message: ServerMessage): void {
     this.#messageHandler?.(message);
+  }
+
+  /**
+   * After reconnect + state sync, retry a move that was in-flight when the socket dropped,
+   * but only if the server hasn't already applied it (version-based idempotency check).
+   */
+  #checkAndRetryPendingMove(currentStateVersion: number): void {
+    const retry = this.#pendingRetryMove;
+    if (!retry) return;
+    this.#pendingRetryMove = null;
+
+    if (currentStateVersion >= retry.expectedVersion + 1) {
+      // Server already processed the move — no retry needed.
+      // If it was an undo, clear the flag: move_accepted/rejected will never
+      // arrive for it after reconnect, so we do it here to avoid stale state.
+      if (retry.isUndo) {
+        this.#pendingUndoMove = false;
+      }
+      return;
+    }
+
+    if (currentStateVersion < retry.expectedVersion) {
+      // Server snapshot is behind the move's base version — keep the retry
+      // queued so it can be attempted once the state catches up.
+      this.#pendingRetryMove = retry;
+      return;
+    }
+
+    // currentStateVersion === retry.expectedVersion: server did not process the move — resend it.
+    if (retry.isUndo) {
+      this.#pendingUndoMove = true;
+    }
+    this.#gateway.sendWithAck(retry.message).catch((reason: string) => {
+      if (reason === "disconnected" || reason === "timeout") {
+        // Do NOT clear #pendingUndoMove here — same reasoning as in UNDO_REQUEST:
+        // the socket may still be alive on timeout and a delayed move_rejected
+        // (proposal reason) must still trigger proposal escalation.
+        this.#pendingRetryMove = retry;
+      }
+    });
   }
 
   /** Push a protocol ERROR so the client engine rolls back optimistic moves. */

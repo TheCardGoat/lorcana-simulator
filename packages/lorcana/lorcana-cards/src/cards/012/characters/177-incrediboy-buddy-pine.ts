@@ -49,10 +49,12 @@ export const incrediboyBuddyPine: CharacterCard = {
         comparison: "greater-or-equal",
         count: 1,
         classification: "Hero",
+        excludeSelf: true,
       },
       effect: {
-        amount: 1,
         type: "gain-lore",
+        amount: 1,
+        target: "CONTROLLER",
       },
     },
     {

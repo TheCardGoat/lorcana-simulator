@@ -7,8 +7,20 @@
   import Smartphone from '@lucide/svelte/icons/smartphone';
   import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
   import X from '@lucide/svelte/icons/x';
+  import Star from '@lucide/svelte/icons/star';
+  import Gem from '@lucide/svelte/icons/gem';
+  import Sparkles from '@lucide/svelte/icons/sparkles';
+  import Crown from '@lucide/svelte/icons/crown';
   import type { LiveMatchesStore } from '../state/live-matches.svelte.js';
   import { trackEvent } from '$lib/analytics/analytics.js';
+
+  type PatronConfig = { name: () => string; color: string; glow: string; border: string };
+  const patronTierConfigs: Record<string, PatronConfig> = {
+    tier2: { name: () => m["patron_tier_supporter"]({}), color: "#cd7f32", glow: "rgba(205,127,50,0.55)", border: "rgba(205,127,50,0.5)" },
+    tier3: { name: () => m["patron_tier_champion"]({}),  color: "#d4d4d4", glow: "rgba(212,212,212,0.5)", border: "rgba(212,212,212,0.45)" },
+    tier4: { name: () => m["patron_tier_legend"]({}),    color: "#ffd700", glow: "rgba(255,215,0,0.6)",   border: "rgba(255,215,0,0.55)" },
+    tier5: { name: () => m["patron_tier_admin"]({}),     color: "#a855f7", glow: "rgba(168,85,247,0.55)", border: "rgba(168,85,247,0.5)" },
+  };
 
   const INK_TYPES = ["amber", "amethyst", "emerald", "ruby", "sapphire", "steel"] as const;
   type InkType = typeof INK_TYPES[number];
@@ -232,6 +244,29 @@
               {#if match.player1.isMobile}
                 <Smartphone class="size-3 shrink-0 text-slate-500" />
               {/if}
+              {#if Number.isFinite(match.player1.mmr)}
+                <span class="live-mmr shrink-0">#{Math.round(match.player1.mmr!)}</span>
+              {/if}
+              {#if match.player1.subscriptionTier && patronTierConfigs[match.player1.subscriptionTier]}
+                {@const cfg = patronTierConfigs[match.player1.subscriptionTier]}
+                <span
+                  class="live-patron shrink-0"
+                  style:--patron-color={cfg.color}
+                  style:--patron-glow={cfg.glow}
+                  style:--patron-border={cfg.border}
+                  title={cfg.name()}
+                >
+                  {#if match.player1.subscriptionTier === 'tier5'}
+                    <Crown class="size-[9px]" />
+                  {:else if match.player1.subscriptionTier === 'tier4'}
+                    <Sparkles class="size-[9px]" />
+                  {:else if match.player1.subscriptionTier === 'tier3'}
+                    <Gem class="size-[9px]" />
+                  {:else}
+                    <Star class="size-[9px]" />
+                  {/if}
+                </span>
+              {/if}
             </div>
             <span class="shrink-0 text-xs text-slate-500">vs</span>
             <div class="flex min-w-0 items-center gap-1">
@@ -241,6 +276,29 @@
               <span class="ml-1 truncate font-medium text-slate-200">{match.player2.displayName}</span>
               {#if match.player2.isMobile}
                 <Smartphone class="size-3 shrink-0 text-slate-500" />
+              {/if}
+              {#if Number.isFinite(match.player2.mmr)}
+                <span class="live-mmr shrink-0">#{Math.round(match.player2.mmr!)}</span>
+              {/if}
+              {#if match.player2.subscriptionTier && patronTierConfigs[match.player2.subscriptionTier]}
+                {@const cfg = patronTierConfigs[match.player2.subscriptionTier]}
+                <span
+                  class="live-patron shrink-0"
+                  style:--patron-color={cfg.color}
+                  style:--patron-glow={cfg.glow}
+                  style:--patron-border={cfg.border}
+                  title={cfg.name()}
+                >
+                  {#if match.player2.subscriptionTier === 'tier5'}
+                    <Crown class="size-[9px]" />
+                  {:else if match.player2.subscriptionTier === 'tier4'}
+                    <Sparkles class="size-[9px]" />
+                  {:else if match.player2.subscriptionTier === 'tier3'}
+                    <Gem class="size-[9px]" />
+                  {:else}
+                    <Star class="size-[9px]" />
+                  {/if}
+                </span>
               {/if}
             </div>
           </div>
@@ -272,3 +330,28 @@
     {/if}
   {/if}
 </div>
+
+<style>
+  .live-mmr {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: rgba(148, 163, 184, 0.55);
+    white-space: nowrap;
+  }
+
+  .live-patron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--patron-border);
+    color: var(--patron-color);
+    box-shadow:
+      0 0 4px var(--patron-glow),
+      0 0 8px var(--patron-glow);
+    cursor: default;
+  }
+</style>

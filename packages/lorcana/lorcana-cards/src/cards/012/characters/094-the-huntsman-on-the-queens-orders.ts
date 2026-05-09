@@ -22,7 +22,7 @@ export const theHuntsmanOnTheQueensOrders: CharacterCard = {
   externalIds: {
     lorcast: "crd_b3558cc6e55c47c6823f2324e28b0397",
   },
-  text: "Ward",
+  text: "<Ward>",
   classifications: ["Storyborn", "Ally"],
   abilities: [ward],
   i18n: theHuntsmanOnTheQueensOrdersI18n,

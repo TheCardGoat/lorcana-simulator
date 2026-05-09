@@ -1,6 +1,7 @@
 import { belleStrangeButSpecial, genieOnTheJob } from "@tcg/lorcana-cards/cards/001";
 import { createFixture } from "../fixture-factory.js";
 import { retroEvolutionDevice } from "@tcg/lorcana-cards/cards/011";
+import { woodyJungleGuide } from "@tcg/lorcana-cards/cards/012";
 
 export const retroEvolutionDeviceGenie = createFixture({
   id: "retro-evolution-device-genie",
@@ -16,6 +17,7 @@ export const retroEvolutionDeviceGenie = createFixture({
     deck: 10,
   },
   playerTwo: {
+    play: [woodyJungleGuide],
     inkwell: 3,
     deck: 10,
   },

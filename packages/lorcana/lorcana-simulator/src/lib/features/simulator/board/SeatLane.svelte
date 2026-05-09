@@ -5,7 +5,7 @@ import type {
 	ExecutableMovePresentationCategoryId,
 } from "@/features/simulator/model/contracts.js";
 import type { SimulatorLayoutMode } from "@/features/simulator/model/layout-mode.svelte.js";
-import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
+import CardImage from "@/design-system/simulator/cards/CardImage.svelte";
 import PlayZone from "./PlayZone.svelte";
 import InkwellZone from "@/features/simulator/board/InkwellZone.svelte";
 import ItemZone from "./ItemZone.svelte";
@@ -16,14 +16,17 @@ import {
 	useLorcanaSidebarPresenter,
 } from "@/features/simulator/context/game-context.svelte.js";
 import { createLoreBadgeAnchorId } from "@/features/simulator/animations/quest-animations.js";
+import { useLorcanaSimulatorDndContext } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
 import {
 	ORDERED_MOVE_CATEGORIES,
 	getCategoryLabel,
 } from "@/features/simulator/model/move-presentation.js";
+import * as Tooltip from "$lib/design-system/primitives/tooltip/index.js";
 import * as ContextMenu from "$lib/design-system/primitives/context-menu";
 import * as Dialog from "$lib/design-system/primitives/dialog";
 import { Button } from "$lib/design-system/primitives/button";
 import { m } from "$lib/i18n/messages.js";
+import { getManualModeContext } from "@/features/manual-mode/manual-mode-context.svelte.js";
 
 interface SeatLaneProps {
 	layoutMode?: SimulatorLayoutMode;
@@ -43,6 +46,8 @@ interface SeatLaneProps {
 	onDiscardClick?: () => void;
 	onInkwellClick?: () => void;
 	onProposeCancel?: () => void;
+	onReportOpponent?: () => void;
+	canReportOpponent?: boolean;
 }
 
 let {
@@ -63,10 +68,13 @@ let {
 	onDiscardClick,
 	onInkwellClick,
 	onProposeCancel,
+	onReportOpponent,
+	canReportOpponent = false,
 }: SeatLaneProps = $props();
 
 const board = useLorcanaBoardPresenter();
 const sidebar = useLorcanaSidebarPresenter();
+const dnd = useLorcanaSimulatorDndContext();
 
 const ownerId = $derived(board.getOwnerIdForSide(playerSide));
 const boardSummary = $derived(board.getPlayerSummary(playerSide));
@@ -117,6 +125,20 @@ const canConcede = $derived(sidebar.canConcede);
 const availableCategoryIds = $derived(
 	new Set(sidebar.moveCategorySummaries.map((s) => s.categoryId)),
 );
+const loreDropState = $derived(dnd.getLoreDropState(playerSide));
+
+const manualMode = getManualModeContext();
+const manualModeEnabled = $derived(manualMode?.enabled ?? false);
+
+function handleLoreIncrement(): void {
+	if (!manualMode || !ownerId) return;
+	manualMode.setLore(ownerId, lore + 1);
+}
+
+function handleLoreDecrement(): void {
+	if (!manualMode || !ownerId) return;
+	manualMode.setLore(ownerId, Math.max(0, lore - 1));
+}
 
 // Card-based moves require selecting a specific card — always disabled in context menu
 const CARD_BASED = new Set<ExecutableMovePresentationCategoryId>([
@@ -130,7 +152,7 @@ const CARD_BASED = new Set<ExecutableMovePresentationCategoryId>([
 	"move-to-location",
 ]);
 
-type ConfirmableAction = "pass-turn" | "undo" | "concede";
+type ConfirmableAction = "pass-turn" | "undo" | "concede" | "disable-manual-mode";
 let pendingAction = $state<ConfirmableAction | null>(null);
 
 const confirmDialogConfig = $derived.by(() => {
@@ -156,6 +178,13 @@ const confirmDialogConfig = $derived.by(() => {
 				confirmLabel: m["sim.actions.label.concede"]({}),
 				destructive: true,
 			};
+		case "disable-manual-mode":
+			return {
+				title: m["sim.manualMode.disableDialog.title"]({}),
+				description: m["sim.manualMode.disableDialog.description"]({}),
+				confirmLabel: m["sim.manualMode.disableDialog.confirmLabel"]({}),
+				destructive: false,
+			};
 		default:
 			return null;
 	}
@@ -178,6 +207,8 @@ function confirmPendingAction(): void {
 	if (!pendingAction) return;
 	if (pendingAction === "concede") {
 		sidebar.handleMobileConcede();
+	} else if (pendingAction === "disable-manual-mode") {
+		manualMode?.requestDisable();
 	} else {
 		const moves = sidebar.expandCategoryMoves(pendingAction);
 		if (moves.length > 0) {
@@ -215,22 +246,44 @@ function confirmPendingAction(): void {
               aria-label={playerEffectAriaLabel}
             >
               {#each visibleEffectSourceCards as effectCard, index (effectCard.cardId)}
-                <div
-                  class="seat-effect-card"
-                  style={`--effect-card-offset:${index}`}
-                  title={playerActiveEffects
-                    .filter((effect) => effect.sourceCardId === effectCard.cardId)
-                    .map((effect) => effect.description)
-                    .join("; ") || effectCard.label}
-                >
-                  <LorcanaCard
-                    card={effectCard}
-                    size="micro"
-                    imageFormat="art_only"
-                    isExerted={effectCard.readyState === "exerted"}
-                    isMasked={effectCard.isMasked}
-                  />
-                </div>
+                {@const effectDescriptions = playerActiveEffects
+                  .filter((e) => e.sourceCardId === effectCard.cardId)
+                  .map((e) => e.description)
+                  .join("; ")}
+                <Tooltip.Root>
+                  <Tooltip.Trigger>
+                    {#snippet child({ props })}
+                      <div
+                        class="seat-effect-card"
+                        style={`--effect-card-offset:${index}`}
+                        aria-label={effectCard.label}
+                        {...props}
+                      >
+                        {#if effectCard.set && effectCard.cardNumber && !effectCard.isMasked}
+                          <CardImage
+                            set={effectCard.set}
+                            number={effectCard.cardNumber}
+                            crop="art_only"
+                            alt={effectCard.label}
+                            class="seat-effect-card__image"
+                          />
+                        {:else}
+                          <div class="seat-effect-card__placeholder" aria-hidden="true"></div>
+                        {/if}
+                      </div>
+                    {/snippet}
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    side="top"
+                    sideOffset={6}
+                    class="rounded-lg border border-white/10 bg-slate-950/95 px-2.5 py-1.5 text-[0.7rem] leading-snug text-slate-100 shadow-xl max-w-[14rem]"
+                  >
+                    <div class="font-semibold">{effectCard.label}</div>
+                    {#if effectDescriptions}
+                      <div class="mt-0.5 text-slate-300">{effectDescriptions}</div>
+                    {/if}
+                  </Tooltip.Content>
+                </Tooltip.Root>
               {/each}
               {#if hiddenEffectSourceCount > 0}
                 <div
@@ -252,12 +305,82 @@ function confirmPendingAction(): void {
           {/if}
 
           <div class="seat-badges">
+            {#if manualModeEnabled && manualMode}
+              <Tooltip.Root>
+                <Tooltip.Trigger>
+                  {#snippet child({ props })}
+                    <button
+                      type="button"
+                      class="seat-chip seat-chip--manual"
+                      class:seat-chip--manual-self={!isOpponent}
+                      aria-label={isOpponent
+                        ? m["sim.manualMode.chip.ariaLabel.opponent"]({})
+                        : m["sim.manualMode.chip.ariaLabel.self"]({})}
+                      {...props}
+                      onclick={(event) => {
+                        (props as { onclick?: (e: MouseEvent) => void }).onclick?.(event);
+                        if (!isOpponent) pendingAction = "disable-manual-mode";
+                      }}
+                    >
+                      <span class="seat-chip--manual__dot" aria-hidden="true"></span>
+                      <span class="seat-chip--manual__label">
+                        {isOpponent
+                          ? m["sim.manualMode.chip.label.opponent"]({})
+                          : m["sim.manualMode.chip.label.self"]({})}
+                      </span>
+                    </button>
+                  {/snippet}
+                </Tooltip.Trigger>
+                <Tooltip.Content
+                  side={seatPosition === "top" ? "bottom" : "top"}
+                  sideOffset={6}
+                  class="rounded-lg border border-amber-300/30 bg-slate-950/95 px-2.5 py-1.5 text-[0.7rem] leading-snug text-slate-100 shadow-xl max-w-[16rem]"
+                >
+                  <div class="font-semibold text-amber-200">{m["sim.manualMode.tooltip.title"]({})}</div>
+                  <div class="mt-0.5 text-slate-300">
+                    {m["sim.manualMode.tooltip.description"]({})}
+                  </div>
+                  {#if !isOpponent}
+                    <div class="mt-1 text-slate-400">{m["sim.manualMode.tooltip.disableHint"]({})}</div>
+                  {/if}
+                </Tooltip.Content>
+              </Tooltip.Root>
+            {/if}
             {#if seatPosition === "top" || seatPosition === "bottom"}
               <span
                 class="seat-chip seat-chip--lore"
+                class:seat-chip--lore-quest-target={loreDropState !== "none"}
+                class:seat-chip--lore-quest-hovered={loreDropState === "valid"}
+                class:seat-chip--lore-manual={manualModeEnabled}
                 data-board-anchor-id={createLoreBadgeAnchorId(playerSide)}
+                data-lore-drop-target={playerSide}
+                data-player-side={playerSide}
                 aria-label={`Lore: ${lore}`}
-              >Lore: {lore}</span>
+              >
+                {#if manualModeEnabled}
+                  <button
+                    type="button"
+                    class="seat-chip__lore-btn"
+                    aria-label={`Decrease lore for ${playerSide}`}
+                    onclick={handleLoreDecrement}
+                    disabled={lore <= 0}
+                  >−</button>
+                {/if}
+                <span class="seat-chip__lore-value">Lore: {lore}</span>
+                {#if manualModeEnabled}
+                  <button
+                    type="button"
+                    class="seat-chip__lore-btn"
+                    aria-label={`Increase lore for ${playerSide}`}
+                    onclick={handleLoreIncrement}
+                  >+</button>
+                {/if}
+                {#if loreDropState !== "none"}
+                  <span class="seat-chip__drop-hint" aria-hidden="true">
+                    {m["sim.dnd.lore.dropHint"]({})}
+                  </span>
+                {/if}
+              </span>
             {/if}
             {#if isTurnPlayer}
               <span class="seat-chip seat-chip--turn">Turn</span>
@@ -273,22 +396,44 @@ function confirmPendingAction(): void {
               aria-label={playerEffectAriaLabel}
             >
               {#each visibleEffectSourceCards as effectCard, index (effectCard.cardId)}
-                <div
-                  class="seat-effect-card"
-                  style={`--effect-card-offset:${index}`}
-                  title={playerActiveEffects
-                    .filter((effect) => effect.sourceCardId === effectCard.cardId)
-                    .map((effect) => effect.description)
-                    .join("; ") || effectCard.label}
-                >
-                  <LorcanaCard
-                    card={effectCard}
-                    size="micro"
-                    imageFormat="art_only"
-                    isExerted={effectCard.readyState === "exerted"}
-                    isMasked={effectCard.isMasked}
-                  />
-                </div>
+                {@const effectDescriptions = playerActiveEffects
+                  .filter((e) => e.sourceCardId === effectCard.cardId)
+                  .map((e) => e.description)
+                  .join("; ")}
+                <Tooltip.Root>
+                  <Tooltip.Trigger>
+                    {#snippet child({ props })}
+                      <div
+                        class="seat-effect-card"
+                        style={`--effect-card-offset:${index}`}
+                        aria-label={effectCard.label}
+                        {...props}
+                      >
+                        {#if effectCard.set && effectCard.cardNumber && !effectCard.isMasked}
+                          <CardImage
+                            set={effectCard.set}
+                            number={effectCard.cardNumber}
+                            crop="art_only"
+                            alt={effectCard.label}
+                            class="seat-effect-card__image"
+                          />
+                        {:else}
+                          <div class="seat-effect-card__placeholder" aria-hidden="true"></div>
+                        {/if}
+                      </div>
+                    {/snippet}
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    side="bottom"
+                    sideOffset={6}
+                    class="rounded-lg border border-white/10 bg-slate-950/95 px-2.5 py-1.5 text-[0.7rem] leading-snug text-slate-100 shadow-xl max-w-[14rem]"
+                  >
+                    <div class="font-semibold">{effectCard.label}</div>
+                    {#if effectDescriptions}
+                      <div class="mt-0.5 text-slate-300">{effectDescriptions}</div>
+                    {/if}
+                  </Tooltip.Content>
+                </Tooltip.Root>
               {/each}
               {#if hiddenEffectSourceCount > 0}
                 <div
@@ -422,6 +567,28 @@ function confirmPendingAction(): void {
     >
       {m["sim.actions.label.proposeCancel"]({})}
     </ContextMenu.Item>
+    {#if manualMode}
+      <ContextMenu.Item
+        onSelect={() => {
+          if (manualModeEnabled) manualMode.requestDisable();
+          else manualMode.requestEnable();
+        }}
+      >
+        {manualModeEnabled
+          ? "Exit Board State Correction…"
+          : "Request Board State Correction…"}
+      </ContextMenu.Item>
+    {/if}
+
+    {#if isOpponent}
+      <ContextMenu.Item
+        disabled={!canReportOpponent || !onReportOpponent}
+        variant="destructive"
+        onSelect={() => onReportOpponent?.()}
+      >
+        {m["sim.player.report.openAria"]({})}
+      </ContextMenu.Item>
+    {/if}
 
     <ContextMenu.Separator />
 
@@ -497,6 +664,7 @@ function confirmPendingAction(): void {
       background 160ms ease;
     overflow: visible;
     isolation: isolate;
+
   }
 
   .seat-lane__content {
@@ -561,6 +729,7 @@ function confirmPendingAction(): void {
     display: flex;
     align-items: center;
     gap: 0.35rem;
+    pointer-events: auto;
   }
 
   .seat-playmat {
@@ -696,6 +865,78 @@ function confirmPendingAction(): void {
     text-shadow: none;
     font-size: 1rem;
     padding: 0.22rem 0.72rem;
+    transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, box-shadow 150ms ease, border-radius 150ms ease, padding 150ms ease, min-width 150ms ease;
+  }
+
+  .seat-chip--lore-quest-target {
+    pointer-events: auto;
+    flex-direction: column;
+    padding: 0.75rem 1.1rem;
+    min-width: 4.5rem;
+    transform: scale(1.0);
+    border-color: rgba(74, 222, 128, 0.75);
+    background: linear-gradient(180deg, rgba(22, 101, 52, 0.96) 0%, rgba(15, 60, 30, 0.96) 100%);
+    color: #bbf7d0;
+    cursor: copy;
+    border-radius: 10px;
+  }
+
+  .seat-chip--lore-quest-hovered {
+    transform: scale(1.06);
+    border-color: rgba(74, 222, 128, 1);
+    box-shadow: 0 0 18px rgba(74, 222, 128, 0.6);
+  }
+
+  .seat-chip--lore-manual {
+    gap: 0.35rem;
+    padding: 0.18rem 0.42rem;
+    border-color: rgba(99, 102, 241, 0.55);
+    z-index: 99;
+  }
+
+  .seat-chip__lore-value {
+    line-height: 1;
+  }
+
+  .seat-chip__lore-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(99, 102, 241, 0.6);
+    background: rgba(99, 102, 241, 0.18);
+    color: #e0e7ff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 120ms ease, transform 120ms ease;
+  }
+
+  .seat-chip__lore-btn:hover:not(:disabled) {
+    background: rgba(99, 102, 241, 0.35);
+  }
+
+  .seat-chip__lore-btn:active:not(:disabled) {
+    transform: scale(0.92);
+    cursor: pointer;
+  }
+
+  .seat-chip__lore-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .seat-chip__drop-hint {
+    display: block;
+    font-size: 0.52rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(187, 247, 208, 0.85);
+    margin-top: 0.1rem;
   }
 
   .seat-chip--turn {
@@ -708,6 +949,51 @@ function confirmPendingAction(): void {
     border-color: rgba(155, 221, 255, 0.78);
     background: linear-gradient(180deg, rgba(32, 103, 155, 0.96) 0%, rgba(16, 66, 110, 0.96) 100%);
     color: #ebf8ff;
+  }
+
+  .seat-chip--manual {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.18rem 0.55rem;
+    border: 1px solid rgba(251, 191, 36, 0.7);
+    background: linear-gradient(180deg, rgba(180, 83, 9, 0.92) 0%, rgba(120, 53, 15, 0.92) 100%);
+    color: #fef3c7;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: default;
+    transition: filter 120ms ease, transform 120ms ease;
+  }
+
+  .seat-chip--manual-self {
+    cursor: pointer;
+  }
+
+  .seat-chip--manual-self:hover {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+  }
+
+  .seat-chip--manual__dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 9999px;
+    background: rgba(251, 191, 36, 0.95);
+    box-shadow: 0 0 6px rgba(251, 191, 36, 0.85);
+    animation: seat-chip-manual-pulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes seat-chip-manual-pulse {
+    0%, 100% {
+      opacity: 0.65;
+      box-shadow: 0 0 4px rgba(251, 191, 36, 0.55);
+    }
+    50% {
+      opacity: 1;
+      box-shadow: 0 0 10px rgba(251, 191, 36, 1);
+    }
   }
 
   .seat-effect-strip {
@@ -723,11 +1009,30 @@ function confirmPendingAction(): void {
     height: 1.35rem;
     margin-left: calc(var(--effect-card-offset) * -0.35rem);
     filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
-  }
-
-  .seat-effect-card :global(.lorcana-card) {
     border-radius: 0.18rem;
     overflow: hidden;
+    opacity: 0.65;
+    transition: opacity 0.15s ease;
+    cursor: default;
+  }
+
+  .seat-effect-card:hover {
+    opacity: 0.9;
+  }
+
+  .seat-effect-card :global(.seat-effect-card__image) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .seat-effect-card__placeholder {
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 0.18rem;
   }
 
   .seat-effect-overflow {

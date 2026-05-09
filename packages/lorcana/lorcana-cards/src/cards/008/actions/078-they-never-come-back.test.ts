@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { mickeyMouseTrueFriend, simbaProtectiveCub } from "../../001";
+import { auroraDreamingGuardian } from "../../001/characters/139-aurora-dreaming-guardian";
 import { theyNeverComeBack } from "./078-they-never-come-back";
 
 describe("They Never Come Back", () => {
@@ -52,5 +53,25 @@ describe("They Never Come Back", () => {
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().isExerted(simbaProtectiveCub)).toBe(true);
+  });
+
+  it("regression: cannot target opponent's character with granted Ward", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [theyNeverComeBack],
+        inkwell: theyNeverComeBack.cost,
+        deck: 1,
+      },
+      {
+        // Aurora grants Ward to her other characters → Simba should be unselectable.
+        play: [auroraDreamingGuardian, { card: simbaProtectiveCub, exerted: true }],
+      },
+    );
+
+    const simbaId = testEngine.findCardInstanceId(simbaProtectiveCub, "play", "p2");
+    const result = testEngine.asPlayerOne().playCard(theyNeverComeBack, { targets: [simbaId] });
+
+    // Expect command to fail — Ward must block opponent-chosen targeting.
+    expect(result.success).toBe(false);
   });
 });

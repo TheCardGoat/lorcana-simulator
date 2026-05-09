@@ -2,7 +2,7 @@ import type { CharacterCard } from "@tcg/lorcana-types";
 import { hiramFlavershamIntriguedInventorI18n } from "./159-hiram-flaversham-intrigued-inventor.i18n";
 
 export const hiramFlavershamIntriguedInventor: CharacterCard = {
-  id: "3CQ",
+  id: "yGJ",
   canonicalId: "ci_3CQ",
   reprints: ["set6-159"],
   cardType: "character",

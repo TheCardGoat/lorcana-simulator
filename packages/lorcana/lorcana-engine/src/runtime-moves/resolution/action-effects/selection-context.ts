@@ -5,6 +5,7 @@ import type {
   CardFilter,
   Condition,
   LorcanaCard,
+  LorcanaCardDefinition,
   ScryCardOrdering,
 } from "@tcg/lorcana-types";
 import type { CardPlayedPayload, LorcanaG, PendingActionResolutionInput } from "../../../types";
@@ -21,6 +22,7 @@ import type {
 } from "../../../types";
 import type { SearchDeckEffect } from "@tcg/lorcana-types";
 import { matchesSearchFilter } from "./search-deck-effect";
+import { matchesCardFilterArray } from "./card-filter-match-utils";
 import { analyzeEffectTargets } from "../../../targeting/runtime";
 import {
   analyzeTargetSelectionAvailabilityFromAnalysis,
@@ -36,9 +38,12 @@ import {
   effectTargetUsesSelectionContext,
   getEffectTargetSelectionInput,
   getCombinedSelectionInput,
+  getContextSelectionTargets,
   getCurrentSelectionInput,
 } from "./selection-state";
 import type { SlottedTargetKind } from "../../../targeting/slotted-targets";
+import { hasBodyguard, hasMayEnterPlayExertedOption } from "../../../card-utils";
+import { getShiftRules, resolveShiftTargetCandidates } from "../../rules/play-card-rules";
 
 export type ResolutionSelectionRuntimeContext = {
   G?: DeepReadonly<LorcanaG>;
@@ -162,6 +167,10 @@ function normalizeCurrentSelection(
     currentSelection.resolveOptional = resolutionInput.resolveOptional;
   }
 
+  if (typeof resolutionInput.enterPlayExerted === "boolean") {
+    currentSelection.enterPlayExerted = resolutionInput.enterPlayExerted;
+  }
+
   if (
     typeof resolutionInput.namedCard === "string" &&
     resolutionInput.namedCard.trim().length > 0
@@ -204,6 +213,7 @@ function resolveDefaultTargetChooserId(
   cardPlayed: CardPlayedPayload,
   effect: Record<string, unknown>,
   resolutionInput: PendingActionResolutionInput,
+  parentChooser?: PlayerId,
 ): PlayerId {
   const chosenBy = effect.chosenBy;
   if (chosenBy === "you") {
@@ -235,11 +245,18 @@ function resolveDefaultTargetChooserId(
     }
   }
 
-  // If no explicit chosenBy, derive the chooser from the effect's player target.
-  // For effects like "the challenging player chooses and discards a card", the target
-  // player (CHALLENGING_PLAYER, OPPONENT, etc.) is implicitly the chooser.
+  // If no explicit chosenBy, derive the chooser from the effect's player target,
+  // but only for effect types where `target` semantically identifies the player
+  // who performs the action (e.g. "the challenging player chooses and discards").
+  // Movement effects like put-into-inkwell, move-to-hand, deal-damage use
+  // `target` for destination/recipient — not chooser — so the inference must
+  // not apply (Hades — Infernal Schemer regression: the controller of the
+  // played card chooses the opposing character; target=OPPONENT only describes
+  // whose inkwell receives it).
+  const TARGET_IS_CHOOSER_EFFECT_TYPES = new Set(["discard", "reveal-hand"]);
+  const effectType = typeof effect.type === "string" ? effect.type : undefined;
   const target = effect.target;
-  if (target) {
+  if (target && effectType && TARGET_IS_CHOOSER_EFFECT_TYPES.has(effectType)) {
     const targetPlayers = resolveTargetPlayerIds(ctx, target, {
       controllerId: cardPlayed.playerId,
       sourceCardId: cardPlayed.cardId as CardInstanceId,
@@ -250,7 +267,11 @@ function resolveDefaultTargetChooserId(
     }
   }
 
-  return ctx.playerId ?? cardPlayed.playerId;
+  // Prefer an explicit chooser inherited from an outer optional wrapper (e.g.
+  // Leviathan's "IT'S A MACHINE!" banish is wrapped by an optional with
+  // chooser: CONTROLLER). Without this, ctx.playerId (the board-projection
+  // viewer) would be used, assigning the prompt to the wrong player.
+  return parentChooser ?? ctx.playerId ?? cardPlayed.playerId;
 }
 
 function resolveChoiceChooserId(
@@ -410,14 +431,103 @@ function buildChoiceOptions(
         (label): label is string => typeof label === "string" && label.trim().length > 0,
       )
     : [];
-  const legalChoiceSet =
-    legalChoiceIndices && legalChoiceIndices.length > 0 ? new Set(legalChoiceIndices) : null;
+  const legalChoiceSet = legalChoiceIndices ? new Set(legalChoiceIndices) : null;
 
-  return rawOptions.map((_, index) => ({
+  return rawOptions.map((option, index) => ({
     index,
-    label: optionLabels[index] ?? `Option ${index + 1}`,
+    label: optionLabels[index] ?? deriveChoiceOptionLabel(option) ?? `Option ${index + 1}`,
     legal: legalChoiceSet ? legalChoiceSet.has(index) : true,
   }));
+}
+
+function deriveChoiceOptionLabel(option: unknown): string | undefined {
+  const effect = asRecord(option);
+  if (!effect) {
+    return undefined;
+  }
+
+  const explicitText = getRecordString(effect, "text");
+  if (explicitText) {
+    return explicitText;
+  }
+
+  switch (effect.type) {
+    case "sequence": {
+      const steps = Array.isArray(effect.steps)
+        ? effect.steps
+        : Array.isArray(effect.effects)
+          ? effect.effects
+          : [];
+      const labels = steps
+        .map((step) => deriveChoiceOptionLabel(step))
+        .filter((label): label is string => typeof label === "string" && label.length > 0);
+      return labels.length > 0 ? labels.join(" ") : undefined;
+    }
+    case "draw": {
+      const amount = typeof effect.amount === "number" ? effect.amount : 1;
+      return amount === 1 ? "Draw a card." : `Draw ${amount} cards.`;
+    }
+    case "deal-damage": {
+      const amount = typeof effect.amount === "number" ? effect.amount : undefined;
+      return typeof amount === "number"
+        ? `Deal ${amount} damage to chosen character.`
+        : "Deal damage to chosen character.";
+    }
+    case "banish":
+      return "Banish chosen card.";
+    case "ready":
+      return "Ready chosen card.";
+    case "discard": {
+      const amount = typeof effect.amount === "number" ? effect.amount : 1;
+      return amount === 1 ? "Discard a card." : `Discard ${amount} cards.`;
+    }
+    case "remove-damage": {
+      const amount = resolveLabelAmount(effect.amount);
+      return amount ? `Remove up to ${amount} damage.` : "Remove damage.";
+    }
+    case "return-to-hand":
+      return "Return chosen card to hand.";
+    case "put-on-bottom":
+      return "Put chosen card on the bottom of their deck.";
+    case "gain-lore": {
+      const amount = typeof effect.amount === "number" ? effect.amount : undefined;
+      return typeof amount === "number" ? `Gain ${amount} lore.` : "Gain lore.";
+    }
+    case "conditional": {
+      const thenLabel = deriveChoiceOptionLabel(effect.then);
+      const elseLabel = deriveChoiceOptionLabel(effect.else);
+      if (thenLabel && elseLabel) {
+        return `${thenLabel} Otherwise, ${elseLabel}`;
+      }
+      return thenLabel ?? elseLabel;
+    }
+    case "modify-stat": {
+      const stat = getRecordString(effect, "stat");
+      const modifier = typeof effect.modifier === "number" ? effect.modifier : undefined;
+      if (!stat || typeof modifier !== "number") {
+        return undefined;
+      }
+
+      const sign = modifier > 0 ? "+" : "";
+      return `Chosen character gets ${sign}${modifier} ${stat}.`;
+    }
+    case "gain-keyword": {
+      const keyword = getRecordString(effect, "keyword");
+      return keyword ? `Chosen character gains ${keyword}.` : undefined;
+    }
+    default:
+      return undefined;
+  }
+}
+
+function resolveLabelAmount(amount: unknown): number | undefined {
+  if (typeof amount === "number") {
+    return amount;
+  }
+
+  const amountRecord = asRecord(amount);
+  const value = amountRecord?.value;
+  return typeof value === "number" ? value : undefined;
 }
 
 function buildChoiceSelectionContext(
@@ -436,6 +546,53 @@ function buildChoiceSelectionContext(
     submitField: "choiceIndex",
     options: buildChoiceOptions(args.effect, args.legalChoiceIndices),
   };
+}
+
+function deriveLegalChoiceIndices(
+  args: ResolutionSelectionBuildBase,
+  options: readonly unknown[],
+): number[] {
+  return options.flatMap((option, index) => {
+    const optionRecord = asRecord(option);
+    if (
+      optionRecord?.type === "discard" &&
+      optionRecord.chosen === true &&
+      typeof optionRecord.target === "string"
+    ) {
+      const targetPlayerIds = resolveTargetPlayerIds(args.ctx, optionRecord.target, {
+        controllerId: args.cardPlayed.playerId,
+        sourceCardId: args.sourceCardId,
+        eventSnapshot: args.resolutionInput.eventSnapshot,
+      });
+      const sourceZone = getRecordString(optionRecord, "from") ?? "hand";
+      const amount =
+        typeof optionRecord.amount === "number" && Number.isFinite(optionRecord.amount)
+          ? Math.max(0, Math.floor(optionRecord.amount))
+          : 1;
+      const canDiscard =
+        amount > 0 &&
+        targetPlayerIds.length > 0 &&
+        targetPlayerIds.every(
+          (playerId) =>
+            args.ctx.framework.zones.getCards({
+              zone: sourceZone,
+              playerId,
+            }).length >= amount,
+        );
+      return canDiscard ? [index] : [];
+    }
+
+    const optionContext = buildImmediateSelectionContext({
+      ...args,
+      effect: option,
+    });
+    if (optionContext?.kind === "target-selection" || optionContext?.kind === "discard-choice") {
+      const candidateCount =
+        optionContext.cardCandidateIds.length + optionContext.playerCandidateIds.length;
+      return candidateCount >= optionContext.minSelections ? [index] : [];
+    }
+    return [index];
+  });
 }
 
 function buildOptionalSelectionContext(
@@ -713,6 +870,26 @@ function buildGenericTargetSelectionContext(
   }
 
   const expectedSlottedKind = deriveSlottedKind(effectRecord);
+  const projectedCurrentSelection: ResolutionSelectionCurrentSelection = { ...currentSelection };
+  const [onlyTargetDsl] = analysis.targetDsl;
+  const onlyTargetCardTypes =
+    onlyTargetDsl && typeof onlyTargetDsl === "object" && "cardTypes" in onlyTargetDsl
+      ? onlyTargetDsl.cardTypes
+      : undefined;
+  const isMoveToLocationLocationPrompt =
+    expectedSlottedKind === "move-to-location" &&
+    analysis.targetDsl.length === 1 &&
+    Array.isArray(onlyTargetCardTypes) &&
+    onlyTargetCardTypes.includes("location");
+  if (isMoveToLocationLocationPrompt && !projectedCurrentSelection.targets?.length) {
+    const priorTargets = getContextSelectionTargets(args.resolutionInput).filter(
+      (target): target is CardInstanceId | PlayerId =>
+        typeof target === "string" && target.length > 0,
+    );
+    if (priorTargets.length > 0) {
+      projectedCurrentSelection.targets = priorTargets;
+    }
+  }
 
   return {
     origin: args.origin,
@@ -720,7 +897,7 @@ function buildGenericTargetSelectionContext(
     kind: args.kind,
     sourceCardId: args.sourceCardId,
     chooserId: args.chooserId,
-    currentSelection,
+    currentSelection: projectedCurrentSelection,
     submitField: "targets",
     originatesFromOptional: args.originatesFromOptional,
     canDeclineSelection: args.canDeclineSelection,
@@ -763,7 +940,27 @@ type PlayCardEffectRecord = {
   cardType?: unknown;
   costRestriction?: unknown;
   filter?: unknown;
+  playMethod?: string;
 };
+
+function matchesPlayCardTypeConstraint(
+  definition: { actionSubtype?: string; cardType?: string; classifications?: string[] },
+  expectedType: unknown,
+): boolean {
+  if (typeof expectedType !== "string") {
+    return true;
+  }
+
+  if (expectedType === "song") {
+    return definition.cardType === "action" && definition.actionSubtype === "song";
+  }
+
+  if (expectedType === "floodborn") {
+    return (definition.classifications ?? []).includes("Floodborn");
+  }
+
+  return definition.cardType === expectedType;
+}
 
 function isNameRestrictedPlayCard(effectRecord: Record<string, unknown>): boolean {
   const filter = effectRecord.filter;
@@ -835,10 +1032,58 @@ function resolveContextDependentMaxCost(
   return typeof chosenDefinition?.cost === "number" ? chosenDefinition.cost + offset : undefined;
 }
 
+function getPlayCardEntryModeCandidateIds(
+  args: ResolutionSelectionBuildArgs,
+  eligibleCards: readonly CardInstanceId[],
+): CardInstanceId[] {
+  return eligibleCards.filter((cardId) => {
+    const definition = args.ctx.cards.getDefinition(cardId);
+    return definition
+      ? hasBodyguard(definition) || hasMayEnterPlayExertedOption(definition)
+      : false;
+  });
+}
+
+function getLegalShiftBaseCandidateIds(
+  args: ResolutionSelectionBuildArgs,
+  eligibleCards: readonly CardInstanceId[],
+  effectRecord: PlayCardEffectRecord,
+): CardInstanceId[] {
+  if (effectRecord.playMethod !== "shift" && effectRecord.playMethod !== "either") {
+    return [];
+  }
+
+  const controllerId = args.cardPlayed.playerId;
+  const charactersInPlay = args.ctx.framework.zones.getCards({
+    zone: "play",
+    playerId: controllerId,
+  }) as CardInstanceId[];
+  const candidateIds = new Set<CardInstanceId>();
+
+  for (const cardId of eligibleCards) {
+    const definition = args.ctx.cards.getDefinition(cardId) as LorcanaCardDefinition | undefined;
+    const shiftRules = getShiftRules(definition);
+    if (!shiftRules) {
+      continue;
+    }
+
+    for (const shiftTargetId of resolveShiftTargetCandidates(
+      shiftRules,
+      charactersInPlay,
+      (candidateId) =>
+        args.ctx.cards.getDefinition(candidateId) as LorcanaCardDefinition | undefined,
+    )) {
+      candidateIds.add(shiftTargetId);
+    }
+  }
+
+  return [...candidateIds];
+}
+
 function getEligibleZoneCardsForPlayCardEffect(
   args: ResolutionSelectionBuildArgs,
   effectRecord: PlayCardEffectRecord,
-  zone: "hand" | "discard",
+  zone: "hand" | "discard" | "inkwell",
 ): CardInstanceId[] {
   // Context-dependent filters: resolve maxCost from event snapshot so we can
   // compute eligible candidates for the selection context.
@@ -871,15 +1116,14 @@ function getEligibleZoneCardsForPlayCardEffect(
 
   return zoneCardsAccum.filter((cardId) => {
     const definition = args.ctx.cards.getDefinition(cardId) as
-      | { cost?: number; cardType?: string; classifications?: string[] }
+      | { actionSubtype?: string; cost?: number; cardType?: string; classifications?: string[] }
       | undefined;
     if (!definition) {
       return false;
     }
 
     // Top-level card type constraint (e.g. effect.cardType = "character")
-    const cardTypeConstraint = effectRecord.cardType;
-    if (typeof cardTypeConstraint === "string" && definition.cardType !== cardTypeConstraint) {
+    if (!matchesPlayCardTypeConstraint(definition, effectRecord.cardType)) {
       return false;
     }
 
@@ -904,10 +1148,7 @@ function getEligibleZoneCardsForPlayCardEffect(
     const filter = effectRecord.filter;
     if (filter && typeof filter === "object" && !Array.isArray(filter)) {
       const filterRecord = filter as Record<string, unknown>;
-      if (
-        typeof filterRecord.cardType === "string" &&
-        definition.cardType !== filterRecord.cardType
-      ) {
+      if (!matchesPlayCardTypeConstraint(definition, filterRecord.cardType)) {
         return false;
       }
       if (typeof filterRecord.maxCost === "number") {
@@ -925,6 +1166,21 @@ function getEligibleZoneCardsForPlayCardEffect(
       if (
         typeof filterRecord.classification === "string" &&
         !(definition.classifications ?? []).includes(filterRecord.classification)
+      ) {
+        return false;
+      }
+    }
+
+    // Handle CardFilter[] format — e.g. [{ type: "has-keyword", keyword: "Shift" }]
+    if (Array.isArray(filter)) {
+      if (
+        !matchesCardFilterArray(
+          filter,
+          definition as {
+            abilities?: Array<{ type?: string; keyword?: string }>;
+            classifications?: string[];
+          },
+        )
       ) {
         return false;
       }
@@ -958,17 +1214,18 @@ function buildPlayCardSelectionContext(
     return undefined;
   }
 
-  // Play from discard: always require an explicit choice so the player can pick which card.
-  if (from === "discard") {
+  // Play from discard or inkwell: always require an explicit choice so the player picks the card.
+  if (from === "discard" || from === "inkwell") {
     const eligibleCards = getEligibleZoneCardsForPlayCardEffect(
       args,
       effectRecord as PlayCardEffectRecord,
-      "discard",
+      from,
     );
     if (eligibleCards.length === 0) {
       return undefined;
     }
 
+    const playCardEntryModeCandidateIds = getPlayCardEntryModeCandidateIds(args, eligibleCards);
     return {
       origin: args.origin,
       requestId: args.requestId,
@@ -982,19 +1239,13 @@ function buildPlayCardSelectionContext(
       targetDsl: [],
       cardCandidateIds: eligibleCards,
       playerCandidateIds: [],
-      allowedZones: ["discard"],
+      allowedZones: [from],
       minSelections: 1,
       maxSelections: 1,
       ordered: false,
       autoRejected: false,
+      ...(playCardEntryModeCandidateIds.length > 0 ? { playCardEntryModeCandidateIds } : {}),
     };
-  }
-
-  // Only build hand-picker selection context in the bag resolution path,
-  // or for context-dependent filters in sequence steps that need player input
-  // (e.g. "play a character with cost up to 2 more than the banished character").
-  if (args.origin !== "bag" && !isContextDependent) {
-    return undefined;
   }
 
   const eligibleCards = getEligibleZoneCardsForPlayCardEffect(
@@ -1006,6 +1257,48 @@ function buildPlayCardSelectionContext(
     return undefined;
   }
 
+  // Multi-player targets (EACH_PLAYER, EACH_OPPONENT, ALL_PLAYERS, OPPONENTS): the execution
+  // loop handles each player's selection independently, so no picker is needed here.
+  // getEligibleZoneCardsForPlayCardEffect aggregates across all target players, making
+  // eligibleCards.length misleading for single-player picker logic.
+  const target = effectRecord.target;
+  if (
+    target === "EACH_PLAYER" ||
+    target === "EACH_OPPONENT" ||
+    target === "ALL_PLAYERS" ||
+    target === "OPPONENTS"
+  ) {
+    return undefined;
+  }
+
+  // Build the hand-picker selection context when:
+  // 1. This is a bag-resolution path (original behavior, always show picker).
+  // 2. Filter is context-dependent (e.g. "play a character costing up to X").
+  // 3. Multiple eligible cards exist and an explicit choice is required (the
+  //    engine cannot auto-select when the player must choose among candidates).
+  // 4. The play-card effect originates from an optional: always show the picker
+  //    so the player can see and confirm which card will be played (R16).
+  // When only 1 card is eligible and none of the above apply, the engine
+  // auto-selects it, so no picker is needed.
+  const playCardEntryModeCandidateIds = getPlayCardEntryModeCandidateIds(args, eligibleCards);
+  const legalShiftBaseCandidateIds = getLegalShiftBaseCandidateIds(
+    args,
+    eligibleCards,
+    effectRecord,
+  );
+  const canSelectShiftBase = legalShiftBaseCandidateIds.length > 0;
+  if (
+    args.origin !== "bag" &&
+    !isContextDependent &&
+    eligibleCards.length <= 1 &&
+    playCardEntryModeCandidateIds.length === 0 &&
+    !canSelectShiftBase &&
+    !options?.originatesFromOptional
+  ) {
+    return undefined;
+  }
+
+  const requiresShiftBase = effectRecord.playMethod === "shift";
   return {
     origin: args.origin,
     requestId: args.requestId,
@@ -1016,14 +1309,32 @@ function buildPlayCardSelectionContext(
     submitField: "targets",
     originatesFromOptional: options?.originatesFromOptional,
     canDeclineSelection: options?.canDeclineSelection,
-    targetDsl: [],
-    cardCandidateIds: eligibleCards,
+    targetDsl: canSelectShiftBase
+      ? [
+          {
+            selector: "chosen",
+            zones: ["hand"],
+            count: 1,
+          },
+          {
+            selector: "chosen",
+            owner: "you",
+            zones: ["play"],
+            cardTypes: ["character"],
+            count: requiresShiftBase ? 1 : { upTo: 1 },
+          },
+        ]
+      : [],
+    cardCandidateIds: canSelectShiftBase
+      ? [...new Set([...eligibleCards, ...legalShiftBaseCandidateIds])]
+      : eligibleCards,
     playerCandidateIds: [],
-    allowedZones: ["hand"],
-    minSelections: 1,
-    maxSelections: 1,
+    allowedZones: canSelectShiftBase ? ["hand", "play"] : ["hand"],
+    minSelections: requiresShiftBase ? 2 : 1,
+    maxSelections: canSelectShiftBase ? 2 : 1,
     ordered: false,
     autoRejected: false,
+    ...(playCardEntryModeCandidateIds.length > 0 ? { playCardEntryModeCandidateIds } : {}),
   };
 }
 
@@ -1034,6 +1345,9 @@ function requiresTargetOrdering(
   resolutionInput: PendingActionResolutionInput,
 ): boolean {
   if (effect.type !== "put-on-bottom" || effect.ordering !== "player-choice") {
+    return false;
+  }
+  if (isAllTargetDescriptor(effect.target)) {
     return false;
   }
 
@@ -1055,6 +1369,15 @@ function requiresTargetOrdering(
     new Set(selectedTargets).size === candidateTargets.length &&
     selectedTargets.every((targetId) => candidateSet.has(targetId))
   );
+}
+
+function isAllTargetDescriptor(target: unknown): boolean {
+  if (!target || typeof target !== "object" || Array.isArray(target)) {
+    return false;
+  }
+
+  const targetRecord = target as Record<string, unknown>;
+  return targetRecord.selector === "all" || targetRecord.count === "all";
 }
 
 function buildImmediateSelectionContext(
@@ -1155,7 +1478,11 @@ function buildImmediateSelectionContext(
       if (
         immediateContext &&
         immediateContext.kind === "target-selection" &&
-        immediateContext.currentSelection.resolveOptional === undefined
+        immediateContext.currentSelection.resolveOptional === undefined &&
+        immediateContext.cardCandidateIds.length + immediateContext.playerCandidateIds.length > 0 &&
+        (args.origin !== "bag" ||
+          (immediateContext.targetDsl as unknown[]).length > 0 ||
+          (immediateContext.playCardEntryModeCandidateIds?.length ?? 0) > 0)
       ) {
         return {
           ...immediateContext,
@@ -1219,7 +1546,7 @@ function buildImmediateSelectionContext(
         ...args,
         chooserId,
         effect: effectRecord,
-        legalChoiceIndices: args.legalChoiceIndices,
+        legalChoiceIndices: args.legalChoiceIndices ?? deriveLegalChoiceIndices(args, options),
       });
     }
 
@@ -1302,6 +1629,7 @@ function buildImmediateSelectionContext(
       args.cardPlayed,
       effectRecord,
       args.resolutionInput,
+      args.chooserId,
     ),
     originatesFromOptional: args.originatesFromOptional,
   });

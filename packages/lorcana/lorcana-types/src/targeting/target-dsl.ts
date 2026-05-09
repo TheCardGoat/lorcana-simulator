@@ -148,6 +148,26 @@ export interface TargetDSL<TFilter = unknown, TContext extends BaseContext = Bas
 
   /** All selected targets must be different cards */
   requireDifferentTargets?: boolean;
+
+  /**
+   * Cap the sum of selected targets' ink cost.
+   *
+   * When set, `applyTotalCostBudget` (called after `selectTargets`) keeps the
+   * longest legal prefix of the chooser's selection whose cumulative cost
+   * stays within the budget. Used by effects like "banish any number of chosen
+   * opposing characters with total cost N or less."
+   */
+  totalCostBudget?: number;
+
+  /**
+   * Cap the sum of selected targets' Strength.
+   *
+   * When set, `applyTotalStrengthBudget` (called after `selectTargets`) keeps
+   * the longest legal prefix of the chooser's selection whose cumulative
+   * Strength stays within the budget. Used by effects like "banish any number
+   * of chosen opposing characters with total {S} N or less."
+   */
+  totalStrengthBudget?: number;
 }
 
 // ============================================================================

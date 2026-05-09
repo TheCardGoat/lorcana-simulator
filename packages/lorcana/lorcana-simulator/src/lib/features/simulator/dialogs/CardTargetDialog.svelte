@@ -5,9 +5,8 @@
     LorcanaCardSnapshot,
     LorcanaPlayerSide,
   } from "@/features/simulator/model/contracts.js";
-  import { buildCardTargetDialogState } from "@/features/simulator/dialogs/card-target-dialog-state.js";
-  import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
   import type { LorcanaCardTarget } from "@tcg/lorcana-engine";
+  import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 
   interface TargetSelectionPlayerEntry {
     id: string;
@@ -19,22 +18,24 @@
 
   interface CardTargetDialogProps {
     open?: boolean;
+    /**
+     * Card snapshots to render. Caller must scope this to the engine's
+     * legal candidate set — the dialog does NOT filter or re-derive
+     * legality. See `@tcg/lorcana-interaction`'s `PlayerInteractionView`
+     * for the source of truth.
+     */
     cards: LorcanaCardSnapshot[];
+    target?: LorcanaCardTarget | null;
     playerSide: LorcanaPlayerSide;
     viewerSide?: LorcanaPlayerSide | null;
     /** Turn-action sources (e.g. ink); used for playable highlight in zone browsers. */
     playableCardIds?: string[];
-    target?: LorcanaCardTarget | null;
-    /**
-     * Set to `true` when `cards` is already scoped to the engine-published
-     * candidate set (target-selection prompts). Skips the dialog's parallel
-     * filter evaluator, which can disagree with the engine on filters that
-     * depend on runtime context (event snapshots, granted keywords).
-     */
-    trustCandidates?: boolean;
     selectable?: boolean;
     players?: TargetSelectionPlayerEntry[];
     selectedCardIds?: string[];
+    entryModeChoice?: {
+      selected: boolean | null;
+    };
     canConfirm?: boolean;
     titleText?: string;
     descriptionText?: string;
@@ -43,18 +44,20 @@
     closeButtonLabel?: string;
     closeButtonAriaLabel?: string;
     footerCancelLabel?: string;
+    footerDeclineLabel?: string;
     footerConfirmLabel?: string;
     selectionSummaryText?: string;
     summaryFormatter?: (
       matchCount: number,
       totalCount: number,
       playerLabel: string,
-      target: LorcanaCardTarget | null,
     ) => string;
     onSelectCard?: (cardId: string) => void;
     onSelectPlayer?: (playerId: string) => void;
+    onSelectEntryMode?: (enterPlayExerted: boolean) => void;
     onConfirm?: () => void;
     onCancel?: () => void;
+    onDecline?: () => void;
   }
 
   let {
@@ -63,11 +66,10 @@
     playerSide,
     viewerSide = null,
     playableCardIds = [],
-    target = null,
-    trustCandidates = false,
     selectable = false,
     players = [],
     selectedCardIds = [],
+    entryModeChoice,
     canConfirm = false,
     titleText,
     descriptionText,
@@ -76,14 +78,17 @@
     closeButtonLabel = m["sim.target.close"]({}),
     closeButtonAriaLabel = m["sim.target.closeAria"]({}),
     footerCancelLabel = m["sim.actions.cancel"]({}),
+    footerDeclineLabel = m["sim.actions.label.skipOptionalEffect"]({}),
     footerConfirmLabel = m["sim.actions.confirm"]({}),
     selectionSummaryText,
-    summaryFormatter = (matchCount, totalCount, playerLabel, _target) =>
+    summaryFormatter = (matchCount, totalCount, playerLabel) =>
       m["sim.target.summary"]({ matchCount, totalCount, playerLabel }),
     onSelectCard,
     onSelectPlayer,
+    onSelectEntryMode,
     onConfirm,
     onCancel,
+    onDecline,
   }: CardTargetDialogProps = $props();
 
   const playerLabel = $derived(
@@ -92,26 +97,23 @@
       : m["sim.player.side.playerTwo"]({}),
   );
 
-  const dialogState = $derived(
-    buildCardTargetDialogState({
-      cards,
-      target,
-      viewerSide,
-      selectedCardIds,
-      selectedPlayerCount: players.filter((player) => player.selected).length,
-      trustCandidates,
-    }),
+  /**
+   * Render order: most-recently-added (top of stack) first.
+   * Caller already provides the engine's authoritative candidate list,
+   * so the dialog simply mirrors it without filtering.
+   */
+  const orderedCards = $derived(cards.slice().reverse());
+  const selectedCount = $derived(
+    selectedCardIds.length + players.filter((player) => player.selected).length,
   );
-  const badgeModels = $derived(dialogState.badgeModels);
-  const orderedCards = $derived(dialogState.orderedCards);
   const headerSummary = $derived(
     descriptionText ??
-      summaryFormatter(orderedCards.length, cards.length, playerLabel, target),
+      summaryFormatter(orderedCards.length, cards.length, playerLabel),
   );
-  const hasFooter = $derived(Boolean(onConfirm || onCancel));
+  const hasFooter = $derived(Boolean(onConfirm || onCancel || onDecline || entryModeChoice));
   const resolvedSelectionSummaryText = $derived(
     selectionSummaryText ??
-      m["sim.target.selectedCount"]({ selectedCount: dialogState.selectedCount }),
+      m["sim.target.selectedCount"]({ selectedCount }),
   );
 
   /** No card grid: shrink shell so player-only / empty steps are not stretched to full scry size. */
@@ -127,6 +129,18 @@
 
   function handleCancel(): void {
     onCancel?.();
+  }
+
+  function handleDecline(): void {
+    onDecline?.();
+  }
+
+  function handleEntryModeReady(): void {
+    onSelectEntryMode?.(false);
+  }
+
+  function handleEntryModeExerted(): void {
+    onSelectEntryMode?.(true);
   }
 
   function handlePlayerClick(event: MouseEvent): void {
@@ -217,20 +231,6 @@
         </Dialog.Close>
       </header>
 
-      {#if badgeModels.length > 0}
-        <div class="badge-strip" role="list" aria-label={m["sim.target.constraints.aria"]({})}>
-          {#each badgeModels as badge (badge.id)}
-            <span
-              class="badge"
-              class:badge--warning={badge.variant === "warning"}
-              role="listitem"
-            >
-              {badge.label}
-            </span>
-          {/each}
-        </div>
-      {/if}
-
       {#if players.length > 0}
         <section class="player-section">
           <div class="section-header">
@@ -291,6 +291,7 @@
                   isSelected={isSelected}
                   isMasked={card.isMasked}
                   isPlayable={playableCardIds.includes(card.cardId)}
+                  isValidTarget={selectable && playableCardIds.includes(card.cardId)}
                   size="small"
                   hoverShowActions={!selectable}
                   interactionMeta={{
@@ -310,13 +311,44 @@
 
       {#if hasFooter}
         <footer class="dialog-footer">
-          <button
-            type="button"
-            class="footer-button footer-button--secondary"
-            onclick={handleCancel}
-          >
-            {footerCancelLabel}
-          </button>
+          {#if onCancel}
+            <button
+              type="button"
+              class="footer-button footer-button--secondary"
+              onclick={handleCancel}
+            >
+              {footerCancelLabel}
+            </button>
+          {/if}
+          {#if onDecline}
+            <button
+              type="button"
+              class="footer-button footer-button--secondary"
+              onclick={handleDecline}
+            >
+              {footerDeclineLabel}
+            </button>
+          {/if}
+          {#if entryModeChoice}
+            <button
+              type="button"
+              class="footer-button footer-button--secondary"
+              class:footer-button--selected={entryModeChoice.selected === false}
+              onclick={handleEntryModeReady}
+            >
+              {m["sim.target.entryMode.ready"]({})}
+
+            </button>
+            <button
+              type="button"
+              class="footer-button footer-button--secondary"
+              class:footer-button--selected={entryModeChoice.selected === true}
+              onclick={handleEntryModeExerted}
+            >
+              {m["sim.target.entryMode.exerted"]({})}
+
+            </button>
+          {/if}
           {#if onConfirm}
             <button
               type="button"
@@ -405,6 +437,12 @@
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.1),
       0 16px 30px rgba(2, 6, 23, 0.35);
+  }
+
+  .footer-button--selected {
+    --close-border: rgba(251, 191, 36, 0.7);
+    --close-bg: linear-gradient(180deg, rgba(120, 53, 15, 0.7), rgba(69, 26, 3, 0.58));
+    --close-text: #fef3c7;
   }
 
   :global(.close-button:focus-visible),

@@ -53,7 +53,10 @@ export const montereyJackWatchfulRanger: CharacterCard = {
               zone: "hand",
               min: 0,
               max: 1,
-              filter: { type: "card-type", cardType: "character" },
+              filter: {
+                type: "card-type",
+                cardType: "character",
+              },
             },
             {
               zone: "deck-bottom",

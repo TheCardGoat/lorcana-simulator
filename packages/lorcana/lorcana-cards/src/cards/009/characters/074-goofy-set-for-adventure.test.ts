@@ -54,6 +54,71 @@ describe("Goofy - Set for Adventure", () => {
     expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, deck: 0 });
   });
 
+  it("builds a character-only prompt because the destination location is fixed by the trigger", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [goofySetForAdventure, vacationBuddy, vacationSpot],
+      inkwell: 1,
+      deck: 1,
+    });
+
+    expect(
+      testEngine.asPlayerOne().moveCharacterToLocation(goofySetForAdventure, vacationSpot),
+    ).toBeSuccessfulCommand();
+
+    const goofyBag = testEngine
+      .asPlayerOne()
+      .getBagEffects()
+      .find((bagEffect) => (bagEffect.payload as { abilityId?: string })?.abilityId === "1yc-1");
+    const selectionContext = goofyBag?.selectionContext;
+    if (!selectionContext || selectionContext.kind !== "target-selection") {
+      throw new Error("Expected Goofy's FAMILY VACATION to publish a target-selection prompt");
+    }
+
+    const buddyId = testEngine.findCardInstanceId(vacationBuddy, "play");
+    const locationId = testEngine.findCardInstanceId(vacationSpot, "play");
+
+    expect(selectionContext.expectedSlottedKind).toBe("move-to-location");
+    expect(selectionContext.targetDsl).toHaveLength(1);
+    expect(selectionContext.targetDsl[0]).toMatchObject({
+      selector: "chosen",
+      cardTypes: ["character"],
+    });
+    expect(selectionContext.cardCandidateIds).toContain(buddyId);
+    expect(selectionContext.cardCandidateIds).not.toContain(locationId);
+  });
+
+  it("accepts the direct bag slotted UI payload with the fixed location outside the candidate list", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [goofySetForAdventure, vacationBuddy, vacationSpot],
+      inkwell: 1,
+      deck: 1,
+    });
+
+    expect(
+      testEngine.asPlayerOne().moveCharacterToLocation(goofySetForAdventure, vacationSpot),
+    ).toBeSuccessfulCommand();
+
+    const buddyId = testEngine.findCardInstanceId(vacationBuddy, "play");
+    const locationId = testEngine.findCardInstanceId(vacationSpot, "play");
+
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(goofySetForAdventure, {
+        resolveOptional: true,
+        targets: {
+          kind: "move-to-location",
+          subject: [buddyId],
+          location: [locationId],
+        },
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne()).toBeAtLocation({
+      card: vacationBuddy,
+      location: vacationSpot,
+    });
+    expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 1, deck: 0 });
+  });
+
   it("regression: second character moved to Zootopia Police HQ via Goofy triggers the location ability", () => {
     const secondBuddy = createMockCharacter({
       id: "goofy-second-buddy",

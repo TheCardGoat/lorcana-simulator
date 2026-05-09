@@ -69,15 +69,7 @@ export const annaSoothingSister: CharacterCard = {
           type: "sequence",
           steps: [
             {
-              type: "gain-lore",
-              amount: {
-                type: "target-attribute",
-                attribute: "lore",
-              },
-              target: "CONTROLLER",
-            },
-            {
-              type: "put-on-bottom",
+              type: "select-target",
               target: {
                 selector: "chosen",
                 count: 1,
@@ -85,6 +77,18 @@ export const annaSoothingSister: CharacterCard = {
                 zones: ["discard"],
                 cardTypes: ["character"],
               },
+            },
+            {
+              type: "gain-lore",
+              amount: {
+                type: "lore-value-of",
+                target: { ref: "previous-target" },
+              },
+              target: "CONTROLLER",
+            },
+            {
+              type: "put-on-bottom",
+              target: { ref: "previous-target" },
             },
           ],
         },

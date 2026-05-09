@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { ward } from "../../../helpers/abilities/ward";
 import { meridaDefiantDaughterI18n } from "./069-merida-defiant-daughter.i18n";
+import { ward } from "../../../helpers/abilities/ward";
 
 export const meridaDefiantDaughter: CharacterCard = {
   id: "2e1",

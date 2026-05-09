@@ -9,6 +9,7 @@ import {
 	type SimulatorDebugAnimationRequest,
 } from "$lib";
 import type { LorcanaGameContext } from "@/features/simulator/context/game-context.svelte.js";
+import type { PlayerInteractionView } from "@tcg/lorcana-interaction";
 import { LorcanaMultiplayerSimulatorAdapter } from "@/features/simulator-devtools/harness";
 import {
 	PLAYER_ONE,
@@ -66,6 +67,9 @@ let viewOverride = $state<LorcanaSimulatorView | null>(null);
 let serializedState = $state<string>("No state available.");
 let serializedBoardProjection = $state<string>(
 	"No board projection available.",
+);
+let serializedInteractionPrompt = $state<string>(
+	"No interaction prompt available.",
 );
 let debugStateId = $state<number | null>(null);
 
@@ -235,6 +239,11 @@ function refreshDebugPayloads(): void {
 		null,
 		2,
 	);
+	serializedInteractionPrompt = JSON.stringify(
+		interactionViewRef ?? gameContextRef?.interactionView ?? null,
+		null,
+		2,
+	);
 }
 
 $effect(() => {
@@ -292,6 +301,7 @@ async function getBoard(targetView: LorcanaSimulatorView) {
 }
 
 let gameContextRef = $state<LorcanaGameContext | null>(null);
+let interactionViewRef = $state<PlayerInteractionView | null>(null);
 
 async function runAnimation(): Promise<boolean> {
 	return false;
@@ -329,6 +339,8 @@ function handleRunChallengeAnimation(
 		defenderKind: "character" | "location";
 		attackerWouldBeBanished: boolean;
 		defenderWouldBeBanished: boolean;
+		attackerDamageIsReduced: boolean;
+		defenderDamageIsReduced: boolean;
 	},
 ): boolean {
 	if (!gameContextRef) {
@@ -386,7 +398,12 @@ $effect(() => {
 	class="relative h-full w-full"
 	bind:this={wrapperElement}
 >
-  <LorcanaTabletopSimulator {engine} {readModel} bind:gameContext={gameContextRef} />
+  <LorcanaTabletopSimulator
+    {engine}
+    {readModel}
+    bind:gameContext={gameContextRef}
+    bind:interactionView={interactionViewRef}
+  />
 
   <LorcanaDebugControls
     {wrapperElement}
@@ -395,6 +412,7 @@ $effect(() => {
     stateId={debugStateId}
     {serializedState}
     {serializedBoardProjection}
+    {serializedInteractionPrompt}
     onViewChange={setCurrentView}
     onSwapPlayers={swapPlayers}
     onReset={resetToInitialFixture}

@@ -23,24 +23,38 @@ export interface MoveLogBase {
 // Aggregated Outcomes — nested in any move that produces side-effects
 // =============================================================================
 
+export interface DamageEntry {
+  sourceId: CardInstanceId;
+  targetId: CardInstanceId;
+  amount: number;
+  kind: "combat" | "effect";
+}
+
+export interface MovedDamageEntry {
+  sourceCharacterId: CardInstanceId;
+  targetId: CardInstanceId;
+  amount: number;
+}
+
 export interface MoveOutcomes {
   cardsDrawn?: { amount: number; detail?: PrivateField<CardInstanceId[]> };
   cardsBanished?: CardInstanceId[];
   damageDealt?: DamageEntry[];
+  damageMoved?: MovedDamageEntry[];
   loreChanged?: { playerId: PlayerId; amount: number; operation: "add" | "remove" };
   cardsExerted?: CardInstanceId[];
   cardsReadied?: CardInstanceId[];
   cardsMilled?: { playerId: PlayerId; amount: number; cardIds?: PrivateField<CardInstanceId[]> };
   cardsReturnedToHand?: CardInstanceId[];
   cardsMovedToZone?: Array<{ cardId: CardInstanceId; zone: string }>;
-  cardsInked?: Array<{ cardId: CardInstanceId; exerted: boolean; cardName?: string }>;
-}
-
-export interface DamageEntry {
-  sourceId: CardInstanceId;
-  targetId: CardInstanceId;
-  amount: number;
-  kind: "combat" | "effect";
+  cardsInked?: Array<{
+    /**
+     * Public when from a public zone (play). Private when from a private zone
+     * (hand/deck via an effect) — strips to `undefined` for non-owner viewers.
+     */
+    cardId: CardInstanceId | PrivateField<CardInstanceId>;
+    exerted: boolean;
+  }>;
 }
 
 // =============================================================================
@@ -58,8 +72,6 @@ export interface ShiftCardLog extends MoveLogBase {
   type: "shiftCard";
   cardId: CardInstanceId;
   shiftTargetId: CardInstanceId;
-  /** Stored when the move runs so UI text can name the target after it is in limbo (hidden in zone projection). */
-  shiftTargetName?: string;
   inkPaid?: number;
   outcomes?: MoveOutcomes;
 }
@@ -98,7 +110,12 @@ export interface QuestWithAllLog extends MoveLogBase {
 export interface InkCardLog extends MoveLogBase {
   type: "inkCard";
   cardId: CardInstanceId;
-  cardName?: string;
+}
+
+export interface LookAtInkwellLog extends MoveLogBase {
+  type: "lookAtInkwell";
+  count: number;
+  cardIds?: PrivateField<CardInstanceId[]>;
 }
 
 export interface ActivateAbilityLog extends MoveLogBase {
@@ -158,6 +175,10 @@ export interface ResolveBagLog extends MoveLogBase {
   status: "completed" | "skipped" | "pending" | "cancelled";
   cancelReason?: ResolveBagCancelledCause;
   resolution?: BagResolution;
+  lookedAtInkwell?: {
+    count: number;
+    cardIds?: PrivateField<CardInstanceId[]>;
+  };
   outcomes?: MoveOutcomes;
 }
 
@@ -171,21 +192,41 @@ export interface ResolveEffectLog extends MoveLogBase {
 // ─── Effect Resolution Sub-Union ──────────────────────────────
 
 export type EffectResolution =
-  | { kind: "targetSelection"; targets: Array<CardInstanceId | PlayerId> }
+  | { kind: "targetSelection"; targets: Array<CardInstanceId | PlayerId>; effectType?: string }
   | { kind: "discardChoice"; discarded: Array<CardInstanceId | PlayerId> }
   | { kind: "choiceSelection"; choiceIndex: number; revealedCardId?: CardInstanceId }
-  | { kind: "optionalSelection"; accepted: boolean }
+  | {
+      kind: "optionalSelection";
+      accepted: boolean;
+      targets?: Array<CardInstanceId | PlayerId>;
+      abilityName?: string;
+    }
   | { kind: "nameCardSelection"; namedCard: string }
   | {
       kind: "scrySelection";
       count: number;
       detail?: PrivateField<ScryDestinationEntry[]>;
+      /**
+       * Destinations whose cards were revealed publicly to all players.
+       * Always visible (not wrapped in PrivateField) so non-chooser viewers
+       * can see what was revealed (e.g. via "reveal a card and put it into hand").
+       */
+      publicRevealed?: ScryDestinationEntry[];
     }
   | { kind: "revealTopCard"; targetPlayerId: PlayerId; cardId: CardInstanceId; destination: string }
   | { kind: "cancelled"; cause: string };
 
 export type BagResolution =
-  | { kind: "targets"; targets: Array<CardInstanceId | PlayerId> }
+  | {
+      kind: "targets";
+      /**
+       * Public when targets are publicly observable. Wrapped in PrivateField
+       * when targeting a card from a private zone (e.g. put-into-inkwell from
+       * hand): non-owner viewers see `undefined` and the formatter falls back
+       * to the no-targets phrasing.
+       */
+      targets: Array<CardInstanceId | PlayerId> | PrivateField<Array<CardInstanceId | PlayerId>>;
+    }
   | { kind: "noInput" };
 
 // =============================================================================
@@ -239,6 +280,7 @@ export type MoveLog =
   | QuestLog
   | QuestWithAllLog
   | InkCardLog
+  | LookAtInkwellLog
   | ActivateAbilityLog
   | MoveToLocationLog
   | PassTurnLog

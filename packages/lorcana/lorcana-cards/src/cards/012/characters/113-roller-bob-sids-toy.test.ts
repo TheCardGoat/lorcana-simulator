@@ -57,6 +57,50 @@ describe("Roller Bob - Sid's Toy", () => {
       expect(testEngine.asPlayerOne().canChallenge(rollerBobSidsToy, opponentCharacter)).toBe(true);
     });
 
+    it("auto-declines and creates no pending effect when discard has fewer than 2 character cards", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [rollerBobSidsToy],
+          discard: [discardOne],
+          inkwell: rollerBobSidsToy.cost,
+          deck: 3,
+        },
+        {
+          play: [{ card: opponentCharacter, exerted: true }],
+          deck: 3,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(rollerBobSidsToy)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+
+      expect(testEngine.asPlayerOne().hasKeyword(rollerBobSidsToy, "Rush")).toBe(false);
+    });
+
+    it("auto-declines and creates no pending effect when discard is empty", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [rollerBobSidsToy],
+          discard: [],
+          inkwell: rollerBobSidsToy.cost,
+          deck: 3,
+        },
+        {
+          play: [{ card: opponentCharacter, exerted: true }],
+          deck: 3,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(rollerBobSidsToy)).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+
+      expect(testEngine.asPlayerOne().hasKeyword(rollerBobSidsToy, "Rush")).toBe(false);
+    });
+
     it("does not grant Rush when the optional ability is declined", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

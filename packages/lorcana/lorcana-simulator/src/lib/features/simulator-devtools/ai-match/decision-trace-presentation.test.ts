@@ -85,7 +85,7 @@ describe("buildPresentedDecisionTrace", () => {
           },
           family: "quest",
           heuristics: [
-            { direction: "asc", key: "familyOrder", value: 4 },
+            { direction: "asc", key: "familyOrder", value: 4.5 },
             { direction: "desc", key: "printedLore", value: 1 },
             { direction: "asc", key: "stableKey", value: `quest:${QUESTER_ID}` },
           ],

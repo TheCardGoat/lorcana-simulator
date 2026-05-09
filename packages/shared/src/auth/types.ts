@@ -11,24 +11,21 @@
 export type UserRole = "user" | "donor" | "moderator" | "admin";
 
 /**
- * Subscription tier levels
+ * Subscription tier levels.
+ *
+ * `"free"` is the implicit default for users with no Stripe subscription
+ * (new signups, and anyone who has cancelled). It is intentionally distinct
+ * from `"tier1"`, which is preserved for legacy paid tier-1 customers
+ * migrated from lorcanito and ranks just above "free" in tier ordering.
  */
-export type SubscriptionTier = "tier1" | "tier2" | "tier3" | "tier4" | "tier5" | "tier6";
-
-/**
- * Minimum tier required to use alternate art in matches.
- * Players below this tier have their art selections silently ignored at match creation.
- */
-export const ENCHANTED_TIER: SubscriptionTier = "tier4";
+export type SubscriptionTier = "free" | "tier1" | "tier2" | "tier3" | "tier4" | "tier5" | "tier6";
 
 /**
  * User type from Better Auth session
  *
- * SYNC NOTE: Better Auth's /api/auth/get-session only returns the fields it manages
- * natively. Custom fields like `displayUsername` are NOT included in that response.
- * They are merged in by `enrichUserFromApi()` in session.svelte.ts, which calls
- * GET /v1/users/me after every session fetch. Keep this in mind when adding new
- * custom fields — they must be added to both this type AND the enrichment function.
+ * Custom DB columns are surfaced on the session payload via `user.additionalFields`
+ * in apps/api/src/auth/auth.ts. To expose a new column here, declare it both on
+ * this interface AND in the `additionalFields` block on the API.
  */
 export interface AuthUser {
   id: string;
@@ -40,8 +37,8 @@ export interface AuthUser {
   username?: string | null;
   /**
    * User-chosen display name, editable via Account Settings.
-   * Stored in our DB (users.displayUsername), NOT in Better Auth's session.
-   * Populated by enrichUserFromApi() on session fetch, and patched optimistically on save.
+   * Stored as `users.displayUsername`; surfaced on the Better Auth session via
+   * `user.additionalFields` on the API. Patched optimistically on save.
    */
   displayUsername?: string | null;
   emailVerified: boolean;
@@ -70,8 +67,8 @@ export function isModerator(user: AuthUser | null): boolean {
  * Check if user has required subscription tier or higher
  */
 export function hasSubscriptionTier(user: AuthUser | null, minTier: SubscriptionTier): boolean {
-  const tiers: SubscriptionTier[] = ["tier1", "tier2", "tier3", "tier4", "tier5", "tier6"];
-  const userTierIndex = tiers.indexOf(user?.subscriptionTier ?? "tier1");
+  const tiers: SubscriptionTier[] = ["free", "tier1", "tier2", "tier3", "tier4", "tier5", "tier6"];
+  const userTierIndex = tiers.indexOf(user?.subscriptionTier ?? "free");
   const minTierIndex = tiers.indexOf(minTier);
   return userTierIndex >= minTierIndex;
 }

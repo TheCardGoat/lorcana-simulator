@@ -92,8 +92,30 @@ describe("Jasmine - Fearless Princess", () => {
     });
   });
 
-  describe("NOW'S MY CHANCE — {E}, Choose and discard a card — This character gains Challenger +3 this turn.", () => {
-    it("gains Challenger +3 this turn after exerting and discarding a card", () => {
+  describe("NOW'S MY CHANCE — Choose and discard a card — This character gains Challenger +3 this turn.", () => {
+    it("does NOT exert Jasmine when activated (regression: spurious exert cost removed)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [cardToDiscard],
+        play: [{ card: jasmineFearlessPrincess, isDrying: false }],
+        deck: 1,
+      });
+
+      const discardId = testEngine.findCardInstanceId(cardToDiscard, "hand", "p1");
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(jasmineFearlessPrincess, {
+          ability: "NOW'S MY CHANCE",
+          costs: {
+            discardCards: [discardId],
+          },
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Printed text has no exert cost; Jasmine must remain ready after activating.
+      expect(testEngine.asPlayerOne().getCard(jasmineFearlessPrincess).exerted).toBe(false);
+    });
+
+    it("gains Challenger +3 this turn after discarding a card", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [cardToDiscard],
         play: [{ card: jasmineFearlessPrincess, isDrying: false }],

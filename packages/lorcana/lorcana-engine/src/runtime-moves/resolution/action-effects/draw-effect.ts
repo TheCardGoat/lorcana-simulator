@@ -105,6 +105,10 @@ export function resolveDrawEffect(
 
     drawnCardIds.forEach((cardId) => {
       recordCardDrawnThisTurn(ctx, playerId);
+      const drawCount =
+        (ctx.G.turnMetadata?.cardsDrawnThisTurnByPlayer as Record<string, number> | undefined)?.[
+          playerId
+        ] ?? 1;
       emitTriggeredLorcanaEvent(
         ctx,
         "cardsDrawn",
@@ -118,6 +122,7 @@ export function resolveDrawEffect(
           playerId,
           subjectCardId: cardId,
           triggerSourceCardId: cardPlayed.cardId,
+          eventSnapshot: { drawCountForPlayerThisTurn: drawCount },
         },
       );
     });

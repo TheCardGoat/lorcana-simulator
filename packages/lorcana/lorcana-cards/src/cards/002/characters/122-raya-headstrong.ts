@@ -80,6 +80,5 @@ export const rayaHeadstrong: CharacterCard = {
       },
     },
   ],
-  missingTests: true,
   i18n: rayaHeadstrongI18n,
 };

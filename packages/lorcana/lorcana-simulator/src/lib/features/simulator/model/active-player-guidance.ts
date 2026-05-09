@@ -27,11 +27,20 @@ export interface GuidanceInlineReference {
   suffix?: string;
 }
 
+export interface GuidanceTargetSlot {
+  id: string;
+  label: string;
+  detail: string;
+  active: boolean;
+  selected: boolean;
+}
+
 export interface ActivePlayerGuidanceItem {
   id: string;
   message: string;
   abilityDescription?: string;
   inlineReference?: GuidanceInlineReference;
+  targetSlots?: GuidanceTargetSlot[];
   actions: GuidanceAction[];
   mode: GuidanceMode;
   order: number;

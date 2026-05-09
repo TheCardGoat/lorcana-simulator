@@ -10,3 +10,4 @@ export type {
   UserRole,
 } from "./types";
 export { hasSubscriptionTier, isAdmin, isDonor, isModerator } from "./types";
+export { FEATURES, getEnabledFeatures, hasFeature, type FeatureKey } from "./features";

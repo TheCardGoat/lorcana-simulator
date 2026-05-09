@@ -612,6 +612,7 @@ export interface CardsAuxValidationReport {
   ids: ValidationSection;
   canonicalIds: ValidationSection;
   reprints: ValidationSection;
+  reprintSharedFields: ValidationSection;
   localization: ValidationSection;
 }
 

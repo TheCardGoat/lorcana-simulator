@@ -68,6 +68,41 @@ describe("Moana - Kakamora Leader", () => {
     });
   });
 
+  it("GATHERING FORCES - moves only a subset of characters and gains lore equal to moved count", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: moanaKakamoraLeader.cost,
+      hand: [moanaKakamoraLeader],
+      play: [
+        kakamoraBoardingParty,
+        kakamoraPiratePitcher,
+        kakamoraLongrangeSpecialist,
+        flotillaCoconutArmada,
+      ],
+    });
+
+    expect(testEngine.asPlayerOne().playCard(moanaKakamoraLeader)).toBeSuccessfulCommand();
+
+    // Move only 2 of the 4 available characters.
+    expect(
+      testEngine.asPlayerOne().resolvePendingByCard(moanaKakamoraLeader, {
+        resolveOptional: true,
+        targets: [kakamoraBoardingParty, kakamoraPiratePitcher, flotillaCoconutArmada],
+      }),
+    ).toBeSuccessfulCommand();
+
+    // 2 characters moved = 2 lore gained (not 4).
+    expect(testEngine.getLore(PLAYER_ONE)).toBe(2);
+
+    expect(testEngine.asPlayerOne()).toBeAtLocation({
+      card: kakamoraBoardingParty,
+      location: flotillaCoconutArmada,
+    });
+    expect(testEngine.asPlayerOne()).toBeAtLocation({
+      card: kakamoraPiratePitcher,
+      location: flotillaCoconutArmada,
+    });
+  });
+
   it("GATHERING FORCES - optional: declining does not move characters or gain lore", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       inkwell: moanaKakamoraLeader.cost,

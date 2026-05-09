@@ -281,8 +281,8 @@
       return;
     }
 
-    cards.length;
-    hiddenPlaceholderCount;
+    void cards.length;
+    void hiddenPlaceholderCount;
 
     const container = handContainerEl;
     const resizeObserver =
@@ -376,13 +376,14 @@
         {@const rotation = getFanRotation(index, cards.length)}
         {@const playable = isPlayable(card)}
         {@const actionState = sidebar.getActionSessionCardState(card.cardId)}
+        {@const selectable = actionState.isSelectable || playable}
         {@const isSelected =
           actionState.isSelected ||
           selectedCardIds.includes(card.cardId) ||
           simulatorCardContext.previewCard?.cardId === card.cardId}
         {@const draggable = createOptionalDraggable({
           card,
-          disabled: isOpponent || isMasked || !playable,
+          disabled: isOpponent || isMasked || !selectable,
         })}
 
         <div
@@ -413,7 +414,8 @@
             clickOpensHover
             isSelected={isSelected}
             isMasked={isMasked}
-            isPlayable={actionState.isSelectable || playable}
+            isPlayable={selectable}
+            isValidTarget={actionState.isSelectable}
             isInvalidTarget={actionState.isInvalidTarget}
             isExerted={card.readyState === "exerted"}
             isDrying={card.isDrying ?? false}

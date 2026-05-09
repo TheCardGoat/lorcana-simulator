@@ -114,6 +114,38 @@ describe("validateDeckForFormat", () => {
       expect(setRule?.passed).toBe(false);
     });
 
+    it("rejects cards whose only printings live in excludedSets, even when rotation matches", () => {
+      const lookup = buildLookup({
+        a: card("a", {
+          sets: ["WUN"] as LorcanaSetCode[],
+          rotationStates: ["CoreConstructed"],
+        }),
+      });
+      const result = validateDeckForFormat(
+        deck([{ id: "a", qty: 60 }]),
+        lookup,
+        coreFormat({ excludedSets: ["WUN"] as LorcanaSetCode[] }),
+      );
+      const setRule = result.rules.find((r) => r.kind === "CARD_SET");
+      expect(setRule?.passed).toBe(false);
+    });
+
+    it("allows excluded-set cards when they also have a printing in an allowed set", () => {
+      const lookup = buildLookup({
+        a: card("a", {
+          sets: ["WUN", "SSK"] as LorcanaSetCode[],
+          rotationStates: ["CoreConstructed"],
+        }),
+      });
+      const result = validateDeckForFormat(
+        deck([{ id: "a", qty: 60 }]),
+        lookup,
+        coreFormat({ excludedSets: ["WUN"] as LorcanaSetCode[] }),
+      );
+      const setRule = result.rules.find((r) => r.kind === "CARD_SET");
+      expect(setRule?.passed).toBe(true);
+    });
+
     it("specialAllowedCardIds bypass both set and rotation checks", () => {
       const lookup = buildLookup({
         promo: card("promo", {
@@ -167,15 +199,70 @@ describe("validateDeckForFormat", () => {
       const qtyRule = result.rules.find((r) => r.kind === "CARD_QUANTITY");
       expect(qtyRule?.passed).toBe(true);
     });
+
+    it("honors cardCopyLimit raised above 4 (Tail Wagger - 99)", () => {
+      const lookup = buildLookup({
+        wagger: card("wagger", { cardCopyLimit: 99 }),
+      });
+      const result = validateDeckForFormat(
+        [{ cardId: "wagger", quantity: 60 }],
+        lookup,
+        coreFormat(),
+      );
+      const qtyRule = result.rules.find((r) => r.kind === "CARD_QUANTITY");
+      expect(qtyRule?.passed).toBe(true);
+    });
+
+    it("honors cardCopyLimit = 'no-limit' (Microbots)", () => {
+      const lookup = buildLookup({
+        bots: card("bots", { cardCopyLimit: "no-limit" }),
+      });
+      const result = validateDeckForFormat(
+        [{ cardId: "bots", quantity: 60 }],
+        lookup,
+        coreFormat(),
+      );
+      const qtyRule = result.rules.find((r) => r.kind === "CARD_QUANTITY");
+      expect(qtyRule?.passed).toBe(true);
+    });
+
+    it("honors cardCopyLimit lowered below 4 (Glass Slipper - 2)", () => {
+      const lookup = buildLookup({
+        slipper: card("slipper", { cardCopyLimit: 2 }),
+      });
+      const result = validateDeckForFormat(
+        [{ cardId: "slipper", quantity: 3 }],
+        lookup,
+        coreFormat({ minDeckSize: 3 }),
+      );
+      const qtyRule = result.rules.find((r) => r.kind === "CARD_QUANTITY");
+      expect(qtyRule?.passed).toBe(false);
+      expect(qtyRule?.message).toContain("3 copies (maximum 2)");
+    });
+
+    it("aggregates reprints/variants under one canonicalId against the override limit", () => {
+      // Both variants share canonicalId "ci_slipper" via the card() helper.
+      const lookup = buildLookup({
+        base: card("slipper", { cardCopyLimit: 2 }),
+        enchanted: card("slipper", { cardCopyLimit: 2 }),
+      });
+      const result = validateDeckForFormat(
+        [
+          { cardId: "base", quantity: 2 },
+          { cardId: "enchanted", quantity: 1 },
+        ],
+        lookup,
+        coreFormat({ minDeckSize: 3 }),
+      );
+      const qtyRule = result.rules.find((r) => r.kind === "CARD_QUANTITY");
+      expect(qtyRule?.passed).toBe(false);
+      expect(qtyRule?.message).toContain("3 copies (maximum 2)");
+    });
   });
 
   describe("format definitions", () => {
     it("core-constructed has requiredRotationState", () => {
       expect(LORCANA_FORMATS["core-constructed"].requiredRotationState).toBe("CoreConstructed");
-    });
-
-    it("early-access has requiredRotationState", () => {
-      expect(LORCANA_FORMATS["early-access"].requiredRotationState).toBe("CoreConstructed");
     });
 
     it("infinity has no requiredRotationState", () => {
@@ -186,6 +273,38 @@ describe("validateDeckForFormat", () => {
       expect(LORCANA_FORMATS["shimmering-skies"].requiredRotationState).toBeUndefined();
       expect(LORCANA_FORMATS["azurite-sea"].requiredRotationState).toBeUndefined();
       expect(LORCANA_FORMATS["archazias-island"].requiredRotationState).toBeUndefined();
+    });
+
+    it("infinity includes WUN in allowedSets", () => {
+      expect(LORCANA_FORMATS.infinity.allowedSets).toContain("WUN");
+    });
+
+    it("core-constructed includes WUN in allowedSets", () => {
+      expect(LORCANA_FORMATS["core-constructed"].allowedSets).toContain("WUN");
+      expect(LORCANA_FORMATS["core-constructed"].excludedSets ?? []).not.toContain("WUN");
+    });
+
+    it("a WUN-only card is legal in infinity and core-constructed", () => {
+      const lookup = buildLookup({
+        wun: card("wun", {
+          sets: ["WUN"] as LorcanaSetCode[],
+          rotationStates: ["CoreConstructed"],
+        }),
+        ssk: card("ssk", {
+          sets: ["SSK"] as LorcanaSetCode[],
+          rotationStates: ["CoreConstructed"],
+        }),
+      });
+      const deckCards: DeckCard[] = [
+        { cardId: "wun", quantity: 4 },
+        { cardId: "ssk", quantity: 56 },
+      ];
+
+      const infinity = validateDeckForFormat(deckCards, lookup, LORCANA_FORMATS.infinity);
+      expect(infinity.rules.find((r) => r.kind === "CARD_SET")?.passed).toBe(true);
+
+      const cc = validateDeckForFormat(deckCards, lookup, LORCANA_FORMATS["core-constructed"]);
+      expect(cc.rules.find((r) => r.kind === "CARD_SET")?.passed).toBe(true);
     });
   });
 });

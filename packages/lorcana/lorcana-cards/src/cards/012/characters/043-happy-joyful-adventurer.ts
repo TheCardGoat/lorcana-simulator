@@ -19,6 +19,9 @@ export const happyJoyfulAdventurer: CharacterCard = {
   lore: 1,
   inkable: true,
   vanilla: true,
+  externalIds: {
+    lorcast: "crd_19f9cb6d8ec14727aecb704c3d5c1c14",
+  },
   classifications: ["Storyborn", "Ally", "Seven Dwarfs"],
   i18n: happyJoyfulAdventurerI18n,
 };

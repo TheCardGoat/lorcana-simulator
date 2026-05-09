@@ -40,7 +40,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { generateCanonicalCardsFromPrintings } from "./generators/canonical-generator";
-import { generateCardFiles } from "./generators/file-generator";
+import {
+  generateCardFiles,
+  getOverwrittenFiles,
+  resetOverwrittenFiles,
+} from "./generators/file-generator";
 import { assignPrintingIds } from "./generators/id-generator";
 import {
   computePrintingIdsInOrder,
@@ -61,6 +65,7 @@ import {
   type LorcastFullIndex,
   type LorcastTextIndex,
 } from "./parsers/lorcast-parser";
+import { loadGalleryJson, mergeGalleryFallback } from "./parsers/gallery-parser";
 import type {
   CanonicalCard,
   CardPrinting,
@@ -73,6 +78,7 @@ import {
   validateCanonicalIdNames,
   validateFullNameCanonicalId,
   validatePipelineIdMapping,
+  validateSourceIdsMatchCanonical,
   validateUniqueCardIds,
 } from "./validators/card-validation";
 
@@ -97,6 +103,57 @@ interface PrintingsPhaseResult {
   printings: Record<string, CardPrinting>;
   printingItems: PrintingItem[];
   printingIdsInOrder: string[];
+}
+
+/** Match the top-level `id: "..."` line in a card TypeScript file. */
+const CARD_ID_RE = /^\s{0,4}id:\s*"([^"]+)"/m;
+
+/**
+ * Scan existing TypeScript card source files and extract their `id` values,
+ * keyed by printingId (derived from `reprints[0]` or from the file path).
+ * Used to cross-check against the newly-generated canonical-cards.json.
+ */
+function readSourceCardIds(cardsDir: string): Record<string, string> {
+  const result: Record<string, string> = {};
+
+  function walk(dir: string): void {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (
+        !entry.isFile() ||
+        !entry.name.endsWith(".ts") ||
+        entry.name.endsWith(".test.ts") ||
+        entry.name.endsWith(".i18n.ts") ||
+        entry.name === "index.ts" ||
+        entry.name === "types.ts" ||
+        entry.name === "catalog-data.ts" ||
+        entry.name === "catalog-integrity.test.ts"
+      ) {
+        continue;
+      }
+
+      const content = fs.readFileSync(full, "utf-8");
+
+      const idMatch = content.match(CARD_ID_RE);
+      if (!idMatch?.[1]) continue;
+      const sourceId = idMatch[1];
+
+      // Extract reprints field to find the printingId
+      const reprintsMatch = content.match(/reprints:\s*\[([^\]]+)\]/);
+      if (!reprintsMatch?.[1]) continue;
+      const firstReprint = reprintsMatch[1].match(/"([^"]+)"/)?.[1];
+      if (!firstReprint) continue;
+
+      result[firstReprint] = sourceId;
+    }
+  }
+
+  walk(cardsDir);
+  return result;
 }
 
 /**
@@ -134,7 +191,14 @@ function loadData(): LoadDataResult {
   const { textIndex: lorcastIndex, fullIndex: lorcastFullIndex } = loadLorcastAndBuildIndexes();
 
   console.log("\n📚 Loading Ravensburger data...");
-  const input = loadRavensburgerJson();
+  const rawInput = loadRavensburgerJson();
+
+  console.log("\n🖼️  Loading gallery fallback...");
+  const gallery = loadGalleryJson();
+  const { input, stats: galleryStats } = mergeGalleryFallback(rawInput, gallery);
+  console.log(
+    `  Gallery: ${galleryStats.total} entries (${galleryStats.alreadyInRavensburger} already in Ravensburger, ${galleryStats.seeded} seeded as fallback, ${galleryStats.skippedUnknownSet} skipped due to unknown set)`,
+  );
 
   return { input, lorcastIndex, lorcastFullIndex };
 }
@@ -249,6 +313,19 @@ function buildCanonicalAndValidate(
   validationErrors.push(...validateUniqueCardIds(canonicalCards));
   validationErrors.push(...validateCanonicalIdNames(canonicalCards));
   validationErrors.push(...validateFullNameCanonicalId(canonicalCards));
+
+  // Cross-check existing TypeScript source files against the newly-generated
+  // canonical data. Catches stale IDs when canonical-cards.json was updated
+  // without regenerating the TypeScript files.
+  const sourceIds = readSourceCardIds(CARDS_OUTPUT_DIR);
+  const sourceErrors = validateSourceIdsMatchCanonical(sourceIds, canonicalCards);
+  if (sourceErrors.length > 0) {
+    console.warn(
+      `  ⚠️  ${sourceErrors.length} TypeScript source file(s) have IDs that differ from canonical-cards.json (will be fixed by file generation):\n` +
+        sourceErrors.map((e) => `    ${e}`).join("\n"),
+    );
+  }
+
   if (validationErrors.length > 0) {
     throw new Error(`Card validation failed:\n${validationErrors.join("\n")}`);
   }
@@ -369,10 +446,24 @@ function generateCardFilesPhase(
     cardCategories.stubbed.forEach((name) => verboseLog.push(`  - ${name}`));
     verboseLog.push("");
   }
-  fs.writeFileSync(verboseLogPath, verboseLog.join("\n"), "utf-8");
-  console.log(`  ✅ Verbose log: ${path.relative(process.cwd(), verboseLogPath)}`);
-
-  generateCardFiles(CARDS_OUTPUT_DIR, generatableCards, sets, printings);
+  resetOverwrittenFiles();
+  try {
+    generateCardFiles(CARDS_OUTPUT_DIR, generatableCards, sets, printings);
+  } finally {
+    const overwritten = getOverwrittenFiles();
+    if (overwritten.length > 0) {
+      console.log(
+        `  ⚠️  Overwrote ${overwritten.length} existing file(s) with different content (see verbose log)`,
+      );
+      verboseLog.push(`OVERWRITTEN FILES (${overwritten.length}):`);
+      for (const filePath of overwritten) {
+        verboseLog.push(`  - ${path.relative(process.cwd(), filePath)}`);
+      }
+      verboseLog.push("");
+    }
+    fs.writeFileSync(verboseLogPath, verboseLog.join("\n"), "utf-8");
+    console.log(`  ✅ Verbose log: ${path.relative(process.cwd(), verboseLogPath)}`);
+  }
 }
 
 /**

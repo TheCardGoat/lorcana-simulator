@@ -61,3 +61,39 @@ export async function submitBugReport(params: {
     "Failed to submit bug report",
   );
 }
+
+export const PLAYER_REPORT_REASONS = [
+  "stalling",
+  "abusive_chat",
+  "exploit",
+  "collusion",
+  "inappropriate_name",
+  "intentional_disconnect",
+  "other",
+] as const;
+
+export type PlayerReportReason = (typeof PLAYER_REPORT_REASONS)[number];
+
+export async function submitPlayerReport(params: {
+  reportedGameProfileId: string;
+  matchId?: string;
+  gameId?: string;
+  reason: PlayerReportReason;
+  details?: string;
+}): Promise<void> {
+  await requestVoid(
+    `${getApiOrigin()}/v1/moderation/player-reports`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        reportedGameProfileId: params.reportedGameProfileId,
+        matchId: params.matchId,
+        gameId: params.gameId,
+        reason: params.reason,
+        details: params.details,
+      }),
+    },
+    "Failed to submit player report",
+  );
+}

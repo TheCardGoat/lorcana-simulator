@@ -11,7 +11,7 @@ export const captainHookThePirateKingI18n: Record<Languages, I18nProperties> = {
       {
         title: "GIVE 'EM ALL YOU GOT!",
         description:
-          "Once during your turn, whenever an opposing character is damaged, your Pirate characters get +2 {S} and gain Resist +2 this turn.",
+          "Once during your turn, whenever an opposing character takes damage, your Pirate characters get +2 {S} and gain Resist +2 this turn.",
       },
     ],
   },

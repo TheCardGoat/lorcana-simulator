@@ -567,47 +567,46 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
   #buildCardReferenceResolver(
     view: LorcanaSimulatorView = "authoritative",
   ): (cardId: string) => LogCardReference | null {
-    // Use the viewer's board so hand cards are fully visible for the owner.
+    // Typed MoveLog entries already strip private cardIds via PrivateField,
+    // so anything reaching the formatter through `typedLogEntry` is safe to
+    // resolve from staticResources. But fallback/manual entries (e.g.
+    // `manualMoveCard`) read the cardId from raw `entry.params` without that
+    // stripping, so we still need a viewer-aware mask check before exposing
+    // the definition name in `entry.title`. Use the projected board for the
+    // current view to detect masked cards.
     const board = this.#engine.getBoard(view);
     const authoritativeBoard =
       view === "authoritative" ? board : this.#engine.getBoard("authoritative");
 
+    const staticInstances = this.#engine.getServerEngine().staticResources.instances;
+    const resolveOwnerSide = (cardId: string, projected?: { ownerId?: string }) => {
+      const ownerId = projected?.ownerId ?? staticInstances.get(cardId)?.ownerID;
+      return ownerId ? (this.#resolveSideFromOwner(ownerId) ?? "playerOne") : "playerOne";
+    };
+
     return (cardId: string): LogCardReference | null => {
-      const card = board.cards[cardId] ?? authoritativeBoard.cards[cardId];
-      if (card) {
-        const isMasked = card.hidden === true;
-        const ownerSide = this.#resolveSideFromOwner(card.ownerId) ?? "playerOne";
-        const definition = this.#engine.getCardDefinition(cardId) as LorcanaCard | undefined;
-        const shortId = definition ? this.#resolveCardShortId(definition, undefined) : undefined;
-        const localizedProjection =
-          shortId && definition ? this.#resolveLocalizedCardProjection(shortId, definition) : null;
-        const defaultLabel = definition
-          ? (getCardDisplayName(undefined, definition) ?? definition.name)
-          : cardId;
-        const label = isMasked
-          ? parseBaseZone(card.zone) === "deck"
-            ? this.#translate("sim.card.hiddenDeck")
-            : this.#translate("sim.card.hidden")
-          : (localizedProjection?.label ?? defaultLabel);
-
-        return {
-          cardId,
-          definitionId: definition?.id ?? cardId,
-          label,
-          inkType: definition?.inkType,
-          inkable: definition?.inkable,
-          isMasked,
-          ownerSide,
-          cardType: definition?.cardType,
-          set: definition?.set,
-          cardNumber: definition?.cardNumber,
-        };
-      }
-
-      // Fallback for cards not in the projected board (e.g. deck cards after mulligan).
+      const projected = board.cards[cardId] ?? authoritativeBoard.cards[cardId];
       const definition = this.#engine.getCardDefinition(cardId) as LorcanaCard | undefined;
       if (!definition) {
         return null;
+      }
+
+      const isMasked = projected?.hidden === true;
+      if (isMasked) {
+        const maskedLabel =
+          parseBaseZone(projected?.zone) === "deck"
+            ? this.#translate("sim.card.hiddenDeck")
+            : this.#translate("sim.card.hidden");
+        return {
+          cardId,
+          definitionId: definition.id,
+          label: maskedLabel,
+          isMasked: true,
+          ownerSide: resolveOwnerSide(cardId, projected),
+          cardType: definition.cardType,
+          set: definition.set,
+          cardNumber: definition.cardNumber,
+        };
       }
 
       const shortId = this.#resolveCardShortId(definition, undefined);
@@ -624,7 +623,7 @@ export class LorcanaMultiplayerSimulatorAdapter implements LorcanaSimulatorReadM
         inkType: definition.inkType,
         inkable: definition.inkable,
         isMasked: false,
-        ownerSide: "playerOne",
+        ownerSide: resolveOwnerSide(cardId, projected),
         cardType: definition.cardType,
         set: definition.set,
         cardNumber: definition.cardNumber,

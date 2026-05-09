@@ -17,7 +17,7 @@
  *
  * Usage:
  *   const formats = getDeckFormats(deckCards, myLookup);
- *   // => ["core-constructed", "early-access"]
+ *   // => ["core-constructed", "infinity"]
  *
  * Building the lookup from @tcg/lorcana-cards:
  * @example
@@ -88,7 +88,6 @@ export type LorcanaSetCode =
 export type LorcanaFormatId =
   | "infinity"
   | "core-constructed"
-  | "early-access"
   | "archazias-island"
   | "shimmering-skies"
   | "azurite-sea";
@@ -137,6 +136,14 @@ export interface LorcanaFormat {
    * pure Core Constructed decks (with no WSP/WUN cards) are not considered valid.
    */
   requiresAnySet?: LorcanaSetCode[];
+  /**
+   * Set codes whose cards must be rejected even if they would otherwise pass via
+   * {@link requiredRotationState}. Used to reject cards from sets that should
+   * not be legal in the format even when Ravensburger pre-tags them as `"CoreConstructed"`.
+   *
+   * A card fails if every one of its printings is in `excludedSets`.
+   */
+  excludedSets?: LorcanaSetCode[];
 }
 
 // ---------------------------------------------------------------------------
@@ -155,11 +162,13 @@ const FORTISPHERE = "PSk";
 // ---------------------------------------------------------------------------
 
 export const LORCANA_FORMATS: Record<LorcanaFormatId, LorcanaFormat> = {
-  /** All sets legal; only Hiram Flaversham - Toymaker banned. */
+  /**
+   * All released sets legal; only Hiram Flaversham - Toymaker banned.
+   */
   infinity: {
     id: "infinity",
     label: "Infinity",
-    description: "All sets are legal. One card is banned.",
+    description: "All released sets are legal. One card is banned.",
     allowedSets: [
       "TFC",
       "ROF",
@@ -184,25 +193,10 @@ export const LORCANA_FORMATS: Record<LorcanaFormatId, LorcanaFormat> = {
   "core-constructed": {
     id: "core-constructed",
     label: "Core Constructed",
-    description: "Current rotating format. Sets SSK through WIW are legal.",
-    allowedSets: ["SSK", "AZS", "ARC", "ROJ", "FAB", "WIW"],
+    description: "Current rotating format. Sets SSK through WUN are legal.",
+    allowedSets: ["SSK", "AZS", "ARC", "ROJ", "FAB", "WIW", "WSP", "WUN"],
     bannedCardIds: [HIRAM_FLAVERSHAM_TOYMAKER, FORTISPHERE],
     requiredRotationState: "CoreConstructed",
-  },
-
-  /**
-   * Early access format. Core Constructed plus Winterspell (WSP) and Wilds Unknown (WUN).
-   * Hiram Flaversham - Toymaker banned. Casual-only queue.
-   * Requires at least one WSP or WUN card so that pure CC-only decks are not valid.
-   */
-  "early-access": {
-    id: "early-access",
-    label: "Early Access",
-    description: "Core Constructed plus Winterspell and Wilds Unknown. Hiram Flaversham banned.",
-    allowedSets: ["SSK", "AZS", "ARC", "ROJ", "FAB", "WIW", "WSP", "WUN"],
-    bannedCardIds: [HIRAM_FLAVERSHAM_TOYMAKER],
-    requiredRotationState: "CoreConstructed",
-    requiresAnySet: ["WSP", "WUN"],
   },
 
   /**
@@ -416,6 +410,8 @@ export function validateDeckForFormat(
 
   // CARD_SET — a card passes if any printing is in an allowed set,
   // OR if any printing's rotation state matches the format's required state.
+  // Cards whose printings live entirely in `excludedSets` are rejected even
+  // when rotation state would otherwise admit them.
   const setFailures: string[] = [];
   for (const card of cards) {
     if (format.specialAllowedCardIds?.includes(card.cardId)) continue;
@@ -425,7 +421,12 @@ export function validateDeckForFormat(
     const matchesRotation =
       format.requiredRotationState != null &&
       (data.rotationStates?.includes(format.requiredRotationState) ?? false);
-    if (!inAllowedSet && !matchesRotation) {
+    const allInExcluded =
+      (format.excludedSets?.length ?? 0) > 0 &&
+      data.sets.length > 0 &&
+      data.sets.every((s) => format.excludedSets!.includes(s));
+    const passes = !allInExcluded && (inAllowedSet || matchesRotation);
+    if (!passes) {
       setFailures.push(`${data.fullName} (sets: ${data.sets.join(", ") || "unknown"})`);
     }
   }
@@ -509,7 +510,7 @@ export function validateDeck(
  * @example
  * ```ts
  * const formats = getDeckFormats(deckCards, lookup);
- * // => ["core-constructed", "early-access"]
+ * // => ["core-constructed", "infinity"]
  * ```
  */
 export function getDeckFormats(

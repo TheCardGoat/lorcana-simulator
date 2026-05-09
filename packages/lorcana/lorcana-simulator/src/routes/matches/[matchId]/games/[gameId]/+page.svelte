@@ -15,6 +15,7 @@
   import BotMatchMode from './modes/BotMatchMode.svelte';
   import HumanVsHumanMode from './modes/HumanVsHumanMode.svelte';
   import type { GamePageData } from './+page.server.js';
+  import AntiRamp from "@tcg/shared/ads/AntiRamp";
 
   let { data }: { data: GamePageData } = $props();
 
@@ -32,6 +33,7 @@
   });
 </script>
 
+<AntiRamp />
 <main class="immersive-app-shell relative h-screen min-h-0 text-slate-100">
   {#if data.mode === 'error'}
     <div class="mx-auto flex h-full max-w-3xl items-center justify-center px-4 py-8">
@@ -47,11 +49,15 @@
     </div>
   {:else if data.mode === 'local'}
     <LocalMatchMode />
-  {:else if data.spectate}
-    <SpectatorMatchMode {data} />
-  {:else if data.gameSubMode === 'bot'}
-    <BotMatchMode {data} />
   {:else}
-    <HumanVsHumanMode {data} />
+    {#key data.gameId}
+      {#if data.spectate}
+        <SpectatorMatchMode {data} />
+      {:else if data.gameSubMode === 'bot'}
+        <BotMatchMode {data} />
+      {:else}
+        <HumanVsHumanMode {data} />
+      {/if}
+    {/key}
   {/if}
 </main>

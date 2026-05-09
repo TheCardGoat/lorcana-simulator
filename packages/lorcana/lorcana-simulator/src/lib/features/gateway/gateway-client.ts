@@ -33,6 +33,12 @@ export interface GatewayClientState {
    * is already up during a blue-green deploy.
    */
   serverInitiatedClose: boolean;
+  /**
+   * True when the server rejected the connection with `gateway_error`
+   * `code: "unauthenticated"`. Terminal — auto-reconnect is stopped so the UI
+   * can prompt the user to sign in / refresh instead of looping silently.
+   */
+  authError: boolean;
 }
 
 export interface GatewayClientOptions {
@@ -62,6 +68,14 @@ const MAX_RECONNECT_DELAY_MS = 30_000;
 const DEPLOY_RECONNECT_DELAY_MS = 100;
 const DEFAULT_PING_INTERVAL_MS = 29_000;
 
+type GatewayMsg = { type: string; correlationId?: string; [key: string]: unknown };
+
+type PendingAck = {
+  resolve: (msg: GatewayMsg) => void;
+  reject: (reason: string) => void;
+  timeoutHandle: ReturnType<typeof setTimeout>;
+};
+
 export class GatewayClient {
   private ws: WebSocket | null = null;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
@@ -69,6 +83,7 @@ export class GatewayClient {
   private intentionalClose = false;
   /** Tracks whether the fast deploy reconnect delay has already been used this cycle. */
   private deployFastReconnectUsed = false;
+  private pendingAcks = new Map<string, PendingAck>();
   private readonly options: Required<
     Omit<GatewayClientOptions, "ticket" | "token" | "getToken" | "onGameMessage" | "onOpen">
   > &
@@ -83,6 +98,7 @@ export class GatewayClient {
     reconnectAttempts: 0,
     error: null,
     serverInitiatedClose: false,
+    authError: false,
   };
 
   constructor(options: GatewayClientOptions) {
@@ -113,14 +129,52 @@ export class GatewayClient {
     }
   }
 
+  /**
+   * Send a message and return a Promise that resolves with the correlated server response,
+   * or rejects with `"disconnected"` (socket not open or closed before ack) or `"timeout"`.
+   */
+  sendWithAck<T extends GatewayMsg>(message: object, timeoutMs = 10_000): Promise<T> {
+    if (this.ws?.readyState !== WebSocket.OPEN) {
+      return Promise.reject("disconnected");
+    }
+    return new Promise<T>((resolve, reject) => {
+      const correlationId = crypto.randomUUID();
+      const timeoutHandle = setTimeout(() => {
+        this.pendingAcks.delete(correlationId);
+        reject("timeout");
+      }, timeoutMs);
+      this.pendingAcks.set(correlationId, {
+        resolve: resolve as (msg: GatewayMsg) => void,
+        reject,
+        timeoutHandle,
+      });
+      try {
+        this.send({ ...message, correlationId });
+      } catch (err) {
+        clearTimeout(timeoutHandle);
+        this.pendingAcks.delete(correlationId);
+        throw err;
+      }
+    });
+  }
+
   /** Open the WebSocket connection. */
   connect(): void {
     if (
       this.ws &&
       (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)
     ) {
+      console.debug("[GW] connect() skipped — socket already open/connecting", {
+        readyState: this.ws.readyState,
+      });
       return;
     }
+    console.debug("[GW] connect()", {
+      hasTicket: !!this.options.ticket,
+      hasToken: !!this.options.token,
+      hasGetToken: !!this.options.getToken,
+      url: this.options.url,
+    });
     this.intentionalClose = false;
     this.updateState({ status: "connecting", error: null });
     this.createSocket();
@@ -174,9 +228,16 @@ export class GatewayClient {
       const separator = wsUrl.includes("?") ? "&" : "?";
       wsUrl = `${wsUrl}${separator}${qs}`;
     }
+    console.debug("[GW] createSocket()", {
+      url: wsUrl.replace(/ticket=[^&]+/, "ticket=***").replace(/token=[^&]+/, "token=***"),
+      hasTicket: !!this.options.ticket,
+      hasToken: !!token,
+      attempt: this._state.reconnectAttempts,
+    });
     const ws = new WebSocket(wsUrl);
 
     ws.addEventListener("open", () => {
+      console.debug("[GW] socket open");
       this.updateState({
         status: "connected",
         reconnectAttempts: 0,
@@ -184,6 +245,7 @@ export class GatewayClient {
         // Clear deploy flag once the new connection is established so
         // the UI stops showing "Updating server…" and returns to normal.
         serverInitiatedClose: false,
+        authError: false,
       });
       this.deployFastReconnectUsed = false;
       this.startPingLoop();
@@ -194,15 +256,23 @@ export class GatewayClient {
       this.handleMessage(event.data as string);
     });
 
-    ws.addEventListener("close", () => {
+    ws.addEventListener("close", (event) => {
+      console.debug("[GW] socket closed", {
+        code: event.code,
+        reason: event.reason || "(none)",
+        wasClean: event.wasClean,
+        intentional: this.intentionalClose,
+      });
       this.ws = null;
       this.clearPingTimer();
+      this.rejectAllPendingAcks("disconnected");
       if (!this.intentionalClose) {
         this.scheduleReconnect();
       }
     });
 
-    ws.addEventListener("error", () => {
+    ws.addEventListener("error", (event) => {
+      console.error("[GW] socket error", event);
       this.updateState({ error: "Connection error" });
     });
 
@@ -221,8 +291,31 @@ export class GatewayClient {
       console.debug("[WS ⬇ RECV]", msg);
     }
 
+    // Resolve or reject a pending ack when the server echoes a correlationId.
+    // Still falls through to normal message handling so the transport layer
+    // also processes the message (e.g. move_accepted updates game state).
+    const correlationId = (msg as GatewayMsg).correlationId;
+    if (correlationId) {
+      const ack = this.pendingAcks.get(correlationId);
+      if (ack) {
+        clearTimeout(ack.timeoutHandle);
+        this.pendingAcks.delete(correlationId);
+        const isError =
+          msg.type === "error" || msg.type === "gateway_error" || msg.type === "move_rejected";
+        if (isError) {
+          ack.reject(msg.type);
+        } else {
+          ack.resolve(msg as GatewayMsg);
+        }
+      }
+    }
+
     switch (msg.type) {
       case "welcome": {
+        console.debug("[GW] welcome received", {
+          authenticated: msg.authenticated,
+          connectionId: msg.connectionId,
+        });
         this.updateState({
           authenticated: msg.authenticated as boolean,
           connectionId: msg.connectionId as string,
@@ -237,7 +330,12 @@ export class GatewayClient {
         break;
       }
       case "gateway_error": {
+        console.error("[GW] gateway_error", { code: msg.code, message: msg.message });
         this.updateState({ error: `${msg.code}: ${msg.message}` });
+        if (msg.code === "unauthenticated") {
+          this.stopReconnecting();
+          this.updateState({ authError: true, status: "disconnected" });
+        }
         break;
       }
       // DEPLOYMENT CACHE STRATEGY: The server sends this just before shutting
@@ -268,7 +366,18 @@ export class GatewayClient {
     }
   }
 
+  private stopReconnecting(): void {
+    this.intentionalClose = true;
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+
   private scheduleReconnect(): void {
+    if (this._state.authError) {
+      return;
+    }
     const attempts = this._state.reconnectAttempts;
     if (attempts >= this.options.maxReconnectAttempts) {
       this.updateState({ status: "disconnected", error: "Max reconnect attempts reached" });
@@ -288,6 +397,7 @@ export class GatewayClient {
     const delay = useDeployFastDelay
       ? DEPLOY_RECONNECT_DELAY_MS
       : Math.min(INITIAL_RECONNECT_DELAY_MS * 2 ** Math.min(attempts, 30), MAX_RECONNECT_DELAY_MS);
+    console.debug("[GW] scheduleReconnect()", { attempt: attempts + 1, delayMs: delay });
     this.updateState({ status: "reconnecting", reconnectAttempts: attempts + 1 });
 
     this.reconnectTimer = setTimeout(() => {
@@ -308,6 +418,14 @@ export class GatewayClient {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+  }
+
+  private rejectAllPendingAcks(reason: string): void {
+    this.pendingAcks.forEach((ack) => {
+      clearTimeout(ack.timeoutHandle);
+      ack.reject(reason);
+    });
+    this.pendingAcks.clear();
   }
 
   private updateState(patch: Partial<GatewayClientState>): void {

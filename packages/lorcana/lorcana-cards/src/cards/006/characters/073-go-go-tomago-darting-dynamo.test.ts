@@ -119,13 +119,8 @@ describe("Go Go Tomago - Darting Dynamo", () => {
 
     expect(testEngine.asPlayerOne().playCard(goGoTomagoDartingDynamo)).toBeSuccessfulCommand();
 
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-    expect(
-      testEngine.asPlayerOne().resolvePendingByCard(goGoTomagoDartingDynamo, {
-        resolveOptional: true,
-        targets: [damagedOpponent],
-      }),
-    ).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    expect(testEngine.asPlayerOne().getPendingEffects()).toEqual([]);
 
     // No ink available to pay, no lore gained
     expect(testEngine.getLore(PLAYER_ONE)).toBe(0);

@@ -7,17 +7,21 @@ import type {
 import { m } from "$lib/i18n/messages.js";
 import { useLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
 import LoreBadge from "@/design-system/simulator/display/LoreBadge.svelte";
-import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import SimulatorSupportReminder from "@/features/simulator/support/SimulatorSupportReminder.svelte";
 import {
 	Settings,
 	Bug,
+	Flag,
 	Trash2,
 	Layers,
 	Hand,
 	PaintBucket,
 	EyeOff,
 	Smartphone,
+	Star,
+	Gem,
+	Sparkles,
+	Crown,
 } from "@lucide/svelte";
 import type { Snippet } from "svelte";
 import PlayerTimer from "./PlayerTimer.svelte";
@@ -38,6 +42,8 @@ interface PlayerInfoProps {
 	onSettingsClick?: () => void;
 	showSupport?: boolean;
 	onSupportClick?: () => void;
+	showReport?: boolean;
+	onReportClick?: () => void;
 	supportReminderText?: string | null;
 	supportReminderOpen?: boolean;
 	onDismissSupportReminder?: () => void;
@@ -49,6 +55,10 @@ interface PlayerInfoProps {
 	isAfk?: boolean;
 	/** Whether the player joined on a mobile device. */
 	isMobile?: boolean;
+	/** Player's MMR at match start, when available. */
+	mmr?: number;
+	/** Player's subscription tier (e.g. "tier2", "tier3", "tier4"). */
+	subscriptionTier?: string;
 	children?: Snippet;
 }
 
@@ -68,6 +78,8 @@ let {
 	onSettingsClick,
 	showSupport = false,
 	onSupportClick,
+	showReport = false,
+	onReportClick,
 	supportReminderText = null,
 	supportReminderOpen = $bindable(false),
 	onDismissSupportReminder,
@@ -75,6 +87,8 @@ let {
 	isOwnClock = false,
 	isAfk = false,
 	isMobile = false,
+	mmr,
+	subscriptionTier,
 	children,
 }: PlayerInfoProps = $props();
 
@@ -151,6 +165,16 @@ const sideColors = {
 	playerTwo: "#ea0000",
 };
 
+type PatronTierConfig = { name: () => string; color: string; glow: string; borderColor: string };
+const patronTierConfigs: Record<string, PatronTierConfig> = {
+	tier2: { name: () => m["patron_tier_supporter"]({}), color: "#cd7f32", glow: "rgba(205,127,50,0.55)", borderColor: "rgba(205,127,50,0.5)" },
+	tier3: { name: () => m["patron_tier_champion"]({}),  color: "#d4d4d4", glow: "rgba(212,212,212,0.5)", borderColor: "rgba(212,212,212,0.45)" },
+	tier4: { name: () => m["patron_tier_legend"]({}),    color: "#ffd700", glow: "rgba(255,215,0,0.6)",   borderColor: "rgba(255,215,0,0.55)" },
+	tier5: { name: () => m["patron_tier_admin"]({}),     color: "#a855f7", glow: "rgba(168,85,247,0.55)", borderColor: "rgba(168,85,247,0.5)" },
+};
+const patronConfig = $derived(subscriptionTier ? (patronTierConfigs[subscriptionTier] ?? null) : null);
+const mmrDisplay = $derived(Number.isFinite(mmr) ? `#${Math.round(mmr!)}` : null);
+
 function getSideLabel(side: LorcanaPlayerSide): string {
 	return side === "playerOne"
 		? m["sim.player.side.playerOne"]({})
@@ -185,72 +209,48 @@ function handleSupportClick() {
               aria-hidden="true"
       ></span>
     </div>
-    {#if timer}
-      <PlayerTimer snapshot={timer} {isOwnClock} />
-    {/if}
     <div class="player-identity">
       <div class="player-details">
+        {#if patronConfig}
+          <span
+                  class="player-patron-pill"
+                  style:--patron-color={patronConfig.color}
+                  style:--patron-glow={patronConfig.glow}
+                  style:--patron-border={patronConfig.borderColor}
+                  title={patronConfig.name()}
+          >
+            {#if subscriptionTier === "tier5"}
+              <Crown size={8} />
+            {:else if subscriptionTier === "tier4"}
+              <Sparkles size={8} />
+            {:else if subscriptionTier === "tier3"}
+              <Gem size={8} />
+            {:else}
+              <Star size={8} />
+            {/if}
+          </span>
+        {/if}
         <span class="player-name">{name}</span>
-        <span class="player-side">{getSideLabel(side)}</span>
         {#if isMobile}
           <Smartphone size={10} class="shrink-0 opacity-60" />
         {/if}
+        {#if mmrDisplay}
+          <span class="player-mmr-pill">{mmrDisplay}</span>
+        {/if}
+
+
         {#if isAfk}
           <span class="player-afk-pill" role="status" aria-label={m["sim.player.afk.awayAria"]({})}>
             <EyeOff size={9} />
             {m["sim.player.afk.title"]({})}
           </span>
         {/if}
+        {#if timer}
+          <PlayerTimer snapshot={timer} {isOwnClock} />
+        {/if}
       </div>
     </div>
 
-    {#if showSettings || showSupport}
-      <div class="player-quick-actions">
-        {#if showSupport}
-          {#if supportReminderText}
-            <SimulatorSupportReminder
-              text={supportReminderText}
-              bind:open={supportReminderOpen}
-              side="left"
-              align="start"
-              onOpen={handleSupportClick}
-              onDismiss={onDismissSupportReminder}
-            >
-              {#snippet child({ props })}
-                <button
-                  type="button"
-                  class="settings-trigger"
-                  aria-label={m["sim.player.support.openAria"]({})}
-                  onclick={handleSupportClick}
-                  {...props}
-                >
-                  <Bug />
-                </button>
-              {/snippet}
-            </SimulatorSupportReminder>
-          {:else}
-            <button
-              type="button"
-              class="settings-trigger"
-              aria-label={m["sim.player.support.openAria"]({})}
-              onclick={handleSupportClick}
-            >
-              <Bug />
-            </button>
-          {/if}
-        {/if}
-        {#if showSettings}
-          <button
-            type="button"
-            class="settings-trigger"
-            aria-label={m["sim.player.settings.openAria"]({})}
-            onclick={handleSettingsClick}
-          >
-            <Settings/>
-          </button>
-        {/if}
-      </div>
-    {/if}
   </div>
 
   <div class="player-stats">
@@ -272,6 +272,67 @@ function handleSupportClick() {
         <span class="stat-icon"><PaintBucket /></span>
       </div>
     </div>
+    {#if showSettings || showSupport || showReport}
+      <div class="player-quick-actions">
+        {#if showReport}
+          <button
+            type="button"
+            class="settings-trigger settings-trigger--report"
+            aria-label={m["sim.player.report.openAria"]({})}
+            title={m["sim.player.report.openAria"]({})}
+            onclick={onReportClick}
+          >
+            <Flag />
+          </button>
+        {/if}
+        {#if showSupport}
+          {#if supportReminderText}
+            <SimulatorSupportReminder
+              text={supportReminderText}
+              bind:open={supportReminderOpen}
+              side="left"
+              align="start"
+              onOpen={handleSupportClick}
+              onDismiss={onDismissSupportReminder}
+            >
+              {#snippet child({ props })}
+                <button
+                  type="button"
+                  class="settings-trigger"
+                  aria-label={m["sim.player.support.openAria"]({})}
+                  title={m["sim.player.support.openAria"]({})}
+                  onclick={handleSupportClick}
+                  {...props}
+                >
+                  <Bug />
+                </button>
+              {/snippet}
+            </SimulatorSupportReminder>
+          {:else}
+            <button
+              type="button"
+              class="settings-trigger"
+              aria-label={m["sim.player.support.openAria"]({})}
+              title={m["sim.player.support.openAria"]({})}
+              onclick={handleSupportClick}
+            >
+              <Bug />
+            </button>
+          {/if}
+        {/if}
+        {#if showSettings}
+          <button
+            type="button"
+            class="settings-trigger"
+            aria-label={m["sim.player.settings.openAria"]({})}
+            title={m["sim.player.settings.openAria"]({})}
+            onclick={handleSettingsClick}
+          >
+            <Settings/>
+          </button>
+        {/if}
+      </div>
+    {/if}
   </div>
 
   {#if children}
@@ -302,7 +363,7 @@ function handleSupportClick() {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.35rem;
+    gap: 0.45rem;
   }
 
   .player-identity {
@@ -314,7 +375,7 @@ function handleSupportClick() {
 
   .player-details {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     flex-wrap: wrap;
     gap: 0.22rem 0.38rem;
     min-width: 0;
@@ -325,6 +386,7 @@ function handleSupportClick() {
     font-weight: 700;
     color: #f8fafc;
     line-height: 1.1;
+    letter-spacing: -0.005em;
   }
 
   .player-side {
@@ -335,7 +397,7 @@ function handleSupportClick() {
     border-radius: 999px;
     background: rgba(20, 40, 64, 0.72);
     border: 1px solid rgba(109, 149, 195, 0.18);
-    font-size: 0.5rem;
+    font-size: clamp(0.58rem, 1.55vw, 0.64rem);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: #9db1c8;
@@ -343,19 +405,66 @@ function handleSupportClick() {
     white-space: nowrap;
   }
 
+  .player-mmr-pill {
+    display: inline-flex;
+    align-items: center;
+    height: 1rem;
+    padding: 0 0.32rem;
+    border-radius: 999px;
+    background: rgba(20, 40, 64, 0.72);
+    border: 1px solid rgba(109, 149, 195, 0.22);
+    font-size: clamp(0.56rem, 1.5vw, 0.62rem);
+    font-weight: 600;
+    color: rgba(148, 163, 184, 0.85);
+    line-height: 1;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+  }
+
+  .player-patron-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--patron-border);
+    color: var(--patron-color);
+    flex-shrink: 0;
+    box-shadow:
+      0 0 4px var(--patron-glow),
+      0 0 8px var(--patron-glow),
+      inset 0 0 4px rgba(255, 255, 255, 0.06);
+    filter: drop-shadow(0 0 3px var(--patron-glow));
+    transition: box-shadow 200ms ease, filter 200ms ease;
+  }
+
+  .player-patron-pill:hover {
+    box-shadow:
+      0 0 6px var(--patron-glow),
+      0 0 14px var(--patron-glow),
+      inset 0 0 4px rgba(255, 255, 255, 0.08);
+    filter: drop-shadow(0 0 5px var(--patron-glow));
+  }
+
+  .player-patron-pill :global(svg) {
+    flex-shrink: 0;
+  }
+
   .player-afk-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.18rem;
-    min-height: 1rem;
-    padding: 0 0.32rem;
+    height: 1rem;
+    padding: 0 0.3rem;
     border-radius: 999px;
     background: rgba(217, 119, 6, 0.18);
     border: 1px solid rgba(217, 119, 6, 0.35);
-    font-size: 0.5rem;
+    font-size: clamp(0.58rem, 1.55vw, 0.64rem);
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     color: #fbbf24;
     line-height: 1;
     white-space: nowrap;
@@ -378,11 +487,10 @@ function handleSupportClick() {
   }
 
   .player-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: flex;
     align-items: center;
     min-width: 0;
-    gap: 0.2rem;
+    gap: 0.4rem;
     overflow: hidden;
   }
 
@@ -417,7 +525,7 @@ function handleSupportClick() {
     border: 1px solid rgba(148, 163, 184, 0.34);
     background: rgba(15, 23, 42, 0.88);
     color: #cbd5e1;
-    font-size: 0.58rem;
+    font-size: clamp(0.64rem, 1.7vw, 0.7rem);
     font-weight: 700;
     line-height: 1;
   }
@@ -433,7 +541,7 @@ function handleSupportClick() {
     border: 1px solid rgba(125, 211, 252, 0.3);
     background: rgba(3, 105, 161, 0.22);
     color: #e0f2fe;
-    font-size: 0.56rem;
+    font-size: clamp(0.62rem, 1.7vw, 0.68rem);
     font-weight: 700;
     line-height: 1;
     white-space: nowrap;
@@ -490,21 +598,26 @@ function handleSupportClick() {
   }
 
   .stat-group {
-    display: contents;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: center;
+    flex: 1;
     min-width: 0;
-    width: 100%;
-    overflow: hidden;
+    gap: 0.2rem;
   }
 
   .stat-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.18rem;
+    gap: 0.22rem;
     line-height: 1;
     min-width: 0;
     padding: 0.08rem 0;
+  }
+
+  .stat-item + .stat-item {
+    border-left: 1px solid rgba(148, 163, 184, 0.1);
   }
 
   .stat-icon {
@@ -513,7 +626,7 @@ function handleSupportClick() {
     justify-content: center;
     width: 0.72rem;
     height: 0.72rem;
-    opacity: 0.72;
+    opacity: 0.6;
     flex-shrink: 0;
   }
 
@@ -543,39 +656,93 @@ function handleSupportClick() {
   }
 
   .settings-trigger {
-    width: 1.6rem;
-    height: 1.6rem;
-    padding: 0.25rem;
-    border-radius: 0.35rem;
-    border: 1px solid rgba(124, 196, 255, 0.35);
-    background: rgba(18, 38, 61, 0.75);
-    color: #dbeafe;
+    width: 1.65rem;
+    height: 1.65rem;
+    padding: 0.3rem;
+    border-radius: 0.45rem;
+    border: 1px solid rgba(125, 211, 252, 0.7);
+    background:
+      linear-gradient(180deg, rgba(125, 211, 252, 0.18), rgba(125, 211, 252, 0.04)),
+      rgba(21, 48, 77, 0.95);
+    color: #f0f9ff;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     cursor: pointer;
-    transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.08) inset,
+      0 0 0 1px rgba(125, 211, 252, 0.1),
+      0 1px 3px rgba(0, 0, 0, 0.4);
+    transition:
+      background 140ms ease,
+      border-color 140ms ease,
+      color 140ms ease,
+      transform 140ms ease,
+      box-shadow 140ms ease;
   }
 
   .settings-trigger :global(svg) {
     width: 100%;
     height: 100%;
+    stroke-width: 2.2;
   }
 
   .settings-trigger:hover,
   .settings-trigger:focus-visible {
-    background: rgba(33, 63, 96, 0.95);
-    border-color: rgba(125, 211, 252, 0.85);
-    color: #f0f9ff;
+    background:
+      linear-gradient(180deg, rgba(125, 211, 252, 0.32), rgba(125, 211, 252, 0.1)),
+      rgba(34, 74, 117, 0.98);
+    border-color: rgba(186, 230, 253, 0.95);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.14) inset,
+      0 0 0 2px rgba(125, 211, 252, 0.22),
+      0 4px 10px rgba(0, 0, 0, 0.5);
     outline: none;
+  }
+
+  .settings-trigger:active {
+    transform: translateY(0);
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.25) inset,
+      0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  .settings-trigger--report {
+    border-color: rgba(248, 113, 113, 0.7);
+    background:
+      linear-gradient(180deg, rgba(248, 113, 113, 0.22), rgba(248, 113, 113, 0.05)),
+      rgba(48, 14, 22, 0.95);
+    color: #fecaca;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.08) inset,
+      0 0 0 1px rgba(248, 113, 113, 0.12),
+      0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  .settings-trigger--report:hover,
+  .settings-trigger--report:focus-visible {
+    background:
+      linear-gradient(180deg, rgba(248, 113, 113, 0.4), rgba(248, 113, 113, 0.1)),
+      rgba(127, 29, 29, 0.95);
+    border-color: rgba(254, 202, 202, 0.95);
+    color: #fee2e2;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.14) inset,
+      0 0 0 2px rgba(248, 113, 113, 0.28),
+      0 4px 10px rgba(0, 0, 0, 0.5);
   }
 
   .player-quick-actions {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.32rem;
     flex-shrink: 0;
+    margin-left: auto;
+    padding-left: 0.3rem;
+    border-left: 1px solid rgba(148, 163, 184, 0.18);
   }
 
 </style>

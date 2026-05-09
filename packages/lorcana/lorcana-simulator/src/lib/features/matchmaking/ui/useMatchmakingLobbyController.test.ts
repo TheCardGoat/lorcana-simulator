@@ -77,6 +77,10 @@ const importDeckForProfile = mock(async () => ({
   activeDeckVersionId: "version-2",
   activeDeckListId: "deck-list-2",
 }));
+const importLegacyDecksForProfile = mock(async () => ({
+  ...initialContext,
+  profiles: initialContext.profiles.map((profile) => ({ ...profile, decks: null })),
+}));
 const trackEvent = mock(() => {});
 const openWindow = mock(() => null);
 const fetchGatewayTicket = mock(async () => ({
@@ -274,6 +278,7 @@ describe("createMatchmakingLobbyController", () => {
   beforeEach(() => {
     fetchDeckListSnapshotByDeckListId.mockClear();
     importDeckForProfile.mockClear();
+    importLegacyDecksForProfile.mockClear();
     trackEvent.mockClear();
     openWindow.mockClear();
     fetchGatewayTicket.mockClear();
@@ -290,6 +295,7 @@ describe("createMatchmakingLobbyController", () => {
       {
         getGatewayWsUrl: () => "wss://gateway.example.test",
         importDeckForProfile,
+        importLegacyDecksForProfile,
         fetchDeckListSnapshotByDeckListId: fetchDeckListSnapshotByDeckListId as never,
         trackEvent,
         openWindow,
@@ -318,6 +324,7 @@ describe("createMatchmakingLobbyController", () => {
       {
         getGatewayWsUrl: () => "wss://gateway.example.test",
         importDeckForProfile,
+        importLegacyDecksForProfile,
         fetchDeckListSnapshotByDeckListId: fetchDeckListSnapshotByDeckListId as never,
         trackEvent,
         openWindow,
@@ -356,6 +363,7 @@ describe("createMatchmakingLobbyController", () => {
       {
         getGatewayWsUrl: () => "wss://gateway.example.test",
         importDeckForProfile,
+        importLegacyDecksForProfile,
         fetchDeckListSnapshotByDeckListId: fetchDeckListSnapshotByDeckListId as never,
         trackEvent,
         openWindow,
@@ -431,6 +439,19 @@ describe("createMatchmakingLobbyController", () => {
       (controller.playerContext as unknown as FakePlayerContextState).setSelectedDeck,
     ).toHaveBeenCalledWith("deck-imported");
     expect(controller.deckSelection.success).toContain("Imported Deck");
+  });
+
+  it("imports legacy decks into the active profile and uses the refreshed deck list", async () => {
+    const controller = createController();
+
+    await controller.handleImportLegacy();
+
+    expect(importLegacyDecksForProfile).toHaveBeenCalledWith("profile-1");
+    expect(
+      (controller.playerContext as unknown as FakePlayerContextState).loadProfileDecks,
+    ).toHaveBeenCalledWith("profile-1", { force: true });
+    expect(controller.deckSelection.importLegacyError).toBeNull();
+    expect(controller.deckSelection.importLegacySuccess).toBe("Decks imported successfully!");
   });
 
   it("opens the legacy quick AI route in a new tab for the selected deck", async () => {

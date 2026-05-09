@@ -46,9 +46,9 @@ describe("Mystical Tree - Mama Odie's Home", () => {
 
     expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
     expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
-    // Per CRD 6.2.7: both start-turn abilities enqueue; HARD-EARNED WISDOM condition (Mama Odie here)
-    // fails at resolution. Find the NOT BAD bag effect by ability id and resolve it.
-    expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
+    // Board-state condition is checked at trigger time. HARD-EARNED WISDOM condition (Mama Odie here)
+    // is not met, so it's NOT enqueued. Only NOT BAD is in the bag.
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
     const notBadBag = testEngine
       .asPlayerOne()
       .getBagEffects()
@@ -61,7 +61,6 @@ describe("Mystical Tree - Mama Odie's Home", () => {
       testEngine.asPlayerOne().resolveNextPending({ targets: [damagedResident, opposingTarget] })
         .success,
     ).toBe(true);
-    // After NOT BAD resolves, HARD-EARNED WISDOM auto-resolves (condition fails at resolution - no Mama Odie)
     expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
     expect(testEngine.asPlayerOne().getCard(damagedResident)?.damage).toBe(1);

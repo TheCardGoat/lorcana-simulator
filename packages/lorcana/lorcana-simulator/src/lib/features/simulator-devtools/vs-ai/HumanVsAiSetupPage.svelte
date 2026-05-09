@@ -110,7 +110,7 @@
   }
 
   async function startMatch(): Promise<void> {
-    const errors = validateAutomatedMatchConfig({
+    const errors = await validateAutomatedMatchConfig({
       playerOneDeckText: config.playerOneDeckText,
       playerTwoDeckText: config.playerTwoDeckText,
       playerOneFixtureId: config.playerOneFixtureId,

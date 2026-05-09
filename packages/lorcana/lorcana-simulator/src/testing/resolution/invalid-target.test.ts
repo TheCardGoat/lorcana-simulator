@@ -116,17 +116,11 @@ describe("Invalid Target Resolution", () => {
       expect(
         testEngine.asPlayerOne().quest(tweedledeeTweedledumStrangeStorytellers),
       ).toBeSuccessfulCommand();
-      // CR 6.2.3: trigger enters the bag even when no valid targets exist
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      // Declining the optional resolves it with no effect
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
-            resolveOptional: false,
-          }),
-      ).toBeSuccessfulCommand();
+      // BUG-3 fix: optional effects with owner:"any" + filter are auto-resolved at bag-decision
+      // time when no valid targets exist. The bag entry is created (CR 6.2.3) but drained
+      // immediately without requiring player input. No stuck prompt is presented.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // The undamaged character remains in play — the optional resolved with no effect.
       expect(testEngine.asPlayerOne().getCardZone(undamagedTarget)).toBe("play");
     });
 
@@ -203,17 +197,11 @@ describe("Invalid Target Resolution", () => {
       });
 
       expect(testEngine.asPlayerOne().playCard(tiggerBouncingAllTheWay)).toBeSuccessfulCommand();
-      // CR 6.2.3: trigger enters the bag even when no valid targets exist
-      expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(1);
-      // Declining the optional resolves it with no effect
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(testEngine.asPlayerOne().getBagEffects()[0]!.sourceId, {
-            resolveOptional: false,
-          }),
-      ).toBeSuccessfulCommand();
+      // BUG-3 fix: optional effects with owner:"any" + filter are auto-resolved at bag-decision
+      // time when no valid targets exist. The bag entry is created (CR 6.2.3) but drained
+      // immediately without requiring player input. No stuck prompt is presented.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      // The expensive character remains in play — the optional resolved with no effect.
       expect(testEngine.asPlayerOne().getCardZone(expensiveCharacter)).toBe("play");
     });
   });

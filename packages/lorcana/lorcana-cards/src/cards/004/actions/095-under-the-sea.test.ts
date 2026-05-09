@@ -22,7 +22,7 @@ describe("Under the Sea", () => {
     );
   });
 
-  it("lets the player who played the song choose the order for opposing characters put on the bottom", () => {
+  it("puts all opposing characters with 2 strength or less on the bottom without target selection", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [underTheSea],
@@ -33,27 +33,26 @@ describe("Under the Sea", () => {
       },
     );
 
-    const simbaId = testEngine.findCardInstanceId(simbaProtectiveCub, "play", "player_two");
-    const minnieId = testEngine.findCardInstanceId(
-      minnieMouseBelovedPrincess,
-      "play",
-      "player_two",
-    );
-
     expect(testEngine.asPlayerOne().playCard(underTheSea).success).toBe(true);
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({
-        targets: [minnieId, simbaId],
-      }).success,
-    ).toBe(true);
+    expect(testEngine.asServer().getState().G.pendingEffects).toHaveLength(0);
 
     expect(testEngine.asPlayerTwo().getCardZone(simbaProtectiveCub)).toBe("deck");
     expect(testEngine.asPlayerTwo().getCardZone(minnieMouseBelovedPrincess)).toBe("deck");
     expect(testEngine.asPlayerTwo().getCardZone(arielOnHumanLegs)).toBe("play");
     expect(testEngine.getCardDefinitionIdsInZone("deck", PLAYER_TWO).slice(0, 2)).toEqual([
-      minnieMouseBelovedPrincess.id,
       simbaProtectiveCub.id,
+      minnieMouseBelovedPrincess.id,
     ]);
+
+    const playLog = [...testEngine.getServerEngine().getRuntime().getMoveLogHistory()]
+      .reverse()
+      .find((log) => log.type === "playCard");
+    expect(playLog).toMatchObject({
+      type: "playCard",
+      outcomes: {
+        cardsMovedToZone: [{ zone: "deck-bottom" }, { zone: "deck-bottom" }],
+      },
+    });
   });
 
   it("can be played via Sing Together 8 by exerting characters with total cost >= 8", () => {
@@ -75,18 +74,7 @@ describe("Under the Sea", () => {
     expect(testEngine.asPlayerOne().isExerted(moanaChosenByTheOcean)).toBe(true);
     expect(testEngine.asPlayerOne().isExerted(simbaReturnedKing)).toBe(true);
 
-    const simbaId = testEngine.findCardInstanceId(simbaProtectiveCub, "play", "player_two");
-    const minnieId = testEngine.findCardInstanceId(
-      minnieMouseBelovedPrincess,
-      "play",
-      "player_two",
-    );
-
-    expect(
-      testEngine.asPlayerOne().resolveNextPending({
-        targets: [simbaId, minnieId],
-      }).success,
-    ).toBe(true);
+    expect(testEngine.asServer().getState().G.pendingEffects).toHaveLength(0);
 
     expect(testEngine.asPlayerTwo().getCardZone(simbaProtectiveCub)).toBe("deck");
     expect(testEngine.asPlayerTwo().getCardZone(minnieMouseBelovedPrincess)).toBe("deck");

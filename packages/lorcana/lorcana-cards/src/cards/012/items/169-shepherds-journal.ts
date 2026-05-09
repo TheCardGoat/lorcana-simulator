@@ -75,6 +75,10 @@ export const shepherdsJournal: ItemCard = {
         target: "CONTROLLER",
         count: 1,
         destination: "hand",
+        filter: {
+          type: "source",
+          ref: "other",
+        },
       },
       text: "KEY TO THE PUZZLE 1 {I}, Banish this item — Return another item card from your discard to your hand.",
     },

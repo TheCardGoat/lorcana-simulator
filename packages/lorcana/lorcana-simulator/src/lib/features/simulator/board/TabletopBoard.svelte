@@ -36,6 +36,7 @@ import * as Dialog from "$lib/design-system/primitives/dialog";
 import { Button } from "$lib/design-system/primitives/button";
 import ScryResolutionOverlay from "@/features/simulator/board/ScryResolutionOverlay.svelte";
 import ChoiceResolutionOverlay from "@/features/simulator/board/ChoiceResolutionOverlay.svelte";
+import type { InteractionSelectChoice } from "@tcg/lorcana-interaction";
 import ResolutionTargetOverlay from "@/features/simulator/board/ResolutionTargetOverlay.svelte";
 import { shouldUseResolutionTargetOverlay } from "@/features/simulator/board/resolution-target-overlay.js";
 import {
@@ -56,13 +57,17 @@ import SeatLane from "@/features/simulator/board/SeatLane.svelte";
 import TurnActionRail from "@/features/simulator/board/TurnActionRail.svelte";
 import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import { toggleHandTuckState } from "@/features/simulator/board/hand-tuck-state.js";
-import type { SimulatorHotkeyDescriptor } from "@/features/simulator/hotkeys/hotkey-bindings.js";
+import type {
+	SimulatorHotkeyCardZone,
+	SimulatorHotkeyDescriptor,
+} from "@/features/simulator/hotkeys/hotkey-bindings.js";
 import {
 	useLorcanaGameContext,
 	useLorcanaBoardPresenter,
 	useLorcanaSidebarPresenter,
 } from "@/features/simulator/context/game-context.svelte.js";
 import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
+import { useLorcanaSimulatorDndContext } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
 import { bugReportContextFromBoard } from "@/features/simulator/support/feedback-api.js";
 import type { SimulatorLayoutMode } from "@/features/simulator/model/layout-mode.svelte.js";
 import type { MatchNavigationContext } from "@/features/simulator/model/contracts.js";
@@ -124,9 +129,13 @@ interface PendingEffectsPopoverItem {
 	opponentPresence?: import("@/features/gateway/opponent-presence.svelte.js").OpponentPresenceTracker | null;
 	onSkipOpponent?: (() => void) | null;
 	onDropOpponent?: (() => void) | null;
+	onReportOpponent?: (() => void) | null;
+	canReportOpponent?: boolean;
 	gatewayStatus?: import("@/features/gateway/gateway-client.js").ConnectionStatus | null;
 	/** True when the server announced a deploy before the socket closed. */
 	serverInitiatedClose?: boolean;
+	/** True when the gateway rejected the connection with a terminal auth error. */
+	authError?: boolean;
 	viewerMode?: "player" | "spectator";
 	isAuthenticated?: boolean;
 	matchContext?: MatchNavigationContext | null;
@@ -161,8 +170,11 @@ let {
 	opponentPresence = null,
 	onSkipOpponent = null,
 	onDropOpponent = null,
+	onReportOpponent = null,
+	canReportOpponent = false,
 	gatewayStatus = null,
 	serverInitiatedClose = false,
+	authError = false,
 	viewerMode = "player",
 	isAuthenticated = true,
 	matchContext = null,
@@ -175,6 +187,7 @@ const board = useLorcanaBoardPresenter();
 const sidebar = useLorcanaSidebarPresenter();
 const game = useLorcanaGameContext();
 const simulatorCardContext = useSimulatorCardContext();
+const dnd = useLorcanaSimulatorDndContext();
 const boardSnapshot = $derived(board.boardSnapshot);
 const isPostGame = $derived(boardSnapshot?.status === "finished" || (matchContext?.matchCompleted ?? false));
 const bugReportContext = $derived(bugReportContextFromBoard(boardSnapshot));
@@ -264,8 +277,10 @@ $effect(() => {
 });
 const isUnauthenticatedPlayer = $derived(
   viewerMode === "player" &&
-  gatewayStatus === "connected" &&
-  isAuthenticated === false,
+  (
+    authError === true ||
+    (gatewayStatus === "connected" && isAuthenticated === false)
+  ),
 );
 
 const isMobileLayout = $derived(layoutMode === "mobile");
@@ -402,12 +417,52 @@ const choiceSelectionState = $derived.by((): ResolutionChoiceAvailableMovesSelec
   return null;
 });
 
+/**
+ * Renderer-facing view of the active engine prompt, with the chooser's
+ * in-flight selection state merged in. Owned by `LorcanaSidebarPresenter`
+ * because the sidebar holds `#resolutionSelectionSession`. Use this for
+ * overlay rendering — `game.interactionView` returns an engine-only
+ * view that's stale for renderer copy (e.g. `submission.canSubmit`
+ * after a target click but before submit). See gap #18 in
+ * `docs/player-interaction-rewrite.md`.
+ */
+const interactionView = $derived(sidebar.interactionView);
+
+const choiceSourceCard = $derived.by(() => {
+  const sourceId = interactionView?.activePrompt?.sourceCardId;
+  if (!sourceId) return null;
+  return board.cardSnapshotsById[sourceId as unknown as string] ?? null;
+});
+
+const selectedChoiceIndex = $derived(
+  sidebar.resolutionSelectionSession?.selectedChoiceIndex ?? null,
+);
+
+function handleChoiceInteraction(interaction: InteractionSelectChoice): void {
+  sidebar.selectResolutionChoice(interaction.index);
+}
+
 const hasActiveOverlay = $derived(
   Boolean(resolutionTargetOverlayState || scrySelectionState || choiceSelectionState || dialogTargetState),
 );
+
+function getDialogCardIds(
+	state: ResolutionTargetAvailableMovesSelectionState | null,
+): string[] {
+	if (!state) {
+		return [];
+	}
+
+	const entryCardIds = state.entries.flatMap((entry) =>
+		entry.kind === "card" && typeof entry.cardId === "string" ? [entry.cardId] : [],
+	);
+
+	return entryCardIds.length > 0 ? entryCardIds : state.candidateCardIds;
+}
+
 const targetSelectionDialogCards = $derived.by(
 	() =>
-		dialogTargetState?.candidateCardIds
+		getDialogCardIds(dialogTargetState)
 			.map((cardId) => game.resolveCardSnapshot(cardId))
 			.filter((card): card is LorcanaCardSnapshot => card !== null) ?? [],
 );
@@ -426,15 +481,27 @@ const targetSelectionDialogPlayers = $derived.by(
 			})) ?? [],
 );
 const selectedTargetCardIds = $derived.by(
-	() =>
-		dialogTargetState?.entries
+	() => {
+		const selectedSlotCardIds =
+			(interactionView?.activePrompt?.slots ?? [])
+				.flatMap((slot) =>
+					slot.targetCardId && !slot.autoResolved ? [String(slot.targetCardId)] : [],
+				) ?? [];
+		if (selectedSlotCardIds.length > 0) {
+			return selectedSlotCardIds;
+		}
+
+		return (
+			dialogTargetState?.entries
 			.filter(
 				(entry): entry is AvailableMovesSelectionEntry & { cardId: string } =>
 					entry.kind === "card" &&
 					typeof entry.cardId === "string" &&
 					entry.selected,
 			)
-			.map((entry) => entry.cardId) ?? [],
+				.map((entry) => entry.cardId) ?? []
+		);
+	},
 );
 const selectedTargetCount = $derived.by(
 	() =>
@@ -466,51 +533,39 @@ const activeTargetDialogSessionKey = $derived(
 	dialogTargetState?.sessionKey ?? null,
 );
 const hasPendingEffects = $derived(sidebar.hasPendingEffects);
-const opponentPlayHotkeys = $derived.by(
-  () =>
-    new Map(
-      hotkeyDescriptors
-        .filter(
-          (descriptor) =>
-            descriptor.kind === "card" &&
-            descriptor.cardZone === "opponent-play" &&
-            typeof descriptor.cardId === "string",
-        )
-        .map((descriptor) => [descriptor.cardId!, descriptor.hotkey]),
-    ),
-);
-const ownedPlayHotkeys = $derived.by(
-  () =>
-    new Map(
-      hotkeyDescriptors
-        .filter(
-          (descriptor) =>
-            descriptor.kind === "card" &&
-            descriptor.cardZone === "your-play" &&
-            typeof descriptor.cardId === "string",
-        )
-        .map((descriptor) => [descriptor.cardId!, descriptor.hotkey]),
-    ),
-);
-const ownedHandHotkeys = $derived.by(
-  () =>
-    new Map(
-      hotkeyDescriptors
-        .filter(
-          (descriptor) =>
-            descriptor.kind === "card" &&
-            descriptor.cardZone === "your-hand" &&
-            typeof descriptor.cardId === "string",
-        )
-        .map((descriptor) => [descriptor.cardId!, descriptor.hotkey]),
-    ),
-);
+// Strict-visibility rule: a card only gets a badge when its hotkey would
+// actually do something right now. We filter on `enabled` so off-layer zones
+// quietly disappear from the UI as the active layer changes.
+function buildHotkeyBindingMap(
+  descriptors: ReadonlyArray<SimulatorHotkeyDescriptor>,
+  zone: SimulatorHotkeyCardZone,
+): Map<string, string> {
+  return new Map(
+    descriptors
+      .filter(
+        (descriptor) =>
+          descriptor.kind === "card" &&
+          descriptor.cardZone === zone &&
+          descriptor.enabled &&
+          typeof descriptor.cardId === "string",
+      )
+      .map((descriptor) => [descriptor.cardId!, descriptor.hotkey]),
+  );
+}
+const opponentPlayHotkeys = $derived(buildHotkeyBindingMap(hotkeyDescriptors, "opponent-play"));
+const ownedPlayHotkeys = $derived(buildHotkeyBindingMap(hotkeyDescriptors, "your-play"));
+const ownedHandHotkeys = $derived(buildHotkeyBindingMap(hotkeyDescriptors, "your-hand"));
+const opponentHandHotkeys = $derived(buildHotkeyBindingMap(hotkeyDescriptors, "opponent-hand"));
 const canConcede = $derived(sidebar.canConcede);
 const challengeSelectionSession = $derived(sidebar.actionSelectionSession);
 const isChallengeAimOverlayVisible = $derived(
 	challengeSelectionSession?.categoryId === "challenge" &&
 		(challengeSelectionSession.phase === "choose-target" ||
-			challengeSelectionSession.phase === "confirm"),
+			challengeSelectionSession.phase === "confirm") &&
+		!dnd.isDraggingPlayCard,
+);
+const canOpenTargetModal = $derived(
+	Boolean(targetSelectionState) && !isChallengeAimOverlayVisible,
 );
 const challengeAttackerCard = $derived.by(() => {
 	const attackerId = challengeSelectionSession?.sourceCardId;
@@ -1029,7 +1084,7 @@ $effect(() => {
   <PendingEffectsPopover
     items={pendingEffectsPopoverItems}
     bind:open={pendingEffectsOpen}
-    canOpenTargetModal={Boolean(targetSelectionState)}
+    canOpenTargetModal={canOpenTargetModal}
     onOpenTargetModal={openTargetSelectionDialog}
     initialDockPosition={isMobileLayout ? "top" : "middle"}
     hasActiveOverlay={hasActiveOverlay}
@@ -1040,31 +1095,41 @@ $effect(() => {
       bind:open={targetSelectionDialogOpen}
       playerSide={ownerSide ?? "playerOne"}
       viewerSide={ownerSide}
-      target={dialogTargetState.target}
       cards={targetSelectionDialogCards}
-      trustCandidates={true}
       selectable={true}
       players={targetSelectionDialogPlayers}
       selectedCardIds={selectedTargetCardIds}
+      entryModeChoice={dialogTargetState.playCardEntryModeChoice}
       canConfirm={dialogTargetState.canConfirm}
       titleText={targetSelectionDialogTitle}
       descriptionText={targetSelectionDialogDescription}
+      footerDeclineLabel={dialogTargetState.declineLabel}
       selectionSummaryText={`${selectedTargetCount} selected`}
       onSelectCard={sidebar.handleAvailableMovesSelectionCard}
       onSelectPlayer={sidebar.handleAvailableMovesSelectionPlayer}
+      onSelectEntryMode={sidebar.selectResolutionEnterPlayExerted}
       onConfirm={sidebar.confirmActionSelection}
+      onDecline={dialogTargetState.canDecline
+        ? sidebar.rejectActiveResolutionSelection
+        : undefined}
       onCancel={() => {
-        userForcedTargetDialogOpen = false;
-        dismissedTargetDialogSessionKey = activeTargetDialogSessionKey;
-        targetSelectionDialogOpen = false;
+        if (dialogTargetState?.canDecline) {
+          sidebar.rejectActiveResolutionSelection();
+        } else {
+          userForcedTargetDialogOpen = false;
+          dismissedTargetDialogSessionKey = activeTargetDialogSessionKey;
+          targetSelectionDialogOpen = false;
+        }
       }}
     />
   {/if}
 
-  {#if resolutionTargetOverlayState}
+  {#if resolutionTargetOverlayState && interactionView}
     <ResolutionTargetOverlay
-      selectionState={resolutionTargetOverlayState}
-      cardSnapshots={board.cardSnapshotsById}
+      view={interactionView}
+      cardSnapshotsById={board.cardSnapshotsById}
+      viewerSide={ownerSide}
+      amountSelection={resolutionTargetOverlayState?.amountSelection}
       onSelectCard={sidebar.handleAvailableMovesSelectionCard}
       onSelectSlot={sidebar.selectResolutionTargetSlot}
       onAmountChange={sidebar.updateResolutionSelectedAmount}
@@ -1073,10 +1138,11 @@ $effect(() => {
     />
   {/if}
 
-  {#if scrySelectionState}
+  {#if scrySelectionState && interactionView}
     <ScryResolutionOverlay
-      selectionState={scrySelectionState}
-      cardSnapshots={board.cardSnapshotsById}
+      view={interactionView}
+      cardSnapshotsById={board.cardSnapshotsById}
+      viewerSide={ownerSide}
       onAssignCard={sidebar.handleAvailableMovesScryAssignment}
       onReorderCard={sidebar.handleAvailableMovesScryReorder}
       onConfirm={sidebar.confirmActionSelection}
@@ -1084,10 +1150,12 @@ $effect(() => {
     />
   {/if}
 
-  {#if choiceSelectionState}
+  {#if choiceSelectionState && interactionView}
     <ChoiceResolutionOverlay
-      selectionState={choiceSelectionState}
-      onSelectOption={(moveId) => sidebar.selectResolutionChoice(Number(moveId))}
+      view={interactionView}
+      targetCard={choiceSourceCard}
+      selectedChoiceIndex={selectedChoiceIndex}
+      onSelectChoice={handleChoiceInteraction}
       onConfirm={sidebar.confirmActionSelection}
       onDismiss={sidebar.cancelActionSelectionSession}
     />
@@ -1146,6 +1214,7 @@ $effect(() => {
         playerSide={topSide}
         seat={topSeat}
         isOpponent={hasOwnedView}
+        hotkeyBindings={opponentHandHotkeys}
       />
     </div>
 
@@ -1206,6 +1275,8 @@ $effect(() => {
             isTimedOut={isOpponentTimedOut}
             onDiscardClick={() => board.handleDiscardClick(topSide)}
             onInkwellClick={() => board.handleInkwellClick(topSide)}
+            onReportOpponent={onReportOpponent ?? undefined}
+            {canReportOpponent}
           >
             {#snippet timeoutOverlay()}
               {#if opponentClockView && (canSkipOpponent || canDropOpponent)}
@@ -1386,7 +1457,7 @@ $effect(() => {
       isBottomHandExpanded={!isBottomHandTucked && !isMobileLayout}
       isTopHandExpanded={!isTopHandTucked && !isMobileLayout}
       onToggleAnchor={toggleGuidancePosition}
-      canOpenTargetModal={Boolean(targetSelectionState)}
+      canOpenTargetModal={canOpenTargetModal}
       onOpenTargetModal={openTargetSelectionDialog}
     />
   {/if}

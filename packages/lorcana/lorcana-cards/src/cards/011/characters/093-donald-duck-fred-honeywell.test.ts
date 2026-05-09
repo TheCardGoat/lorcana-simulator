@@ -126,13 +126,8 @@ describe("Donald Duck - Fred Honeywell", () => {
         }),
       ).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerTwo()
-          .resolvePendingByCard(donaldDuckFredHoneywell, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
 
       const handAfter = testEngine.asPlayerTwo().getCardsInZone("hand", PLAYER_TWO).count;
       expect(handAfter).toBe(handBefore);
@@ -218,6 +213,46 @@ describe("Donald Duck - Fred Honeywell", () => {
 
       const handAfter = testEngine.asPlayerTwo().getCardsInZone("hand", PLAYER_TWO).count;
       expect(handAfter).toBe(handBefore);
+    });
+
+    it("triggers independently for each Donald in play (R24)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [dragonFire],
+          inkwell: dragonFire.cost,
+          deck: 5,
+        },
+        {
+          // Two Donalds + Little John (with cards under) on player two's board
+          play: [donaldDuckFredHoneywell, donaldDuckFredHoneywell, littleJohnImpermanentOutlaw],
+          deck: 10,
+        },
+      );
+
+      const playIds = testEngine.getCardInstanceIdsInZone("play", PLAYER_TWO);
+      const littleJohnId = playIds.find(
+        (id) => testEngine.getCardDefinitionId(id) === littleJohnImpermanentOutlaw.id,
+      );
+      expect(littleJohnId).toBeDefined();
+
+      const deckCards = testEngine.getCardInstanceIdsInZone("deck", PLAYER_TWO);
+      testEngine.putCardUnder(littleJohnId!, deckCards[0]!);
+      testEngine.putCardUnder(littleJohnId!, deckCards[1]!);
+      expect(testEngine.getCardsUnder(littleJohnId!)).toHaveLength(2);
+
+      const handBefore = testEngine.asPlayerTwo().getCardsInZone("hand", PLAYER_TWO).count;
+
+      expect(
+        testEngine.asPlayerOne().playCard(dragonFire, {
+          targets: [littleJohnImpermanentOutlaw],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Both Donalds' WELL WISHES should trigger and resolve to drawing 2 cards each = 4 total.
+      testEngine.asPlayerTwo().resolveAllBagEffects();
+
+      const handAfter = testEngine.asPlayerTwo().getCardsInZone("hand", PLAYER_TWO).count;
+      expect(handAfter).toBe(handBefore + 4);
     });
 
     it("should allow declining the optional draw", () => {

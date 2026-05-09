@@ -111,6 +111,8 @@ describe("MatchmakingQueueStore", () => {
     expect(store.error).toBe("Queue service unavailable");
     expect(trackEvent).toHaveBeenCalledWith("queue_join_error", {
       error: "api_error",
+      error_code: "Error",
+      error_message: "Queue service unavailable",
     });
 
     store.destroy();
@@ -184,6 +186,26 @@ describe("MatchmakingQueueStore", () => {
 
     expect(store.selfAccepted).toBe(true);
     expect(store.opponentAccepted).toBe(true);
+
+    store.destroy();
+  });
+
+  it("normalizes pending deadlines with server time to avoid client clock skew timeouts", () => {
+    const store = new MatchmakingQueueStore();
+    const before = Date.now();
+
+    store.handleMatchReady({
+      pendingMatchId: "pm_skewed",
+      opponentDisplayName: "Opponent",
+      acceptDeadline: 1_015_000,
+      serverNow: 1_000_000,
+    });
+
+    expect(store.status).toBe("match_ready");
+    expect(store.pendingMatchId).toBe("pm_skewed");
+    expect(store.acceptDeadline).toBeGreaterThanOrEqual(before + 15_000);
+    expect(store.acceptDeadline).toBeLessThanOrEqual(Date.now() + 15_000);
+    expect(store.error).toBeNull();
 
     store.destroy();
   });

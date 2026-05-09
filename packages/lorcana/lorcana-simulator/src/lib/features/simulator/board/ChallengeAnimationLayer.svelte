@@ -34,6 +34,8 @@
       defenderDamageDealt: animation.preview.defenderDamageDealt,
       attackerWouldBeBanished: animation.preview.attackerWouldBeBanished,
       defenderWouldBeBanished: animation.preview.defenderWouldBeBanished,
+      attackerDamageIsReduced: animation.preview.attackerDamageIsReduced,
+      defenderDamageIsReduced: animation.preview.defenderDamageIsReduced,
     };
   }
 

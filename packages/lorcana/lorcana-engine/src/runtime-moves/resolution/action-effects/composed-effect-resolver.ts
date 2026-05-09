@@ -5,6 +5,7 @@ import type {
   PlayCardExecutionContext,
 } from "./types";
 import type { CardInstanceId, PlayerId } from "#core";
+import type { CardRuntimeReadAPI, DeepReadonly, FrameworkReadAPI } from "../../../core/runtime";
 import type {
   AdditionalInkwellEffect,
   BanishEffect,
@@ -43,6 +44,7 @@ import type {
   PutOnBottomEffect,
   ReadyEffect,
   RevealHandEffect,
+  RevealInkwellEffect,
   RevealUntilMatchEffect,
   RemoveDamageEffect,
   SelectTargetEffect,
@@ -65,7 +67,16 @@ import {
   createLorcanaGameLogEntry,
   createLorcanaLogMessage,
   type CardPlayedPayload,
+  type LorcanaG,
 } from "../../../types/index";
+
+type EffectLegalityContext = {
+  G: DeepReadonly<LorcanaG>;
+  playerId: PlayerId;
+  query: PlayCardExecutionContext["query"];
+  framework: FrameworkReadAPI;
+  cards: CardRuntimeReadAPI;
+};
 import {
   resolveAggregateFieldAmount,
   resolveEffectDynamicFields,
@@ -135,6 +146,7 @@ import { isPutOnBottomEffect, resolvePutOnBottomEffect } from "./put-on-bottom-e
 import { isReadyEffect, resolveReadyEffect } from "./ready-effect";
 import { payBasicCost, validateBasicCost } from "../../rules/play-card-rules";
 import { isRevealHandEffect, resolveRevealHandEffect } from "./reveal-hand-effect";
+import { isRevealInkwellEffect, resolveRevealInkwellEffect } from "./reveal-inkwell-effect";
 import {
   isRevealUntilMatchEffect,
   resolveRevealUntilMatchEffect,
@@ -177,6 +189,7 @@ import { resolveTargetPlayerIds } from "./player-target-resolver";
 import { applyReplacementEffects } from "../../effects/replacement-effects";
 import {
   analyzeEffectTargets,
+  analyzeTargetSelectionAvailabilityFromAnalysis,
   normalizeSelectedTargets,
   normalizeTargetDescriptor,
   resolveCandidateTargets,
@@ -354,6 +367,14 @@ function hasSatisfiedChosenTargetContext(
 
 function stepRequiresPriorTargetContext(descriptors: EffectChosenTargetDescriptor[]): boolean {
   return descriptors.some(({ descriptor }) => descriptor?.requireDifferentTargets === true);
+}
+
+function effectTreeContainsRequireDifferentTargets(effect: unknown): boolean {
+  if (!effect || typeof effect !== "object") return false;
+  if (Array.isArray(effect)) return effect.some(effectTreeContainsRequireDifferentTargets);
+  const record = effect as Record<string, unknown>;
+  if (record.requireDifferentTargets === true) return true;
+  return Object.values(record).some(effectTreeContainsRequireDifferentTargets);
 }
 
 function effectRequiresFullTargetContext(effect: unknown): boolean {
@@ -666,10 +687,7 @@ function canStageSequenceTargetCollection(
       return false;
     }
 
-    if (
-      effectContainsTargetReference(nestedEffect) ||
-      effectUsesParentTargetComparison(nestedEffect)
-    ) {
+    if (effectUsesParentTargetComparison(nestedEffect)) {
       return false;
     }
 
@@ -690,12 +708,12 @@ function canStageSequenceTargetCollection(
 }
 
 function getCurrentActionActorId(
-  ctx: PlayCardExecutionContext,
+  ctx: Pick<EffectLegalityContext, "framework" | "playerId">,
   cardPlayed: CardPlayedPayload,
 ): PlayerId {
   const actorId =
     ctx.playerId ?? ctx.framework.state.currentPlayer ?? ctx.framework.state.priority.holder;
-  return actorId ?? cardPlayed.playerId;
+  return (actorId ?? cardPlayed.playerId) as PlayerId;
 }
 
 function resolvePayCostEffect(
@@ -1053,6 +1071,10 @@ function maybeSuspendForTargetOrdering(
     orderBy?: unknown;
     target?: unknown;
   };
+  if (isAllTargetDescriptor(effectRecord.target)) {
+    return undefined;
+  }
+
   const candidateTargets =
     resolveEffectTargets(ctx, cardPlayed, effectRecord.target, resolutionInput.targets) ?? [];
   if (candidateTargets.length <= 1) {
@@ -1134,6 +1156,15 @@ function maybeSuspendForTargetOrdering(
     selectionContext,
   });
   return suspendActionEffect(ctx, pendingEffect);
+}
+
+function isAllTargetDescriptor(target: unknown): boolean {
+  if (!target || typeof target !== "object" || Array.isArray(target)) {
+    return false;
+  }
+
+  const targetRecord = target as Record<string, unknown>;
+  return targetRecord.selector === "all" || targetRecord.count === "all";
 }
 
 function isNameACardEffect(effect: unknown): effect is NameACardEffect {
@@ -1258,6 +1289,7 @@ export const ACTION_EFFECT_RESOLVER_TYPES = [
   "reveal-until-match",
   "name-a-card",
   "reveal-hand",
+  "reveal-inkwell",
   "search-deck",
   "put-damage",
   "grant-ability",
@@ -1344,6 +1376,13 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       return RESOLVED_ACTION_EFFECT;
     }
 
+    // Initialize eventSnapshot early so that all steps in this sequence share
+    // the same object reference. This ensures that mutations made by one step
+    // (e.g. recording previouslyTargetedCardIds for requireDifferentTargets) are
+    // visible to subsequent steps even when nestedResolutionInput is built via
+    // object spread (which shallow-copies the reference, not the property value).
+    resolutionInput.eventSnapshot ??= {};
+
     const nestedEffects = effect.steps ?? effect.effects ?? [];
     const stagedSequence =
       options?.continuation?.stagedSequence?.sequenceEffect === effect
@@ -1426,7 +1465,9 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         effectRequiresFullTargetContext(nestedEffect) ||
         effectRequiresFullTargetContext(runtimeNestedEffect);
       const requiresPriorTargetContext =
-        requiresFullTargetContext || stepRequiresPriorTargetContext(chosenTargetDescriptors);
+        requiresFullTargetContext ||
+        stepRequiresPriorTargetContext(chosenTargetDescriptors) ||
+        effectTreeContainsRequireDifferentTargets(nestedEffect);
       const reusedTargets =
         !stagedSequence && targetSignature
           ? selectedTargetsBySignature.get(targetSignature)
@@ -1619,6 +1660,106 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     const chooserId = resolveOptionalChooserId(ctx, cardPlayed, effect, resolutionInput);
     const actorId = getCurrentActionActorId(ctx, cardPlayed);
     if (actorId !== chooserId || typeof resolutionInput.resolveOptional !== "boolean") {
+      // When resolveOptional is undefined (not explicitly set by the player or
+      // bag auto-accept), check if the inner effect has no valid candidates.
+      // If so, auto-decline instead of creating a pending-effect prompt.
+      // This handles optionals nested inside sequences (e.g. "draw, then you
+      // may play a character for free") where the preceding steps (draw) have
+      // already executed and the candidate pool reflects the updated board state.
+      if (resolutionInput.resolveOptional === undefined && effect.effect) {
+        const innerRecord = effect.effect as unknown as Record<string, unknown>;
+        let hasCandidates = true;
+
+        if (innerRecord.type === "play-card") {
+          const from = typeof innerRecord.from === "string" ? innerRecord.from : "hand";
+          // Only auto-decline when the play-card targets the active player's own hand.
+          // If target is OPPONENT or CHOSEN_PLAYER we skip the optimisation and let the
+          // normal prompt flow handle it, to avoid checking the wrong player's hand.
+          const hasNonSelfTarget =
+            typeof innerRecord.target === "string" &&
+            innerRecord.target !== "SELF" &&
+            innerRecord.target !== cardPlayed.playerId;
+          if (from === "hand" && !hasNonSelfTarget) {
+            const handCards = ctx.framework.zones.getCards({
+              zone: "hand",
+              playerId: cardPlayed.playerId,
+            }) as CardInstanceId[];
+            const cardTypeConstraint = innerRecord.cardType;
+            const costRestriction = innerRecord.costRestriction;
+            hasCandidates = handCards.some((cardId) => {
+              const definition = ctx.cards.getDefinition(cardId) as
+                | { cost?: number; cardType?: string }
+                | undefined;
+              if (!definition) return false;
+              if (
+                typeof cardTypeConstraint === "string" &&
+                definition.cardType !== cardTypeConstraint
+              )
+                return false;
+              if (
+                costRestriction &&
+                typeof costRestriction === "object" &&
+                !Array.isArray(costRestriction)
+              ) {
+                const { comparison, value } = costRestriction as {
+                  comparison?: unknown;
+                  value?: unknown;
+                };
+                if (typeof comparison === "string" && typeof value === "number") {
+                  const cardCost = Number(definition.cost ?? Number.NaN);
+                  if (Number.isNaN(cardCost)) return false;
+                  if (comparison === "less-or-equal" && cardCost > value) return false;
+                  if (comparison === "less-than" && cardCost >= value) return false;
+                  if (comparison === "equal" && cardCost !== value) return false;
+                  if (comparison === "greater-than" && cardCost <= value) return false;
+                  if (comparison === "greater-or-equal" && cardCost < value) return false;
+                }
+              }
+              return true;
+            });
+          }
+        }
+
+        // For effects whose target has requireDifferentTargets, check whether
+        // any valid candidates remain after excluding previouslyTargetedCardIds.
+        // If none exist, auto-decline so the player doesn't see an unfulfillable
+        // optional (e.g. Three Arrows step 2 when only 1 character is in play).
+        if (
+          hasCandidates &&
+          innerRecord.type !== "play-card" &&
+          resolutionInput.eventSnapshot?.previouslyTargetedCardIds?.length
+        ) {
+          const innerTarget = innerRecord.target;
+          if (
+            innerTarget &&
+            typeof innerTarget === "object" &&
+            !Array.isArray(innerTarget) &&
+            (innerTarget as Record<string, unknown>).requireDifferentTargets === true
+          ) {
+            const innerSelectionContext = buildResolutionSelectionContext({
+              origin: "pending-effect",
+              requestId: "optional:preview",
+              sourceCardId: cardPlayed.cardId,
+              chooserId: actorId,
+              cardPlayed,
+              effect: effect.effect,
+              resolutionInput,
+              ctx,
+            });
+            if (
+              innerSelectionContext?.kind === "target-selection" &&
+              innerSelectionContext.cardCandidateIds.length === 0
+            ) {
+              hasCandidates = false;
+            }
+          }
+        }
+
+        if (!hasCandidates) {
+          markLastEffectPerformed(resolutionInput.eventSnapshot, false);
+          return RESOLVED_ACTION_EFFECT;
+        }
+      }
       const pendingEffect = createPendingActionEffect(ctx, {
         kind: "optional-selection",
         sourceCardId: cardPlayed.cardId,
@@ -1642,10 +1783,21 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     if (effect.effect) {
-      const nestedResolutionInput =
+      const baseResolutionInput =
         effect.chooser === "CHOSEN_PLAYER"
           ? promoteSelectedPlayersToTargetContext(ctx, resolutionInput)
           : resolutionInput;
+      // Clear resolveOptional so it does not leak into nested optionals.
+      // This optional has already been accepted/rejected; a child optional
+      // (e.g. inside a sequence wrapped by this optional) must create its
+      // own pending-effect prompt rather than silently inheriting the
+      // parent's decision.  See Woody Jungle Guide — "draw, then you may
+      // play a character for free" — where the sequence auto-inherited
+      // resolveOptional=true from the bag executor.
+      const nestedResolutionInput =
+        resolutionInput.resolveOptional !== undefined
+          ? { ...baseResolutionInput, resolveOptional: undefined }
+          : baseResolutionInput;
       return resolveActionEffect(ctx, cardPlayed, effect.effect, nestedResolutionInput, options);
     }
 
@@ -2085,7 +2237,9 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
           : getScryLookedAtCards(ctx, deckPlayerId, scryAmount);
 
       if (lookedAtCards.length > 0) {
-        const revealWindowIds = [ctx.framework.zones.reveal(lookedAtCards, [chooserId])];
+        const scryRevealVisibility: "all" | string[] =
+          (effect as { revealAll?: unknown }).revealAll === true ? "all" : [chooserId];
+        const revealWindowIds = [ctx.framework.zones.reveal(lookedAtCards, scryRevealVisibility)];
         const scryVisibility = {
           mode: "PUBLIC_WITH_OVERRIDES" as const,
           overrides: {
@@ -2386,6 +2540,22 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       amountByTarget: replacedAmounts,
       targets: replacedTargetOrder,
     });
+
+    // Record the resolved targets in the shared event snapshot so that
+    // subsequent sequence steps with requireDifferentTargets can exclude them
+    // from the candidate pool (e.g. Three Arrows: step 2 must target a
+    // *different* character than step 1). We mutate the object in place (same
+    // pattern as markLastEffectPerformed) so the update is visible through any
+    // derived copies of resolutionInput that share the same eventSnapshot ref.
+    if (resolved.resolvedTargets.length > 0) {
+      resolutionInput.eventSnapshot ??= {};
+      const snapshot = resolutionInput.eventSnapshot;
+      const existing = snapshot.previouslyTargetedCardIds;
+      snapshot.previouslyTargetedCardIds = existing
+        ? [...existing, ...resolved.resolvedTargets]
+        : [...resolved.resolvedTargets];
+    }
+
     return RESOLVED_ACTION_EFFECT;
   },
 
@@ -2694,6 +2864,16 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
     }
 
     resolveRevealHandEffect(ctx, cardPlayed, effect as RevealHandEffect, resolutionInput);
+    return RESOLVED_ACTION_EFFECT;
+  },
+
+  "reveal-inkwell": (ctx, cardPlayed, effect, resolutionInput) => {
+    if (!isRevealInkwellEffect(effect)) {
+      handleUnsupportedActionEffect("reveal-inkwell", "Malformed reveal-inkwell effect payload");
+      return RESOLVED_ACTION_EFFECT;
+    }
+
+    resolveRevealInkwellEffect(ctx, cardPlayed, effect as RevealInkwellEffect, resolutionInput);
     return RESOLVED_ACTION_EFFECT;
   },
 
@@ -3032,7 +3212,7 @@ function countDescriptorMinimum(count: unknown, selector: unknown): number {
 }
 
 function isEffectCurrentlyLegal(
-  ctx: PlayCardExecutionContext,
+  ctx: EffectLegalityContext,
   cardPlayed: CardPlayedPayload,
   effect: unknown,
   resolutionInput: ActionResolutionInput,
@@ -3189,6 +3369,18 @@ function isEffectCurrentlyLegal(
   }
 
   if (isBanishEffect(effect)) {
+    const descriptor = normalizeTargetDescriptor(effect.target);
+
+    // For SELF targets, directly verify the source card exists without depending on resolutionInput.targets
+    // This prevents stale target state from previous failed option evaluations in "or" effects
+    if (descriptor?.selector === "self") {
+      const sourceCardId = cardPlayed.cardId;
+      const cardZoneKey =
+        (sourceCardId && (ctx.framework.zones as any).getCardZone?.(sourceCardId)) ||
+        ctx.framework.state._zonesPrivate?.cardIndex?.[sourceCardId]?.zoneKey;
+      return typeof cardZoneKey === "string" && cardZoneKey.length > 0;
+    }
+
     const targets =
       resolveEffectTargets(
         ctx,
@@ -3204,7 +3396,7 @@ function isEffectCurrentlyLegal(
 }
 
 export function getLegalOrOptionIndices(
-  ctx: PlayCardExecutionContext,
+  ctx: EffectLegalityContext,
   cardPlayed: CardPlayedPayload,
   effect: OrLikeEffect,
   resolutionInput: ActionResolutionInput,

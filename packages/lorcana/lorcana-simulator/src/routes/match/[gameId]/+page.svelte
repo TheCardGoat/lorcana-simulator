@@ -1,4 +1,6 @@
 <script lang="ts">
+  import AntiRamp from '@tcg/shared/ads/AntiRamp';
+
   import { goto } from "$app/navigation";
   import {
     Card,
@@ -62,6 +64,9 @@
   const opponentPresence = new OpponentPresenceTracker();
   let ownPlayerId: string | null = null;
   let isBotMatch = $state(false);
+  let opponentGameProfileId = $state<string | null>(null);
+  let opponentDisplayName = $state<string | null>(null);
+  let moderationMatchId = $state<string | null>(null);
 
   const GATEWAY_WS_URL = getGatewayWsUrl();
 
@@ -78,6 +83,7 @@
       return;
     }
     isBotMatch = !!session.botPlayerId;
+    moderationMatchId = session.matchId ?? null;
     console.log("[match-page] session loaded", {
       matchId: session.matchId,
       gameProfileId: session.gameProfileId,
@@ -199,6 +205,18 @@
           );
         }
 
+        if (msg.type === "match_state") {
+          const participants = (msg as Record<string, unknown>).participants as
+            | Array<{ id: string; displayName?: string }>
+            | undefined;
+          if (participants && session.gameProfileId) {
+            const opp = participants.find((p) => p.id !== session.gameProfileId);
+            if (opp?.displayName) {
+              opponentDisplayName = opp.displayName;
+            }
+          }
+        }
+
         if (msg.type === "presence_change" && ownPlayerId && !isBotMatch) {
           const playerId = String(msg.playerId ?? "");
           if (playerId && playerId !== ownPlayerId) {
@@ -297,8 +315,11 @@
       const players = gameJoinedMsg.players as Array<{ id: string; connected: boolean; disconnectedAt?: string }> | undefined;
       if (players) {
         const opponent = players.find((p) => p.id !== session.gameProfileId);
-        if (opponent && !opponent.connected) {
-          opponentPresence.handlePresenceChange("disconnected", opponent.disconnectedAt);
+        if (opponent) {
+          opponentGameProfileId = opponent.id;
+          if (!opponent.connected) {
+            opponentPresence.handlePresenceChange("disconnected", opponent.disconnectedAt);
+          }
         }
       }
     }
@@ -326,7 +347,7 @@
         ownerCount: Object.keys(cardsMaps.owners).length,
       });
 
-      practiceOrchestrator = new PracticeMatchOrchestrator({
+      practiceOrchestrator = await PracticeMatchOrchestrator.create({
         gameId,
         playerId: session.gameProfileId,
         botPlayerId: session.botPlayerId,
@@ -339,7 +360,7 @@
       pendingRecentHistory = null;
     } else {
       console.log("[match-page] no state in game_joined, starting fresh");
-      practiceOrchestrator = new PracticeMatchOrchestrator({
+      practiceOrchestrator = await PracticeMatchOrchestrator.create({
         gameId,
         playerId: session.gameProfileId,
         botPlayerId: session.botPlayerId,
@@ -421,6 +442,7 @@
   });
 </script>
 
+<AntiRamp />
 <main class="immersive-app-shell relative h-screen min-h-0 text-slate-100">
   {#if loading}
     <div class="grid h-full place-items-center px-4 text-slate-400">
@@ -441,34 +463,6 @@
       </Card>
     </div>
   {:else if practiceOrchestrator}
-    {#if showPracticeHint}
-      <div class="pointer-events-none absolute left-0 right-0 top-4 z-20 flex justify-center px-4">
-        <div class="pointer-events-auto w-full max-w-xl rounded-2xl border border-sky-400/25 bg-slate-950/88 px-4 py-3 shadow-[0_18px_50px_-30px_rgba(14,165,233,0.85)] backdrop-blur-md">
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <p class="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-sky-200/80">
-                Practice vs Bot
-              </p>
-              <p class="mt-1 text-sm leading-6 text-slate-100">
-                This practice room syncs through the backend for reconnects, while bot decisions stay on
-                this device. AI controls live on the opponent panel, and takeover lets you pilot the bot
-                seat manually.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              class="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
-              aria-label="Dismiss practice match hint for one week"
-              onclick={dismissPracticeHint}
-            >
-              <X class="size-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-    {/if}
-
     {#key practiceOrchestrator.orchestrator.sessionRevision}
       <LorcanaTabletopSimulator
         engine={practiceOrchestrator.currentEngine}
@@ -482,6 +476,9 @@
         onSkipOpponent={isBotMatch ? null : handleSkipOpponent}
         gatewayStatus={gateway?.status ?? null}
         onReturnToMatchmaking={handleReturnToMatchmaking}
+        opponentGameProfileId={isBotMatch ? null : opponentGameProfileId}
+        opponentDisplayName={isBotMatch ? null : opponentDisplayName}
+        {moderationMatchId}
       />
     {/key}
   {/if}

@@ -146,6 +146,10 @@
         hasPatchData: orchestrator.hasPatchData,
         totalSteps: orchestrator.totalSteps,
       });
+
+      if (data.initialStep != null && orchestrator.hasPatchData) {
+        orchestrator.goToStep(data.initialStep);
+      }
     } catch (error) {
       loadError = error instanceof Error ? error.message : "Failed to load replay.";
       console.error("[ReplayPage] Failed to load replay:", error);
@@ -156,6 +160,19 @@
 
   onDestroy(() => {
     orchestrator?.dispose();
+  });
+
+  $effect(() => {
+    if (!orchestrator || !orchestrator.hasPatchData) return;
+    const step = orchestrator.currentStep;
+    const url = new URL(window.location.href);
+    if (step === 0) {
+      url.searchParams.delete("step");
+    } else {
+      url.searchParams.set("step", String(step));
+    }
+    const newUrl = step === 0 ? url.pathname : `${url.pathname}?step=${step}`;
+    window.history.replaceState({}, "", newUrl);
   });
 </script>
 

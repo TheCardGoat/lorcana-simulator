@@ -1,4 +1,4 @@
-import { getGameServerOrigin } from "$lib/config/public-url-config.js";
+import { getApiOrigin } from "$lib/config/public-url-config.js";
 import {
   HttpRequestError,
   requestJson,
@@ -68,7 +68,7 @@ export async function createLobbyRoom(params: {
 }): Promise<LobbyRoomResponse> {
   try {
     return await requestJson<LobbyRoomResponse>(
-      `${getGameServerOrigin()}/v1/play/lobby/rooms`,
+      `${getApiOrigin()}/v1/games/lorcana/play/lobby/rooms`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,7 +87,7 @@ export async function joinLobbyRoom(params: {
 }): Promise<LobbyJoinResponse> {
   try {
     return await requestJson<LobbyJoinResponse>(
-      `${getGameServerOrigin()}/v1/play/lobby/rooms/${encodeURIComponent(params.roomCode.toUpperCase())}/join`,
+      `${getApiOrigin()}/v1/games/lorcana/play/lobby/rooms/${encodeURIComponent(params.roomCode.toUpperCase())}/join`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,7 +103,7 @@ export async function joinLobbyRoom(params: {
 export async function startLobbyRoom(roomCode: string): Promise<LobbyMatchResponse> {
   try {
     return await requestJson<LobbyMatchResponse>(
-      `${getGameServerOrigin()}/v1/play/lobby/rooms/${encodeURIComponent(roomCode.toUpperCase())}/start`,
+      `${getApiOrigin()}/v1/games/lorcana/play/lobby/rooms/${encodeURIComponent(roomCode.toUpperCase())}/start`,
       {
         method: "POST",
       },
@@ -117,7 +117,7 @@ export async function startLobbyRoom(roomCode: string): Promise<LobbyMatchRespon
 export async function leaveLobbyRoom(roomCode: string): Promise<void> {
   try {
     await requestVoid(
-      `${getGameServerOrigin()}/v1/play/lobby/rooms/${encodeURIComponent(roomCode.toUpperCase())}/leave`,
+      `${getApiOrigin()}/v1/games/lorcana/play/lobby/rooms/${encodeURIComponent(roomCode.toUpperCase())}/leave`,
       {
         method: "POST",
       },
@@ -130,7 +130,7 @@ export async function leaveLobbyRoom(roomCode: string): Promise<void> {
 
 export async function getLobbyRoomStatus(roomCode: string): Promise<LobbyRoomResponse | null> {
   return requestJsonOrNull<LobbyRoomResponse>(
-    `${getGameServerOrigin()}/v1/play/lobby/rooms/${encodeURIComponent(roomCode.toUpperCase())}`,
+    `${getApiOrigin()}/v1/games/lorcana/play/lobby/rooms/${encodeURIComponent(roomCode.toUpperCase())}`,
     undefined,
     [404],
   );
@@ -139,7 +139,7 @@ export async function getLobbyRoomStatus(roomCode: string): Promise<LobbyRoomRes
 export async function cancelLobbyRoom(roomCode: string): Promise<void> {
   try {
     await requestVoid(
-      `${getGameServerOrigin()}/v1/play/lobby/rooms/${encodeURIComponent(roomCode.toUpperCase())}`,
+      `${getApiOrigin()}/v1/games/lorcana/play/lobby/rooms/${encodeURIComponent(roomCode.toUpperCase())}`,
       {
         method: "DELETE",
       },

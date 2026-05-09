@@ -195,8 +195,10 @@ export type { CardNameLookup, MoveMetadata } from "./move-metadata-registry";
 export {
   canInk,
   canQuest,
+  cardHasName,
   getAllKeywords,
   getAmpersandNames,
+  getCardNameVariants,
   getLoreValue,
   getMoveCost,
   getShiftCost,

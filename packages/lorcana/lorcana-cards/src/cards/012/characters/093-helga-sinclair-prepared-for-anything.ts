@@ -18,6 +18,9 @@ export const helgaSinclairPreparedForAnything: CharacterCard = {
   willpower: 5,
   lore: 2,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_ad9b6e3372a140178662bc5ffd0db287",
+  },
   text: [
     {
       title: "COMBAT TRAINING",

@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { evasive } from "../../../helpers/abilities/evasive";
 import { pegasusSearchingHighAndLowI18n } from "./106-pegasus-searching-high-and-low.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const pegasusSearchingHighAndLow: CharacterCard = {
   id: "t4R",

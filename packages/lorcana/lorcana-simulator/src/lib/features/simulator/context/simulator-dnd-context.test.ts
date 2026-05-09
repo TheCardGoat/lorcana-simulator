@@ -11,6 +11,11 @@ function createDropActionGame(
     ink: () => false,
     shouldOpenPlayCardSelectionOnDrop: () => false,
     canDropHandCardIntoZone: () => false,
+    questCard: () => false,
+    executeChallengeDrop: () => false,
+    executeMoveToLocationDrop: () => false,
+    executeShiftDrop: () => false,
+    executeSingDrop: () => false,
     ...overrides,
   };
 }

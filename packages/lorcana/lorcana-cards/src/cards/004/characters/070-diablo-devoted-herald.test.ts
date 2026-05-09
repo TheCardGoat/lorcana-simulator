@@ -8,6 +8,7 @@ import { pawpsicle } from "../../002/items/169-pawpsicle";
 import { brawl } from "../actions/130-brawl";
 import { diabloMaleficentsSpy } from "./071-diablo-maleficents-spy";
 import { diabloDevotedHerald } from "./070-diablo-devoted-herald";
+import { diabloStoneServant } from "../../012/characters/196-diablo-stone-servant";
 
 describe("Diablo - Devoted Herald", () => {
   it("has Evasive", () => {
@@ -40,6 +41,49 @@ describe("Diablo - Devoted Herald", () => {
 
     expect(testEngine.asPlayerOne().getCardZone(diabloDevotedHerald)).toBe("play");
     expect(testEngine.asPlayerOne().getCardZone(brawl)).toBe("discard");
+  });
+
+  it("Shift: can shift onto a 2-cost Diablo (Stone Servant, set 12) — R30 regression", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: 0,
+      play: [diabloStoneServant],
+      hand: [brawl, diabloDevotedHerald],
+    });
+
+    const shiftTarget = testEngine.findCardInstanceId(diabloStoneServant, "play", PLAYER_ONE);
+    const actionToDiscard = testEngine.findCardInstanceId(brawl, "hand", PLAYER_ONE);
+
+    expect(
+      testEngine.asPlayerOne().playCard(diabloDevotedHerald, {
+        cost: {
+          cost: "shift",
+          shiftTarget: shiftTarget!,
+          discardCards: [actionToDiscard!],
+        },
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(diabloDevotedHerald)).toBe("play");
+  });
+
+  it("canPlayCard reports the discard-action Shift as legal even when all ink is exerted (digest-2026-05-08 #27/#28/#29)", () => {
+    // Player report: "Diablo shifting seems to be bugged when shifting after ink has
+    // been spent. ... On the next turn, it allowed me to shift before I spent any ink."
+    // Diablo - Devoted Herald's Shift cost is purely "Discard an action card" — no ink
+    // component — so the simulator's Play CTA should remain available regardless of
+    // available ink. canPlayCard previously returned false because it only validated
+    // the standard ink cost; now it falls through to the Shift path when standard fails.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: [
+        { card: brawl, exerted: true },
+        { card: brawl, exerted: true },
+        { card: brawl, exerted: true },
+      ],
+      play: [diabloMaleficentsSpy],
+      hand: [brawl, diabloDevotedHerald],
+    });
+
+    expect(testEngine.asPlayerOne().canPlayCard(diabloDevotedHerald)).toBe(true);
   });
 
   describe("CIRCLE FAR AND WIDE - whenever the opponent draws a card while this character is exerted, you may draw a card.", () => {
@@ -132,6 +176,43 @@ describe("Diablo - Devoted Herald", () => {
       // CIRCLE FAR AND WIDE should queue one optional bag effect per draw.
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(7);
     });
+  });
+
+  it("triggers during the opponent's mandatory Draw Phase draw (pass-turn)", () => {
+    // P1 owns Diablo (exerted). P1 passes the turn; P2's Draw Phase draws 1 card.
+    // That mandatory draw should fire CIRCLE FAR AND WIDE, putting 1 bag item in P1's bag.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        play: [{ card: diabloDevotedHerald, exerted: true }],
+        deck: 5,
+      },
+      {
+        deck: 10,
+      },
+    );
+
+    // Clear any bag effects from the initial fixture setup.
+    testEngine.asPlayerOne().resolveAllBagEffects();
+    testEngine.asPlayerTwo().resolveAllBagEffects();
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+    // Verify P2 actually drew a card during their Draw Phase.
+    const p2ZonesAfter = testEngine.asPlayerTwo().getZonesCardCount();
+    expect(p2ZonesAfter.deck).toBe(9);
+    expect(p2ZonesAfter.hand).toBe(1);
+
+    // Check the authoritative server bag count for diagnostic purposes.
+    const serverBagCount = testEngine.getBoard("authoritative").bagEffects.length;
+    // P2's mandatory draw fires during their Draw Phase.
+    // CIRCLE FAR AND WIDE should place one optional bag item in P1's bag.
+    expect(serverBagCount).toBe(1);
+    expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+    testEngine.asPlayerOne().resolveAllBagEffects();
+    const p1Zones = testEngine.asPlayerOne().getZonesCardCount();
+    expect(p1Zones.hand).toBe(1);
+    expect(p1Zones.deck).toBe(4);
   });
 
   describe("Regression", () => {

@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { evasive } from "../../../helpers/abilities";
 import { violetParrLearningNewPowersI18n } from "./048-violet-parr-learning-new-powers.i18n";
+import { evasive } from "../../../helpers/abilities/evasive";
 
 export const violetParrLearningNewPowers: CharacterCard = {
   id: "YdE",
@@ -36,7 +36,7 @@ export const violetParrLearningNewPowers: CharacterCard = {
   abilities: [
     evasive,
     {
-      id: "YdE-1",
+      id: "YdE-2",
       name: "DEFLECT",
       type: "triggered",
       text: "DEFLECT When you play this character, you may move 1 damage from chosen character to chosen opposing character.",
@@ -50,7 +50,7 @@ export const violetParrLearningNewPowers: CharacterCard = {
         chooser: "CONTROLLER",
         effect: {
           type: "move-damage",
-          amount: { type: "up-to", value: 1 },
+          amount: 1,
           from: "CHOSEN_CHARACTER",
           to: "CHOSEN_OPPOSING_CHARACTER",
         },

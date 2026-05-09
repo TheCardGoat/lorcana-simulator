@@ -8,7 +8,7 @@ export const hydraDeadlySerpentI18n: Record<Languages, I18nProperties> = {
       {
         title: "WATCH THE TEETH",
         description:
-          "Whenever this character is dealt damage, deal that much damage to chosen opposing character.",
+          "Whenever this character takes damage, deal that much damage to chosen opposing character.",
       },
     ],
   },

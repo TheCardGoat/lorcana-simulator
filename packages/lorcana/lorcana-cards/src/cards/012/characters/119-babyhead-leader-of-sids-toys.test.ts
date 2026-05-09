@@ -5,6 +5,7 @@ import {
   createMockAction,
   createMockCharacter,
 } from "@tcg/lorcana-engine/testing";
+import { buzzsArm } from "../items/098-buzzs-arm";
 import { babyheadLeaderOfSidsToys } from "./119-babyhead-leader-of-sids-toys";
 
 const cheapAlly = createMockCharacter({
@@ -82,6 +83,58 @@ describe("Babyhead - Leader of Sid's Toys", () => {
       expect(testEngine.asPlayerOne().playCard(cheapAlly)).toBeSuccessfulCommand();
 
       // Resolve Tighten the Bolts, choosing the chosenCharacter
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(babyheadLeaderOfSidsToys, {
+          targets: [chosenCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      const chosen = testEngine.asPlayerOne().getCard(chosenCharacter);
+      expect(chosen.strength).toBe(chosenCharacter.strength + 2);
+    });
+
+    it("release notes ruling: triggers based on total ink paid AFTER payment modifiers — paying 2 ink for a 3-cost action via -1 modifier triggers", () => {
+      // Q&A: Tighten the Bolts cares about total paid (post-modifiers).
+      // Use Buzz's Arm SOME ASSEMBLY REQUIRED to reduce a 3-cost action's
+      // cost by 1 and pay only 2 ink to play it.
+      const threeCostAction = createMockAction({
+        id: "babyhead-release-3cost-action",
+        name: "Three Cost Action",
+        cost: 3,
+        abilities: [
+          {
+            id: "babyhead-release-3cost-action-1",
+            type: "action",
+            text: "Draw a card.",
+            effect: { type: "draw", amount: 1, target: "CONTROLLER" },
+          },
+        ],
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: babyheadLeaderOfSidsToys, isDrying: false },
+            { card: chosenCharacter, isDrying: false },
+            buzzsArm,
+          ],
+          hand: [threeCostAction],
+          inkwell: 2,
+          deck: 5,
+        },
+        { deck: 2 },
+      );
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(buzzsArm, {
+          ability: "SOME ASSEMBLY REQUIRED",
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Pay 2 ink for the (modified-to-2) action.
+      expect(testEngine.asPlayerOne().playCard(threeCostAction)).toBeSuccessfulCommand();
+
+      // Tighten the Bolts triggers because total ink paid was 2.
       expect(
         testEngine.asPlayerOne().resolvePendingByCard(babyheadLeaderOfSidsToys, {
           targets: [chosenCharacter],

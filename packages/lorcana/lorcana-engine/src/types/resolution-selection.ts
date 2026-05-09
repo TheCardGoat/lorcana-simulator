@@ -45,6 +45,7 @@ export type ResolutionSelectionCurrentSelection = Partial<{
   amount: number;
   choiceIndex: number;
   resolveOptional: boolean;
+  enterPlayExerted: boolean;
   namedCard: string;
   destinations: ResolutionSelectionDestination[];
 }>;
@@ -112,6 +113,7 @@ export type TargetResolutionSelectionContext = ResolutionSelectionContextBase & 
    * single-slot / non-slotted effects — flat-array path preserved.
    */
   expectedSlottedKind?: SlottedTargetKind;
+  playCardEntryModeCandidateIds?: CardInstanceId[];
 };
 
 export type ChoiceResolutionSelectionContext = ResolutionSelectionContextBase & {

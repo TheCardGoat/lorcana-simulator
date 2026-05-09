@@ -46,15 +46,15 @@ export function resolveServerCurrentActor(args: {
     };
   }
 
-  const validationContext = buildValidationContext(
-    state as LorcanaMatchState,
-    state.ctx.priority.holder ?? state.ctx.playerIds[0] ?? "",
-    { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-    lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
+  const validationContext = buildValidationContext({
+    state: state as LorcanaMatchState,
+    playerId: state.ctx.priority.holder ?? state.ctx.playerIds[0] ?? "",
+    input: { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+    config: lorcanaRuntimeConfig as unknown as MatchRuntimeConfig,
     staticResources,
-    state.ctx.status.gameEnded,
-    "preflight",
-  );
+    gameEnded: state.ctx.status.gameEnded,
+    validationMode: "preflight",
+  });
   const bagResolver = getNextBagResolver(
     validationContext as unknown as Parameters<typeof getNextBagResolver>[0],
   );

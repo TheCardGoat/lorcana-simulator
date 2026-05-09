@@ -128,15 +128,15 @@ export function validateCommand(
       return { valid: true, moveDef, actingPlayerId };
     }
 
-    const validationContext = buildValidationContextFromUtils(
-      ctx.state,
-      actingPlayerId,
-      commandInput,
-      ctx.config,
-      ctx.staticResources,
-      ctx.gameEnded,
-      "final",
-    );
+    const validationContext = buildValidationContextFromUtils({
+      state: ctx.state,
+      playerId: actingPlayerId,
+      input: commandInput,
+      config: ctx.config,
+      staticResources: ctx.staticResources,
+      gameEnded: ctx.gameEnded,
+      validationMode: "final",
+    });
     const validation = moveDef.validate(validationContext);
     if (!validation.valid) {
       return {
@@ -154,15 +154,15 @@ export function validateCommand(
   }
 
   const validation = moveDef.validate(
-    buildValidationContextFromUtils(
-      ctx.state,
+    buildValidationContextFromUtils({
+      state: ctx.state,
       playerId,
-      commandInput,
-      ctx.config,
-      ctx.staticResources,
-      ctx.gameEnded,
-      "final",
-    ),
+      input: commandInput,
+      config: ctx.config,
+      staticResources: ctx.staticResources,
+      gameEnded: ctx.gameEnded,
+      validationMode: "final",
+    }),
   );
   if (!validation.valid) {
     return {

@@ -18,9 +18,12 @@ export const kidaGuardianOfThePath: CharacterCard = {
   willpower: 3,
   lore: 1,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_36826a0cb54b4f06b8e5de879e20d926",
+  },
   text: [
     {
-      title: "Natural Defense",
+      title: "NATURAL DEFENSE",
       description: "When you play this character, chosen opposing character gets -2 {S} this turn.",
     },
   ],

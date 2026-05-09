@@ -140,7 +140,7 @@ describe("King Candy - Sugar Rush Nightmare", () => {
 
       expect(testEngine.asPlayerOne().getCardZone(kingCandySugarRushNightmare)).toBe("discard");
 
-      // Ability should not trigger when there are no valid targets (King Candy is in discard but excluded via excludeSelf)
+      // With no other Racer to return, the optional bag entry auto-drains as a no-op.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 

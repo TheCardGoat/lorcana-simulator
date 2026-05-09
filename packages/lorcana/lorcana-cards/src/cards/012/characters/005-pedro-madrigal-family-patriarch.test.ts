@@ -75,12 +75,7 @@ describe("Pedro Madrigal - Family Patriarch", () => {
         testEngine.asPlayerOne().playCard(pedroMadrigalFamilyPatriarch),
       ).toBeSuccessfulCommand();
 
-      // Condition fails at resolution, so even if queued, it resolves without effect.
-      if (testEngine.asPlayerOne().getBagCount() > 0) {
-        expect(
-          testEngine.asPlayerOne().resolvePendingByCard(pedroMadrigalFamilyPatriarch),
-        ).toBeSuccessfulCommand();
-      }
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       // Pedro still has 1 damage from DIFFICULT JOURNEY
       expect(testEngine.asPlayerOne().getCard(pedroMadrigalFamilyPatriarch)?.damage).toBe(1);
@@ -106,6 +101,43 @@ describe("Pedro Madrigal - Family Patriarch", () => {
 
       // Damage remains because player declined the optional effect
       expect(testEngine.asPlayerOne().getCard(pedroMadrigalFamilyPatriarch)?.damage).toBe(1);
+    });
+  });
+
+  describe("release notes ruling", () => {
+    it("'him' refers to this character only — cannot remove damage from another copy of Pedro Madrigal in play", () => {
+      // Release-notes Q&A: When you play this character with another copy of
+      // Pedro Madrigal in play, the "him" in Devoted Family refers to the
+      // newly played Pedro, NOT the other copy.
+      const otherPedroInPlay = {
+        ...pedroMadrigalFamilyPatriarch,
+        id: `${pedroMadrigalFamilyPatriarch.id}-second`,
+      };
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [pedroMadrigalFamilyPatriarch],
+        // The other Pedro is already in play and has 1 damage on him.
+        play: [{ card: otherPedroInPlay, damage: 1, isDrying: false }],
+        inkwell: pedroMadrigalFamilyPatriarch.cost,
+      });
+
+      expect(
+        testEngine.asPlayerOne().playCard(pedroMadrigalFamilyPatriarch),
+      ).toBeSuccessfulCommand();
+
+      // Trigger should fire — there IS another Madrigal in play.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(pedroMadrigalFamilyPatriarch, {
+          resolveOptional: true,
+          amount: 1,
+        }),
+      ).toBeSuccessfulCommand();
+
+      // The newly played Pedro has its damage removed.
+      expect(testEngine.asPlayerOne().getCard(pedroMadrigalFamilyPatriarch)?.damage).toBe(0);
+      // The OTHER Pedro keeps its damage — the ability cannot target it.
+      expect(testEngine.asPlayerOne().getCard(otherPedroInPlay)?.damage).toBe(1);
     });
   });
 });

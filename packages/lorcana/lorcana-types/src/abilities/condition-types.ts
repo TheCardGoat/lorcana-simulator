@@ -14,6 +14,7 @@
  */
 
 import type { CardType } from "../cards/card-types";
+import type { Classification } from "../cards/classifications";
 import type { CharacterTarget, ComparisonOperator, TargetZone } from "./target-types";
 import type { LorcanaCardTarget, LorcanaTargetDSL } from "../targeting/lorcana-target-dsl";
 
@@ -188,6 +189,21 @@ export interface ReturnedCardIsNamedCondition {
 }
 
 /**
+ * Check if the card returned from discard (in the current sequence) has a specific classification.
+ *
+ * Used in abilities of the form:
+ * "Return a character from your discard to your hand.
+ *  If that character is a <Classification>, you may play it for free."
+ *
+ * @example "If that character is a Princess"
+ */
+export interface ReturnedCardHasClassificationCondition {
+  type: "returned-card-has-classification";
+  /** The classification to check against */
+  classification: string;
+}
+
+/**
  * Check if revealed card has same name
  */
 export interface RevealedHasSameNameCondition {
@@ -221,6 +237,17 @@ export interface BeingChallengedCondition {
  */
 export interface SelfHasDamageCondition {
   type: "self-has-damage";
+}
+
+/**
+ * Check if the revealed card is one of the specified card types
+ *
+ * @example { type: "revealed-is-card-type", cardType: "character" }
+ * @example { type: "revealed-is-card-type", cardType: ["action", "item"] }
+ */
+export interface RevealedIsCardTypeCondition {
+  type: "revealed-is-card-type";
+  cardType: CardType | CardType[];
 }
 
 /**
@@ -910,7 +937,14 @@ export interface TurnMetricCondition {
   metric: TurnMetric;
   playerScope?: "you" | "opponent" | "any";
   ownerScope?: "you" | "opponent" | "any";
-  classification?: string;
+  classification?: Classification;
+  /**
+   * Optional card-name filter. When set, the metric only counts entries whose
+   * card definition matches the given name. Currently supported by the
+   * `banished-characters` metric (e.g. "If a character named Buzz Lightyear
+   * was banished this turn …").
+   */
+  name?: string;
   comparison?: ConditionComparison;
   excludeSource?: boolean;
 }
@@ -1163,6 +1197,7 @@ export type Condition =
   | HasCharacterWithStrengthCondition
   | ReturnedCardIsPrincessCondition
   | ReturnedCardIsNamedCondition
+  | ReturnedCardHasClassificationCondition
   | RevealedHasSameNameCondition
   | HasCharactersHereCondition
   | HasCharacterAtLocationCondition
@@ -1186,7 +1221,9 @@ export type Condition =
   // Discard-context conditions
   | DiscardedCardHasClassificationCondition
   // Granted ability conditions
-  | HasGrantedAbilityCondition;
+  | HasGrantedAbilityCondition
+  // Reveal-context conditions
+  | RevealedIsCardTypeCondition;
 
 // ============================================================================
 // Condition Builders (convenience)

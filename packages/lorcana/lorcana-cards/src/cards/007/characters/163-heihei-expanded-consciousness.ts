@@ -45,7 +45,12 @@ export const heiheiExpandedConsciousness: CharacterCard = {
       effect: {
         exerted: true,
         facedown: true,
-        source: "hand",
+        source: {
+          selector: "all",
+          count: "all",
+          owner: "you",
+          zones: ["hand"],
+        },
         target: "CONTROLLER",
         type: "put-into-inkwell",
       },

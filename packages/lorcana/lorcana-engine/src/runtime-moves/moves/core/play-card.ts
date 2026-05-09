@@ -88,7 +88,6 @@ import {
   deriveStrength,
   type CostReductionApplication,
   type DerivedStateContext,
-  type PendingCostReduction,
 } from "../../../rules/derived-state";
 import {
   formatLorcanaCardName,
@@ -103,7 +102,6 @@ import {
   hasStaticCardRestriction,
 } from "../../rules/static-ability-utils";
 import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
-import { buildStaticEffectRegistry } from "../../../rules/static-effect-registry";
 import type { StaticEffectRegistry } from "../../../rules/static-effect-registry";
 import { getActivePlayFromUnderPermissions } from "../../effects/play-from-under-permissions";
 
@@ -365,10 +363,10 @@ function entersPlayExerted(
   };
   const getDefinitionByInstanceId = (instanceId: string) =>
     ctx.cards.getDefinition(instanceId) as LorcanaCard | undefined;
-  const registry = buildStaticEffectRegistry(
-    createProjectionState(ctx.framework.state, ctx.G),
-    getDefinitionByInstanceId,
-  );
+  // Section 3 ensures `staticEffectsVersion` is bumped on every static-relevant
+  // mutation, so the cached registry is current here. Previous fresh-build
+  // workaround removed.
+  const registry = getOrBuildMoveRegistry(ctx);
 
   // Check the card's own static self-restriction (e.g., "this character enters play exerted")
   const selfRestricted = (cardDef.abilities ?? []).some((ability) => {
@@ -676,12 +674,6 @@ function isValidActionResolutionAmount(value: unknown): boolean {
 
 type BasicPlayCostPayment = Parameters<typeof validateBasicCost>[1];
 
-type TurnMetadataCostReductionRead = {
-  pendingCostReductionsByPlayer?: Partial<
-    Record<PlayerId, readonly PendingCostReduction[] | PendingCostReduction[]>
-  >;
-};
-
 type StaticCostReductionContext = Pick<
   MoveValidationContext<MoveInput>,
   "framework" | "cards" | "G"
@@ -689,7 +681,6 @@ type StaticCostReductionContext = Pick<
 
 function computeCostReduction(
   ctx: StaticCostReductionContext,
-  turnMetadata: TurnMetadataCostReductionRead,
   playerId: PlayerId,
   cardId: CardInstanceId,
   cardDef: LorcanaCard,
@@ -854,6 +845,7 @@ function getPlayRestrictionError(
         playerId,
         restriction: "cant-play-actions",
         registry,
+        cardCost: cardDef.cost,
       })
     ) {
       return {
@@ -1060,7 +1052,6 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
 
     const costReduction = computeCostReduction(
       ctx,
-      ctx.G.turnMetadata,
       currentPlayer as PlayerId,
       cardId,
       cardDef,
@@ -1128,7 +1119,6 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           // Compute shift-specific cost reduction (includes both general and shift-only reductions)
           const shiftCostReduction = computeCostReduction(
             ctx,
-            ctx.G.turnMetadata,
             currentPlayer as PlayerId,
             cardId,
             cardDef,
@@ -1556,6 +1546,14 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         );
       }
 
+      if (params.enterPlayExerted !== undefined && typeof params.enterPlayExerted !== "boolean") {
+        return fail(
+          "enterPlayExerted must be a boolean when provided",
+          "INVALID_ENTER_PLAY_EXERTED_SELECTION",
+          cardDef,
+        );
+      }
+
       if (params.choiceIndex !== undefined) {
         if (
           typeof params.choiceIndex !== "number" ||
@@ -1697,7 +1695,6 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
     const executeRegistry = getOrBuildMoveRegistry(ctx);
     const computedCostReduction = computeCostReduction(
       ctx,
-      ctx.G.turnMetadata,
       currentPlayer,
       cardId,
       cardDef,
@@ -1710,7 +1707,6 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         ? computedCostReduction
         : computeCostReduction(
             ctx,
-            ctx.G.turnMetadata,
             currentPlayer,
             cardId,
             cardDef,
@@ -1787,7 +1783,6 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           // Compute shift-specific cost reduction (includes both general and shift-only reductions)
           const shiftCostReduction = computeCostReduction(
             ctx,
-            ctx.G.turnMetadata,
             currentPlayer,
             cardId,
             cardDef,
@@ -1863,6 +1858,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
           zone: "discard",
           playerId: currentPlayer,
         });
+        ctx.cards.clearMeta(sacrificeTargetId);
         traceLorcanaRuntimeStep({
           kind: "card.moved",
           moveId: "playCard",
@@ -2013,9 +2009,6 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
               playerId: currentPlayer,
               cardId,
               shiftTargetId,
-              shiftTargetName: formatLorcanaCardName(
-                ctx.cards.require(shiftTargetId).definition as LorcanaCard,
-              ),
             },
             { mode: "PUBLIC" },
             "action",
@@ -2159,11 +2152,9 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         preventAutoResolveTriggeredEffects:
           params.preventAutoResolveTriggeredEffects === true ? true : undefined,
         destinations: actionDestinations,
-        eventSnapshot: {
-          ...params.eventSnapshot,
-          autoExertBodyguardOnNestedPlay: params.resolveOptional === true,
-        },
+        eventSnapshot: params.eventSnapshot,
         resolveOptional: params.resolveOptional,
+        enterPlayExerted: params.enterPlayExerted,
       } satisfies ActionResolutionInput;
       const immediateLogTargets = collectImmediateActionLogTargets(
         ctx,
@@ -2226,7 +2217,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       const entersExerted =
         entersPlayExerted(ctx, cardId, cardDef) ||
         ((hasBodyguard(cardDef) || hasMayEnterPlayExertedOption(cardDef)) &&
-          params.resolveOptional === true);
+          (params.enterPlayExerted === true || params.resolveOptional === true));
       const banishedByGSC = executeShiftPlay(ctx, cardId, shiftTarget, currentPlayer, cardDef, {
         entersExerted,
       });
@@ -2246,7 +2237,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       const entersExerted =
         entersPlayExerted(ctx, cardId, cardDef) ||
         ((hasBodyguard(cardDef) || hasMayEnterPlayExertedOption(cardDef)) &&
-          params.resolveOptional === true);
+          (params.enterPlayExerted === true || params.resolveOptional === true));
       ctx.cards.setMeta(cardId, {
         state: entersExerted ? "exerted" : "ready",
         damage: entersWithDamage,
@@ -2344,7 +2335,6 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
       const currentTurn = ctx.framework.state.status.turn ?? 1;
       const standardCostReduction = computeCostReduction(
         ctx,
-        ctx.G.turnMetadata,
         ctx.playerId as PlayerId,
         handCardId as CardInstanceId,
         cardDef,
@@ -2364,7 +2354,6 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
 
       const shiftCostReduction = computeCostReduction(
         ctx,
-        ctx.G.turnMetadata,
         ctx.playerId as PlayerId,
         handCardId as CardInstanceId,
         cardDef,

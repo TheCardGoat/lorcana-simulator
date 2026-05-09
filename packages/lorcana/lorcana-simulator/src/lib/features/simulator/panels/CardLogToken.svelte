@@ -17,17 +17,35 @@
   const cardContext = maybeUseSimulatorCardContext();
 
   const snapshot = $derived(sidebar?.resolveCardSnapshot?.(cardId) ?? null);
-  // When the card is masked (hidden in opponent's view), prefer the pre-stored
-  // fallbackLabel (announced card name) over the snapshot's generic "Hidden card" label.
-  const label = $derived(
-    snapshot?.isMasked
-      ? (fallbackLabel ?? snapshot?.label ?? cardId)
-      : (snapshot?.label ?? fallbackLabel ?? cardId),
+  // staticResources.instances knows every dealt card's definition, so the
+  // static name resolver MUST NOT be used when the projected snapshot is
+  // masked for the current viewer (e.g. an opponent's hand/deck card surfaced
+  // in a pending-effect or manual-log row). For move-log entries, hidden
+  // references are already stripped from the payload by `privateField`, so
+  // the cardId never reaches the token.
+  //
+  // Non-masked path: prefer localized labels (fallbackLabel populated by the
+  // harness adapter, or snapshot.label projected by `#projectCard`) so users
+  // on non-English locales see translated names. The static lookup returns
+  // the raw English definition name and is only used when no localized label
+  // is available — e.g. historical entries whose card has left every
+  // projected zone.
+  const isMasked = snapshot?.isMasked === true;
+  const staticName = $derived(
+    !isMasked ? (sidebar?.resolveCardName?.(cardId) ?? null) : null,
   );
-  const inkType = $derived(snapshot?.inkType ?? fallbackInkType);
+  const label = $derived(
+    isMasked
+      ? (fallbackLabel ?? snapshot?.label ?? cardId)
+      : (fallbackLabel ?? snapshot?.label ?? staticName ?? cardId),
+  );
+  const inkType = $derived(fallbackInkType ?? snapshot?.inkType);
 
   function handleHover(): void {
     if (!cardContext) return;
+    // Don't set a masked snapshot — GlobalCardPreview hides when isMasked is true,
+    // which would suppress any existing pinned/hovered preview instead of showing nothing.
+    if (snapshot?.isMasked) return;
     if (snapshot) {
       cardContext.setExternalPreviewCard(snapshot);
       return;
@@ -46,8 +64,10 @@
   }
 
   function handleLeave(): void {
+    // Only clear if handleHover actually set something (masked cards are skipped).
+    if (snapshot?.isMasked) return;
     cardContext?.setExternalPreviewCard(null);
   }
 </script>
 
-<CardTextToken card={{ label, inkType }} interactive={false} onHover={handleHover} onLeave={handleLeave} />
+<CardTextToken card={{ label, inkType }} onHover={handleHover} onLeave={handleLeave} />

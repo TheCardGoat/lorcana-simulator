@@ -16,6 +16,23 @@ const strandedAlly = createMockCharacter({
 });
 
 describe("Pooh Pirate Ship", () => {
+  it("rejects a non-Pirate as a return target (single-object typed has-classification filter)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      deck: 2,
+      discard: [rescuedPirate, strandedAlly],
+      inkwell: 3,
+      play: [poohPirateShip],
+    });
+
+    // Attempt to return the non-Pirate. The single-object typed
+    // has-classification filter must exclude it.
+    testEngine.asPlayerOne().activateAbility(poohPirateShip, {
+      targets: [strandedAlly],
+    });
+
+    expect(testEngine.asPlayerOne().getCardZone(strandedAlly)).toBe("discard");
+  });
+
   it("returns a Pirate character card from your discard to your hand", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       deck: 2,

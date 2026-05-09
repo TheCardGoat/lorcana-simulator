@@ -87,16 +87,16 @@ describe("derived-card-cache integration", () => {
       expect(afterBoard.misses).toBe(1);
       expect(afterBoard.hits).toBeGreaterThan(0);
 
-      const validationContext = buildValidationContext(
+      const validationContext = buildValidationContext({
         state,
-        "player_one",
-        { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
-        lorcanaRuntimeConfig,
+        playerId: "player_one",
+        input: { args: {} } as LorcanaRuntimeMoveInputs["passTurn"],
+        config: lorcanaRuntimeConfig,
         staticResources,
-        false,
-        "final",
-        runtimeCardCache,
-      );
+        gameEnded: false,
+        validationMode: "final",
+        caches: { runtimeCard: runtimeCardCache },
+      });
       const candidates = snapshotTriggeredCandidatesForCard(validationContext as never, cardId);
       expect(candidates).toHaveLength(1);
 

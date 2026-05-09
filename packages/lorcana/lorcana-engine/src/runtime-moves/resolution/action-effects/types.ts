@@ -31,6 +31,7 @@ type ActionResolutionInput = {
   amount?: Amount;
   namedCard?: string;
   resolveOptional?: boolean;
+  enterPlayExerted?: boolean;
   choiceIndex?: number;
   preventAutoResolveTriggeredEffects?: boolean;
   destinations?: { zone: string; cards: CardInstanceId | CardInstanceId[] }[];

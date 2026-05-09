@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-
+import type { CardInstanceId } from "@tcg/lorcana-engine";
 import { buildCardActionViews } from "./card-action-presenter.js";
 import type { ExecutableMoveEntry, LorcanaCardSnapshot } from "./contracts.js";
 
@@ -413,5 +413,70 @@ describe("buildCardActionViews", () => {
         moves: [],
       },
     ]);
+  });
+
+  it("splits put-on-deck-bottom alternative cost into a separate action chip", () => {
+    const card = createCard({
+      zoneId: "hand",
+      cardType: "character",
+      label: "Hand-in-the-Box - Sid's Toy",
+      cost: 2,
+      playCost: 2,
+    });
+    const standardMove = createMove({
+      id: "playCard:card-1",
+      label: "Hand-in-the-Box - Sid's Toy",
+      moveId: "playCard",
+      params: { cardId: card.cardId, cost: "standard" },
+      presentation: {
+        kind: "targeted",
+        categoryId: "play-card",
+        categoryLabel: "Play",
+        optionLabel: card.label,
+      },
+    });
+    const putOnDeckBottomMove = createMove({
+      id: "playCard:card-1:put-on-deck-bottom",
+      label: "Hand-in-the-Box - Sid's Toy (Put Toy on Deck Bottom)",
+      moveId: "playCard",
+      params: { cardId: card.cardId, cost: "put-on-deck-bottom" },
+      presentation: {
+        kind: "targeted",
+        categoryId: "play-card",
+        categoryLabel: "Play",
+        optionLabel: "Put Toy on Deck Bottom",
+        selectableCosts: [
+          {
+            kind: "putOnDeckBottom" as const,
+            count: 1,
+            candidateCardIds: ["toy-discard-id" as CardInstanceId],
+            zone: "discard" as const,
+          },
+        ],
+      },
+    });
+
+    const actions = buildCardActionViews({
+      card,
+      executableMoves: [standardMove, putOnDeckBottomMove],
+      ownerSide: "playerOne",
+      challengeReadyCardIds: [],
+      movableToLocationCardIds: [],
+    });
+
+    const playCardActions = actions.filter((a) => a.categoryId === "play-card");
+    expect(playCardActions).toHaveLength(2);
+
+    // Standard play action
+    const standardAction = playCardActions.find((a) => a.id === `play-card:${card.cardId}`);
+    expect(standardAction).toBeDefined();
+    expect(standardAction?.moves).toEqual([standardMove]);
+
+    // Alternative cost action — separate chip
+    const altAction = playCardActions.find(
+      (a) => a.id === `play-card:${card.cardId}:put-on-deck-bottom`,
+    );
+    expect(altAction).toBeDefined();
+    expect(altAction?.moves).toEqual([putOnDeckBottomMove]);
   });
 });

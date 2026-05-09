@@ -40,10 +40,10 @@ describe("Pacha - Emperor's Guide", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: both abilities enqueue at trigger time; conditions checked at resolution
-      // HELPFUL SUPPLIES (item) and PERFECT DIRECTIONS (location) both enqueue, but only the item
-      // condition is met, so only 1 lore is gained after resolving both
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      // HELPFUL SUPPLIES (item) condition is met so it's enqueued; PERFECT DIRECTIONS (location)
+      // condition is NOT met so it's NOT enqueued. Only 1 lore is gained.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       testEngine.asPlayerOne().resolveAllBagEffects();
 
       // At start of player one's next turn, HELPFUL SUPPLIES should have fired
@@ -90,10 +90,10 @@ describe("Pacha - Emperor's Guide", () => {
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
       expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: both abilities enqueue at trigger time; conditions checked at resolution
-      // HELPFUL SUPPLIES (item) and PERFECT DIRECTIONS (location) both enqueue, but only the
-      // location condition is met, so only 1 lore is gained after resolving both
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      // HELPFUL SUPPLIES (item) condition is NOT met; PERFECT DIRECTIONS (location) condition
+      // IS met so it's enqueued. Only 1 lore is gained.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
       testEngine.asPlayerOne().resolveAllBagEffects();
 
       // At start of player one's next turn, PERFECT DIRECTIONS should have fired

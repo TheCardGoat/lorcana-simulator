@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { rush } from "../../../helpers/abilities/rush";
 import { dashParrSuperSpeedyI18n } from "./118-dash-parr-super-speedy.i18n";
+import { rush } from "../../../helpers/abilities/rush";
 
 export const dashParrSuperSpeedy: CharacterCard = {
   id: "eme",
@@ -22,11 +22,7 @@ export const dashParrSuperSpeedy: CharacterCard = {
   externalIds: {
     lorcast: "crd_160175c3b760464390790a1a4b6f206f",
   },
-  text: [
-    {
-      title: "Rush",
-    },
-  ],
+  text: "Rush",
   classifications: ["Storyborn", "Super", "Hero"],
   abilities: [rush],
   i18n: dashParrSuperSpeedyI18n,

@@ -194,6 +194,6 @@ describe("CardFace", () => {
       },
     });
 
-    expect(body).toContain("https://r2.tcg.online/public/lorcana/004/art_only/128.webp");
+    expect(body).toContain("https://new-cdn.lorcanito.com/public/lorcana/004/art_only/128.webp");
   });
 });

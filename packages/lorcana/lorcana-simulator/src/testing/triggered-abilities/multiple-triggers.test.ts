@@ -195,12 +195,11 @@ describe("Multiple Triggers Scenario", () => {
       testEngine.asPlayerOne().resolvePendingByCard(mickeyMouseGiantMouse),
     ).toBeSuccessfulCommand();
 
-    // Candlehead — optional remove-up-to-2-damage from chosen character; no characters remain, decline
-    expect(
-      testEngine
-        .asPlayerOne()
-        .resolvePendingByCard(candleheadDedicatedRacer, { resolveOptional: false }),
-    ).toBeSuccessfulCommand();
+    // Candlehead — optional remove-up-to-2-damage from chosen character; no characters remain.
+    // BUG-3 fix: the engine auto-resolves (drains) optional bag effects when no valid targets
+    // exist at bag-decision time, so the player never sees a prompt for Candlehead's ability.
+    // The bag entry was still created (CR 6.2.3) but is drained immediately on the next auto-
+    // drain pass following Mickey Mouse's resolution.
 
     // P1 triggers all resolved; P2 triggers still wait (CR 7.7.4.4)
     expect(

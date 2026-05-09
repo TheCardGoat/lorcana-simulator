@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { shift } from "../../../helpers/abilities/shift";
 import { meridaGiftedArcherI18n } from "./089-merida-gifted-archer.i18n";
+import { shift } from "../../../helpers/abilities/shift";
 
 export const meridaGiftedArcher: CharacterCard = {
   id: "wwO",
@@ -39,15 +39,13 @@ export const meridaGiftedArcher: CharacterCard = {
       id: "wwO-2",
       name: "FIERCE PROTECTION",
       type: "triggered",
-      text: "FIERCE PROTECTION While this character is exerted, whenever an opposing character challenges, you may deal 1 damage to the challenging character.",
-      condition: { type: "is-exerted" },
       trigger: {
         event: "challenge",
-        on: {
-          controller: "opponent",
-          cardType: "character",
-        },
+        on: "OPPONENT_CHARACTERS",
         timing: "whenever",
+      },
+      condition: {
+        type: "is-exerted",
       },
       effect: {
         type: "optional",
@@ -55,9 +53,12 @@ export const meridaGiftedArcher: CharacterCard = {
         effect: {
           type: "deal-damage",
           amount: 1,
-          target: { ref: "trigger-subject" },
+          target: {
+            ref: "trigger-subject",
+          },
         },
       },
+      text: "FIERCE PROTECTION While this character is exerted, whenever an opposing character challenges, you may deal 1 damage to the challenging character.",
     },
   ],
   i18n: meridaGiftedArcherI18n,

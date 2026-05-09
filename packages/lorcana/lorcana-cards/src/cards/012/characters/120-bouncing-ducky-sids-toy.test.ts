@@ -73,17 +73,13 @@ describe("Bouncing Ducky - Sid's Toy", () => {
         deck: 5,
       });
 
-      const toyOneId = testEngine.findCardInstanceId(toyInDiscardOne, "discard", PLAYER_ONE);
-      const toyTwoId = testEngine.findCardInstanceId(toyInDiscardTwo, "discard", PLAYER_ONE);
       const nonToyId = testEngine.findCardInstanceId(nonToyInDiscard, "discard", PLAYER_ONE);
 
       expect(testEngine.asPlayerOne().playCard(bouncingDuckySidsToy)).toBeSuccessfulCommand();
       expect(
         testEngine.asPlayerOne().resolvePendingByCard(bouncingDuckySidsToy),
       ).toBeSuccessfulCommand();
-      expect(
-        testEngine.asPlayerOne().resolveNextPending({ targets: [toyOneId, toyTwoId] }),
-      ).toBeSuccessfulCommand();
+      expect(testEngine.asServer().getState().G.pendingEffects).toHaveLength(0);
 
       expect(testEngine.asPlayerOne().getCardZone(toyInDiscardOne)).toBe("deck");
       expect(testEngine.asPlayerOne().getCardZone(toyInDiscardTwo)).toBe("deck");

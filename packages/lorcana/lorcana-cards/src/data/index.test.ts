@@ -1,5 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import { cardsAuxKv, canonicalCards, getLocalizedCardSync } from "./index";
+import {
+  cardsAuxKv,
+  canonicalCards,
+  canonicalCardsByPrintingId,
+  getCardForPrinting,
+  getLocalizedCardSync,
+  printings,
+} from "./index";
 
 describe("getLocalizedCardSync", () => {
   it("returns locale-specific fields from embedded i18n without external localization data", () => {
@@ -42,5 +49,28 @@ describe("getLocalizedCardSync", () => {
     expect(first?.name).toBe(second?.name);
     expect(first?.version).toBe(second?.version);
     expect(first?.rulesText).toBe(second?.rulesText);
+  });
+});
+
+describe("card printing lookup integrity", () => {
+  it("resolves every printing metadata entry to a canonical card", () => {
+    const unresolvedPrintingIds = Object.keys(printings).filter(
+      (printingId) => getCardForPrinting(printingId) === undefined,
+    );
+
+    expect(unresolvedPrintingIds).toEqual([]);
+  });
+
+  it("keeps printing lookup IDs aligned with canonical card data", () => {
+    const mismatchedPrintingIds = Object.entries(canonicalCardsByPrintingId).flatMap(
+      ([printingId, card]) => {
+        const mappedShortId = cardsAuxKv.printingIdToShortId[printingId];
+        return mappedShortId === card.id
+          ? []
+          : [`${printingId}: expected ${card.id}, got ${mappedShortId ?? "missing"}`];
+      },
+    );
+
+    expect(mismatchedPrintingIds).toEqual([]);
   });
 });

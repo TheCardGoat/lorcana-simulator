@@ -10,10 +10,8 @@ import type {
   ActionResolutionInput,
   PlayCardExecutionContext,
 } from "../resolution/action-effects/types";
-import {
-  evaluateCondition,
-  type ConditionEvaluationContext,
-} from "../../rules/condition-evaluator";
+import { evaluateCondition } from "../../rules/condition-evaluator";
+import { buildConditionContext } from "../../rules/condition-context";
 import { createProjectionState, getEffectiveStrength } from "../../rules/derived-state";
 import { getOrBuildMoveRegistry } from "../rules/move-registry-cache";
 import { isEffectExpired, resolveEffectWindow } from "../../rules/effect-registry";
@@ -22,7 +20,7 @@ import {
   getOrBuildStateScopedValue,
 } from "../../core/runtime/state-scoped-value-cache";
 
-type ReplacementContext = Pick<PlayCardExecutionContext, "G" | "framework" | "cards">;
+export type ReplacementContext = Pick<PlayCardExecutionContext, "G" | "framework" | "cards">;
 const MAX_REPLACEMENT_PASSES = 100;
 
 type PrintedReplacementEntry = {
@@ -31,8 +29,9 @@ type PrintedReplacementEntry = {
   ability: ReplacementAbilityDefinition;
 };
 
-const printedReplacementCache =
-  createStateScopedValueCache<Map<string, PrintedReplacementEntry[]>>();
+const printedReplacementCache = createStateScopedValueCache<Map<string, PrintedReplacementEntry[]>>(
+  { label: "printed-replacement-effects" },
+);
 
 function getPrintedAbilityEventKinds(
   ability: ReplacementAbilityDefinition,
@@ -346,7 +345,7 @@ function appliesNumericSelfReplacement(
       );
     case "condition":
       return evaluateCondition(replacement.condition.condition, {
-        ...buildConditionContext(ctx, cardPlayed.playerId, cardPlayed.cardId),
+        ...buildReplacementConditionContext(ctx, cardPlayed.playerId, cardPlayed.cardId),
         cardPlayed,
         resolutionInput,
       });
@@ -380,18 +379,12 @@ function createNumericSelfReplacementCandidate(
   };
 }
 
-function buildConditionContext(
+function buildReplacementConditionContext(
   ctx: ReplacementContext,
   playerId: PlayerId,
   sourceCardId?: CardInstanceId,
-): ConditionEvaluationContext {
-  return {
-    framework: ctx.framework,
-    cards: ctx.cards,
-    G: ctx.G,
-    playerId,
-    sourceCardId,
-  };
+) {
+  return buildConditionContext({ ctx, playerId, sourceCardId });
 }
 
 function createPrintedReplacementCandidate(
@@ -413,7 +406,10 @@ function createPrintedReplacementCandidate(
     // Evaluate the condition (e.g. "during opponents' turns")
     if (
       ability.condition &&
-      !evaluateCondition(ability.condition, buildConditionContext(ctx, controllerId, sourceId))
+      !evaluateCondition(
+        ability.condition,
+        buildReplacementConditionContext(ctx, controllerId, sourceId),
+      )
     ) {
       return undefined;
     }
@@ -438,7 +434,10 @@ function createPrintedReplacementCandidate(
     // Evaluate the condition (e.g. "during opponents' turns")
     if (
       ability.condition &&
-      !evaluateCondition(ability.condition, buildConditionContext(ctx, controllerId, sourceId))
+      !evaluateCondition(
+        ability.condition,
+        buildReplacementConditionContext(ctx, controllerId, sourceId),
+      )
     ) {
       return undefined;
     }
@@ -721,15 +720,18 @@ export function pruneExpiredReplacementEffects(
   G.replacementEffects.usageLedger.perTurn = nextLedger;
 }
 
-export function applyReplacementEffects<TEvent extends ReplacementEvent>(
+type ReplacementEffectsOptions = {
+  selfReplacement?: NumericSelfReplacement;
+  selfReplacementField?: "amount" | "modifier";
+  cardPlayed?: CardPlayedPayload;
+  resolutionInput?: ActionResolutionInput;
+};
+
+function runReplacementEffects<TEvent extends ReplacementEvent>(
   ctx: ReplacementContext,
   event: TEvent,
-  options?: {
-    selfReplacement?: NumericSelfReplacement;
-    selfReplacementField?: "amount" | "modifier";
-    cardPlayed?: CardPlayedPayload;
-    resolutionInput?: ActionResolutionInput;
-  },
+  dryRun: boolean,
+  options?: ReplacementEffectsOptions,
 ): TEvent {
   const replacementEffects = ensureReplacementEffectsState(ctx);
   const printedIndex = buildPrintedReplacementIndex(ctx);
@@ -784,11 +786,30 @@ export function applyReplacementEffects<TEvent extends ReplacementEvent>(
     appliedCandidates.add(chosen.id);
     duplicateCandidates.forEach((candidate) => appliedCandidates.add(candidate.id));
     currentEvent = chosen.apply(currentEvent) as TEvent;
-    chosen.consume();
-    duplicateCandidates.forEach((candidate) => candidate.consumeSibling?.() ?? candidate.consume());
+    if (!dryRun) {
+      chosen.consume();
+      duplicateCandidates.forEach(
+        (candidate) => candidate.consumeSibling?.() ?? candidate.consume(),
+      );
+    }
   }
 
   throw new Error(
     `Exceeded ${MAX_REPLACEMENT_PASSES} replacement passes while resolving event '${currentEvent.eventId}'.`,
   );
+}
+
+export function applyReplacementEffects<TEvent extends ReplacementEvent>(
+  ctx: ReplacementContext,
+  event: TEvent,
+  options?: ReplacementEffectsOptions,
+): TEvent {
+  return runReplacementEffects(ctx, event, false, options);
+}
+
+export function previewReplacementEffects<TEvent extends ReplacementEvent>(
+  ctx: ReplacementContext,
+  event: TEvent,
+): TEvent {
+  return runReplacementEffects(ctx, event, true);
 }

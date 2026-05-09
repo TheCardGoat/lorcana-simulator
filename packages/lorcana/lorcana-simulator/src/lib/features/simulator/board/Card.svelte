@@ -24,6 +24,7 @@
     isGhost?: boolean;
     isDraggable?: boolean;
     isPlayable?: boolean;
+    isValidTarget?: boolean;
     isInvalidTarget?: boolean;
     isQuesting?: boolean;
     isDrying?: boolean;
@@ -43,6 +44,7 @@
     isGhost = false,
     isDraggable = false,
     isPlayable = false,
+    isValidTarget = false,
     isInvalidTarget = false,
     isQuesting = false,
     isDrying = false,
@@ -62,6 +64,7 @@
   {isGhost}
   {isDraggable}
   {isPlayable}
+  {isValidTarget}
   {isInvalidTarget}
   {isQuesting}
   {isDrying}

@@ -135,7 +135,9 @@ export class MatchRuntime {
   private board: FilteredMatchView;
   private cachedEnumeratedMovesStateID = -1;
   private cachedEnumeratedMovesByActor = new Map<string, RuntimeLegalMove<MoveRecord>[]>();
-  private runtimeCardCache = createStateScopedValueCache<unknown>();
+  private runtimeCardCache = createStateScopedValueCache<unknown>({
+    label: "runtime-card-derived",
+  });
 
   constructor(config: MatchRuntimeConfig, init: MatchRuntimeInit) {
     this.config = config;
@@ -519,16 +521,16 @@ export class MatchRuntime {
     input: MoveInput,
     validationMode: "preflight" | "final" = "final",
   ): MoveValidationContext<MoveInput> {
-    return buildValidationContext(
-      this.state,
+    return buildValidationContext({
+      state: this.state,
       playerId,
       input,
-      this.config as unknown as MatchRuntimeConfig,
-      this.staticResources,
-      this.gameEnded,
+      config: this.config as unknown as MatchRuntimeConfig,
+      staticResources: this.staticResources,
+      gameEnded: this.gameEnded,
       validationMode,
-      this.runtimeCardCache,
-    );
+      caches: { runtimeCard: this.runtimeCardCache },
+    });
   }
 
   getRuntimeCardCacheStats() {

@@ -1,6 +1,6 @@
 import type { CharacterCard } from "@tcg/lorcana-types";
-import { challenger } from "../../../helpers/abilities/challenger";
 import { elinorBespelledQueenI18n } from "./051-elinor-bespelled-queen.i18n";
+import { challenger } from "../../../helpers/abilities/challenger";
 
 export const elinorBespelledQueen: CharacterCard = {
   id: "9Ll",
@@ -19,6 +19,9 @@ export const elinorBespelledQueen: CharacterCard = {
   willpower: 4,
   lore: 2,
   inkable: true,
+  externalIds: {
+    lorcast: "crd_0a71c3e50580448eabd6ee24d079ecad",
+  },
   text: "Challenger +2",
   classifications: ["Storyborn", "Queen"],
   abilities: [challenger(2)],

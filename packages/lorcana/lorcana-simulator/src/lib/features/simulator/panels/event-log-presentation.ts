@@ -34,6 +34,13 @@ export type EventLogRow =
       };
       segments: EventLogSegment[];
       source: "typed" | "fallback";
+      /**
+       * Manual / Board-State-Correction moves break out of the surrounding
+       * actor group so corrections are visually separated from in-engine
+       * play. Without this, a player's manual damage tweak would silently
+       * fold into their regular play stream and look like part of the move.
+       */
+      isManual: boolean;
     };
 
 export function filterEntriesToLastTurns(
@@ -66,6 +73,7 @@ export type EventLogGroup =
       kind: "event-group";
       id: string;
       actor: { label: string; tone: EventLogPlayerTone };
+      isManual: boolean;
       rows: Extract<EventLogRow, { kind: "event-row" }>[];
     };
 
@@ -85,13 +93,18 @@ export function groupEventLogRows(rows: EventLogRow[]): EventLogGroup[] {
       continue;
     }
 
-    if (currentGroup && currentGroup.actor.tone === row.actor.tone) {
+    if (
+      currentGroup &&
+      currentGroup.actor.tone === row.actor.tone &&
+      currentGroup.isManual === row.isManual
+    ) {
       currentGroup.rows.push(row);
     } else {
       currentGroup = {
         kind: "event-group",
         id: row.id,
         actor: row.actor,
+        isManual: row.isManual,
         rows: [row],
       };
       groups.push(currentGroup);
@@ -104,6 +117,7 @@ export function groupEventLogRows(rows: EventLogRow[]): EventLogGroup[] {
 export function buildEventLogRows(
   entries: MoveLogEntrySnapshot[],
   viewerSide?: LorcanaPlayerSide | null,
+  resolveCard?: CardReferenceResolver,
 ): EventLogRow[] {
   const visibleEntries = filterEntriesToLastTurns(entries);
   if (visibleEntries.length === 0) {
@@ -125,7 +139,7 @@ export function buildEventLogRows(
       });
     }
 
-    rows.push(buildEventRow(entry, viewerSide));
+    rows.push(buildEventRow(entry, viewerSide, resolveCard));
   }
 
   return rows;
@@ -134,8 +148,9 @@ export function buildEventLogRows(
 function buildEventRow(
   entry: MoveLogEntrySnapshot,
   viewerSide?: LorcanaPlayerSide | null,
+  resolveCard?: CardReferenceResolver,
 ): Extract<EventLogRow, { kind: "event-row" }> {
-  const body = formatEventLogBody(entry, viewerSide);
+  const body = formatEventLogBody(entry, viewerSide, undefined, resolveCard);
 
   return {
     kind: "event-row",
@@ -146,6 +161,7 @@ function buildEventRow(
     actor: buildActor(entry.actorSide, viewerSide),
     segments: body.segments,
     source: body.source,
+    isManual: entry.moveId.startsWith("manual"),
   };
 }
 
@@ -165,8 +181,9 @@ export function buildActivityFeed(
   entries: MoveLogEntrySnapshot[],
   chatMessages: readonly ChatMessage[],
   viewerSide?: LorcanaPlayerSide | null,
+  resolveCard?: CardReferenceResolver,
 ): ActivityFeedGroup[] {
-  const rows = buildEventLogRows(entries, viewerSide);
+  const rows = buildEventLogRows(entries, viewerSide, resolveCard);
   const groups = groupEventLogRows(rows);
 
   // Oldest visible game event timestamp — used to filter out stale chat messages
@@ -241,9 +258,15 @@ export function buildActivityFeed(
 
   // Stable sort: by epoch ascending; separators sort before same-epoch non-separators
   sortable.sort((a, b) => {
-    if (a.epochMs !== b.epochMs) return a.epochMs - b.epochMs;
-    if (a.isSeparator && !b.isSeparator) return -1;
-    if (!a.isSeparator && b.isSeparator) return 1;
+    if (a.epochMs !== b.epochMs) {
+      return a.epochMs - b.epochMs;
+    }
+    if (a.isSeparator && !b.isSeparator) {
+      return -1;
+    }
+    if (!a.isSeparator && b.isSeparator) {
+      return 1;
+    }
     return 0;
   });
 

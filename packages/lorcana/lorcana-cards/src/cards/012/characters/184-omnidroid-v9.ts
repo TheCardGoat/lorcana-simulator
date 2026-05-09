@@ -36,7 +36,7 @@ export const omnidroidV9: CharacterCard = {
   abilities: [
     shift(2),
     {
-      id: "RM2-1",
+      id: "RM2-2",
       name: "ENEMY DETECTED",
       type: "triggered",
       text: "ENEMY DETECTED When you play this character, if you used Shift to play it, you may deal 2 damage to chosen character.",

@@ -21,6 +21,7 @@ import {
   createProjectionState,
   getEffectiveLore,
   getEffectiveStrength,
+  getEffectiveWillpower,
   type DerivedStateContext,
 } from "../../rules/derived-state";
 import { getOrBuildMoveRegistry } from "../../runtime-moves/rules/move-registry-cache";
@@ -55,6 +56,22 @@ export type TargetDescriptor = FilterCarrier & {
   excludeSelf?: boolean;
   excludeTriggerSubject?: boolean;
   requireDifferentTargets?: boolean;
+  /**
+   * Optional cap on the sum of selected targets' ink costs.
+   *
+   * When present, {@link resolveEffectTargets} drops trailing selections whose
+   * cumulative cost would exceed the budget, keeping the largest legal prefix
+   * of the chooser's selection.
+   */
+  totalCostBudget?: number;
+  /**
+   * Optional cap on the sum of selected targets' base Strength.
+   *
+   * When present, {@link resolveEffectTargets} drops trailing selections whose
+   * cumulative Strength would exceed the budget, keeping the largest legal
+   * prefix of the chooser's selection.
+   */
+  totalStrengthBudget?: number;
 };
 
 export type PlayerTargetDescriptor = FilterCarrier & {
@@ -254,6 +271,16 @@ export function normalizeTargetDescriptor(target: unknown): TargetDescriptor | u
         filters: targetRecord.filters,
         excludeSelf: targetRecord.excludeSelf === true,
         requireDifferentTargets: targetRecord.requireDifferentTargets === true,
+        totalCostBudget:
+          typeof targetRecord.totalCostBudget === "number" &&
+          Number.isFinite(targetRecord.totalCostBudget)
+            ? targetRecord.totalCostBudget
+            : undefined,
+        totalStrengthBudget:
+          typeof targetRecord.totalStrengthBudget === "number" &&
+          Number.isFinite(targetRecord.totalStrengthBudget)
+            ? targetRecord.totalStrengthBudget
+            : undefined,
       };
     }
   }
@@ -263,7 +290,24 @@ export function normalizeTargetDescriptor(target: unknown): TargetDescriptor | u
     return undefined;
   }
 
-  return normalized as TargetDescriptor;
+  // Copy budget fields that may not be propagated by older normalizeLorcanaTarget versions.
+  const descriptor = normalized as TargetDescriptor;
+  const rawTarget = target as Record<string, unknown>;
+  if (
+    descriptor.totalCostBudget === undefined &&
+    typeof rawTarget.totalCostBudget === "number" &&
+    Number.isFinite(rawTarget.totalCostBudget)
+  ) {
+    descriptor.totalCostBudget = rawTarget.totalCostBudget as number;
+  }
+  if (
+    descriptor.totalStrengthBudget === undefined &&
+    typeof rawTarget.totalStrengthBudget === "number" &&
+    Number.isFinite(rawTarget.totalStrengthBudget)
+  ) {
+    descriptor.totalStrengthBudget = rawTarget.totalStrengthBudget as number;
+  }
+  return descriptor;
 }
 
 export function isPlayerTargetDescriptor(target: unknown): target is PlayerTargetDescriptor {
@@ -505,6 +549,11 @@ export function passesFilter(
       getCardStrengthByInstanceId?: (cardId: CardInstanceId) => number;
     }
   ).getCardStrengthByInstanceId;
+  const getWillpowerByInstanceId = (
+    ctx as {
+      getCardWillpowerByInstanceId?: (cardId: CardInstanceId) => number;
+    }
+  ).getCardWillpowerByInstanceId;
   let filterRegistry: ReturnType<typeof getOrBuildMoveRegistry> | undefined;
   const getFilterRegistry = () => {
     if (disableFilterRegistry) {
@@ -796,10 +845,18 @@ export function passesFilter(
       if (typeof value !== "number" || !Number.isFinite(value)) {
         return false;
       }
-      const runtimeCard = ctx.cards.require(cardId) as { getWillpower?: () => number } | undefined;
-      const runtimeWillpower = runtimeCard?.getWillpower?.();
-      const willpower = Number(runtimeWillpower ?? cardDefinition?.willpower ?? 0);
-      return compareOperator(willpower, operator, value);
+      const willpower = getEffectiveWillpower(
+        cardDefinition as any,
+        getDerivedState(ctx),
+        cardId,
+        (id) => ctx.cards.getDefinition(id) as any,
+        disableFilterRegistry ? undefined : getFilterRegistry(),
+      );
+      const effectiveWillpower =
+        disableFilterRegistry && getWillpowerByInstanceId
+          ? getWillpowerByInstanceId(cardId)
+          : willpower;
+      return compareOperator(effectiveWillpower, operator, value);
     }
 
     case "lore":
@@ -1275,6 +1332,19 @@ function resolveCandidateTargetsInternal(
     );
   }
 
+  // When requireDifferentTargets is set and earlier sequence steps have
+  // recorded their targets in previouslyTargetedCardIds, exclude those cards
+  // from the candidate pool. This prevents a staged optional step (e.g. Three
+  // Arrows step 2) from allowing the player to pick the same character that
+  // was targeted in step 1.
+  if (
+    descriptor.requireDifferentTargets === true &&
+    queryContext?.eventSnapshot?.previouslyTargetedCardIds?.length
+  ) {
+    const excluded = new Set(queryContext.eventSnapshot.previouslyTargetedCardIds);
+    resolvedCandidates = resolvedCandidates.filter((cardId) => !excluded.has(cardId));
+  }
+
   if (descriptor.excludeTriggerSubject) {
     const eventSnapshot = queryContext?.eventSnapshot;
     // For deal-damage events in a challenge, exclude the defender (the card that was damaged).
@@ -1586,7 +1656,97 @@ export function resolveEffectTargets(
     selectedTargets,
     sourceCardId: cardPlayed.cardId,
   });
-  return selectTargets(candidates, descriptor, selectedTargets, {
+  const selected = selectTargets(candidates, descriptor, selectedTargets, {
     sourceCardId: cardPlayed.cardId,
   });
+
+  const afterCostBudget = applyTotalCostBudget(ctx, selected, descriptor);
+  return applyTotalStrengthBudget(ctx, afterCostBudget, descriptor);
+}
+
+/**
+ * Enforce `descriptor.totalCostBudget` by keeping the longest legal prefix of
+ * the chooser's selection whose cumulative ink cost stays within the budget.
+ *
+ * Trailing selections that would push the running total over the cap are
+ * dropped. When no budget is configured, the selection is returned as-is.
+ */
+function applyTotalCostBudget(
+  ctx: EffectTargetRuntimeContext,
+  selected: CardInstanceId[],
+  descriptor: TargetDescriptor,
+): CardInstanceId[] {
+  const budget = descriptor.totalCostBudget;
+  if (typeof budget !== "number" || !Number.isFinite(budget) || selected.length === 0) {
+    return selected;
+  }
+
+  const accepted: CardInstanceId[] = [];
+  let spent = 0;
+  for (const cardId of selected) {
+    const definition = getCardDefinition(ctx, cardId);
+    const cost =
+      typeof definition?.cost === "number" && Number.isFinite(definition.cost)
+        ? definition.cost
+        : 0;
+    if (spent + cost > budget) {
+      break;
+    }
+    accepted.push(cardId);
+    spent += cost;
+  }
+  return accepted;
+}
+
+/**
+ * Enforce `descriptor.totalStrengthBudget` by keeping the longest legal prefix
+ * of the chooser's selection whose cumulative effective Strength stays within
+ * the budget. Used by effects like "banish any number of chosen opposing
+ * characters with total {S} N or less" (e.g. The Leviathan, Guardian of
+ * Atlantis).
+ *
+ * Per Lorcana rules ("when totalling opposing {S}, modifiers count, and a
+ * current {S} below 0 is treated as 0"), this consults each card's CURRENT
+ * effective strength via `getEffectiveStrength` rather than the printed
+ * `definition.strength`. Reading the printed value alone would reject
+ * legitimate selections when targets have +S/-S modifiers in play (player
+ * report 2026-05-06: "Leviathan selected 4 targets to banish but only 2 of
+ * the 4 were banished. The strength of the characters was not above 10.").
+ *
+ * Trailing selections that would push the running total over the cap are
+ * dropped. When no budget is configured, the selection is returned as-is.
+ */
+function applyTotalStrengthBudget(
+  ctx: EffectTargetRuntimeContext,
+  selected: CardInstanceId[],
+  descriptor: TargetDescriptor,
+): CardInstanceId[] {
+  const budget = descriptor.totalStrengthBudget;
+  if (typeof budget !== "number" || !Number.isFinite(budget) || selected.length === 0) {
+    return selected;
+  }
+
+  const derivedState = getDerivedState(ctx);
+  const registry = getOrBuildMoveRegistry(
+    ctx as import("../../runtime-moves/rules/move-registry-cache").MoveRegistryCtx,
+  );
+  const accepted: CardInstanceId[] = [];
+  let spent = 0;
+  for (const cardId of selected) {
+    const definition = getCardDefinition(ctx, cardId);
+    // Effective strength clamps negatives to 0 (`clampCharacteristicForRules`).
+    const strength = getEffectiveStrength(
+      definition as any,
+      derivedState,
+      cardId,
+      (id) => ctx.cards.getDefinition(id) as any,
+      registry,
+    );
+    if (spent + strength > budget) {
+      break;
+    }
+    accepted.push(cardId);
+    spent += strength;
+  }
+  return accepted;
 }

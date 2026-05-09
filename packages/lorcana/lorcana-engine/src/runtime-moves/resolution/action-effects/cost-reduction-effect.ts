@@ -43,9 +43,23 @@ function resolveCostReductionAmount(
   return 0;
 }
 
+type NormalizedCardType = "character" | "item" | "location" | "action" | "song";
+
 function normalizeCardType(
   cardType: CostReductionEffect["cardType"],
-): "character" | "item" | "location" | "action" | "song" | undefined {
+): NormalizedCardType | NormalizedCardType[] | undefined {
+  if (Array.isArray(cardType)) {
+    const normalized = cardType.filter(
+      (value): value is NormalizedCardType =>
+        value === "character" ||
+        value === "item" ||
+        value === "location" ||
+        value === "action" ||
+        value === "song",
+    );
+    return normalized.length > 0 ? normalized : undefined;
+  }
+
   switch (cardType) {
     case "character":
     case "item":

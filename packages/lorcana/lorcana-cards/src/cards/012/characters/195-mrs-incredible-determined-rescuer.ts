@@ -20,7 +20,7 @@ export const mrsIncredibleDeterminedRescuer: CharacterCard = {
   lore: 3,
   inkable: true,
   externalIds: {
-    lorcast: "crd_b50f7fa4b213465981b1b4cd05d54ee2",
+    lorcast: "crd_fcfb9ad84f3a4c2db462a9ec4d3a63d1",
   },
   text: [
     {
@@ -42,8 +42,8 @@ export const mrsIncredibleDeterminedRescuer: CharacterCard = {
     {
       id: "2J3-2",
       name: "PULL BACK",
-      text: "PULL BACK Your characters gain Resist +1.",
       type: "static",
+      text: "PULL BACK Your characters gain Resist +1.",
       effect: {
         type: "gain-keyword",
         keyword: "Resist",
@@ -57,16 +57,13 @@ export const mrsIncredibleDeterminedRescuer: CharacterCard = {
       type: "triggered",
       text: "REGROUP During your turn, whenever another character is banished in a challenge, you may ready chosen Super character. If you do, they can't quest for the rest of this turn.",
       trigger: {
-        event: "banish",
+        event: "banish-in-challenge",
         on: "OTHER_CHARACTERS",
         timing: "whenever",
         restrictions: [
           {
             type: "during-turn",
             whose: "your",
-          },
-          {
-            type: "in-challenge",
           },
         ],
       },
@@ -97,7 +94,7 @@ export const mrsIncredibleDeterminedRescuer: CharacterCard = {
               restriction: "cant-quest",
               duration: "this-turn",
               target: {
-                reference: "selected-first",
+                ref: "previous-target",
               },
             },
           ],

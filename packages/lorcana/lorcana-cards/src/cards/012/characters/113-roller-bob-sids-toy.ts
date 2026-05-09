@@ -40,12 +40,12 @@ export const rollerBobSidsToy: CharacterCard = {
         timing: "when",
       },
       effect: {
-        type: "sequence",
-        steps: [
-          {
-            type: "optional",
-            chooser: "CONTROLLER",
-            effect: {
+        type: "optional",
+        chooser: "CONTROLLER",
+        effect: {
+          type: "sequence",
+          steps: [
+            {
               type: "put-on-bottom",
               target: {
                 cardTypes: ["character"],
@@ -55,20 +55,14 @@ export const rollerBobSidsToy: CharacterCard = {
                 zones: ["discard"],
               },
             },
-          },
-          {
-            type: "conditional",
-            condition: {
-              type: "if-you-do",
-            },
-            then: {
+            {
               type: "gain-keyword",
               keyword: "Rush",
               duration: "this-turn",
               target: "SELF",
             },
-          },
-        ],
+          ],
+        },
       },
       text: "TIME TO MOVE When you play this character, you may put 2 character cards from your discard on the bottom of your deck to give this character Rush this turn.",
     },

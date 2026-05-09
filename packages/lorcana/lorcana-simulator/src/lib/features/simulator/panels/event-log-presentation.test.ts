@@ -110,6 +110,16 @@ const FORMAT_CASES = {
     values: { playerId: "player_one", count: 2, lookedAt: ["card-primary", "card-secondary"] },
     expected: "Looked at the top 2 cards: Ariel - On Human Legs, Mickey Mouse - Detective.",
   },
+  "lorcana.effect.lookAtInkwell": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", count: 3 },
+    expected: "Looked at their inkwell (3 cards).",
+  },
+  "lorcana.effect.lookAtInkwell.detail": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", count: 2, cardIds: ["card-primary", "card-secondary"] },
+    expected: "Looked at their inkwell (2 cards): Ariel - On Human Legs, Mickey Mouse - Detective.",
+  },
   "lorcana.move.playCard": {
     moveId: "playCard",
     values: { playerId: "player_one", cardId: "card-primary" },
@@ -254,6 +264,27 @@ const FORMAT_CASES = {
     values: { playerId: "player_one", sourceCardId: "card-primary" },
     expected: "Resolved Ariel - On Human Legs by choosing yes.",
   },
+  "lorcana.effect.resolve.optionalSelection.accepted.targets": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      sourceCardId: "card-primary",
+      targets: ["card-secondary", "card-location"],
+    },
+    expected:
+      "Resolved Ariel - On Human Legs by choosing yes, targeting Mickey Mouse - Detective, Motunui - Island Paradise.",
+  },
+  "lorcana.effect.resolve.optionalSelection.accepted.targets.named": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      sourceCardId: "card-primary",
+      abilityName: "Singer 5",
+      targets: ["card-secondary", "card-location"],
+    },
+    expected:
+      "Resolved Singer 5 from Ariel - On Human Legs by choosing yes, targeting Mickey Mouse - Detective, Motunui - Island Paradise.",
+  },
   "lorcana.effect.resolve.optionalSelection.rejected": {
     moveId: "resolveEffect",
     values: { playerId: "player_one", sourceCardId: "card-primary" },
@@ -355,6 +386,25 @@ const FORMAT_CASES = {
     },
     expected: "Ariel - On Human Legs dealt 4 damage to Mickey Mouse - Detective.",
   },
+  "lorcana.outcome.damageMoved": {
+    moveId: "resolveBag",
+    values: {
+      playerId: "player_one",
+      sourceId: "card-primary",
+      targetId: "card-secondary",
+      amount: 3,
+    },
+    expected: "Moved 3 damage from Ariel - On Human Legs to Mickey Mouse - Detective.",
+  },
+  "lorcana.outcome.damagePrevented": {
+    moveId: "resolveEffect",
+    values: {
+      playerId: "player_one",
+      targetId: "card-primary",
+      amount: 2,
+    },
+    expected: "Ariel - On Human Legs took no damage — 2 damage was prevented.",
+  },
   "lorcana.outcome.cardBanished": {
     moveId: "challenge",
     values: { playerId: "player_one", cardId: "card-primary" },
@@ -404,6 +454,12 @@ const FORMAT_CASES = {
     moveId: "resolveEffect",
     values: { playerId: "player_one", amount: 3 },
     expected: "Milled 3 card(s).",
+  },
+  "lorcana.outcome.cardsPutOnBottom": {
+    moveId: "resolveEffect",
+    values: { playerId: "player_one", cardIds: ["card-secondary", "card-tertiary"] },
+    expected:
+      "Put Mickey Mouse - Detective, Grumpy - Soreheaded Miner on the bottom of their deck(s).",
   },
   "lorcana.move.playCard.shift": {
     moveId: "playCard",
@@ -538,11 +594,22 @@ function createTestResolver() {
     id: "card-location",
     name: "Motunui - Island Paradise",
   });
+  const tertiaryCard = createLogCardReference("playerTwo", {
+    id: "card-tertiary",
+    name: "Grumpy - Soreheaded Miner",
+    inkType: ["amethyst"],
+  });
+  const shiftTargetCard = createLogCardReference("playerOne", {
+    id: "t000014",
+    name: "Merlin - Shapeshifter",
+  });
 
   const cardMap = new Map([
     [primaryCard.cardId, primaryCard],
     [secondaryCard.cardId, secondaryCard],
     [locationCard.cardId, locationCard],
+    [tertiaryCard.cardId, tertiaryCard],
+    [shiftTargetCard.cardId, shiftTargetCard],
   ]);
 
   return (cardId: string) => cardMap.get(cardId) ?? null;
@@ -615,6 +682,86 @@ describe("event log presentation", () => {
     expect(flattenRowText(entry)).toBe("Played Ariel - On Human Legs.");
   });
 
+  it("formats typed play-card target selections by naming the play effect", () => {
+    const entry = createTypedEntry("lorcana.effect.resolve.targetSelection", {
+      moveId: "resolveEffect",
+      values: {
+        playerId: "player_one",
+        sourceCardId: "card-primary",
+        targets: ["card-secondary"],
+        effectType: "play-card",
+      },
+      expected: "Resolved Ariel - On Human Legs by playing Mickey Mouse - Detective.",
+    });
+
+    expect(flattenRowText(entry)).toBe(
+      "Resolved Ariel - On Human Legs by playing Mickey Mouse - Detective.",
+    );
+  });
+
+  it("formats flat persisted sing-card logs with cards put on bottom", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const tertiaryCardId = "card-tertiary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "singCard",
+        playerId: playerOneId,
+        timestamp: 123,
+        cardId: primaryCardId,
+        singerIds: [secondaryCardId],
+        outcomes: {
+          cardsMovedToZone: [
+            { cardId: secondaryCardId, zone: "deck-bottom" },
+            { cardId: tertiaryCardId, zone: "deck-bottom" },
+          ],
+        },
+      },
+      { moveId: "playCard" },
+    );
+
+    expect(flattenRowText(entry)).toBe(
+      "Played Ariel - On Human Legs by singing with Mickey Mouse - Detective. Put Mickey Mouse - Detective, Grumpy - Soreheaded Miner on the bottom of their deck(s).",
+    );
+  });
+
+  it("formats flat persisted play-card logs with grouped multi-target effect damage", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const tertiaryCardId = "card-tertiary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "playCard",
+        playerId: playerOneId,
+        timestamp: 123,
+        cardId: primaryCardId,
+        outcomes: {
+          damageDealt: [
+            {
+              sourceId: primaryCardId,
+              targetId: secondaryCardId,
+              amount: 2,
+              kind: "effect",
+            },
+            {
+              sourceId: primaryCardId,
+              targetId: tertiaryCardId,
+              amount: 2,
+              kind: "effect",
+            },
+          ],
+        },
+      },
+      { moveId: "playCard" },
+    );
+
+    expect(flattenRowText(entry)).toBe(
+      "Played Ariel - On Human Legs, dealing 2 damage to Mickey Mouse - Detective and Grumpy - Soreheaded Miner.",
+    );
+  });
+
   it("formats flat persisted challenge logs with combat outcomes", () => {
     const playerOneId = "player_one" as PlayerId;
     const primaryCardId = "card-primary" as CardInstanceId;
@@ -634,6 +781,231 @@ describe("event log presentation", () => {
 
     expect(flattenRowText(entry)).toBe(
       "Challenged Mickey Mouse - Detective with Ariel - On Human Legs. Ariel - On Human Legs dealt 3 damage to Mickey Mouse - Detective. Mickey Mouse - Detective dealt 2 damage to Ariel - On Human Legs. Mickey Mouse - Detective was banished.",
+    );
+  });
+
+  it("formats flat persisted effect-resolution logs with inline effect damage outcomes", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "resolveEffect",
+        playerId: playerOneId,
+        timestamp: 123,
+        sourceCardId: primaryCardId,
+        resolution: { kind: "optionalSelection", accepted: true },
+        outcomes: {
+          damageDealt: [
+            {
+              sourceId: primaryCardId,
+              targetId: secondaryCardId,
+              amount: 4,
+              kind: "effect",
+            },
+          ],
+        },
+      },
+      { moveId: "resolveEffect" },
+    );
+
+    expect(flattenRowText(entry)).toBe(
+      "Resolved Ariel - On Human Legs by choosing yes, dealing 4 damage to Mickey Mouse - Detective.",
+    );
+  });
+
+  it("formats play-card target selections by naming the play effect", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "resolveEffect",
+        playerId: playerOneId,
+        timestamp: 123,
+        sourceCardId: primaryCardId,
+        resolution: { kind: "targetSelection", targets: [secondaryCardId] },
+        outcomes: {
+          cardsMovedToZone: [{ cardId: secondaryCardId, zone: "play" }],
+        },
+      },
+      { moveId: "resolveEffect" },
+    );
+
+    expect(flattenRowText(entry)).toBe(
+      "Resolved Ariel - On Human Legs by playing Mickey Mouse - Detective.",
+    );
+  });
+
+  it("formats flat persisted bag-resolution logs with inline effect damage outcomes", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "resolveBag",
+        playerId: playerOneId,
+        timestamp: 123,
+        sourceCardId: primaryCardId,
+        abilityName: "STEADY AIM",
+        status: "completed",
+        resolution: { kind: "noInput" },
+        outcomes: {
+          damageDealt: [
+            {
+              sourceId: primaryCardId,
+              targetId: secondaryCardId,
+              amount: 2,
+              kind: "effect",
+            },
+          ],
+        },
+      },
+      { moveId: "resolveBag" },
+    );
+
+    expect(flattenRowText(entry)).toBe(
+      "Resolved STEADY AIM from Ariel - On Human Legs, dealing 2 damage to Mickey Mouse - Detective.",
+    );
+  });
+
+  it("formats inline effect damage that banishes the damaged target", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "resolveBag",
+        playerId: playerOneId,
+        timestamp: 123,
+        sourceCardId: primaryCardId,
+        abilityName: "STEADY AIM",
+        status: "completed",
+        resolution: { kind: "noInput" },
+        outcomes: {
+          damageDealt: [
+            {
+              sourceId: primaryCardId,
+              targetId: secondaryCardId,
+              amount: 2,
+              kind: "effect",
+            },
+          ],
+          cardsBanished: [secondaryCardId],
+        },
+      },
+      { moveId: "resolveBag" },
+    );
+
+    expect(flattenRowText(entry)).toBe(
+      "Resolved STEADY AIM from Ariel - On Human Legs, dealing 2 damage to Mickey Mouse - Detective, banishing Mickey Mouse - Detective.",
+    );
+  });
+
+  it("keeps unrelated banish outcomes separate from inline effect damage", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const tertiaryCardId = "card-tertiary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "resolveBag",
+        playerId: playerOneId,
+        timestamp: 123,
+        sourceCardId: primaryCardId,
+        abilityName: "STEADY AIM",
+        status: "completed",
+        resolution: { kind: "noInput" },
+        outcomes: {
+          damageDealt: [
+            {
+              sourceId: primaryCardId,
+              targetId: secondaryCardId,
+              amount: 2,
+              kind: "effect",
+            },
+          ],
+          cardsBanished: [tertiaryCardId],
+        },
+      },
+      { moveId: "resolveBag" },
+    );
+
+    expect(flattenRowText(entry)).toBe(
+      "Resolved STEADY AIM from Ariel - On Human Legs. Grumpy - Soreheaded Miner was banished. Ariel - On Human Legs dealt 2 damage to Mickey Mouse - Detective.",
+    );
+  });
+
+  it("formats flat persisted effect-resolution logs with grouped multi-target effect damage", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const tertiaryCardId = "card-tertiary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "resolveEffect",
+        playerId: playerOneId,
+        timestamp: 123,
+        sourceCardId: primaryCardId,
+        resolution: { kind: "optionalSelection", accepted: true },
+        outcomes: {
+          damageDealt: [
+            {
+              sourceId: primaryCardId,
+              targetId: secondaryCardId,
+              amount: 2,
+              kind: "effect",
+            },
+            {
+              sourceId: primaryCardId,
+              targetId: tertiaryCardId,
+              amount: 2,
+              kind: "effect",
+            },
+          ],
+        },
+      },
+      { moveId: "resolveEffect" },
+    );
+
+    expect(flattenRowText(entry)).toBe(
+      "Resolved Ariel - On Human Legs by choosing yes, dealing 2 damage to Mickey Mouse - Detective and Grumpy - Soreheaded Miner.",
+    );
+  });
+
+  it("keeps mixed effect damage amounts as separate outcome sentences", () => {
+    const playerOneId = "player_one" as PlayerId;
+    const primaryCardId = "card-primary" as CardInstanceId;
+    const secondaryCardId = "card-secondary" as CardInstanceId;
+    const tertiaryCardId = "card-tertiary" as CardInstanceId;
+    const entry = createFlatEntry(
+      {
+        type: "playCard",
+        playerId: playerOneId,
+        timestamp: 123,
+        cardId: primaryCardId,
+        outcomes: {
+          damageDealt: [
+            {
+              sourceId: primaryCardId,
+              targetId: secondaryCardId,
+              amount: 2,
+              kind: "effect",
+            },
+            {
+              sourceId: primaryCardId,
+              targetId: tertiaryCardId,
+              amount: 1,
+              kind: "effect",
+            },
+          ],
+        },
+      },
+      { moveId: "playCard" },
+    );
+
+    expect(flattenRowText(entry)).toBe(
+      "Played Ariel - On Human Legs. Ariel - On Human Legs dealt 2 damage to Mickey Mouse - Detective. Ariel - On Human Legs dealt 1 damage to Grumpy - Soreheaded Miner.",
     );
   });
 
@@ -678,7 +1050,7 @@ describe("event log presentation", () => {
     expect(flattenRowText(entry)).toBe("Altered 2 cards.");
   });
 
-  it("flat shiftCard: uses shiftTargetName when the resolver would show a hidden shift target", () => {
+  it("flat shiftCard: resolves the shift target name from the static resolver", () => {
     const playerOneId = "player_one" as PlayerId;
     const primaryCardId = "card-primary" as CardInstanceId;
     const shiftTargetId = "t000014" as CardInstanceId;
@@ -689,18 +1061,65 @@ describe("event log presentation", () => {
         timestamp: 123,
         cardId: primaryCardId,
         shiftTargetId,
-        shiftTargetName: "Merlin - Shapeshifter",
       },
       { moveId: "playCard" },
     );
 
-    const baseResolver = createTestResolver();
-    const resolveHiddenShiftTarget: CardReferenceResolver = (cardId) =>
-      cardId === shiftTargetId ? { label: "Hidden card" } : baseResolver(cardId);
-
-    expect(formatEventLogBody(entry, "playerOne", undefined, resolveHiddenShiftTarget).text).toBe(
+    expect(formatEventLogBody(entry, "playerOne", undefined, createTestResolver()).text).toBe(
       "Played Ariel - On Human Legs by shifting onto Merlin - Shapeshifter.",
     );
+  });
+
+  it("renders manualMoveCard to a non-deck zone", () => {
+    const entry = createLogEntry("Manual move to hand", {
+      moveId: "manualMoveCard",
+      playerId: "player_one",
+      params: { cardId: "card-primary", targetZoneId: "hand:player_one" },
+    });
+
+    expect(flattenRowText(entry)).toBe("You — manually moved Ariel - On Human Legs to hand.");
+  });
+
+  it("renders manualMoveCard to deck top", () => {
+    const entry = createLogEntry("Manual move to deck top", {
+      moveId: "manualMoveCard",
+      playerId: "player_one",
+      params: {
+        cardId: "card-primary",
+        targetZoneId: "deck:player_one",
+        position: "top",
+      },
+    });
+
+    expect(flattenRowText(entry)).toBe(
+      "You — manually moved Ariel - On Human Legs to top of deck.",
+    );
+  });
+
+  it("renders manualMoveCard to deck bottom", () => {
+    const entry = createLogEntry("Manual move to deck bottom", {
+      moveId: "manualMoveCard",
+      playerId: "player_one",
+      params: {
+        cardId: "card-primary",
+        targetZoneId: "deck:player_one",
+        position: "bottom",
+      },
+    });
+
+    expect(flattenRowText(entry)).toBe(
+      "You — manually moved Ariel - On Human Legs to bottom of deck.",
+    );
+  });
+
+  it("renders manualMoveCard to deck without position as plain deck", () => {
+    const entry = createLogEntry("Manual move to deck", {
+      moveId: "manualMoveCard",
+      playerId: "player_one",
+      params: { cardId: "card-primary", targetZoneId: "deck:player_one" },
+    });
+
+    expect(flattenRowText(entry)).toBe("You — manually moved Ariel - On Human Legs to deck.");
   });
 });
 

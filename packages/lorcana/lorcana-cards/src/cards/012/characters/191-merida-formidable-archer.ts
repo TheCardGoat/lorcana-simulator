@@ -65,10 +65,14 @@ export const meridaFormidableArcher: CharacterCard = {
       trigger: {
         event: "deal-damage",
         on: {
-          controller: "you",
-          cardType: "action",
+          controller: "opponent",
+          cardType: "character",
         },
         timing: "whenever",
+        sourceFilter: {
+          cardType: ["action"],
+          sourceController: "you",
+        },
       },
       effect: {
         type: "deal-damage",

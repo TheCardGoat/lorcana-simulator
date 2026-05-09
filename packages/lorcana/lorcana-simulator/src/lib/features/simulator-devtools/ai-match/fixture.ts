@@ -1,5 +1,5 @@
 import type { LorcanaSimulatorFixtureInput } from "../fixtures/fixture-factory.js";
-import { createFixture } from "../fixtures/fixture-factory.js";
+import { createFixtureFromDeckList } from "../fixtures/fixture-factory.js";
 import type { AutomatedMatchConfig, AutomatedMatchValidationErrors } from "./types.js";
 
 const VALIDATION_FIXTURE_ID = "automated-match-validation";
@@ -70,18 +70,18 @@ function sanitizeValidationMessage(message: string): string {
     .trim();
 }
 
-export function createAutomatedMatchFixture(config: AutomatedMatchConfig) {
-  return createFixture(buildFixtureInput(config));
+export async function createAutomatedMatchFixture(config: AutomatedMatchConfig) {
+  return createFixtureFromDeckList(buildFixtureInput(config));
 }
 
-export function validateAutomatedMatchConfig(
+export async function validateAutomatedMatchConfig(
   config: AutomatedMatchConfig,
-): AutomatedMatchValidationErrors {
+): Promise<AutomatedMatchValidationErrors> {
   const errors: AutomatedMatchValidationErrors = {};
   const validDeckText = config.playerOneDeckText || config.playerTwoDeckText;
 
   try {
-    createFixture(
+    await createFixtureFromDeckList(
       buildValidationFixtureInput("playerOne", config.playerOneDeckText, validDeckText),
     );
   } catch (error) {
@@ -90,7 +90,7 @@ export function validateAutomatedMatchConfig(
   }
 
   try {
-    createFixture(
+    await createFixtureFromDeckList(
       buildValidationFixtureInput("playerTwo", config.playerTwoDeckText, validDeckText),
     );
   } catch (error) {

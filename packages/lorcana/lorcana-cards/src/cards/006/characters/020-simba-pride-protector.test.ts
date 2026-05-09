@@ -137,6 +137,29 @@ describe("Simba - Pride Protector", () => {
   });
 
   describe("Regression", () => {
+    // Player bug report: Simba triggered at the opponent's end-of-turn. The
+    // trigger is `on: "YOU"`, so when the opponent ends their turn, no bag
+    // entry should be created for Simba.
+    it("does not trigger at opponent's end-of-turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          deck: 2,
+        },
+        {
+          play: [
+            { card: simbaPrideProtector, exerted: true },
+            { card: allyCharacter, exerted: true },
+          ],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getBagCount()).toBe(0);
+    });
+
     it("untapping a Reckless character should not force a challenge again", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

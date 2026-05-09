@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import type { MatchSummary } from "../types";
   import { fetchMatches, type FetchMatchesParams } from "../api/player-stats-api";
   import MatchRow from "./MatchRow.svelte";
@@ -19,6 +20,7 @@
     { value: "ranked", label: "Ranked" },
     { value: "casual", label: "Casual" },
   ];
+  const PAGE_SIZE = 10;
 
   let matches = $state<MatchSummary[]>(initialMatches);
   let nextCursor = $state<string | null>(initialCursor);
@@ -28,11 +30,20 @@
   let activeFilter = $state<string>("all");
   let activeFormat = $state<string | null>(null);
   let activeMatchType = $state<MatchTypeFilter>("all");
+  let currentPage = $state(0);
+  let listViewport: HTMLElement | undefined = $state();
 
   let hasMore = $derived(nextCursor !== null);
+  let pageCount = $derived(Math.max(1, Math.ceil(matches.length / PAGE_SIZE)));
+  let visibleStart = $derived(currentPage * PAGE_SIZE);
+  let visibleEnd = $derived(Math.min(visibleStart + PAGE_SIZE, matches.length));
+  let visibleMatches = $derived(matches.slice(visibleStart, visibleEnd));
+  let canGoPrevious = $derived(currentPage > 0);
+  let canGoNext = $derived(visibleEnd < matches.length || hasMore);
+  let rangeLabel = $derived(`${visibleStart + 1}-${visibleEnd}`);
 
-  async function loadMore(): Promise<void> {
-    if (!hasMore || loadingMore) return;
+  async function loadMore(): Promise<boolean> {
+    if (!hasMore || loadingMore) return false;
     loadingMore = true;
     error = null;
     try {
@@ -43,8 +54,10 @@
       const result = await fetchMatches(params);
       matches = [...matches, ...result.matches];
       nextCursor = result.nextCursor;
+      return result.matches.length > 0;
     } catch (err) {
       error = err instanceof Error ? err.message : "Failed to load matches";
+      return false;
     } finally {
       loadingMore = false;
     }
@@ -55,6 +68,7 @@
     error = null;
     matches = [];
     nextCursor = null;
+    currentPage = 0;
     activeFilter = opts?.filter ?? "all";
     activeFormat = opts?.format ?? null;
     activeMatchType = opts?.matchType ?? "all";
@@ -73,6 +87,26 @@
     }
   }
 
+  async function goToPage(page: number): Promise<void> {
+    currentPage = Math.max(0, Math.min(page, pageCount - 1));
+    await tick();
+    listViewport?.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function goToPreviousPage(): Promise<void> {
+    if (!canGoPrevious) return;
+    await goToPage(currentPage - 1);
+  }
+
+  async function goToNextPage(): Promise<void> {
+    if (!canGoNext || loadingMore) return;
+    if (visibleEnd >= matches.length) {
+      const loaded = await loadMore();
+      if (!loaded) return;
+    }
+    await goToPage(currentPage + 1);
+  }
+
   function handleFilterChange(deckListId: string): void {
     void refresh({ filter: deckListId, format: activeFormat, matchType: activeMatchType });
   }
@@ -88,22 +122,6 @@
   export async function reset(): Promise<void> {
     void refresh();
   }
-
-  let sentinelElement: HTMLElement | undefined = $state();
-
-  $effect(() => {
-    if (!sentinelElement || !hasMore || loadingMore) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          void loadMore();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    observer.observe(sentinelElement);
-    return () => observer.disconnect();
-  });
 </script>
 
 <div class="space-y-2">
@@ -156,25 +174,54 @@
       <p class="text-sm text-slate-400">No matches found</p>
     </div>
   {:else}
-    <div class="space-y-1.5">
-      {#each matches as match (match.matchId)}
-        <MatchRow {match} />
-      {/each}
-      {#if loadingMore}
-        <div class="space-y-2">
-          {#each Array(3) as _}
-            <div class="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
-              <Skeleton class="size-8 rounded-lg" />
-              <div class="flex-1 space-y-2">
-                <Skeleton class="h-4 w-32" />
-              </div>
-            </div>
-          {/each}
+    <div class="overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.015]">
+      <div class="flex items-center justify-between gap-3 border-b border-white/[0.06] px-3 py-2">
+        <p class="text-xs tabular-nums text-slate-500">
+          Showing {rangeLabel} of {matches.length}{hasMore ? "+" : ""}
+        </p>
+        <div class="flex items-center gap-1.5">
+          <button
+            class="rounded-md border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
+            type="button"
+            disabled={!canGoPrevious}
+            onclick={() => void goToPreviousPage()}
+          >
+            Previous
+          </button>
+          <span class="min-w-12 text-center text-xs tabular-nums text-slate-500">
+            {currentPage + 1}/{pageCount}{hasMore ? "+" : ""}
+          </span>
+          <button
+            class="rounded-md border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
+            type="button"
+            disabled={!canGoNext || loadingMore}
+            onclick={() => void goToNextPage()}
+          >
+            {loadingMore ? "Loading" : "Next"}
+          </button>
         </div>
-      {/if}
-      {#if hasMore}
-        <div bind:this={sentinelElement} class="h-4"></div>
-      {/if}
+      </div>
+
+      <div
+        bind:this={listViewport}
+        class="max-h-[34rem] space-y-1.5 overflow-y-auto overscroll-contain p-2 [scrollbar-color:rgba(148,163,184,0.45)_transparent] [scrollbar-width:thin]"
+      >
+        {#each visibleMatches as match (match.matchId)}
+          <MatchRow {match} />
+        {/each}
+        {#if loadingMore}
+          <div class="space-y-2">
+            {#each Array(3) as _}
+              <div class="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-3">
+                <Skeleton class="size-8 rounded-lg" />
+                <div class="flex-1 space-y-2">
+                  <Skeleton class="h-4 w-32" />
+                </div>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
     </div>
   {/if}
 </div>

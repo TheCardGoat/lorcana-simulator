@@ -2,6 +2,7 @@
 import MapPinnedIcon from "@lucide/svelte/icons/map-pinned";
 import MoveDiagonalIcon from "@lucide/svelte/icons/move-diagonal";
 import * as Dialog from "$lib/design-system/primitives/dialog";
+import { m } from "$lib/i18n/messages.js";
 
 import LorcanaCard from "@/design-system/simulator/cards/LorcanaCard.svelte";
 import {
@@ -10,23 +11,37 @@ import {
 } from "@/features/simulator/context/simulator-card-context.svelte.js";
 import type {
   LorcanaCardSnapshot,
-  ResolutionTargetAvailableMovesSelectionState,
+  LorcanaPlayerSide,
+  ResolutionAmountSelectionState,
 } from "@/features/simulator/model/contracts.js";
 import ResolutionAmountControls from "@/features/simulator/panels/ResolutionAmountControls.svelte";
+import type {
+  InteractionSelectCard,
+  PlayerInteractionView,
+  PromptSlot,
+} from "@tcg/lorcana-interaction";
 
 interface ResolutionTargetOverlayProps {
-  selectionState: ResolutionTargetAvailableMovesSelectionState;
-  cardSnapshots?: Record<string, LorcanaCardSnapshot>;
-  onSelectCard?: (cardId: string) => boolean;
-  onSelectSlot?: (slotIndex: number) => boolean;
-  onAmountChange?: (value: number) => boolean;
-  onConfirm?: () => boolean;
+  /** Renderer-agnostic view derived from the engine's projected board. */
+  view: PlayerInteractionView;
+  /** Card snapshot lookup, owned by the board presenter. */
+  cardSnapshotsById: Record<string, LorcanaCardSnapshot>;
+  /** The local viewer's side; used to split candidates into your/opponent groups. */
+  viewerSide: LorcanaPlayerSide | null;
+  /** Amount controls — kept as a separate prop until `view.copy` exposes amount metadata. */
+  amountSelection?: ResolutionAmountSelectionState | null;
+  onSelectCard?: (cardId: string) => void;
+  onSelectSlot?: (slotIndex: number) => void;
+  onAmountChange?: (value: number) => void;
+  onConfirm?: () => void;
   onDismiss?: () => void;
 }
 
 let {
-  selectionState,
-  cardSnapshots = {},
+  view,
+  cardSnapshotsById,
+  viewerSide,
+  amountSelection = null,
   onSelectCard,
   onSelectSlot,
   onAmountChange,
@@ -44,12 +59,8 @@ const simulatorCardContextFallback: Pick<
 const simulatorCardContext =
   maybeUseSimulatorCardContext() ?? simulatorCardContextFallback;
 
-const resolvedSourceCard = $derived(
-  selectionState.sourceCardId ? (cardSnapshots[selectionState.sourceCardId] ?? null) : null,
-);
-
 function getCard(cardId: string | null | undefined): LorcanaCardSnapshot | null {
-  return cardId ? (cardSnapshots[cardId] ?? null) : null;
+  return cardId ? (cardSnapshotsById[cardId] ?? null) : null;
 }
 
 function handleCardPreviewEnter(card: LorcanaCardSnapshot | null): void {
@@ -68,28 +79,138 @@ function handleCardPreviewLeave(card: LorcanaCardSnapshot | null): void {
   }
 }
 
+const activePrompt = $derived(view.activePrompt);
+const slottedKind = $derived(activePrompt?.expectedSlottedKind ?? null);
+const sourceCardId = $derived(activePrompt?.sourceCardId ?? null);
+const resolvedSourceCard = $derived(
+  sourceCardId ? (cardSnapshotsById[sourceCardId as unknown as string] ?? null) : null,
+);
+
+/** Slots the chooser can interact with. Auto-resolved slots are hidden. */
+const visibleSlots = $derived<PromptSlot[]>(
+  (activePrompt?.slots ?? []).filter((slot) => !slot.autoResolved),
+);
+
+const candidateInteractions = $derived(
+  view.interactions.filter(
+    (interaction): interaction is InteractionSelectCard => interaction.kind === "select-card",
+  ),
+);
+
+type CandidateRenderItem = {
+  interaction: InteractionSelectCard;
+  card: LorcanaCardSnapshot;
+  selected: boolean;
+};
+
+function buildCandidateItems(
+  interactions: readonly InteractionSelectCard[],
+): CandidateRenderItem[] {
+  const slotTargets = new Set(
+    (activePrompt?.slots ?? [])
+      .map((slot) => slot.targetCardId)
+      .filter((id): id is NonNullable<typeof id> => id !== null),
+  );
+  return interactions.flatMap((interaction) => {
+    const card = getCard(interaction.cardId as unknown as string);
+    if (!card) return [];
+    return [
+      {
+        interaction,
+        card,
+        selected: slotTargets.has(interaction.cardId),
+      },
+    ];
+  });
+}
+
+const candidateItems = $derived(buildCandidateItems(candidateInteractions));
+
 const yourCandidates = $derived(
-  selectionState.candidateEntries.filter((entry) => {
-    if (entry.kind !== "card" || !entry.cardId) return false;
-    const card = getCard(entry.cardId);
-    return card && selectionState.viewerSide && card.ownerSide === selectionState.viewerSide;
-  }),
+  candidateItems.filter(
+    (item) => viewerSide !== null && item.card.ownerSide === viewerSide,
+  ),
 );
-
 const opponentCandidates = $derived(
-  selectionState.candidateEntries.filter((entry) => {
-    if (entry.kind !== "card" || !entry.cardId) return false;
-    const card = getCard(entry.cardId);
-    return card && selectionState.viewerSide && card.ownerSide !== selectionState.viewerSide;
-  }),
+  candidateItems.filter(
+    (item) => viewerSide !== null && item.card.ownerSide !== viewerSide,
+  ),
 );
-
 const showGroupLabels = $derived(yourCandidates.length > 0 && opponentCandidates.length > 0);
+
+/**
+ * Resolve the slot's user-facing label by routing the engine-emitted
+ * `labelKey` through Paraglide. The view's `PromptSlot.labelKey` is a
+ * closed `PromptKey` literal union; the renderer is the only layer
+ * that translates them.
+ */
+function slotLabel(slot: PromptSlot): string {
+  switch (slot.labelKey) {
+    case "prompt.slot.move-damage.from":
+      return m["prompt.slot.move-damage.from"]({});
+    case "prompt.slot.move-damage.to":
+      return m["prompt.slot.move-damage.to"]({});
+    case "prompt.slot.move-to-location.subject":
+      return m["prompt.slot.move-to-location.subject"]({});
+    case "prompt.slot.move-to-location.location":
+      return m["prompt.slot.move-to-location.location"]({});
+    case "prompt.slot.shift-and-choose.chosen":
+      return m["prompt.slot.shift-and-choose.chosen"]({});
+    case "prompt.slot.banish-and-play.banish":
+      return m["prompt.slot.banish-and-play.banish"]({});
+    case "prompt.slot.banish-and-play.play":
+      return m["prompt.slot.banish-and-play.play"]({});
+    default:
+      // Fallback for label keys the renderer doesn't yet handle (e.g.
+      // a new prompt kind added to the engine before the simulator
+      // gets matching messages). Keeps the UI usable instead of
+      // crashing.
+      return "Choose target";
+  }
+}
+
+function slotPlaceholder(slot: PromptSlot): string {
+  const target = slot.targetCardId ? getCard(slot.targetCardId as unknown as string) : null;
+  if (target?.cardType === "location") return m["prompt.target.slot.placeholder.location"]({});
+  return m["prompt.target.slot.placeholder.character"]({});
+}
+
+function categoryLabel(): string {
+  switch (slottedKind) {
+    case "move-damage":
+      return "Move damage";
+    case "move-to-location":
+      return "Move to location";
+    case "shift-and-choose":
+      return "Shift";
+    case "banish-and-play":
+      return "Banish and play";
+    default:
+      return "Choose targets";
+  }
+}
+
+const overlayTitle = $derived(categoryLabel());
+const overlayMessage = $derived(
+  visibleSlots.length > 1 ? `Pick ${visibleSlots.length} targets` : "Choose your target",
+);
+const canConfirm = $derived(view.submission.canSubmit);
+const overlayDataEffectType = $derived(slottedKind ?? undefined);
+// Multi-character "Gathering Forces"-style move-to-location prompts use a
+// dedicated multi-phase layout below; suppress the source-card art in the
+// header to avoid layout collisions with the phase strip.
+const isMultiCharMoveToLocation = $derived(
+  slottedKind === "move-to-location" && visibleSlots.length > 1,
+);
 
 function handleOpenChange(open: boolean): void {
   if (!open) {
     onDismiss?.();
   }
+}
+
+function handleSelectInteraction(interaction: InteractionSelectCard): void {
+  onSelectCard?.(interaction.cardId as unknown as string);
 }
 
 </script>
@@ -101,26 +222,26 @@ function handleOpenChange(open: boolean): void {
       class="target-overlay fixed left-1/2 top-1/2 z-50 h-[100dvh] max-h-[100dvh] w-[min(92vw,60rem)] -translate-x-1/2 -translate-y-1/2 gap-0 overflow-hidden rounded-[1.75rem] p-0"
       showCloseButton={false}
       data-testid="resolution-target-overlay"
-      data-effect-type={selectionState.effectType ?? undefined}
+      data-effect-type={overlayDataEffectType}
     >
       <Dialog.Header class="target-overlay__header">
         <div
           class="target-overlay__header-copy"
-          class:target-overlay__header-copy--with-source={Boolean(resolvedSourceCard)}
+          class:target-overlay__header-copy--with-source={Boolean(resolvedSourceCard) && !isMultiCharMoveToLocation}
         >
           <div class="target-overlay__eyebrow">
-            {#if selectionState.effectType === "move-to-location"}
+            {#if slottedKind === "move-to-location"}
               <MapPinnedIcon class="size-4" />
             {:else}
               <MoveDiagonalIcon class="size-4" />
             {/if}
-            <span>{selectionState.categoryLabel}</span>
+            <span>{categoryLabel()}</span>
           </div>
-          <Dialog.Title class="target-overlay__title">{selectionState.title}</Dialog.Title>
-          <Dialog.Description class="target-overlay__message">{selectionState.message}</Dialog.Description>
+          <Dialog.Title class="target-overlay__title">{overlayTitle}</Dialog.Title>
+          <Dialog.Description class="target-overlay__message">{overlayMessage}</Dialog.Description>
         </div>
 
-        {#if resolvedSourceCard}
+        {#if resolvedSourceCard && !isMultiCharMoveToLocation}
           <div class="target-overlay__source">
             <LorcanaCard
               card={resolvedSourceCard}
@@ -141,137 +262,143 @@ function handleOpenChange(open: boolean): void {
       </Dialog.Header>
 
       <div class="target-overlay__body">
-        <div class="target-overlay__slots">
-          {#each selectionState.slots as slot, index (slot.id)}
-            {@const selectedCard = getCard(slot.targetCardId)}
-            <section
-              class="target-slot"
-              class:target-slot--active={selectionState.activeSlotIndex === index}
-              data-active={selectionState.activeSlotIndex === index ? "true" : "false"}
-            >
-              <div class="target-slot__header">
-                <div>
-                  <p class="target-slot__label">{slot.label}</p>
-                  <p class="target-slot__detail">
-                    {#if slot.locked}
-                      Locked in
-                    {:else if slot.targetId}
-                      Selected
-                    {:else}
-                      Waiting for selection
-                    {/if}
-                  </p>
-                </div>
+        {#if visibleSlots.length > 0}
+          <div class="target-overlay__slots">
+            {#each visibleSlots as slot (slot.key)}
+              {@const selectedCard = getCard(slot.targetCardId)}
+              {@const isActive = activePrompt?.activeSlotIndex === slot.index}
+              <section
+                class="target-slot"
+                class:target-slot--active={isActive}
+                data-active={isActive ? "true" : "false"}
+                data-testid={`resolution-target-slot:${slot.key}`}
+              >
+                <div class="target-slot__header">
+                  <div>
+                    <p class="target-slot__label">{slotLabel(slot)}</p>
+                    <p class="target-slot__detail">
+                      {#if slot.locked}
+                        {m["prompt.target.slot.status.selected"]({})}
+                      {:else}
+                        {m["prompt.target.slot.status.pending"]({})}
+                      {/if}
+                    </p>
+                  </div>
 
-                {#if slot.locked}
-                  <span class="target-slot__badge">Locked</span>
-                {:else if slot.targetId}
-                  <div class="target-slot__header-actions">
-                    <span class="target-slot__badge target-slot__badge--selected">Selected</span>
+                  {#if slot.locked}
+                    <div class="target-slot__header-actions">
+                      <span class="target-slot__badge target-slot__badge--selected"
+                        >{m["prompt.target.slot.status.selected"]({})}</span
+                      >
+                      <button
+                        type="button"
+                        class="target-slot__edit"
+                        onclick={() => onSelectSlot?.(slot.index)}
+                        data-testid={`resolution-target-slot-action:${slot.key}`}
+                      >
+                        {m["prompt.target.slot.action.edit"]({})}
+                      </button>
+                    </div>
+                  {:else}
                     <button
                       type="button"
                       class="target-slot__edit"
-                      onclick={() => onSelectSlot?.(index)}
+                      onclick={() => onSelectSlot?.(slot.index)}
+                      data-testid={`resolution-target-slot-action:${slot.key}`}
                     >
-                      Edit selection
+                      {m["prompt.target.slot.action.choose-now"]({})}
                     </button>
+                  {/if}
+                </div>
+
+                {#if selectedCard}
+                  <div
+                    class="target-slot__card"
+                    role="presentation"
+                    onmouseenter={() => handleCardPreviewEnter(selectedCard)}
+                    onmouseleave={() => handleCardPreviewLeave(selectedCard)}
+                  >
+                    <LorcanaCard
+                      card={selectedCard}
+                      size="small"
+                      isSelected={isActive}
+                      isMasked={selectedCard.isMasked}
+                      interactionMeta={{
+                        cardId: selectedCard.cardId,
+                        ownerSide: selectedCard.ownerSide,
+                        zoneId: selectedCard.zoneId,
+                        selectionGroup: "resolution-target-overlay-slot",
+                        selectionMode: "none",
+                        selectable: false,
+                      }}
+                    />
                   </div>
                 {:else}
-                  <button
-                    type="button"
-                    class="target-slot__edit"
-                    onclick={() => onSelectSlot?.(index)}
-                  >
-                    Choose now
-                  </button>
+                  <div class="target-slot__placeholder">
+                    <span>{slotPlaceholder(slot)}</span>
+                  </div>
                 {/if}
-              </div>
-
-              {#if selectedCard}
-                <div
-                  class="target-slot__card"
-                  role="presentation"
-                  onmouseenter={() => handleCardPreviewEnter(selectedCard)}
-                  onmouseleave={() => handleCardPreviewLeave(selectedCard)}
-                >
-                  <LorcanaCard
-                    card={selectedCard}
-                    size="small"
-                    isSelected={selectionState.activeSlotIndex === index}
-                    isMasked={selectedCard.isMasked}
-                    interactionMeta={{
-                      cardId: selectedCard.cardId,
-                      ownerSide: selectedCard.ownerSide,
-                      zoneId: selectedCard.zoneId,
-                      selectionGroup: "resolution-target-overlay-slot",
-                      selectionMode: "none",
-                      selectable: false,
-                    }}
-                  />
-                </div>
-              {:else}
-                <div class="target-slot__placeholder">
-                  <span>{slot.cardType === "location" ? "Choose a location" : "Choose a character"}</span>
-                </div>
-              {/if}
-            </section>
-          {/each}
-        </div>
+              </section>
+            {/each}
+          </div>
+        {/if}
 
         <section class="target-overlay__candidates">
           <div class="target-overlay__candidate-header">
-            <h3>Available targets</h3>
-            {#if selectionState.activeSlotIndex !== null}
+            <h3>{m["prompt.target.candidates.heading"]({})}</h3>
+            {#if visibleSlots.length > 1 && activePrompt?.activeSlotIndex !== null && activePrompt?.activeSlotIndex !== undefined}
               <span>
-                Step {selectionState.activeSlotIndex + 1} of {selectionState.slots.length}
+                Step {activePrompt.activeSlotIndex - (activePrompt.autoResolvedSlotCount ?? 0) + 1} of {visibleSlots.length}
               </span>
             {/if}
           </div>
 
-          {#each [{ label: "Your characters", entries: yourCandidates }, { label: "Opponent's characters", entries: opponentCandidates }] as group (group.label)}
+          {#if candidateItems.length === 0 && visibleSlots.length === 0}
+            <p class="target-overlay__empty">{m["prompt.target.empty-state"]({})}</p>
+          {/if}
+
+          {#each [{ label: m["prompt.target.candidates.your-characters"]({}), entries: yourCandidates }, { label: m["prompt.target.candidates.opponent-characters"]({}), entries: opponentCandidates }] as group (group.label)}
             {#if group.entries.length > 0}
               {#if showGroupLabels}
                 <p class="target-overlay__group-label">{group.label}</p>
               {/if}
               <div class="target-overlay__candidate-grid">
-                {#each group.entries as entry (entry.id)}
-                  {@const candidateCard = entry.kind === "card" && entry.cardId ? getCard(entry.cardId) : null}
-                  {#if candidateCard}
-                    <button
-                      type="button"
-                      class="target-overlay__candidate-button"
-                      class:target-overlay__candidate-button--selected={entry.selected}
-                      onclick={() => onSelectCard?.(candidateCard.cardId)}
-                      onmouseenter={() => handleCardPreviewEnter(candidateCard)}
-                      onmouseleave={() => handleCardPreviewLeave(candidateCard)}
-                      data-testid={`resolution-target-candidate:${candidateCard.cardId}`}
-                    >
-                      <LorcanaCard
-                        card={candidateCard}
-                        size="small"
-                        isSelected={entry.selected}
-                        isMasked={candidateCard.isMasked}
-                        interactionMeta={{
-                          cardId: candidateCard.cardId,
-                          ownerSide: candidateCard.ownerSide,
-                          zoneId: candidateCard.zoneId,
-                          selectionGroup: "resolution-target-overlay-candidates",
-                          selectionMode: "none",
-                          selectable: true,
-                        }}
-                      />
-                      <span class="target-overlay__candidate-label">{entry.label}</span>
-                    </button>
-                  {/if}
+                {#each group.entries as item (item.card.cardId)}
+                  <button
+                    type="button"
+                    class="target-overlay__candidate-button"
+                    class:target-overlay__candidate-button--selected={item.selected}
+                    onclick={() => handleSelectInteraction(item.interaction)}
+                    onmouseenter={() => handleCardPreviewEnter(item.card)}
+                    onmouseleave={() => handleCardPreviewLeave(item.card)}
+                    data-testid={`resolution-target-candidate:${item.card.cardId}`}
+                  >
+                    <LorcanaCard
+                      card={item.card}
+                      size="small"
+                      isSelected={item.selected}
+                      isValidTarget={!item.selected}
+                      isMasked={item.card.isMasked}
+                      interactionMeta={{
+                        cardId: item.card.cardId,
+                        ownerSide: item.card.ownerSide,
+                        zoneId: item.card.zoneId,
+                        selectionGroup: "resolution-target-overlay-candidates",
+                        selectionMode: "none",
+                        selectable: true,
+                      }}
+                    />
+                    <span class="target-overlay__candidate-label">{item.card.label}</span>
+                  </button>
                 {/each}
               </div>
             {/if}
           {/each}
         </section>
 
-        {#if selectionState.amountSelection}
+        {#if amountSelection}
           <ResolutionAmountControls
-            selection={selectionState.amountSelection}
+            selection={amountSelection}
             onChange={(value) => {
               onAmountChange?.(value);
             }}
@@ -291,7 +418,7 @@ function handleOpenChange(open: boolean): void {
           type="button"
           class="target-overlay__button target-overlay__button--primary"
           onclick={onConfirm}
-          disabled={!selectionState.canConfirm}
+          disabled={!canConfirm}
         >
           Confirm
         </button>
@@ -550,6 +677,9 @@ function handleOpenChange(open: boolean): void {
   }
 
   .target-overlay__button--primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     background: linear-gradient(180deg, rgba(14, 116, 144, 0.96), rgba(8, 47, 73, 0.96));
     color: #f8fafc;
   }
@@ -587,5 +717,283 @@ function handleOpenChange(open: boolean): void {
     .target-overlay__slots {
       grid-template-columns: 1fr;
     }
+  }
+
+  /* ── Gathering Forces / multi-char move-to-location layout ── */
+
+  .gather-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .gather-phase {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+    transition: background 200ms ease;
+  }
+
+  .gather-phase--active {
+    background: rgba(8, 47, 73, 0.28);
+  }
+
+  .gather-phase--location {
+    border-bottom: none;
+  }
+
+  .gather-phase--needs-action .gather-phase__title {
+    color: rgba(251, 191, 36, 0.9);
+  }
+
+  .gather-phase__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .gather-phase__step {
+    flex-shrink: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1.5px solid rgba(148, 163, 184, 0.5);
+    background: rgba(15, 23, 42, 0.7);
+    color: rgba(148, 163, 184, 0.8);
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .gather-phase__step--complete {
+    border-color: rgba(34, 197, 94, 0.7);
+    background: rgba(21, 128, 61, 0.35);
+    color: rgba(134, 239, 172, 0.95);
+  }
+
+  .gather-phase__title-group {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .gather-phase__title {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 0.92rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .gather-phase__hint {
+    margin: 0.2rem 0 0;
+    color: rgba(148, 163, 184, 0.75);
+    font-size: 0.78rem;
+  }
+
+  .gather-required-badge {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    color: rgba(253, 224, 71, 0.9);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    vertical-align: middle;
+  }
+
+  .gather-edit-btn {
+    flex-shrink: 0;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid rgba(125, 211, 252, 0.3);
+    background: rgba(15, 23, 42, 0.8);
+    color: rgba(186, 230, 253, 0.85);
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .gather-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .gather-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    width: 6rem;
+  }
+
+  .gather-chip__name {
+    color: rgba(203, 213, 225, 0.9);
+    font-size: 0.67rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gather-chip--removable {
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    border-radius: 0.5rem;
+    transition: opacity 140ms ease;
+  }
+
+  .gather-chip--removable:hover {
+    opacity: 0.8;
+  }
+
+  .gather-chip__card-wrap {
+    position: relative;
+  }
+
+  .gather-chip__remove {
+    position: absolute;
+    top: -0.35rem;
+    right: -0.35rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.85);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 140ms ease;
+    pointer-events: none;
+  }
+
+  .gather-chip--removable:hover .gather-chip__remove {
+    opacity: 1;
+  }
+
+  .gather-candidates {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+    gap: 0.65rem;
+  }
+
+  .gather-candidate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(71, 85, 105, 0.5);
+    background: rgba(15, 23, 42, 0.6);
+    transition:
+      border-color 140ms ease,
+      background 140ms ease,
+      transform 140ms ease;
+  }
+
+  .gather-candidate:hover {
+    border-color: rgba(125, 211, 252, 0.55);
+    background: rgba(8, 47, 73, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .gather-candidate--selected {
+    border-color: rgba(125, 211, 252, 0.8);
+    background: linear-gradient(180deg, rgba(14, 116, 144, 0.65), rgba(15, 23, 42, 0.8));
+  }
+
+  .gather-candidate__name {
+    color: #e2e8f0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .gather-empty {
+    margin: 0;
+    color: rgba(148, 163, 184, 0.65);
+    font-size: 0.82rem;
+    font-style: italic;
+  }
+
+  .gather-advance-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    align-self: flex-start;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(125, 211, 252, 0.45);
+    background: rgba(8, 47, 73, 0.65);
+    color: rgba(186, 230, 253, 0.92);
+    font-size: 0.8rem;
+    font-weight: 700;
+    transition: background 140ms ease, border-color 140ms ease;
+  }
+
+  .gather-advance-btn:hover {
+    background: rgba(14, 116, 144, 0.55);
+    border-color: rgba(125, 211, 252, 0.7);
+  }
+
+  .gather-location-prompt {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border-radius: 1rem;
+    border: 1.5px dashed rgba(251, 191, 36, 0.45);
+    background: rgba(120, 53, 15, 0.12);
+    color: rgba(253, 224, 71, 0.85);
+    font-size: 0.88rem;
+    font-weight: 700;
+    transition: background 140ms ease, border-color 140ms ease;
+  }
+
+  .gather-location-prompt:hover {
+    background: rgba(120, 53, 15, 0.22);
+    border-color: rgba(251, 191, 36, 0.7);
+  }
+
+  .gather-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0 1rem;
+    color: rgba(148, 163, 184, 0.5);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .gather-divider__line {
+    flex: 1;
+    height: 1px;
+    background: rgba(71, 85, 105, 0.4);
+  }
+
+  .gather-divider__label {
+    white-space: nowrap;
   }
 </style>

@@ -19,11 +19,6 @@
       title: "Core Constructed — Current rotating format",
       style: "bg-amber-400/15 text-amber-300 border-amber-400/30",
     },
-    "early-access": {
-      label: "Early Access",
-      title: "Early Access — Core Constructed + newest set",
-      style: "bg-violet-400/15 text-violet-300 border-violet-400/30",
-    },
     "archazias-island": {
       label: "Archazia's",
       title: "Archazia's Island — Sets SSK–FAB",

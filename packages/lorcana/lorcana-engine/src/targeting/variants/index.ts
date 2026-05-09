@@ -90,4 +90,24 @@ export const TARGET_ENUM_ALIASES: readonly string[] = [
   "YOUR_LOCATIONS",
   "ALL_OPPOSING_LOCATIONS",
   "THIS_LOCATION",
+  // Player enum aliases (mirrors `PlayerTarget` in @tcg/lorcana-types).
+  // These are accepted by the target-resolver normalization layer and used
+  // pervasively by effects with `target: "CONTROLLER"`, `target: "OPPONENTS"`, etc.
+  "CONTROLLER",
+  "OPPONENT",
+  "OPPONENTS",
+  "EACH_PLAYER",
+  "EACH_OPPONENT",
+  "CHOSEN_PLAYER",
+  "CHOSEN_OPPONENT",
+  "CARD_OWNER",
+  "CURRENT_TURN",
+  "ALL_PLAYERS",
+  "CHARACTERS_HERE",
+  "CHALLENGING_PLAYER",
+  "TRIGGER_SOURCE_OWNER",
+  "OPPOSING_CHARACTERS",
+  "THAT_PLAYER",
+  "CHALLENGER_OWNER",
+  "THEIR_CHOSEN_CHARACTER",
 ];

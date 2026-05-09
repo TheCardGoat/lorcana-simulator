@@ -22,6 +22,7 @@ type ContinuousEffectReadContext = {
     continuousEffects?: DeepReadonly<ContinuousEffectState>;
     turnMetadata?: DeepReadonly<Partial<LorcanaG["turnMetadata"]>>;
     challengeState?: DeepReadonly<ChallengeState>;
+    turnsCompletedByPlayer?: DeepReadonly<LorcanaG["turnsCompletedByPlayer"]>;
   };
   ctx?: {
     priority?: {
@@ -29,7 +30,10 @@ type ContinuousEffectReadContext = {
     };
     status?: {
       turn?: number;
+      turnOwnerId?: string;
+      otp?: string;
     };
+    playerIds?: readonly string[];
     zones?: {
       private?: {
         cardIndex?: Record<
@@ -53,7 +57,10 @@ type ContinuousEffectReadContext = {
       };
       status?: {
         turn?: number;
+        turnOwnerId?: string;
+        otp?: string;
       };
+      playerIds?: readonly string[];
       _zonesPrivate?: {
         cardIndex?: Record<
           string,
@@ -79,7 +86,8 @@ type CardZoneKeyEntry = {
 
 function getRuntimeCtx(state: ContinuousEffectReadContext): {
   priority?: { holder?: string };
-  status?: { turn?: number };
+  status?: { turn?: number; turnOwnerId?: string; otp?: string };
+  playerIds?: readonly string[];
   zones?: {
     private?: {
       cardIndex?: Record<string, CardZoneKeyEntry | undefined>;
@@ -92,10 +100,25 @@ function getRuntimeCtx(state: ContinuousEffectReadContext): {
     return {
       priority: state.framework.state.priority,
       status: state.framework.state.status,
+      playerIds: state.framework.state.playerIds,
       zones: { private: state.framework.state._zonesPrivate },
     };
   }
   return state.ctx ?? {};
+}
+
+function derivePlayerIdsFromState(state: ContinuousEffectReadContext): PlayerId[] {
+  const ctx = getRuntimeCtx(state);
+  if (ctx.playerIds && ctx.playerIds.length > 0) {
+    return [...ctx.playerIds] as PlayerId[];
+  }
+  const cardIndex = ctx.zones?.private?.cardIndex ?? {};
+  const seen = new Set<string>();
+  for (const entry of Object.values(cardIndex)) {
+    const ownerId = entry?.ownerID ?? entry?.controllerID;
+    if (ownerId) seen.add(ownerId);
+  }
+  return [...seen] as PlayerId[];
 }
 
 export type AddStatModifierEffectInput = {
@@ -205,10 +228,10 @@ function isCardInPlay(state: ContinuousEffectReadContext, cardId: CardInstanceId
 }
 
 import { resolveEffectWindow, isEffectExpired } from "../../rules/effect-registry";
-import {
-  evaluateCondition,
-  type ConditionEvaluationContext,
-} from "../../rules/condition-evaluator";
+import { evaluateCondition } from "../../rules/condition-evaluator";
+import { buildConditionContextFromMatchState } from "../../rules/condition-context";
+import { invalidateStaticEffects } from "../rules/static-effects-invalidation";
+import { resolveTurnOwnerId } from "../../core/runtime/turn-owner";
 
 function isStatModifierEffectActive(
   state: ContinuousEffectReadContext,
@@ -239,50 +262,24 @@ function isStatModifierEffectActive(
     return false;
   }
 
-  // Construct evaluation context
-  const evaluationContext: ConditionEvaluationContext = {
-    framework: {
-      state: {
-        priority: ctx.priority as ConditionEvaluationContext["framework"]["state"]["priority"],
-        status: ctx.status as ConditionEvaluationContext["framework"]["state"]["status"],
-        _zonesPrivate: ctx.zones
-          ?.private as ConditionEvaluationContext["framework"]["state"]["_zonesPrivate"],
-        currentPlayer: ctx.priority?.holder as PlayerId | undefined,
-        // We don't have easy access to all player IDs here without scanning cardIndex
-        // but let's try to derive it if possible, or leave it empty if not critical for simple conditions
-        playerIds: [], // TODO: Improve if needed
-      },
-      zones: {
-        getCards: ({ zone, playerId }: { zone: string; playerId: PlayerId }) => {
-          if (zone === "play") {
-            const playerZone = ctx.zones?.private?.zoneCards?.[`play:${playerId}`];
-            if (playerZone) return playerZone as CardInstanceId[];
-
-            const globalPlay = ctx.zones?.private?.zoneCards?.play;
-            if (globalPlay) {
-              return globalPlay.filter(
-                (id) => ctx.zones?.private?.cardIndex?.[id]?.controllerID === playerId,
-              ) as CardInstanceId[];
-            }
-            return [];
-          }
-          return (ctx.zones?.private?.zoneCards?.[`${zone}:${playerId}`] ?? []) as CardInstanceId[];
-        },
-      },
+  // Construct evaluation context via the canonical FromMatchState builder.
+  const playerIds = derivePlayerIdsFromState(state);
+  const turnOwnerId = resolveTurnOwnerId(
+    {
+      status: ctx.status,
+      priority: ctx.priority,
+      playerIds: playerIds as readonly PlayerId[],
     },
-    cards: {
-      getDefinition: getDefinitionByInstanceId ?? (() => undefined),
-      require: (cardId: CardInstanceId) => ({
-        meta: ctx.zones?.private?.cardMeta?.[cardId] ?? {},
-      }),
-      get: (cardId: CardInstanceId) => ({
-        definition: getDefinitionByInstanceId?.(cardId),
-      }),
-    },
-    G: state.G as DeepReadonly<LorcanaG>,
+    state.G as { turnsCompletedByPlayer?: Record<string, number> } | undefined,
+  );
+  const evaluationContext = buildConditionContextFromMatchState({
+    state,
     playerId: controllerId,
     sourceCardId: effect.targetId,
-  };
+    playerIds,
+    currentPlayer: turnOwnerId ?? (ctx.priority?.holder as PlayerId | undefined),
+    getDefinitionByInstanceId,
+  });
 
   return evaluateCondition(effect.condition, evaluationContext);
 }
@@ -342,7 +339,7 @@ export function addStatModifierEffect(
     effects.byTarget[created.targetId] = [];
   }
   effects.byTarget[created.targetId].push(created);
-  if (state.G) state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
+  invalidateStaticEffects(state);
   return created;
 }
 
@@ -380,7 +377,7 @@ export function cleanupExpiredEffects(
   });
   effects.byTarget = rebuildByTarget(effects.instances);
   if (state.G && effects.instances.length !== before) {
-    state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
+    invalidateStaticEffects(state);
   }
 }
 
@@ -401,7 +398,7 @@ export function retargetContinuousEffects(
     }
   }
   effects.byTarget = rebuildByTarget(effects.instances);
-  if (state.G) state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
+  invalidateStaticEffects(state);
 }
 
 export function cleanupDanglingTargetEffects(
@@ -418,6 +415,6 @@ export function cleanupDanglingTargetEffects(
   });
   effects.byTarget = rebuildByTarget(effects.instances);
   if (state.G && effects.instances.length !== before) {
-    state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
+    invalidateStaticEffects(state);
   }
 }

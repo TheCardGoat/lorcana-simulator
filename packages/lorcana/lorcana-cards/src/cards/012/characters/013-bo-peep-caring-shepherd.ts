@@ -44,7 +44,14 @@ export const boPeepCaringShepherd: CharacterCard = {
           owner: "you",
           selector: "all",
           zones: ["play"],
-          filter: [{ type: "attribute", attribute: "name", comparison: "equals", value: "Woody" }],
+          filter: [
+            {
+              type: "attribute",
+              attribute: "name",
+              comparison: "equals",
+              value: "Woody",
+            },
+          ],
         },
       },
     },

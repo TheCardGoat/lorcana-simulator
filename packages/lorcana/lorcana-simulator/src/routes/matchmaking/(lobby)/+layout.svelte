@@ -155,7 +155,6 @@
   <PlayerSettingsDialog
     bind:open={controller.playerSettingsOpen}
     selectedLocale={controller.playerSettings.selectedLocale}
-    skipActionConfirmation={controller.playerSettings.skipActionConfirmation}
     hotkeyMode={controller.playerSettings.hotkeyMode}
     cardPreviewMode={controller.playerSettings.cardPreviewMode}
     primaryClickAction={controller.playerSettings.primaryClickAction}
@@ -164,8 +163,6 @@
     accessibleMobileControls={controller.playerSettings
       .accessibleMobileControls}
     onLocaleSelection={controller.playerSettings.handleLocaleSelection}
-    onToggleSkipActionConfirmation={controller.playerSettings
-      .handleSkipActionConfirmationToggle}
     onHotkeyModeChange={controller.playerSettings.handleHotkeyModeChange}
     onCardPreviewModeChange={controller.playerSettings
       .handleCardPreviewModeChange}

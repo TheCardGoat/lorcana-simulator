@@ -22,6 +22,7 @@ import {
 import type {
   PersistedReplayData,
   PersistedReplayMetadata,
+  PersistedReplayStep,
   ReplayChatMessage,
 } from "./fetch-replay.js";
 
@@ -95,6 +96,7 @@ export class ReplayOrchestrator {
   /** Step timestamps (index N = steps[N-1].acceptedMove.timestamp; index 0 = 0). */
   readonly #stepTimestamps: number[];
   readonly #metadata: PersistedReplayMetadata;
+  readonly #steps: PersistedReplayStep[];
 
   #currentStep = $state(0);
   #isPlaying = $state(false);
@@ -116,6 +118,7 @@ export class ReplayOrchestrator {
     this.#chatMessages = replayData.chatMessages ?? [];
     this.#stepTimestamps = [0, ...replayData.steps.map((s) => s.acceptedMove.timestamp)];
     this.#metadata = replayData.metadata;
+    this.#steps = replayData.steps;
 
     const playerIdList =
       Object.keys(cardsMaps.owners ?? {}).length > 0
@@ -265,6 +268,18 @@ export class ReplayOrchestrator {
       this.#engine.loadState(nextState);
       this.readModel.setVisibleStep(clamped);
       this.readModel.notify();
+    }
+
+    // Step 0 = initial state (no move); step N corresponds to steps[N-1]
+    const stepData = clamped > 0 ? this.#steps[clamped - 1] : null;
+    if (stepData) {
+      console.group(`[Replay] Step ${clamped} — ${stepData.acceptedMove.moveId}`);
+      console.log("Move:", stepData.acceptedMove);
+      console.log("Logs:", stepData.logs);
+      console.log("Patches (state diff):", stepData.patches);
+      console.groupEnd();
+    } else {
+      console.log("[Replay] Step 0 — initial state (no move)");
     }
   }
 

@@ -57,6 +57,7 @@
             isExerted={card.readyState === "exerted"}
             isDraggable={!isOpponent && !isMasked}
             isPlayable={isCardPlayable(card)}
+            isValidTarget={isCardValidTarget(card)}
             isInvalidTarget={isCardInvalidTarget(card)}
             isQuesting={false}
             isDrying={card.isDrying ?? false}

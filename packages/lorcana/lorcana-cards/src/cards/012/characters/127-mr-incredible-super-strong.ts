@@ -40,38 +40,41 @@ export const mrIncredibleSuperStrong: CharacterCard = {
   ],
   classifications: ["Storyborn", "Super", "Hero"],
   abilities: [
-    shift(3),
+    shift("Mr. Incredible", 3),
     {
-      id: "qoz-1",
+      id: "qoz-2",
       name: "ALWAYS UNITED",
-      text: "ALWAYS UNITED This character gets +2 {S} for each other character you have in play.",
       type: "static",
+      text: "ALWAYS UNITED This character gets +2 {S} for each other character you have in play.",
       effect: {
         type: "modify-stat",
         stat: "strength",
-        target: "SELF",
         modifier: {
           type: "filtered-count",
           owner: "you",
           zones: ["play"],
           cardType: "character",
+          filters: [],
           excludeSelf: true,
           multiplier: 2,
-          filters: [],
         },
+        target: "SELF",
       },
     },
     {
-      id: "qoz-2",
+      id: "qoz-3",
       name: "LET'S DO THIS!",
-      text: "LET'S DO THIS! Whenever one of your Super characters challenges another character, draw a card.",
       type: "triggered",
+      text: "LET'S DO THIS! Whenever one of your Super characters challenges another character, draw a card.",
       trigger: {
         event: "challenge",
         on: {
           controller: "you",
           cardType: "character",
           classification: "Super",
+        },
+        defender: {
+          filters: [{ type: "card-type", value: "character" }],
         },
         timing: "whenever",
       },

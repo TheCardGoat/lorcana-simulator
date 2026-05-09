@@ -19,6 +19,9 @@ export const youngMacintoshProudSon: CharacterCard = {
   lore: 2,
   inkable: true,
   vanilla: true,
+  externalIds: {
+    lorcast: "crd_35c7f5fe2959472a8f4abc38de41a8af",
+  },
   classifications: ["Storyborn", "Ally"],
   i18n: youngMacintoshProudSonI18n,
 };

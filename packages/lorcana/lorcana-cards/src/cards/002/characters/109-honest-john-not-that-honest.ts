@@ -51,6 +51,5 @@ export const honestJohnNotThatHonest: CharacterCard = {
       type: "triggered",
     },
   ],
-  missingTests: true,
   i18n: honestJohnNotThatHonestI18n,
 };

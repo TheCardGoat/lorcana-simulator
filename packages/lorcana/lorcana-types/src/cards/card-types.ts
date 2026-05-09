@@ -253,10 +253,11 @@ export interface BaseCardProperties {
     | "enchanted"
     | "epic"
     | "iconic"
-    | "promo";
+    | "promo"
+    | "special";
 
   /** Special rarity variant when applicable (e.g. Enchanted, Epic, Iconic, Promo) */
-  specialRarity?: "enchanted" | "epic" | "iconic" | "promo";
+  specialRarity?: "enchanted" | "epic" | "iconic" | "promo" | "challenge";
 
   /**
    * Special card copy limit rules
@@ -515,10 +516,11 @@ export interface LorcanaCardDefinition {
     | "enchanted"
     | "epic"
     | "iconic"
-    | "promo";
+    | "promo"
+    | "special";
 
   /** Special rarity variant when applicable (e.g. Enchanted, Epic, Iconic, Promo) */
-  specialRarity?: "enchanted" | "epic" | "iconic" | "promo";
+  specialRarity?: "enchanted" | "epic" | "iconic" | "promo" | "challenge";
 
   /**
    * Special card copy limit rules

@@ -31,6 +31,10 @@ const dryingPrinceCharacter = createMockCharacter({
 });
 
 describe("The Glass Slipper", () => {
+  it("restricts decks to 2 copies (PERFECT PAIR)", () => {
+    expect(theGlassSlipper.cardCopyLimit).toBe(2);
+  });
+
   it("banishes itself and exerts your Prince to find a Princess character card", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       deck: [princessCard],

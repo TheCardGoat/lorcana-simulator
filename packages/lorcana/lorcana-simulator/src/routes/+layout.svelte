@@ -13,13 +13,14 @@
     localizeHref,
   } from '$lib/paraglide/runtime.js';
   import * as Tooltip from '$lib/design-system/primitives/tooltip/index.js';
-  import { initAnalytics, trackPageView } from '$lib/analytics/analytics.js';
+  import { initAnalytics, trackEvent, trackPageView } from '$lib/analytics/analytics.js';
+  import { startVitalsReporting } from '$lib/analytics/vitals.js';
+  import EuConsentBanner from '$lib/analytics/EuConsentBanner.svelte';
   import {
     QueryClientProvider,
     type QueryClient,
   } from '@tanstack/svelte-query';
   import { createSimulatorQueryClient } from '$lib/data/query-client.js';
-
   configureCoreSimulatorLogging();
 
   const DISCORD_JOIN_GUILD_NONCE_KEY = 'discord-join-guild-nonce';
@@ -36,7 +37,40 @@
   // });
 
   onMount(() => {
-    initAnalytics();
+    initAnalytics({ gdprStrict: data.gdprStrict ?? true });
+    startVitalsReporting();
+
+    // Session lifecycle: each session_start is matched with a session_end so
+    // counts and durations stay consistent. bfcache transitions are treated
+    // as session boundaries — pagehide(persisted) closes the active session
+    // and pageshow(persisted) opens a fresh one — so a back/forward
+    // navigation produces balanced start/end pairs with accurate per-window
+    // duration_seconds (active window only, not wall-clock-since-load).
+    let sessionStartedAt = Date.now();
+    trackEvent('session_start');
+    const emitSessionEnd = () => {
+      trackEvent('session_end', {
+        duration_seconds: Math.round((Date.now() - sessionStartedAt) / 1000),
+      });
+    };
+    const handlePageHide = (_event: PageTransitionEvent) => {
+      // Always close the current session — terminal unload AND bfcache freeze
+      // both mean the user has stopped engaging with this view.
+      emitSessionEnd();
+    };
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        // Restored from bfcache — open a new session window.
+        sessionStartedAt = Date.now();
+        trackEvent('session_start');
+      }
+    };
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('pageshow', handlePageShow);
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
   });
 
   afterNavigate(({ to }) => {
@@ -108,5 +142,6 @@
     </div>
 
     {@render children?.()}
+    <EuConsentBanner />
   </QueryClientProvider>
 </Tooltip.Provider>

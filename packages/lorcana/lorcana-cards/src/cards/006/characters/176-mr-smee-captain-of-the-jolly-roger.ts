@@ -37,7 +37,7 @@ export const mrSmeeCaptainOfTheJollyRoger: CharacterCard = {
   ],
   classifications: ["Floodborn", "Villain", "Pirate", "Captain"],
   abilities: [
-    shift(4),
+    shift("Mr. Smee", 4),
     {
       effect: {
         chooser: "CONTROLLER",

@@ -164,7 +164,7 @@ describe("Finnick - Tiny Terror", () => {
 
       expect(testEngine.asPlayerOne().playCard(finnickTinyTerror)).toBeSuccessfulCommand();
 
-      // Auto-skips — no ≤2 strength opponents, so no player decision needed
+      // No <=2 strength opponents means the optional bag entry auto-drains as a no-op.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       // Strong character should remain in play — strength filter prevents returning it
@@ -224,27 +224,8 @@ describe("Finnick - Tiny Terror", () => {
 
       expect(testEngine.asPlayerOne().playCard(finnickTinyTerror)).toBeSuccessfulCommand();
 
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
-      expect(bagEffect).toBeDefined();
-
-      expect(
-        testEngine.asPlayerOne().resolvePendingByCard(finnickTinyTerror, {
-          resolveOptional: true,
-        }),
-      ).toBeSuccessfulCommand();
-
-      // Target selection may still be offered; resolve it if present
-      const pendingEffects = testEngine.asPlayerOne().getPendingEffects();
-      if (pendingEffects.length > 0) {
-        const opponentId = testEngine.findCardInstanceId(
-          weakOpposingCharacter,
-          "play",
-          "player_two",
-        );
-        expect(
-          testEngine.asPlayerOne().resolveNextPending({ targets: [opponentId] }),
-        ).toBeSuccessfulCommand();
-      }
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getPendingEffects()).toEqual([]);
 
       // Cannot pay 2 ink, so no character is returned
       expect(testEngine.asPlayerTwo().getCardZone(weakOpposingCharacter)).toBe("play");

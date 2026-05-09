@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import {
+  LorcanaMultiplayerTestEngine,
+  createMockAction,
+  createMockCharacter,
+} from "@tcg/lorcana-engine/testing";
+import { buzzsArm } from "../items/098-buzzs-arm";
 import { jessieLivelyCowgirl } from "./020-jessie-lively-cowgirl";
 
 const toyCharacterA = createMockCharacter({
@@ -91,15 +96,8 @@ describe("Jessie - Lively Cowgirl", () => {
 
       expect(testEngine.asPlayerOne().quest(jessieLivelyCowgirl)).toBeSuccessfulCommand();
 
-      // Trigger enters the bag (condition is checked at resolution, per CRD 2.0 Rule 6.2.7)
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-
-      // Resolve - condition should fail (only 1 other Toy), so no draw happens
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(jessieLivelyCowgirl, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
 
       // Hand count should be unchanged since condition was not met
       expect(testEngine.asPlayerOne().getCardsInZone("hand", "player_one").count).toBe(
@@ -168,6 +166,81 @@ describe("Jessie - Lively Cowgirl", () => {
       ).toBeSuccessfulCommand();
 
       // Opposing character should have -1 strength
+      expect(testEngine.getCard(opposingCharacter).strength).toBe(initialStrength - 1);
+    });
+
+    it("auto-resolves with no effect when no opposing characters are in play (R10)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [jessieLivelyCowgirl],
+          hand: [cheapCard],
+          inkwell: cheapCard.cost,
+          deck: 5,
+        },
+        {
+          // no opposing characters
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(cheapCard)).toBeSuccessfulCommand();
+
+      // YODEL-AY-HEE-HOO! triggers but has no valid target. The bag effect must
+      // drain (auto-resolve to nothing) rather than leave the player stuck.
+      testEngine.asPlayerOne().resolveAllBagEffects();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+    });
+
+    it("release notes ruling: triggers based on total ink paid AFTER payment modifiers — paying 2 ink for a 3-cost action via -1 modifier triggers", () => {
+      const expensiveAction = createMockAction({
+        id: "jessie-release-expensive-action",
+        name: "Expensive Discount Action",
+        cost: 3,
+        abilities: [
+          {
+            id: "jessie-release-expensive-action-1",
+            type: "action",
+            effect: { type: "draw", amount: 1, target: "CONTROLLER" },
+            text: "Draw a card.",
+          },
+        ],
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [jessieLivelyCowgirl, buzzsArm],
+          hand: [expensiveAction],
+          inkwell: 2, // only 2 ink available — printed cost of 3 unaffordable
+          deck: 5,
+        },
+        {
+          play: [opposingCharacter],
+          deck: 5,
+        },
+      );
+
+      // Apply -1 cost modifier via Buzz's Arm — printed 3 → paid 2.
+      expect(
+        testEngine.asPlayerOne().activateAbility(buzzsArm, {
+          ability: "SOME ASSEMBLY REQUIRED",
+        }),
+      ).toBeSuccessfulCommand();
+
+      const opposingId = testEngine.findCardInstanceId(opposingCharacter, "play", "player_two");
+      const initialStrength = testEngine.getCard(opposingCharacter).strength!;
+
+      // Pay 2 ink to play a 3-cost action (modified). Total paid = 2 (≤2).
+      expect(testEngine.asPlayerOne().playCard(expensiveAction)).toBeSuccessfulCommand();
+
+      // Yodel-ay-hee-hoo! should trigger because total paid (2) is ≤ 2,
+      // even though printed cost (3) is > 2.
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(jessieLivelyCowgirl, { targets: [opposingId] }),
+      ).toBeSuccessfulCommand();
+
       expect(testEngine.getCard(opposingCharacter).strength).toBe(initialStrength - 1);
     });
 

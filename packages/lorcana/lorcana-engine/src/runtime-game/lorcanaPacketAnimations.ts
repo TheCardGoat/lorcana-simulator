@@ -398,24 +398,6 @@ export function deriveLorcanaPacketAnimations(
     const previousDefenderMeta = previousCardMeta[defenderId] as LorcanaCardMeta | undefined;
     const nextDefenderMeta = nextCardMeta[defenderId] as LorcanaCardMeta | undefined;
 
-    // Compute damage dealt by looking at the damage delta.
-    // When a card is banished, its damage may be reset in nextState, so we fall
-    // back to the card's strength as the damage dealt.
-    const defenderDamageDelta =
-      (nextDefenderMeta?.damage ?? 0) - (previousDefenderMeta?.damage ?? 0);
-    let attackerDamageDealt =
-      defenderDamageDelta > 0 ? defenderDamageDelta : (attackerDef?.strength ?? 0);
-    const attackerDamageDelta =
-      defenderKind === "character"
-        ? (nextAttackerMeta?.damage ?? 0) - (previousAttackerMeta?.damage ?? 0)
-        : 0;
-    const defenderDamageDealt =
-      defenderKind === "character"
-        ? attackerDamageDelta > 0
-          ? attackerDamageDelta
-          : (defenderDef?.strength ?? 0)
-        : 0;
-
     const attackerOwner = attackerInstance?.ownerID;
     const defenderOwner = defenderInstance?.ownerID;
 
@@ -433,6 +415,31 @@ export function deriveLorcanaPacketAnimations(
 
     const attackerWouldBeBanished = isInDiscard(attackerId, attackerOwner);
     const defenderWouldBeBanished = isInDiscard(defenderId, defenderOwner);
+
+    // Compute damage dealt by looking at the damage delta.
+    // When a card is banished its damage counter may be reset in nextState, so
+    // fall back to the card's strength. When delta is zero AND the card was NOT
+    // banished, damage was prevented — show 0, not the raw strength.
+    const defenderDamageDelta =
+      (nextDefenderMeta?.damage ?? 0) - (previousDefenderMeta?.damage ?? 0);
+    let attackerDamageDealt =
+      defenderDamageDelta > 0
+        ? defenderDamageDelta
+        : defenderWouldBeBanished
+          ? (attackerDef?.strength ?? 0)
+          : 0;
+    const attackerDamageDelta =
+      defenderKind === "character"
+        ? (nextAttackerMeta?.damage ?? 0) - (previousAttackerMeta?.damage ?? 0)
+        : 0;
+    const defenderDamageDealt =
+      defenderKind === "character"
+        ? attackerDamageDelta > 0
+          ? attackerDamageDelta
+          : attackerWouldBeBanished
+            ? (defenderDef?.strength ?? 0)
+            : 0
+        : 0;
 
     if (
       defenderKind === "location" &&

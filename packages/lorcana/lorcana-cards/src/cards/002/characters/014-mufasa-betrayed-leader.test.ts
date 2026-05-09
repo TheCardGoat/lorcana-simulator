@@ -21,9 +21,10 @@ describe("Mufasa - Betrayed Leader", () => {
       // Triggered ability should be in the bag
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolvePendingByCard(mufasaBetrayedLeader),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mufasaBetrayedLeader, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Resolve the scry — choose to play Gaston for free
@@ -58,9 +59,10 @@ describe("Mufasa - Betrayed Leader", () => {
       // Triggered ability should be in the bag
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolvePendingByCard(mufasaBetrayedLeader),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mufasaBetrayedLeader, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Non-character doesn't match the play filter — resolve scry with no hand selection
@@ -89,9 +91,10 @@ describe("Mufasa - Betrayed Leader", () => {
       ).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
 
-      const [bagEffect] = testEngine.asPlayerOne().getBagEffects();
       expect(
-        testEngine.asPlayerOne().resolvePendingByCard(mufasaBetrayedLeader),
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mufasaBetrayedLeader, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Decline playing — resolve scry with empty destinations, Gaston goes to deck-top (remainder)
@@ -100,6 +103,31 @@ describe("Mufasa - Betrayed Leader", () => {
       ).toBeSuccessfulCommand();
 
       // Gaston should remain in deck (not played)
+      expect(testEngine.asPlayerOne().getCardZone(gastonBaritoneBully)).toBe("deck");
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({
+        deck: 1,
+        play: 0,
+        discard: 1,
+      });
+    });
+
+    it("player may decline revealing the top card", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [{ card: mufasaBetrayedLeader }],
+        deck: [{ card: gastonBaritoneBully }],
+      });
+
+      expect(
+        testEngine.asServer().manualSetDamage(mufasaBetrayedLeader, 10),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mufasaBetrayedLeader, { resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
       expect(testEngine.asPlayerOne().getCardZone(gastonBaritoneBully)).toBe("deck");
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({
         deck: 1,
@@ -134,9 +162,10 @@ describe("Mufasa - Betrayed Leader", () => {
       // Triggered ability should be in the bag for player two (the controller)
       expect(testEngine.asPlayerTwo().getBagCount()).toBe(1);
 
-      const [bagEffect] = testEngine.asPlayerTwo().getBagEffects();
       expect(
-        testEngine.asPlayerTwo().resolvePendingByCard(mufasaBetrayedLeader),
+        testEngine
+          .asPlayerTwo()
+          .resolvePendingByCard(mufasaBetrayedLeader, { resolveOptional: true }),
       ).toBeSuccessfulCommand();
 
       // Resolve the scry — choose to play Gaston for free

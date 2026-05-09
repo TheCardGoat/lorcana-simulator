@@ -9,6 +9,7 @@ import { normalizeSelectedTargets, resolveEffectTargets } from "../../../targeti
 import { getCurrentSelectionInput, getEffectTargetSelectionInput } from "./selection-state";
 import { emitTriggeredLorcanaEvent } from "../../../triggered-abilities";
 import { isDiscardZoneKey, recordDiscardExitThisTurn } from "../../state/turn-metrics";
+import { isPlayZoneKey } from "../../../operations/zones";
 
 export function isPutOnBottomEffect(effect: unknown): effect is PutOnBottomEffect {
   return (
@@ -29,7 +30,7 @@ function putCardOnBottomOfOwnerDeck(
   const zoneKey = ctx.framework.zones.getCardZone(cardId);
   const fromDiscard = typeof zoneKey === "string" && isDiscardZoneKey(zoneKey);
 
-  if (typeof zoneKey === "string" && (zoneKey === "play" || zoneKey.startsWith("play:"))) {
+  if (isPlayZoneKey(zoneKey)) {
     moveCardOutOfPlayWithStack(
       ctx,
       cardId,
@@ -39,6 +40,23 @@ function putCardOnBottomOfOwnerDeck(
       },
       {
         index: 0,
+      },
+    );
+    emitTriggeredLorcanaEvent(
+      ctx,
+      "cardMoved",
+      {
+        cardId,
+        fromZone: zoneKey,
+        toZone: "deck-bottom",
+        playerId: ownerId,
+      },
+      {
+        event: "move",
+        fromZone: zoneKey,
+        toZone: "deck-bottom",
+        playerId: ownerId,
+        subjectCardId: cardId,
       },
     );
     return;
@@ -52,6 +70,23 @@ function putCardOnBottomOfOwnerDeck(
     },
     {
       index: 0,
+    },
+  );
+  emitTriggeredLorcanaEvent(
+    ctx,
+    "cardMoved",
+    {
+      cardId,
+      fromZone: typeof zoneKey === "string" ? zoneKey : "unknown",
+      toZone: "deck-bottom",
+      playerId: ownerId,
+    },
+    {
+      event: "move",
+      fromZone: typeof zoneKey === "string" ? zoneKey : "unknown",
+      toZone: "deck-bottom",
+      playerId: ownerId,
+      subjectCardId: cardId,
     },
   );
 

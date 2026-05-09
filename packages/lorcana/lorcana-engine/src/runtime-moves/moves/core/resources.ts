@@ -13,14 +13,10 @@ type LorcanaRuntimeCard = RuntimeCardWithDefinition & LorcanaCardDerived;
 import { type LorcanaMoveDefinition } from "../../../types";
 import { createLorcanaLogProjection } from "../../../types";
 import { INKWELL_CANDIDATE_QUERY_DSL, canInkThisTurn } from "../../state/runtime-card-derived";
-import {
-  EFFECT_PENDING_ERROR_CODE,
-  hasPendingActionEffectResolution,
-} from "../../resolution/action-effects/pending-action-effects";
+import { hasAnyPendingEffects, validateNoPendingEffects } from "../../../operations";
 import {
   emitTriggeredLorcanaEvent,
   flushTriggeredEventsToBag,
-  hasPendingBagItems,
 } from "../../effects/triggered-abilities";
 import { recordCardPutIntoInkwellThisTurn } from "../../state/turn-metrics";
 
@@ -51,20 +47,9 @@ function buildTurnActionInkState(ctx: {
  */
 export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
   validate: (ctx): RuntimeValidationResult => {
-    if (hasPendingActionEffectResolution(ctx)) {
-      return {
-        valid: false,
-        error: "Cannot ink cards while an action effect is pending",
-        errorCode: EFFECT_PENDING_ERROR_CODE,
-      };
-    }
-
-    if (hasPendingBagItems(ctx)) {
-      return {
-        valid: false,
-        error: "Cannot ink cards while bag effects are pending",
-        errorCode: "BAG_PENDING",
-      };
+    const pendingFailure = validateNoPendingEffects(ctx, { actionLabel: "ink cards" });
+    if (pendingFailure) {
+      return pendingFailure;
     }
 
     const { cardId } = ctx.args;
@@ -117,9 +102,6 @@ export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
     const discardCards = ctx.framework.zones.getCards({ zone: "discard", playerId: ownerId });
     const sourceZone = discardCards.includes(cardId) ? "discard" : "hand";
 
-    const cardDef = ctx.cards.require(cardId).definition;
-    const cardName = cardDef.version ? `${cardDef.name} - ${cardDef.version}` : cardDef.name;
-
     const inkwellZoneRef = { zone: "inkwell", playerId: ownerId };
     ctx.framework.zones.moveCard(cardId, inkwellZoneRef);
     ctx.cards.patchMeta(cardId, { state: "ready", publicFaceState: "faceDown" });
@@ -133,7 +115,6 @@ export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
         {
           playerId: ownerId,
           cardId: cardId as CardInstanceId,
-          cardName,
         },
         { mode: "PUBLIC" },
         "action",
@@ -162,11 +143,7 @@ export const putCardIntoInkwell: LorcanaMoveDefinition<"putCardIntoInkwell"> = {
   },
 
   available: (ctx) => {
-    if (hasPendingActionEffectResolution(ctx)) {
-      return false;
-    }
-
-    if (hasPendingBagItems(ctx)) {
+    if (hasAnyPendingEffects(ctx)) {
       return false;
     }
 

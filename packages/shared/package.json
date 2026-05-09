@@ -14,13 +14,22 @@
     "./types": "./src/types.ts",
     "./auth": "./src/auth/index.ts",
     "./testing": "./src/testing/index.ts",
+    "./game-adapter": "./src/game-adapter/index.ts",
+    "./game-engine": "./src/game-engine/index.ts",
     "./cards": "./src/cards/index.ts",
     "./cards/images": "./src/cards/images.ts",
     "./cards/catalog": "./src/cards/catalog.ts",
+    "./cyberpunk": "./src/cyberpunk/index.ts",
+    "./cyberpunk/deck-validation": "./src/cyberpunk/deck-validation.ts",
     "./deck-list-normalize": "./src/deck-list-normalize.ts",
     "./deck-list-parse": "./src/deck-list-parse.ts",
     "./deck-list-errors": "./src/deck-list-errors.ts",
-    "./display-name-normalize": "./src/display-name-normalize.ts"
+    "./display-name-normalize": "./src/display-name-normalize.ts",
+    "./ads/PrivacyPage": "./src/ads/PrivacyPage.svelte",
+    "./ads/TermsPage": "./src/ads/TermsPage.svelte",
+    "./ads/RampPlaywire": "./src/ads/RampPlaywire.svelte",
+    "./ads/AntiRamp": "./src/ads/AntiRamp.svelte",
+    "./ads/ad-free-user": "./src/ads/ad-free-user.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -34,6 +43,7 @@
   },
   "devDependencies": {
     "@tcg/typescript-config": "workspace:*",
-    "@types/node": "^22.13.4"
+    "@types/node": "^22.13.4",
+    "svelte": "^5.49.2"
   }
 }

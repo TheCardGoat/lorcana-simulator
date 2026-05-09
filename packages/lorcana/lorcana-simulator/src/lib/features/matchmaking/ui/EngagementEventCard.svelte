@@ -37,6 +37,7 @@
   const featuredRulesUrl = $derived(
     featuredEvent ? sanitizeExternalUrl(featuredEvent.rulesUrl) : null,
   );
+  const pastWinnersUrl = $derived(`/matchmaking/events`);
   const overflowEvents = $derived(
     engagement?.activeEvents.filter((event) => event.eventId !== featuredEvent?.eventId) ?? [],
   );
@@ -105,7 +106,19 @@
     return labels;
   }
 
+  function isMultiWeekEvent(event: MatchmakingEngagementEventSummary): boolean {
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    return new Date(event.endsAt).getTime() - new Date(event.startsAt).getTime() > msPerWeek;
+  }
+
   function progressPercent(event: MatchmakingEngagementEventSummary): number {
+    if (
+      isMultiWeekEvent(event) &&
+      event.eventCapPoints !== null &&
+      event.eventCapPoints > 0
+    ) {
+      return Math.min(100, Math.round((event.pointsEarned / event.eventCapPoints) * 100));
+    }
     if (event.weeklyCapPoints !== null && event.weeklyCapPoints > 0) {
       return Math.min(100, Math.round((event.weeklyPoints / event.weeklyCapPoints) * 100));
     }
@@ -119,6 +132,12 @@
   }
 
   function progressLabel(event: MatchmakingEngagementEventSummary): string {
+    if (isMultiWeekEvent(event) && event.eventCapPoints !== null) {
+      return m["sim.matchmaking.engagement.progress.event"]({
+        current: event.pointsEarned,
+        cap: event.eventCapPoints,
+      });
+    }
     if (event.weeklyCapPoints !== null) {
       return m["sim.matchmaking.engagement.progress.weekly"]({
         current: event.weeklyPoints,
@@ -139,6 +158,16 @@
     }
     return m["sim.matchmaking.engagement.progress.earned"]({
       points: event.pointsEarned,
+    });
+  }
+
+  function secondaryProgressLabel(event: MatchmakingEngagementEventSummary): string | null {
+    if (!isMultiWeekEvent(event) || event.weeklyCapPoints === null) {
+      return null;
+    }
+    return m["sim.matchmaking.engagement.progress.weekly"]({
+      current: event.weeklyPoints,
+      cap: event.weeklyCapPoints,
     });
   }
 
@@ -287,6 +316,16 @@
         {m["sim.matchmaking.engagement.empty.body"]({})}
       </CardDescription>
     </CardHeader>
+    <CardContent>
+      <a
+        class="text-sm font-medium text-sky-300 underline decoration-sky-400/50 underline-offset-4 hover:text-sky-200"
+        href={pastWinnersUrl}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {m["sim.matchmaking.engagement.pastEvents"]({})}
+      </a>
+    </CardContent>
   </Card>
 {:else if featuredEvent}
   <div class="grid gap-4">
@@ -389,7 +428,7 @@
         <div class="flex flex-wrap items-center">
           {#if featuredEvent.canJoin}
             <Button
-              class="h-10"
+              class="h-10 mr-2"
               disabled={joinPendingEventId === featuredEvent.eventId}
               onclick={() => joinEvent(featuredEvent.eventId)}
             >
@@ -411,6 +450,14 @@
               {m["sim.matchmaking.engagement.rules"]({})}
             </a>
           {/if}
+          <a
+            class="text-sm font-medium text-sky-300 underline decoration-sky-400/50 underline-offset-4 hover:text-sky-200"
+            href={pastWinnersUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {m["sim.matchmaking.engagement.pastWinners"]({})}
+          </a>
         </div>
 
         {#if joinError}
@@ -434,6 +481,9 @@
                     style={`width:${progressPercent(featuredEvent)}%`}
             ></div>
           </div>
+          {#if secondaryProgressLabel(featuredEvent)}
+            <p class="text-xs text-slate-400">{secondaryProgressLabel(featuredEvent)}</p>
+          {/if}
           {#if capStatLine(featuredEvent)}
             <p class="text-xs text-slate-400 text-right">{capStatLine(featuredEvent)}</p>
           {/if}
@@ -469,6 +519,7 @@
                     variant="outline"
                     disabled={joinPendingEventId === event.eventId}
                     onclick={() => joinEvent(event.eventId)}
+                    class="mr-2"
                   >
                     {joinPendingEventId === event.eventId
                       ? m["sim.matchmaking.engagement.joining"]({})

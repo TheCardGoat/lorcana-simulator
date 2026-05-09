@@ -14,6 +14,7 @@ import type {
   AutomatedActionFallback,
   AutomatedActionSearchCaps,
   AutomatedActionStrategy,
+  LorcanaCard,
   StrategyInformationPolicy,
   PlayerId,
 } from "@tcg/lorcana-engine";
@@ -38,6 +39,19 @@ import {
   createFixture,
   type LorcanaSimulatorFixtureInput,
 } from "../../lib/features/simulator-devtools/fixtures/fixture-factory.js";
+import { all001Cards } from "@tcg/lorcana-cards/cards/001";
+import { all002Cards } from "@tcg/lorcana-cards/cards/002";
+import { all003Cards } from "@tcg/lorcana-cards/cards/003";
+import { all004Cards } from "@tcg/lorcana-cards/cards/004";
+import { all005Cards } from "@tcg/lorcana-cards/cards/005";
+import { all006Cards } from "@tcg/lorcana-cards/cards/006";
+import { all007Cards } from "@tcg/lorcana-cards/cards/007";
+import { all008Cards } from "@tcg/lorcana-cards/cards/008";
+import { all009Cards } from "@tcg/lorcana-cards/cards/009";
+import { all010Cards } from "@tcg/lorcana-cards/cards/010";
+import { all011Cards } from "@tcg/lorcana-cards/cards/011";
+import { all012Cards } from "@tcg/lorcana-cards/cards/012";
+import { resolveLorcanaDeckListTextFromPool } from "@tcg/lorcana-cards/deck-list-resolver";
 import { configureStrategySuiteLogging } from "./configure-strategy-logging.js";
 import {
   createRepeatedStateDeadlockTracker,
@@ -831,9 +845,30 @@ export function buildStrategyLabMatchDefinitions(
   return matchDefinitions;
 }
 
+// Card pool for strategy tests — eagerly loaded because this module only runs in Bun/Node.
+const STRATEGY_CARD_POOL = [
+  ...all001Cards,
+  ...all002Cards,
+  ...all003Cards,
+  ...all004Cards,
+  ...all005Cards,
+  ...all006Cards,
+  ...all007Cards,
+  ...all008Cards,
+  ...all009Cards,
+  ...all010Cards,
+  ...all011Cards,
+  ...all012Cards,
+].filter((card) => card?.name != null);
+
+function resolveStrategyDeckText(deckText: string): LorcanaCard[] {
+  const { cards } = resolveLorcanaDeckListTextFromPool(deckText, STRATEGY_CARD_POOL);
+  return cards;
+}
+
 function createFixturePlayer(deckText: string): LorcanaSimulatorFixtureInput["playerOne"] {
   return {
-    deck: deckText,
+    deck: resolveStrategyDeckText(deckText),
   };
 }
 

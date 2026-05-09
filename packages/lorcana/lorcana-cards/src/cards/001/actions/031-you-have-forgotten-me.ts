@@ -2,7 +2,7 @@ import type { ActionCard } from "@tcg/lorcana-types";
 import { youHaveForgottenMeI18n } from "./031-you-have-forgotten-me.i18n";
 
 export const youHaveForgottenMe: ActionCard = {
-  id: "7me",
+  id: "3p5",
   canonicalId: "ci_7me",
   reprints: ["set1-031"],
   cardType: "action",

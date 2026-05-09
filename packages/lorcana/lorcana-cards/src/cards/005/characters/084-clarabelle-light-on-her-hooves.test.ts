@@ -97,6 +97,36 @@ describe("Clarabelle - Light on Her Hooves", () => {
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 3 });
     });
 
+    it("regression: resolves cleanly when deck has fewer cards than the draw target (no softlock)", () => {
+      // Reports #22/#23/#27/#28/#35 — KEEP IN STEP softlocks turn end. Most plausible
+      // root cause is an iterative draw that hangs when the deck runs out before the
+      // hand sizes match. Opponent has 5 cards, controller has 0, but only 2 in deck.
+      const shortDeck = drawnCards.slice(0, 2);
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [clarabelleLightOnHerHooves],
+          inkwell: clarabelleLightOnHerHooves.cost,
+          deck: shortDeck,
+        },
+        {
+          hand: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(clarabelleLightOnHerHooves)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(clarabelleLightOnHerHooves, {
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Should have drawn the available 2 cards and resolved without leaving a pending bag.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 2, deck: 0 });
+    });
+
     it("does not trigger if the opponent does not have more cards in hand", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {
@@ -113,13 +143,8 @@ describe("Clarabelle - Light on Her Hooves", () => {
       expect(testEngine.asPlayerOne().playCard(clarabelleLightOnHerHooves)).toBeSuccessfulCommand();
       expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
 
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(clarabelleLightOnHerHooves, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
       expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, deck: 6 });
     });
   });

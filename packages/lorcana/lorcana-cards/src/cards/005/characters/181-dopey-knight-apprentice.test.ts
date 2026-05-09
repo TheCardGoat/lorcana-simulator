@@ -26,13 +26,8 @@ describe("Dopey - Knight Apprentice", () => {
       );
 
       expect(testEngine.asPlayerOne().playCard(dopeyKnightApprentice)).toBeSuccessfulCommand();
-      // Per CRD 6.2.7: ability IS enqueued; condition checked at resolution
-      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
-      expect(
-        testEngine
-          .asPlayerOne()
-          .resolvePendingByCard(dopeyKnightApprentice, { resolveOptional: true }),
-      ).toBeSuccessfulCommand();
+      // Board-state condition is checked at trigger time, ability is not queued when condition is false.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
     it("triggers and deals 1 damage when another Knight is in play", () => {

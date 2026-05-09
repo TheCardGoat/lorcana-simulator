@@ -1,10 +1,9 @@
 import type { AvailableMovesSelectionState } from "@/features/simulator/model/contracts.js";
 
 // Effects whose slot structure doesn't map cleanly to picking cards on the
-// board — source→destination for `move-damage`, character→location for
-// `move-to-location`. Everything else (deal-damage, exert, banish, …) is a
-// single-slot-per-pick prompt that the board handles inline.
-const OVERLAY_EFFECT_TYPES = new Set<string>(["move-damage", "move-to-location"]);
+// board. Multi-character `move-to-location` prompts are intentionally handled
+// through the inline board prompt so they stay non-intrusive.
+const OVERLAY_EFFECT_TYPES = new Set<string>(["move-damage"]);
 
 export function shouldUseResolutionTargetOverlay(
   selectionState: AvailableMovesSelectionState | null | undefined,

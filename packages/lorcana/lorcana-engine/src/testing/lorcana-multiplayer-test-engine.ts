@@ -60,6 +60,7 @@ import { LorcanaEngineBase } from "../lorcana-engine-base";
 import { recomputeLoreToWin } from "../runtime-moves/effects/win-condition-effects";
 import { buildZoneRegistry } from "../core/runtime/zone-registry";
 import { lorcanaRuntimeZones } from "../zones";
+import { invalidateStaticEffects } from "../runtime-moves/rules/static-effects-invalidation";
 
 type CardRef = CardInput;
 
@@ -592,7 +593,7 @@ export class LorcanaMultiplayerTestEngine {
           state.G.continuousEffects.instances.push(effectInstance);
           state.G.continuousEffects.byTarget[cardId as CardInstanceId] ??= [];
           state.G.continuousEffects.byTarget[cardId as CardInstanceId].push(effectInstance);
-          state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
+          invalidateStaticEffects(state);
         }
       }
     }
@@ -641,7 +642,7 @@ export class LorcanaMultiplayerTestEngine {
    * @internal Used by serialization helpers; prefer restoreEngineFromState() for external use
    */
   loadState(state: MatchState): void {
-    state.G.staticEffectsVersion = (state.G.staticEffectsVersion ?? 0) + 1;
+    invalidateStaticEffects(state);
     // Access the server engine's runtime and load the state
     const serverEngine = this.getServerEngine();
     const runtime = serverEngine.getRuntime();
