@@ -388,7 +388,7 @@ return {
 # 3. Compare with saved version
 
 # Using git diff
-git diff packages/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts
+git diff packages/lorcana/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts
 ```
 
 ### Status Categories

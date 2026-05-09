@@ -7,7 +7,7 @@ description: Incrementally improve the Lorcana card text parser through pattern 
 
 ## Overview
 
-This skill set enables a virtuous loop for incrementally improving the card text parser in `packages/lorcana-cards/src/parser/` while also updating the type definitions in `packages/lorcana-types`. The workflow coordinates:
+This skill set enables a virtuous loop for incrementally improving the card text parser in `packages/lorcana/lorcana-cards/src/parser/` while also updating the type definitions in `packages/lorcana/lorcana-types`. The workflow coordinates:
 
 1. **Discovery** - Find unimplemented cards (prioritize latest sets)
 2. **Pattern Development** - Analyze text, design patterns, implement, test (TDD)
@@ -32,14 +32,14 @@ This skill set enables a virtuous loop for incrementally improving the card text
 
 ## Key Paths
 
-| Component        | Path                                                       |
-| ---------------- | ---------------------------------------------------------- |
-| V1 Parser        | `packages/lorcana-cards/src/parser/`                       |
-| V2 Parser        | `packages/lorcana-cards/src/parser/v2/`                    |
-| Patterns (split) | `packages/lorcana-cards/src/parser/patterns/*.ts`          |
-| V2 Effects       | `packages/lorcana-cards/src/parser/v2/effects/atomic/*.ts` |
-| Parser Tests     | `packages/lorcana-cards/src/parser/__tests__/*.test.ts`    |
-| Cards            | `packages/lorcana-cards/src/cards/{set}/{type}/*.ts`       |
+| Component        | Path                                                               |
+| ---------------- | ------------------------------------------------------------------ |
+| V1 Parser        | `packages/lorcana/lorcana-cards/src/parser/`                       |
+| V2 Parser        | `packages/lorcana/lorcana-cards/src/parser/v2/`                    |
+| Patterns (split) | `packages/lorcana/lorcana-cards/src/parser/patterns/*.ts`          |
+| V2 Effects       | `packages/lorcana/lorcana-cards/src/parser/v2/effects/atomic/*.ts` |
+| Parser Tests     | `packages/lorcana/lorcana-cards/src/parser/__tests__/*.test.ts`    |
+| Cards            | `packages/lorcana/lorcana-cards/src/cards/{set}/{type}/*.ts`       |
 
 ## Skills Index
 
@@ -87,14 +87,14 @@ This skill set enables a virtuous loop for incrementally improving the card text
 
 - Regex-based pattern matching
 - Quick additions for common patterns
-- Files: `packages/lorcana-cards/src/parser/patterns/*.ts`
+- Files: `packages/lorcana/lorcana-cards/src/parser/patterns/*.ts`
 
 **V2 Parser** (Complex):
 
 - Grammar-based parsing
 - Atomic effect composition
 - Complex multi-clause abilities
-- Files: `packages/lorcana-cards/src/parser/v2/effects/atomic/*.ts`
+- Files: `packages/lorcana/lorcana-cards/src/parser/v2/effects/atomic/*.ts`
 
 **Selection Criteria:**
 
@@ -106,13 +106,13 @@ This skill set enables a virtuous loop for incrementally improving the card text
 
 ```bash
 # Find unimplemented cards in a set
-grep -r "abilities: \[\]" packages/lorcana-cards/src/cards/010/
+grep -r "abilities: \[\]" packages/lorcana/lorcana-cards/src/cards/010/
 
 # Run parser tests
-cd packages/lorcana-cards && bun test parser
+cd packages/lorcana/lorcana-cards && bun test parser
 
 # Type check parser
-cd packages/lorcana-cards && bun run check-types
+cd packages/lorcana/lorcana-cards && bun run check-types
 
 # Full CI check
 bun run ci-check

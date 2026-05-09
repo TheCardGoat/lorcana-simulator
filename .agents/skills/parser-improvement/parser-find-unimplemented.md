@@ -20,7 +20,7 @@ abilities: [],
 
 ```bash
 # Find cards with empty abilities
-grep -r "abilities: \[\]" packages/lorcana-cards/src/cards/010/
+grep -r "abilities: \[\]" packages/lorcana/lorcana-cards/src/cards/010/
 ```
 
 ### 2. Placeholder Abilities
@@ -59,7 +59,7 @@ abilities: [], // Should have been parsed
 ```bash
 # Scan specific set
 TARGET_SET="010"
-find packages/lorcana-cards/src/cards/${TARGET_SET} -name "*.ts" ! -name "*.test.ts" ! -name "index.ts"
+find packages/lorcana/lorcana-cards/src/cards/${TARGET_SET} -name "*.ts" ! -name "*.test.ts" ! -name "index.ts"
 ```
 
 ### Step 2: Check Each Card File
@@ -111,11 +111,11 @@ interface ScanResult {
 
 ```bash
 # Find cards with empty abilities in Set 010
-grep -rn "abilities: \[\]" packages/lorcana-cards/src/cards/010/ --include="*.ts" \
+grep -rn "abilities: \[\]" packages/lorcana/lorcana-cards/src/cards/010/ --include="*.ts" \
   | grep -v ".test.ts" | grep -v "index.ts"
 
 # Count unimplemented cards
-grep -r "abilities: \[\]" packages/lorcana-cards/src/cards/010/ --include="*.ts" \
+grep -r "abilities: \[\]" packages/lorcana/lorcana-cards/src/cards/010/ --include="*.ts" \
   | grep -v ".test.ts" | wc -l
 ```
 
@@ -123,7 +123,7 @@ grep -r "abilities: \[\]" packages/lorcana-cards/src/cards/010/ --include="*.ts"
 
 ```bash
 # Find cards that have text field
-grep -rn "text:" packages/lorcana-cards/src/cards/010/ --include="*.ts" \
+grep -rn "text:" packages/lorcana/lorcana-cards/src/cards/010/ --include="*.ts" \
   | grep -v ".test.ts" | grep -v "index.ts"
 
 # Cross-reference with empty abilities
@@ -134,7 +134,7 @@ grep -rn "text:" packages/lorcana-cards/src/cards/010/ --include="*.ts" \
 
 ```bash
 # Find cards flagged for manual implementation
-grep -rn "manualOverride\|notImplemented" packages/lorcana-cards/src/cards/ \
+grep -rn "manualOverride\|notImplemented" packages/lorcana/lorcana-cards/src/cards/ \
   --include="*.ts" | grep -v ".test.ts"
 ```
 
@@ -200,7 +200,7 @@ const TYPE_PRIORITY = ["character", "action", "item", "location"];
   "cards": [
     {
       "id": "010-043",
-      "path": "packages/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts",
+      "path": "packages/lorcana/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts",
       "text": "When you play this character, you may have each opponent choose and discard a card.",
       "reason": "empty-abilities"
     }
@@ -243,10 +243,10 @@ return {
 
 ```bash
 # Quick scan for a set
-grep -c "abilities: \[\]" packages/lorcana-cards/src/cards/010/**/*.ts 2>/dev/null | grep -v ":0$"
+grep -c "abilities: \[\]" packages/lorcana/lorcana-cards/src/cards/010/**/*.ts 2>/dev/null | grep -v ":0$"
 
 # Full report
-grep -rn "abilities: \[\]" packages/lorcana-cards/src/cards/ --include="*.ts" \
+grep -rn "abilities: \[\]" packages/lorcana/lorcana-cards/src/cards/ --include="*.ts" \
   | grep -v ".test.ts" | grep -v "index.ts" \
   | sort -t'/' -k6,6 -k7,7
 ```
