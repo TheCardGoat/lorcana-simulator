@@ -96,6 +96,7 @@
         wsConnected={controller.gateway.status === 'connected'}
         selectedQueueMode={controller.queue.selectedQueueMode}
         selectedMatchType={controller.queue.selectedMatchType}
+        rankedEnabled={controller.queue.rankedEnabled}
         cards={controller.queue.queueCards}
         isDeckValidForSelectedFormat={controller.queue.isDeckValidForSelectedFormat}
         hasDeckSelected={controller.deckSelection.selectedDeck !== null}

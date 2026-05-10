@@ -11,6 +11,7 @@ const baseProps = {
   selectionDisabled: false,
   selectedQueueMode: "1" as const,
   selectedMatchType: "ranked" as const,
+  rankedEnabled: false,
   cards: [
     {
       definition: {
@@ -113,6 +114,25 @@ describe("MatchmakingQueueCard", () => {
     });
 
     expect(body).not.toContain("border-amber-400/20");
+  });
+
+  it("renders the ranked tab as disabled with a coming-soon badge when rankedEnabled is false", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: { ...baseProps, rankedEnabled: false },
+    });
+
+    expect(body).toContain('aria-disabled="true"');
+    expect(body).toContain("Soon");
+  });
+
+  it("renders the ranked tab as a selectable button when rankedEnabled is true", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: { ...baseProps, rankedEnabled: true, selectedMatchType: "casual" as const },
+    });
+
+    expect(body).not.toContain("Soon");
+    // Ranked tab is now an enabled button alongside Casual
+    expect(body).toContain(">Ranked<");
   });
 
   it("renders elapsed and remaining queue timers with the leave-queue CTA while queued", () => {

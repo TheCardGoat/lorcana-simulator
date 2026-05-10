@@ -103,14 +103,42 @@ const authSession = {
   signOut: async () => {},
 };
 
+mock.module("$env/dynamic/public", () => ({
+  env: {},
+}));
 mock.module("$lib/config/public-url-config.js", () => ({
   getGatewayWsUrl: () => "wss://gateway.example.test",
   getApiOrigin: () => "https://api.example.test",
   getGameServerOrigin: () => "https://game.example.test",
 }));
+mock.module("$lib/config/feature-flags.js", () => ({
+  getFeatureFlags: () => ({ rankedEnabled: false }),
+}));
 mock.module("$lib/analytics/analytics.js", () => ({
   trackEvent,
   setUserProperties: () => {},
+  isAnalyticsConfigured: () => false,
+  normalizePathForAnalytics: (p: string) => p,
+  initAnalytics: () => {},
+  trackPageView: () => {},
+  truncateForAnalytics: (input: unknown) =>
+    typeof input === "string" ? input.slice(0, 100) : undefined,
+  analyticsErrorFields: (error: unknown) => {
+    const code = error instanceof Error ? error.name : undefined;
+    const rawMessage =
+      error instanceof Error ? error.message : typeof error === "string" ? error : undefined;
+    const message =
+      typeof rawMessage === "string" && rawMessage.length > 0
+        ? rawMessage.slice(0, 100)
+        : undefined;
+    return {
+      ...(code ? { error_code: code } : {}),
+      ...(message ? { error_message: message } : {}),
+    };
+  },
+  trackException: () => {},
+  updateConsent: () => {},
+  ANALYTICS_TEXT_MAX_LENGTH: 100,
 }));
 mock.module("$app/navigation", () => ({
   goto: async () => {},
@@ -294,6 +322,7 @@ describe("createMatchmakingLobbyController", () => {
       },
       {
         getGatewayWsUrl: () => "wss://gateway.example.test",
+        getFeatureFlags: () => ({ rankedEnabled: false }),
         importDeckForProfile,
         importLegacyDecksForProfile,
         fetchDeckListSnapshotByDeckListId: fetchDeckListSnapshotByDeckListId as never,
@@ -323,6 +352,7 @@ describe("createMatchmakingLobbyController", () => {
       },
       {
         getGatewayWsUrl: () => "wss://gateway.example.test",
+        getFeatureFlags: () => ({ rankedEnabled: false }),
         importDeckForProfile,
         importLegacyDecksForProfile,
         fetchDeckListSnapshotByDeckListId: fetchDeckListSnapshotByDeckListId as never,
@@ -362,6 +392,7 @@ describe("createMatchmakingLobbyController", () => {
       },
       {
         getGatewayWsUrl: () => "wss://gateway.example.test",
+        getFeatureFlags: () => ({ rankedEnabled: false }),
         importDeckForProfile,
         importLegacyDecksForProfile,
         fetchDeckListSnapshotByDeckListId: fetchDeckListSnapshotByDeckListId as never,
@@ -531,6 +562,52 @@ describe("createMatchmakingLobbyController", () => {
     const url = calls[0]![0]!;
     expect(url).not.toContain("opponentFixtureId");
     expect(url).not.toContain("strategyId");
+  });
+
+  function createControllerWithFlags(flags: { rankedEnabled: boolean }) {
+    return createMatchmakingLobbyController(
+      { initialContext },
+      {
+        getGatewayWsUrl: () => "wss://gateway.example.test",
+        getFeatureFlags: () => flags,
+        importDeckForProfile,
+        importLegacyDecksForProfile,
+        fetchDeckListSnapshotByDeckListId: fetchDeckListSnapshotByDeckListId as never,
+        trackEvent,
+        openWindow,
+        fetchGatewayTicket,
+        authSession: authSession as never,
+        GatewayClientStore: FakeGatewayClientStore as never,
+        MatchmakingPlayerContextState: FakePlayerContextState as never,
+        MatchmakingQueueStore: FakeQueueStore as never,
+        LiveMatchesStore: FakeLiveMatchesStore as never,
+        QueueStatsStore: FakeQueueStatsStore as never,
+        PlayerSettingsStore: FakePlayerSettingsStore as never,
+      },
+    );
+  }
+
+  it("ignores selectMatchType('ranked') when the rankedEnabled flag is off", () => {
+    const controller = createControllerWithFlags({ rankedEnabled: false });
+    const before = controller.queue.selectedMatchType;
+
+    controller.selectMatchType("ranked");
+
+    expect(controller.queue.selectedMatchType).toBe(before);
+    expect(controller.queue.rankedEnabled).toBe(false);
+    expect(trackEvent).not.toHaveBeenCalledWith("matchmaking_match_type_select", expect.anything());
+  });
+
+  it("accepts selectMatchType('ranked') when the rankedEnabled flag is on", () => {
+    const controller = createControllerWithFlags({ rankedEnabled: true });
+
+    controller.selectMatchType("ranked");
+
+    expect(controller.queue.selectedMatchType).toBe("ranked");
+    expect(controller.queue.rankedEnabled).toBe(true);
+    expect(trackEvent).toHaveBeenCalledWith("matchmaking_match_type_select", {
+      matchType: "ranked",
+    });
   });
 
   it("passes selected bot fixture and strategy into AI quick-play URL", async () => {
