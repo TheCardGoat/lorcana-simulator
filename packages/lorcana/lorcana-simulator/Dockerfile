@@ -12,15 +12,15 @@ RUN vp env on
 RUN vp env setup
 RUN vp env print
 
-RUN vp install --frozen-lockfile --ignore-scripts
-RUN pnpm rebuild esbuild
+ENV CI=true
+RUN vp install --frozen-lockfile
 
 ENV NODE_ENV=production
 ENV PLATFORM=node
 ENV NODE_OPTIONS=--max-old-space-size=4096
 
 WORKDIR /app/packages/lorcana/lorcana-simulator
-RUN vp run i18n:compile
+RUN npm run i18n:compile
 RUN vp build
 
 FROM node:24-alpine AS runtime

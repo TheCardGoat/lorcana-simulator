@@ -22,7 +22,7 @@
     "preview": "turbo run preview",
     "boundaries": "turbo boundaries",
     "ready": "vp fmt && vp lint && vp test && vp run build -r",
-    "prepare": "vp config",
+    "prepare": "node -e \"process.exit(process.env.CI?0:1)\" || vp config",
     "clean": "pnpm dlx rimraf '**/node_modules' '**/.turbo' '**/dist' && pnpm install"
   },
   "dependencies": {
