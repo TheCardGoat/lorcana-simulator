@@ -8,9 +8,6 @@ on:
 
 env:
   NODE_OPTIONS: --max-old-space-size=4096
-  TURBO_RUN_SUMMARY: true
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
 jobs:
   build:
@@ -43,7 +40,6 @@ jobs:
           vp env doctor || echo "vp env doctor not available"
           echo "Runner OS: ${{ runner.os }}"
           echo "Runner Arch: ${{ runner.arch }}"
-          echo "TURBO_TEAM: $TURBO_TEAM"
           echo "Bun version: $(bun --version)"
           echo "Node version: $(node --version)"
           echo "pnpm version: $(pnpm --version)"
@@ -51,15 +47,15 @@ jobs:
       - name: Install dependencies
         run: vp install
 
-      - name: Turbo Repo Graph
-        run: pnpm run ci-check:verbose --graph
+      - name: Project Graph
+        run: pnpm exec nx graph --file=nx-graph.json
 
       - name: Run Continuous integration
-        run: pnpm run ci-check-full:verbose --summarize
+        run: pnpm run ci-check-full:verbose
 
-      - name: Upload Turbo run summary
+      - name: Upload Nx project graph
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: turbo-run-summary
-          path: .turbo/runs/*.json
+          name: nx-project-graph
+          path: nx-graph.json

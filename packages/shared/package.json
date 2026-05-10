@@ -45,5 +45,10 @@
     "@tcg/typescript-config": "workspace:*",
     "@types/node": "^22.13.4",
     "svelte": "^5.49.2"
+  },
+  "nx": {
+    "tags": [
+      "foundation"
+    ]
   }
 }
