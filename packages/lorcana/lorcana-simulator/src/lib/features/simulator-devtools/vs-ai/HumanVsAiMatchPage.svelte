@@ -8,7 +8,7 @@
   } from "$lib/design-system/primitives/card";
   import { Button } from "$lib/design-system/primitives/button";
   import { LorcanaTabletopSimulator } from "$lib";
-  import { onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy, untrack } from "svelte";
   import {
     HumanVsAiOrchestrator,
     type HumanVsAiStateChangeCallback,
@@ -44,12 +44,13 @@
   let shouldRedirect = $state(!storedConfig);
   const onboarding = new VsAiOnboardingState();
 
-  let orchestrator: HumanVsAiOrchestrator | null = null;
+  let orchestrator = $state<HumanVsAiOrchestrator | null>(null);
 
   if (storedConfig) {
+    const _onStateChange = untrack(() => onStateChange);
     void HumanVsAiOrchestrator.create(
       { ...storedConfig, seed: createAutomatedMatchSeed() },
-      onStateChange ? { onStateChange } : undefined,
+      _onStateChange ? { onStateChange: _onStateChange } : undefined,
     ).then((result) => {
       orchestrator = result;
     }).catch((error) => {
@@ -73,7 +74,10 @@
     };
   });
 
-  createHumanVsAiContext(orchestrator);
+  const orchestratorStore = createHumanVsAiContext(null);
+  $effect(() => {
+    orchestratorStore.set(orchestrator);
+  });
 
   onMount(() => {
     if (shouldRedirect) {
