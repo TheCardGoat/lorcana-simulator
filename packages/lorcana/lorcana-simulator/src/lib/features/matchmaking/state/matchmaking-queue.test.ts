@@ -1,5 +1,31 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 
+const testGlobals = globalThis as any;
+
+testGlobals.$state = Object.assign(<T>(value: T): T => value, {
+  eager: <T>(value: T): T => value,
+  raw: <T>(value: T): T => value,
+  snapshot: <T>(value: T): T => value,
+});
+
+testGlobals.$derived = Object.assign(<T>(value: T): T => value, {
+  by: <T>(fn: () => T): T => fn(),
+});
+
+testGlobals.$effect = Object.assign(
+  (fn: () => void | (() => void)): void => {
+    fn();
+  },
+  {
+    pre: (fn: () => void | (() => void)): void => {
+      fn();
+    },
+    pending: (): boolean => false,
+    tracking: (): boolean => false,
+    root: <T>(fn: () => T): T => fn(),
+  },
+);
+
 const joinMatchmakingQueue = mock();
 const leaveMatchmakingQueue = mock();
 const getMatchmakingStatus = mock();
@@ -25,10 +51,41 @@ mock.module("../api/matchmaking-api.js", () => ({
 
 mock.module("$lib/analytics/analytics.js", () => ({
   trackEvent,
+  setUserProperties: () => {},
+  isAnalyticsConfigured: () => false,
+  normalizePathForAnalytics: (p: string) => p,
+  initAnalytics: () => {},
+  trackPageView: () => {},
+  truncateForAnalytics: (input: unknown) =>
+    typeof input === "string" ? input.slice(0, 100) : undefined,
+  analyticsErrorFields: (error: unknown) => {
+    const code = error instanceof Error ? error.name : undefined;
+    const rawMessage =
+      error instanceof Error ? error.message : typeof error === "string" ? error : undefined;
+    const message =
+      typeof rawMessage === "string" && rawMessage.length > 0
+        ? rawMessage.slice(0, 100)
+        : undefined;
+    return {
+      ...(code ? { error_code: code } : {}),
+      ...(message ? { error_message: message } : {}),
+    };
+  },
+  trackException: () => {},
+  updateConsent: () => {},
+  ANALYTICS_TEXT_MAX_LENGTH: 100,
 }));
 
 mock.module("$app/navigation", () => ({
   goto,
+}));
+
+mock.module("$env/dynamic/public", () => ({
+  env: {},
+}));
+
+mock.module("$lib/features/practice-match/practice-match-storage.js", () => ({
+  saveRankedMatchSession: () => {},
 }));
 
 const { MatchmakingQueueStore } = await import("./matchmaking-queue.svelte.ts");

@@ -198,7 +198,7 @@ export class MatchmakingQueueStore {
    * Leave the matchmaking queue.
    */
   async leave(): Promise<void> {
-    trackEvent("queue_leave");
+    trackEvent("queue_leave", { matchType: this.queuedMatchType ?? "casual" });
     try {
       await leaveMatchmakingQueue();
     } catch {
@@ -236,7 +236,10 @@ export class MatchmakingQueueStore {
     this.opponentDisplayName = msg.opponentDisplayName ?? null;
     this.stopTimer();
     const waitSeconds = this.queuedAt ? Math.round((Date.now() - this.queuedAt) / 1000) : 0;
-    trackEvent("queue_match_found", { wait_seconds: waitSeconds });
+    trackEvent("queue_match_found", {
+      wait_seconds: waitSeconds,
+      matchType: this.queuedMatchType ?? "casual",
+    });
 
     // Save session so /match/[gameId] can identify and connect the player
     if (msg.playerId) {
@@ -315,7 +318,10 @@ export class MatchmakingQueueStore {
     console.log("[matchmaking-queue] cancelled", { reason, previousStatus: this.status });
     if (reason === "timeout") {
       const waitSeconds = this.queuedAt ? Math.round((Date.now() - this.queuedAt) / 1000) : 0;
-      trackEvent("queue_timeout", { wait_seconds: waitSeconds });
+      trackEvent("queue_timeout", {
+        wait_seconds: waitSeconds,
+        matchType: this.queuedMatchType ?? "casual",
+      });
     }
     this.reset();
     if (reason === "timeout") {
@@ -407,7 +413,10 @@ export class MatchmakingQueueStore {
     } else {
       this.error = "Match acceptance timed out. Please try again.";
     }
-    trackEvent("queue_match_ready_expired", { reason: msg.reason });
+    trackEvent("queue_match_ready_expired", {
+      reason: msg.reason,
+      matchType: this.queuedMatchType ?? "casual",
+    });
   }
 
   /**

@@ -55,12 +55,24 @@ export interface QueueJoinErrorParams {
 export interface QueueJoinBlockedParams {
   reason: string;
 }
-// queue_leave has no params
+export interface QueueLeaveParams {
+  matchType: string;
+}
 export interface QueueMatchFoundParams {
   wait_seconds: number;
+  matchType: string;
 }
 export interface QueueTimeoutParams {
   wait_seconds: number;
+  matchType: string;
+}
+export interface QueueMatchReadyExpiredParams {
+  reason: "declined" | "timeout";
+  matchType: string;
+}
+export interface MatchForfeitParams {
+  source: string;
+  matchType?: string;
 }
 // practice_start has no params
 
@@ -248,12 +260,12 @@ export interface AnalyticsEventMap {
   queue_join: QueueJoinParams;
   queue_join_error: QueueJoinErrorParams;
   queue_join_blocked: QueueJoinBlockedParams;
-  queue_leave: Record<string, never>;
+  queue_leave: QueueLeaveParams;
   queue_match_found: QueueMatchFoundParams;
-  queue_match_ready_expired: { reason: string };
+  queue_match_ready_expired: QueueMatchReadyExpiredParams;
   queue_timeout: QueueTimeoutParams;
   practice_start: Record<string, never>;
-  match_forfeit: { source: string };
+  match_forfeit: MatchForfeitParams;
 
   // Matchmaking Lobby
   matchmaking_format_select: MatchmakingFormatSelectParams;
