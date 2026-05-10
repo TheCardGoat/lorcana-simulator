@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import * as Dialog from "$lib/design-system/primitives/dialog";
   import {
     submitPlayerReport,
@@ -45,7 +46,7 @@
   }
 
   let reasonOrder = $state<PlayerReportReason[]>(shuffledReasonOrder());
-  let reason = $state<PlayerReportReason>(reasonOrder[0]);
+  let reason = $state<PlayerReportReason>(untrack(() => reasonOrder[0]));
   let details = $state("");
   let status = $state<"idle" | "submitting" | "success" | "error">("idle");
   let errorText = $state("");

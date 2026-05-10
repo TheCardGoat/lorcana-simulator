@@ -1,8 +1,7 @@
 FROM node:24-alpine AS build
 WORKDIR /app
 
-# Source (including submodules pinned to the commit recorded in the parent repo)
-COPY --from=source /repo .
+COPY . .
 
 RUN apk add --no-cache bash curl libstdc++
 ENV VP_HOME="/root/.vite-plus"

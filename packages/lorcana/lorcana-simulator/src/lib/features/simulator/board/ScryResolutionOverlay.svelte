@@ -74,7 +74,6 @@
   }: ScryResolutionOverlayProps = $props();
   // viewerSide accepted for parity with other overlays; the scry overlay
   // surfaces the chooser's pending arrangement which is already viewer-correct.
-  void _viewerSide;
 
   const simulatorCardContext = useSimulatorCardContext();
   const layout = new SimulatorLayoutModeObserver();

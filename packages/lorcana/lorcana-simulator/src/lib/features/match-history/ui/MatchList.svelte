@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import type { MatchSummary } from "../types";
   import { fetchMatches, type FetchMatchesParams } from "../api/player-stats-api";
   import MatchRow from "./MatchRow.svelte";
@@ -22,8 +22,8 @@
   ];
   const PAGE_SIZE = 10;
 
-  let matches = $state<MatchSummary[]>(initialMatches);
-  let nextCursor = $state<string | null>(initialCursor);
+  let matches = $state<MatchSummary[]>(untrack(() => initialMatches));
+  let nextCursor = $state<string | null>(untrack(() => initialCursor));
   let loading = $state(false);
   let loadingMore = $state(false);
   let error = $state<string | null>(null);

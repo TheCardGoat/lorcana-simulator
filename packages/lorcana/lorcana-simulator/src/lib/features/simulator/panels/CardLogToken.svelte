@@ -30,7 +30,7 @@
   // the raw English definition name and is only used when no localized label
   // is available — e.g. historical entries whose card has left every
   // projected zone.
-  const isMasked = snapshot?.isMasked === true;
+  const isMasked = $derived(snapshot?.isMasked === true);
   const staticName = $derived(
     !isMasked ? (sidebar?.resolveCardName?.(cardId) ?? null) : null,
   );

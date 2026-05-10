@@ -471,36 +471,9 @@
     fill: currentColor;
   }
 
-  .badge-strip,
   .player-section {
     display: grid;
     gap: 0.65rem;
-  }
-
-  .badge-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-bottom: 0.1rem;
-  }
-
-  .badge {
-    border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.3);
-    background: rgba(15, 23, 42, 0.45);
-    color: #dbeafe;
-    padding: 0.3rem 0.6rem;
-    font-size: 0.7rem;
-    line-height: 1.1;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-  }
-
-  .badge--warning {
-    border-color: rgba(251, 146, 60, 0.45);
-    background: rgba(127, 29, 29, 0.4);
-    color: #fed7aa;
   }
 
   .section-header {
