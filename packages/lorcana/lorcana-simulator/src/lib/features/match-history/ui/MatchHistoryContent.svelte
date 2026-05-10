@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { Skeleton } from "$lib/design-system/primitives/skeleton";
   import StatsOverview from "./StatsOverview.svelte";
   import StreakBanner from "./StreakBanner.svelte";
@@ -47,21 +47,21 @@
     initialDeckRundown,
   }: Props = $props();
 
-  const hasServerData = initialStats !== undefined;
+  const hasServerData = untrack(() => initialStats !== undefined);
 
   const EYEBROW_CLASS =
     "text-muted-foreground text-xs font-semibold uppercase tracking-[0.24em]";
 
-  let stats = $state<PlayerStats | null>(initialStats ?? null);
-  let mmrHistory = $state<MmrHistoryPoint[]>(initialMmrHistory ?? []);
-  let playingStreak = $state<PlayingStreak | null>(initialPlayingStreak ?? null);
+  let stats = $state<PlayerStats | null>(untrack(() => initialStats ?? null));
+  let mmrHistory = $state<MmrHistoryPoint[]>(untrack(() => initialMmrHistory ?? []));
+  let playingStreak = $state<PlayingStreak | null>(untrack(() => initialPlayingStreak ?? null));
   let matchList = $state<{ matches: MatchListResponse["matches"]; nextCursor: string | null }>(
-    initialMatchList ?? { matches: [], nextCursor: null },
+    untrack(() => initialMatchList ?? { matches: [], nextCursor: null }),
   );
   let loading = $state(!hasServerData);
   let error = $state<string | null>(null);
   let partialWarning = $state<string | null>(null);
-  let deckRundown = $state<DeckRundownResponse | null>(initialDeckRundown ?? null);
+  let deckRundown = $state<DeckRundownResponse | null>(untrack(() => initialDeckRundown ?? null));
   let deckRundownLoading = $state(false);
   let deckRundownError = $state<string | null>(null);
 
