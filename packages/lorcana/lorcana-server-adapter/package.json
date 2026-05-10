@@ -31,5 +31,10 @@
   "devDependencies": {
     "@tcg/typescript-config": "workspace:*",
     "@types/node": "^22.13.4"
+  },
+  "nx": {
+    "tags": [
+      "lorcana"
+    ]
   }
 }
