@@ -1,0 +1,1844 @@
+{
+  "graph": {
+    "nodes": {
+      "@tcg/lorcana-server-adapter": {
+        "name": "@tcg/lorcana-server-adapter",
+        "type": "lib",
+        "data": {
+          "root": "packages/lorcana/lorcana-server-adapter",
+          "name": "@tcg/lorcana-server-adapter",
+          "tags": ["npm:private", "lorcana"],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": ["typecheck", "format", "lint", "check-types", "test"]
+            },
+            "description": "Server-side GameAdapter implementation for Disney Lorcana — wires the Lorcana engine, cards data, and format validators into the @tcg/shared/game-adapter contract.",
+            "js": {
+              "packageName": "@tcg/lorcana-server-adapter",
+              "packageVersion": "0.1.0",
+              "packageExports": {
+                ".": {
+                  "types": "./src/index.ts",
+                  "default": "./src/index.ts"
+                }
+              },
+              "packageMain": "./src/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "typecheck": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "typecheck"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit",
+                "runCommand": "pnpm run typecheck"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "format": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "format"
+              },
+              "metadata": {
+                "scriptContent": "bun x oxfmt --write ./src",
+                "runCommand": "pnpm run format"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "lint"
+              },
+              "metadata": {
+                "scriptContent": "vp lint ./src",
+                "runCommand": "pnpm run lint"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check-types": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check-types"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit",
+                "runCommand": "pnpm run check-types"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "{projectRoot}/**/*.ts",
+                "{projectRoot}/**/*.tsx",
+                "{projectRoot}/**/*.svelte",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.*.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test"
+              },
+              "metadata": {
+                "scriptContent": "bun test --pass-with-no-tests",
+                "runCommand": "pnpm run test"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@tcg/lorcana-interaction": {
+        "name": "@tcg/lorcana-interaction",
+        "type": "lib",
+        "data": {
+          "root": "packages/lorcana/lorcana-interaction",
+          "name": "@tcg/lorcana-interaction",
+          "tags": ["npm:private", "game-engine"],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "typecheck",
+                "check-types",
+                "format",
+                "lint",
+                "test",
+                "test:watch",
+                "check"
+              ]
+            },
+            "description": "Renderer-agnostic player interaction view-model derived from the Lorcana engine's projected board",
+            "js": {
+              "packageName": "@tcg/lorcana-interaction",
+              "packageVersion": "0.1.0",
+              "packageExports": {
+                ".": {
+                  "types": "./src/index.ts",
+                  "default": "./src/index.ts"
+                },
+                "./testing": {
+                  "types": "./src/testing/index.ts",
+                  "default": "./src/testing/index.ts"
+                }
+              },
+              "packageMain": "./src/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "typecheck": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "typecheck"
+              },
+              "metadata": {
+                "scriptContent": "bun run check-types",
+                "runCommand": "pnpm run typecheck"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check-types": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check-types"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit",
+                "runCommand": "pnpm run check-types"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "{projectRoot}/**/*.ts",
+                "{projectRoot}/**/*.tsx",
+                "{projectRoot}/**/*.svelte",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.*.json"
+              ],
+              "cache": true
+            },
+            "format": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "format"
+              },
+              "metadata": {
+                "scriptContent": "bun x oxfmt --write './src/**/*.ts'",
+                "runCommand": "pnpm run format"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "lint"
+              },
+              "metadata": {
+                "scriptContent": "vp lint ./src",
+                "runCommand": "pnpm run lint"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test"
+              },
+              "metadata": {
+                "scriptContent": "bun test",
+                "runCommand": "pnpm run test"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            },
+            "test:watch": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:watch"
+              },
+              "metadata": {
+                "scriptContent": "bun test --watch",
+                "runCommand": "pnpm run test:watch"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check"
+              },
+              "metadata": {
+                "scriptContent": "bun run format && bun run lint && bun run check-types && bun run test",
+                "runCommand": "pnpm run check"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@tcg/lorcana-simulator": {
+        "name": "@tcg/lorcana-simulator",
+        "type": "lib",
+        "data": {
+          "root": "packages/lorcana/lorcana-simulator",
+          "name": "@tcg/lorcana-simulator",
+          "tags": ["npm:public", "npm:svelte", "lorcana"],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "dev",
+                "dev:calm",
+                "build",
+                "build:node",
+                "preview",
+                "start",
+                "format",
+                "prepare",
+                "prepack",
+                "i18n:verify",
+                "i18n:compile",
+                "i18n:check",
+                "check-types",
+                "check:data-layer",
+                "check",
+                "check:watch",
+                "test:e2e",
+                "test:e2e:dev",
+                "test:e2e:ui",
+                "test:e2e:install",
+                "test:e2e:report",
+                "test:rules",
+                "test:unit",
+                "test:strategy",
+                "test:strategy:quick",
+                "test:strategy:candidate",
+                "test:strategy:promotion",
+                "test:strategy:lab",
+                "test:strategy:quick-replay",
+                "test:strategy:replay",
+                "test:strategy:benchmark",
+                "test",
+                "storybook",
+                "build-storybook"
+              ]
+            },
+            "js": {
+              "packageName": "@tcg/lorcana-simulator",
+              "packageVersion": "0.0.1",
+              "packageExports": {
+                ".": {
+                  "types": "./src/lib/index.ts",
+                  "svelte": "./src/lib/index.ts",
+                  "import": "./src/lib/index.ts",
+                  "default": "./src/lib/index.ts"
+                }
+              },
+              "packageMain": "./src/lib/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "dev": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "vp dev",
+                "runCommand": "pnpm run dev"
+              },
+              "dependsOn": ["i18n:compile"],
+              "options": {
+                "script": "dev"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": false
+            },
+            "dev:calm": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "dev:calm"
+              },
+              "metadata": {
+                "scriptContent": "HOT_UPDATE_DELAY_MS=1200 vp dev",
+                "runCommand": "pnpm run dev:calm"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "vp build && pnpm run prepack",
+                "runCommand": "pnpm run build"
+              },
+              "dependsOn": ["^build", "i18n:compile"],
+              "inputs": [
+                "{projectRoot}/src/**",
+                "{projectRoot}/static/**",
+                "{projectRoot}/package.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/svelte.config.js",
+                "{projectRoot}/vite.config.ts",
+                {
+                  "env": "PLATFORM"
+                },
+                {
+                  "env": "NODE_ENV"
+                }
+              ],
+              "outputs": ["{projectRoot}/build/**", "{projectRoot}/.svelte-kit/output/**"],
+              "options": {
+                "script": "build"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            },
+            "build:node": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "PLATFORM=node vp build",
+                "runCommand": "pnpm run build:node"
+              },
+              "dependsOn": ["^build", "i18n:compile"],
+              "inputs": [
+                "{projectRoot}/src/**",
+                "{projectRoot}/static/**",
+                "{projectRoot}/package.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/svelte.config.js",
+                "{projectRoot}/vite.config.ts",
+                {
+                  "env": "PLATFORM"
+                },
+                {
+                  "env": "NODE_ENV"
+                }
+              ],
+              "outputs": ["{projectRoot}/build/**", "{projectRoot}/.svelte-kit/output/**"],
+              "options": {
+                "script": "build:node"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            },
+            "preview": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "preview"
+              },
+              "metadata": {
+                "scriptContent": "vp preview",
+                "runCommand": "pnpm run preview"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "dependsOn": ["build"],
+              "cache": false
+            },
+            "start": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "start"
+              },
+              "metadata": {
+                "scriptContent": "node build/index.js",
+                "runCommand": "pnpm run start"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "format": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "format"
+              },
+              "metadata": {
+                "scriptContent": "bun x oxfmt --no-error-on-unmatched-pattern --write 'src/**/*.{js,jsx,ts,tsx,json,jsonc,json5,css,scss,less,html,md,mdx,graphql,yml,yaml,toml}'",
+                "runCommand": "pnpm run format"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "prepare": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "prepare"
+              },
+              "metadata": {
+                "scriptContent": "svelte-kit sync || echo ''",
+                "runCommand": "pnpm run prepare"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "prepack": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "prepack"
+              },
+              "metadata": {
+                "scriptContent": "bun run i18n:compile && svelte-kit sync && svelte-package && publint",
+                "runCommand": "pnpm run prepack"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "i18n:verify": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "i18n:verify"
+              },
+              "metadata": {
+                "scriptContent": "vp run i18n:compile && vp run i18n:check",
+                "runCommand": "pnpm run i18n:verify"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": false
+            },
+            "i18n:compile": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "vpx @inlang/paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide",
+                "runCommand": "pnpm run i18n:compile"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/project.inlang/**",
+                "{projectRoot}/messages/**",
+                "{projectRoot}/package.json"
+              ],
+              "outputs": ["{projectRoot}/src/lib/paraglide/**"],
+              "options": {
+                "script": "i18n:compile"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "i18n:check": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "i18n:check"
+              },
+              "metadata": {
+                "scriptContent": "node ./scripts/check-i18n-catalog.ts && bun run ./scripts/check-localized-copy.ts && bun run ./scripts/check-translation-keys.ts",
+                "runCommand": "pnpm run i18n:check"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check-types": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+                "runCommand": "pnpm run check-types"
+              },
+              "dependsOn": ["i18n:compile"],
+              "options": {
+                "script": "check-types"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "{projectRoot}/**/*.ts",
+                "{projectRoot}/**/*.tsx",
+                "{projectRoot}/**/*.svelte",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.*.json"
+              ],
+              "cache": true
+            },
+            "check:data-layer": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check:data-layer"
+              },
+              "metadata": {
+                "scriptContent": "bun run ./scripts/check-no-raw-fetch.ts",
+                "runCommand": "pnpm run check:data-layer"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check"
+              },
+              "metadata": {
+                "scriptContent": "bun run check-types",
+                "runCommand": "pnpm run check"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check:watch": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check:watch"
+              },
+              "metadata": {
+                "scriptContent": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+                "runCommand": "pnpm run check:watch"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:e2e": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:e2e"
+              },
+              "metadata": {
+                "scriptContent": "playwright test",
+                "runCommand": "pnpm run test:e2e"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:e2e:dev": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:e2e:dev"
+              },
+              "metadata": {
+                "scriptContent": "bunx tsx ./node_modules/.bin/playwright test",
+                "runCommand": "pnpm run test:e2e:dev"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:e2e:ui": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:e2e:ui"
+              },
+              "metadata": {
+                "scriptContent": "bunx tsx ./node_modules/.bin/playwright test --ui",
+                "runCommand": "pnpm run test:e2e:ui"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:e2e:install": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:e2e:install"
+              },
+              "metadata": {
+                "scriptContent": "playwright install --with-deps chromium",
+                "runCommand": "pnpm run test:e2e:install"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:e2e:report": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:e2e:report"
+              },
+              "metadata": {
+                "scriptContent": "playwright show-report",
+                "runCommand": "pnpm run test:e2e:report"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:rules": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:rules"
+              },
+              "metadata": {
+                "scriptContent": "AGENT=1 bun test --silent src/testing/rules",
+                "runCommand": "pnpm run test:rules"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:unit": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:unit"
+              },
+              "metadata": {
+                "scriptContent": "svelte-kit sync && AGENT=1 bun test --silent src/lib",
+                "runCommand": "pnpm run test:unit"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:strategy": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:strategy"
+              },
+              "metadata": {
+                "scriptContent": "AGENT=1 bun test --silent src/testing/ai-strategy/*.test.ts",
+                "runCommand": "pnpm run test:strategy"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:strategy:quick": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:strategy:quick"
+              },
+              "metadata": {
+                "scriptContent": "RUN_STRATEGY_LAB=1 STRATEGY_PRESET=quick AGENT=1 bun test --silent src/testing/ai-strategy/*.test.ts",
+                "runCommand": "pnpm run test:strategy:quick"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:strategy:candidate": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:strategy:candidate"
+              },
+              "metadata": {
+                "scriptContent": "RUN_STRATEGY_LAB=1 STRATEGY_PRESET=candidate AGENT=1 bun test --silent src/testing/ai-strategy/*.test.ts",
+                "runCommand": "pnpm run test:strategy:candidate"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:strategy:promotion": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:strategy:promotion"
+              },
+              "metadata": {
+                "scriptContent": "RUN_STRATEGY_LAB=1 STRATEGY_PRESET=promotion AGENT=1 bun test --silent src/testing/ai-strategy/*.test.ts",
+                "runCommand": "pnpm run test:strategy:promotion"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:strategy:lab": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:strategy:lab"
+              },
+              "metadata": {
+                "scriptContent": "RUN_STRATEGY_LAB=1 AGENT=1 bun test --silent src/testing/ai-strategy/*.test.ts",
+                "runCommand": "pnpm run test:strategy:lab"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:strategy:quick-replay": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:strategy:quick-replay"
+              },
+              "metadata": {
+                "scriptContent": "RUN_STRATEGY_QUICK_REPLAY=1 AGENT=1 bun test --silent src/testing/ai-strategy/simulate-game.test.ts",
+                "runCommand": "pnpm run test:strategy:quick-replay"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:strategy:replay": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:strategy:replay"
+              },
+              "metadata": {
+                "scriptContent": "RUN_STRATEGY_REPLAY=1 AGENT=1 bun test --silent src/testing/ai-strategy/simulate-game.test.ts",
+                "runCommand": "pnpm run test:strategy:replay"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:strategy:benchmark": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:strategy:benchmark"
+              },
+              "metadata": {
+                "scriptContent": "RUN_STRATEGY_BENCHMARK=1 STRATEGY_GAME_COUNT=100 AGENT=1 bun test --silent src/testing/ai-strategy/*.test.ts",
+                "runCommand": "pnpm run test:strategy:benchmark"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "bun run test:rules && bun run test:unit",
+                "runCommand": "pnpm run test"
+              },
+              "dependsOn": ["i18n:compile"],
+              "options": {
+                "script": "test"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            },
+            "storybook": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "storybook"
+              },
+              "metadata": {
+                "scriptContent": "HOT_UPDATE_DELAY_MS=1200 storybook dev -p 6006",
+                "runCommand": "pnpm run storybook"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-storybook": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build-storybook"
+              },
+              "metadata": {
+                "scriptContent": "storybook build",
+                "runCommand": "pnpm run build-storybook"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": ["^nx-release-publish"],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "implicitDependencies": []
+        }
+      },
+      "@tcg/lorcana-engine": {
+        "name": "@tcg/lorcana-engine",
+        "type": "lib",
+        "data": {
+          "root": "packages/lorcana/lorcana-engine",
+          "name": "@tcg/lorcana-engine",
+          "tags": ["npm:private", "game-engine"],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "build",
+                "typecheck",
+                "check-types",
+                "i18n:verify",
+                "i18n:compile",
+                "events:check",
+                "i18n:check",
+                "audit:action-effect-coverage",
+                "format",
+                "lint",
+                "test",
+                "test:watch",
+                "test:coverage",
+                "check"
+              ]
+            },
+            "description": "Disney Lorcana TCG engine implementation with an internal runtime core",
+            "js": {
+              "packageName": "@tcg/lorcana-engine",
+              "packageVersion": "0.1.0",
+              "packageExports": {
+                ".": {
+                  "types": "./src/index.ts",
+                  "default": "./src/index.ts"
+                },
+                "./automation": {
+                  "types": "./src/automation/index.ts",
+                  "default": "./src/automation/index.ts"
+                },
+                "./i18n": {
+                  "types": "./src/i18n/index.ts",
+                  "default": "./src/i18n/index.ts"
+                },
+                "./testing": {
+                  "types": "./src/testing/index.ts",
+                  "default": "./src/testing/index.ts"
+                },
+                "./testing/matchers": {
+                  "types": "./src/testing/matchers.d.ts",
+                  "default": "./src/testing/matchers.d.ts"
+                },
+                "./support-probe": {
+                  "types": "./src/support-probe/index.ts",
+                  "default": "./src/support-probe/index.ts"
+                }
+              },
+              "packageMain": "./src/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "build": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build"
+              },
+              "metadata": {
+                "scriptContent": "bun run i18n:compile && tsc --noEmit && mkdir -p dist",
+                "runCommand": "pnpm run build"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "dependsOn": ["^build"],
+              "inputs": [
+                "{projectRoot}/src/**",
+                "{projectRoot}/static/**",
+                "{projectRoot}/public/**",
+                "{projectRoot}/package.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/next.config.js",
+                "{projectRoot}/next.config.mjs",
+                "{projectRoot}/postcss.config.js",
+                "{projectRoot}/postcss.config.mjs",
+                "{projectRoot}/tailwind.config.js",
+                "{projectRoot}/tailwind.config.ts",
+                "{projectRoot}/svelte.config.js",
+                "{projectRoot}/vite.config.js",
+                "{projectRoot}/vite.config.ts",
+                "{projectRoot}/babel.config.json",
+                "{projectRoot}/../../packages/typescript-config/**"
+              ],
+              "outputs": [
+                "{projectRoot}/dist/**",
+                "{projectRoot}/.next/**",
+                "{projectRoot}/build/**",
+                "{projectRoot}/.svelte-kit/output/**",
+                "{projectRoot}/.svelte-kit/cloudflare/**",
+                "!{projectRoot}/.next/cache/**"
+              ],
+              "cache": true
+            },
+            "typecheck": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "typecheck"
+              },
+              "metadata": {
+                "scriptContent": "bun run check-types",
+                "runCommand": "pnpm run typecheck"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check-types": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check-types"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit",
+                "runCommand": "pnpm run check-types"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "{projectRoot}/**/*.ts",
+                "{projectRoot}/**/*.tsx",
+                "{projectRoot}/**/*.svelte",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.*.json"
+              ],
+              "cache": true
+            },
+            "i18n:verify": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "i18n:verify"
+              },
+              "metadata": {
+                "scriptContent": "bun run i18n:compile && bun run i18n:check",
+                "runCommand": "pnpm run i18n:verify"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": false
+            },
+            "i18n:compile": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "i18n:compile"
+              },
+              "metadata": {
+                "scriptContent": "pnpm dlx @inlang/paraglide-js compile --project ./project.inlang --outdir ./src/i18n/paraglide",
+                "runCommand": "pnpm run i18n:compile"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "events:check": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "events:check"
+              },
+              "metadata": {
+                "scriptContent": "bun run ./src/i18n/check-custom-event-usage.ts",
+                "runCommand": "pnpm run events:check"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "i18n:check": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "i18n:check"
+              },
+              "metadata": {
+                "scriptContent": "bun run ./src/i18n/check-log-translations.ts && bun run ./src/i18n/check-custom-event-usage.ts",
+                "runCommand": "pnpm run i18n:check"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "audit:action-effect-coverage": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "audit:action-effect-coverage"
+              },
+              "metadata": {
+                "scriptContent": "bun run ./scripts/audit-action-effect-resolver-coverage.ts",
+                "runCommand": "pnpm run audit:action-effect-coverage"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "format": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "format"
+              },
+              "metadata": {
+                "scriptContent": "bun x oxfmt --write './src/**/*.ts'",
+                "runCommand": "pnpm run format"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "lint"
+              },
+              "metadata": {
+                "scriptContent": "vp lint ./src",
+                "runCommand": "pnpm run lint"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test"
+              },
+              "metadata": {
+                "scriptContent": "AGENT=1 bun test --silent --reporter=junit --reporter-outfile=./bun.xml",
+                "runCommand": "pnpm run test"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            },
+            "test:watch": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:watch"
+              },
+              "metadata": {
+                "scriptContent": "bun test --watch",
+                "runCommand": "pnpm run test:watch"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:coverage": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:coverage"
+              },
+              "metadata": {
+                "scriptContent": "bun test --coverage",
+                "runCommand": "pnpm run test:coverage"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check"
+              },
+              "metadata": {
+                "scriptContent": "bun run format && bun run lint && bun run check-types && bun run test",
+                "runCommand": "pnpm run check"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@tcg/lorcana-cards": {
+        "name": "@tcg/lorcana-cards",
+        "type": "lib",
+        "data": {
+          "root": "packages/lorcana/lorcana-cards",
+          "name": "@tcg/lorcana-cards",
+          "tags": ["npm:private", "card-data"],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "build",
+                "typecheck",
+                "check-types",
+                "format",
+                "lint",
+                "test",
+                "test:watch",
+                "test:coverage",
+                "check",
+                "fetch",
+                "fetch:all-locales",
+                "generate",
+                "generate-cards:all",
+                "generate-legacy-card-map",
+                "embed-card-i18n",
+                "smoke-test:abilities",
+                "generate:all",
+                "generate-localization",
+                "update-translations"
+              ]
+            },
+            "description": "Lorcana card definitions and tooling",
+            "js": {
+              "packageName": "@tcg/lorcana-cards",
+              "packageVersion": "0.1.0",
+              "packageExports": {
+                ".": {
+                  "types": "./src/index.ts",
+                  "default": "./src/index.ts"
+                },
+                "./deck-list-resolver": {
+                  "types": "./src/utils/deck-list-resolver.ts",
+                  "default": "./src/utils/deck-list-resolver.ts"
+                },
+                "./data": {
+                  "types": "./src/data/index.ts",
+                  "default": "./src/data/index.ts"
+                },
+                "./cards": {
+                  "types": "./src/cards/index.ts",
+                  "default": "./src/cards/index.ts"
+                },
+                "./cards/sync": {
+                  "types": "./src/cards/sync.ts",
+                  "default": "./src/cards/sync.ts"
+                },
+                "./cards/001": {
+                  "types": "./src/cards/001/index.ts",
+                  "default": "./src/cards/001/index.ts"
+                },
+                "./cards/002": {
+                  "types": "./src/cards/002/index.ts",
+                  "default": "./src/cards/002/index.ts"
+                },
+                "./cards/003": {
+                  "types": "./src/cards/003/index.ts",
+                  "default": "./src/cards/003/index.ts"
+                },
+                "./cards/004": {
+                  "types": "./src/cards/004/index.ts",
+                  "default": "./src/cards/004/index.ts"
+                },
+                "./cards/005": {
+                  "types": "./src/cards/005/index.ts",
+                  "default": "./src/cards/005/index.ts"
+                },
+                "./cards/006": {
+                  "types": "./src/cards/006/index.ts",
+                  "default": "./src/cards/006/index.ts"
+                },
+                "./cards/007": {
+                  "types": "./src/cards/007/index.ts",
+                  "default": "./src/cards/007/index.ts"
+                },
+                "./cards/008": {
+                  "types": "./src/cards/008/index.ts",
+                  "default": "./src/cards/008/index.ts"
+                },
+                "./cards/009": {
+                  "types": "./src/cards/009/index.ts",
+                  "default": "./src/cards/009/index.ts"
+                },
+                "./cards/010": {
+                  "types": "./src/cards/010/index.ts",
+                  "default": "./src/cards/010/index.ts"
+                },
+                "./cards/011": {
+                  "types": "./src/cards/011/index.ts",
+                  "default": "./src/cards/011/index.ts"
+                },
+                "./cards/012": {
+                  "types": "./src/cards/012/index.ts",
+                  "default": "./src/cards/012/index.ts"
+                }
+              },
+              "packageMain": "./src/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "build": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit && mkdir -p dist",
+                "runCommand": "pnpm run build"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "dependsOn": ["^build"],
+              "inputs": [
+                "{projectRoot}/src/**",
+                "{projectRoot}/static/**",
+                "{projectRoot}/public/**",
+                "{projectRoot}/package.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/next.config.js",
+                "{projectRoot}/next.config.mjs",
+                "{projectRoot}/postcss.config.js",
+                "{projectRoot}/postcss.config.mjs",
+                "{projectRoot}/tailwind.config.js",
+                "{projectRoot}/tailwind.config.ts",
+                "{projectRoot}/svelte.config.js",
+                "{projectRoot}/vite.config.js",
+                "{projectRoot}/vite.config.ts",
+                "{projectRoot}/babel.config.json",
+                "{projectRoot}/../../packages/typescript-config/**"
+              ],
+              "outputs": [
+                "{projectRoot}/dist/**",
+                "{projectRoot}/.next/**",
+                "{projectRoot}/build/**",
+                "{projectRoot}/.svelte-kit/output/**",
+                "{projectRoot}/.svelte-kit/cloudflare/**",
+                "!{projectRoot}/.next/cache/**"
+              ],
+              "cache": true
+            },
+            "typecheck": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "typecheck"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit",
+                "runCommand": "pnpm run typecheck"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check-types": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check-types"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit",
+                "runCommand": "pnpm run check-types"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "{projectRoot}/**/*.ts",
+                "{projectRoot}/**/*.tsx",
+                "{projectRoot}/**/*.svelte",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.*.json"
+              ],
+              "cache": true
+            },
+            "format": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "format"
+              },
+              "metadata": {
+                "scriptContent": "bun x oxfmt --write ./src",
+                "runCommand": "pnpm run format"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "lint"
+              },
+              "metadata": {
+                "scriptContent": "vp lint ./src",
+                "runCommand": "pnpm run lint"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test"
+              },
+              "metadata": {
+                "scriptContent": "bun test src --bail=10 --only-failures",
+                "runCommand": "pnpm run test"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            },
+            "test:watch": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:watch"
+              },
+              "metadata": {
+                "scriptContent": "bun test --watch src",
+                "runCommand": "pnpm run test:watch"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test:coverage": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test:coverage"
+              },
+              "metadata": {
+                "scriptContent": "bun test --coverage src",
+                "runCommand": "pnpm run test:coverage"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check"
+              },
+              "metadata": {
+                "scriptContent": "bun run format && bun run lint && bun run check-types && bun run test",
+                "runCommand": "pnpm run check"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "fetch": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "fetch"
+              },
+              "metadata": {
+                "scriptContent": "bun scripts/fetch-inputs.ts",
+                "runCommand": "pnpm run fetch"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "fetch:all-locales": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "fetch:all-locales"
+              },
+              "metadata": {
+                "scriptContent": "bun scripts/fetch-inputs.ts",
+                "runCommand": "pnpm run fetch:all-locales"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "generate"
+              },
+              "metadata": {
+                "scriptContent": "bun scripts/generate-cards.ts && bun run format",
+                "runCommand": "pnpm run generate"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-cards:all": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "generate-cards:all"
+              },
+              "metadata": {
+                "scriptContent": "bun scripts/generate-cards-all.ts",
+                "runCommand": "pnpm run generate-cards:all"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-legacy-card-map": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "generate-legacy-card-map"
+              },
+              "metadata": {
+                "scriptContent": "bun scripts/generate-legacy-card-map.ts",
+                "runCommand": "pnpm run generate-legacy-card-map"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "embed-card-i18n": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "embed-card-i18n"
+              },
+              "metadata": {
+                "scriptContent": "bun scripts/embed-card-i18n.ts",
+                "runCommand": "pnpm run embed-card-i18n"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "smoke-test:abilities": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "smoke-test:abilities"
+              },
+              "metadata": {
+                "scriptContent": "bun scripts/smoke-test-card-abilities.ts",
+                "runCommand": "pnpm run smoke-test:abilities"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate:all": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "generate:all"
+              },
+              "metadata": {
+                "scriptContent": "bun run generate-cards:all",
+                "runCommand": "pnpm run generate:all"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "generate-localization": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "generate-localization"
+              },
+              "metadata": {
+                "scriptContent": "bun scripts/generate-localization.ts",
+                "runCommand": "pnpm run generate-localization"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "update-translations": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "update-translations"
+              },
+              "metadata": {
+                "scriptContent": "bun run fetch:all-locales && bun run generate-localization",
+                "runCommand": "pnpm run update-translations"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@tcg/lorcana-types": {
+        "name": "@tcg/lorcana-types",
+        "type": "lib",
+        "data": {
+          "root": "packages/lorcana/lorcana-types",
+          "name": "@tcg/lorcana-types",
+          "tags": ["npm:private", "types"],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "build",
+                "typecheck",
+                "check-types",
+                "format",
+                "lint",
+                "test",
+                "check"
+              ]
+            },
+            "description": "Lorcana-specific type definitions for abilities, effects, and cards",
+            "js": {
+              "packageName": "@tcg/lorcana-types",
+              "packageVersion": "0.1.0",
+              "packageExports": {
+                ".": {
+                  "types": "./src/index.ts",
+                  "default": "./src/index.ts"
+                },
+                "./abilities": {
+                  "types": "./src/abilities/index.ts",
+                  "default": "./src/abilities/index.ts"
+                },
+                "./cards": {
+                  "types": "./src/cards/index.ts",
+                  "default": "./src/cards/index.ts"
+                },
+                "./targeting": {
+                  "types": "./src/targeting/index.ts",
+                  "default": "./src/targeting/index.ts"
+                },
+                "./expressions": {
+                  "types": "./src/expressions/index.ts",
+                  "default": "./src/expressions/index.ts"
+                },
+                "./name-generator": {
+                  "types": "./src/name-generator/generator.ts",
+                  "default": "./src/name-generator/generator.ts"
+                }
+              },
+              "packageMain": "./src/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "build": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "build"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit && mkdir -p dist",
+                "runCommand": "pnpm run build"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "dependsOn": ["^build"],
+              "inputs": [
+                "{projectRoot}/src/**",
+                "{projectRoot}/static/**",
+                "{projectRoot}/public/**",
+                "{projectRoot}/package.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/next.config.js",
+                "{projectRoot}/next.config.mjs",
+                "{projectRoot}/postcss.config.js",
+                "{projectRoot}/postcss.config.mjs",
+                "{projectRoot}/tailwind.config.js",
+                "{projectRoot}/tailwind.config.ts",
+                "{projectRoot}/svelte.config.js",
+                "{projectRoot}/vite.config.js",
+                "{projectRoot}/vite.config.ts",
+                "{projectRoot}/babel.config.json",
+                "{projectRoot}/../../packages/typescript-config/**"
+              ],
+              "outputs": [
+                "{projectRoot}/dist/**",
+                "{projectRoot}/.next/**",
+                "{projectRoot}/build/**",
+                "{projectRoot}/.svelte-kit/output/**",
+                "{projectRoot}/.svelte-kit/cloudflare/**",
+                "!{projectRoot}/.next/cache/**"
+              ],
+              "cache": true
+            },
+            "typecheck": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "typecheck"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit",
+                "runCommand": "pnpm run typecheck"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check-types": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check-types"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit",
+                "runCommand": "pnpm run check-types"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "{projectRoot}/**/*.ts",
+                "{projectRoot}/**/*.tsx",
+                "{projectRoot}/**/*.svelte",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.*.json"
+              ],
+              "cache": true
+            },
+            "format": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "format"
+              },
+              "metadata": {
+                "scriptContent": "bun x oxfmt --write ./src",
+                "runCommand": "pnpm run format"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "lint"
+              },
+              "metadata": {
+                "scriptContent": "vp lint ./src",
+                "runCommand": "pnpm run lint"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test"
+              },
+              "metadata": {
+                "scriptContent": "bun test src",
+                "runCommand": "pnpm run test"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            },
+            "check": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check"
+              },
+              "metadata": {
+                "scriptContent": "bun run format && bun run lint && bun run check-types && bun run test",
+                "runCommand": "pnpm run check"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@tcg/typescript-config": {
+        "name": "@tcg/typescript-config",
+        "type": "app",
+        "data": {
+          "root": "packages/typescript-config",
+          "name": "@tcg/typescript-config",
+          "tags": ["npm:private"],
+          "metadata": {
+            "targetGroups": {},
+            "description": "TypeScript configurations for the Lorcanito monorepo",
+            "js": {
+              "packageName": "@tcg/typescript-config",
+              "packageVersion": "0.1.0",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {},
+          "implicitDependencies": []
+        }
+      },
+      "@tcg/shared": {
+        "name": "@tcg/shared",
+        "type": "lib",
+        "data": {
+          "root": "packages/shared",
+          "name": "@tcg/shared",
+          "tags": ["npm:private", "foundation"],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": ["typecheck", "format", "lint", "check-types", "test"]
+            },
+            "js": {
+              "packageName": "@tcg/shared",
+              "packageVersion": "0.1.0",
+              "packageExports": {
+                ".": "./src/index.ts",
+                "./utils": "./src/utils.ts",
+                "./types": "./src/types.ts",
+                "./auth": "./src/auth/index.ts",
+                "./testing": "./src/testing/index.ts",
+                "./game-adapter": "./src/game-adapter/index.ts",
+                "./game-engine": "./src/game-engine/index.ts",
+                "./cards": "./src/cards/index.ts",
+                "./cards/images": "./src/cards/images.ts",
+                "./cards/catalog": "./src/cards/catalog.ts",
+                "./cyberpunk": "./src/cyberpunk/index.ts",
+                "./cyberpunk/deck-validation": "./src/cyberpunk/deck-validation.ts",
+                "./deck-list-normalize": "./src/deck-list-normalize.ts",
+                "./deck-list-parse": "./src/deck-list-parse.ts",
+                "./deck-list-errors": "./src/deck-list-errors.ts",
+                "./display-name-normalize": "./src/display-name-normalize.ts",
+                "./ads/PrivacyPage": "./src/ads/PrivacyPage.svelte",
+                "./ads/TermsPage": "./src/ads/TermsPage.svelte",
+                "./ads/RampPlaywire": "./src/ads/RampPlaywire.svelte",
+                "./ads/AntiRamp": "./src/ads/AntiRamp.svelte",
+                "./ads/ad-free-user": "./src/ads/ad-free-user.ts"
+              },
+              "packageMain": "./src/index.ts",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "typecheck": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "typecheck"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit",
+                "runCommand": "pnpm run typecheck"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "format": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "format"
+              },
+              "metadata": {
+                "scriptContent": "bun x oxfmt --write ./src",
+                "runCommand": "pnpm run format"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "lint"
+              },
+              "metadata": {
+                "scriptContent": "vp lint ./src",
+                "runCommand": "pnpm run lint"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "check-types": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "check-types"
+              },
+              "metadata": {
+                "scriptContent": "tsc --noEmit",
+                "runCommand": "pnpm run check-types"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "{projectRoot}/**/*.ts",
+                "{projectRoot}/**/*.tsx",
+                "{projectRoot}/**/*.svelte",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.*.json"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "test"
+              },
+              "metadata": {
+                "scriptContent": "bun test",
+                "runCommand": "pnpm run test"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "@tcg/lorcana-server-adapter": [
+        {
+          "source": "@tcg/lorcana-server-adapter",
+          "target": "@tcg/typescript-config",
+          "type": "static"
+        },
+        {
+          "source": "@tcg/lorcana-server-adapter",
+          "target": "@tcg/lorcana-cards",
+          "type": "static"
+        },
+        {
+          "source": "@tcg/lorcana-server-adapter",
+          "target": "@tcg/lorcana-engine",
+          "type": "static"
+        },
+        {
+          "source": "@tcg/lorcana-server-adapter",
+          "target": "@tcg/lorcana-types",
+          "type": "static"
+        },
+        {
+          "source": "@tcg/lorcana-server-adapter",
+          "target": "@tcg/shared",
+          "type": "static"
+        }
+      ],
+      "@tcg/lorcana-interaction": [
+        {
+          "source": "@tcg/lorcana-interaction",
+          "target": "@tcg/lorcana-engine",
+          "type": "static"
+        },
+        {
+          "source": "@tcg/lorcana-interaction",
+          "target": "@tcg/lorcana-types",
+          "type": "static"
+        }
+      ],
+      "@tcg/lorcana-simulator": [
+        {
+          "source": "@tcg/lorcana-simulator",
+          "target": "@tcg/lorcana-cards",
+          "type": "static"
+        },
+        {
+          "source": "@tcg/lorcana-simulator",
+          "target": "@tcg/lorcana-engine",
+          "type": "static"
+        },
+        {
+          "source": "@tcg/lorcana-simulator",
+          "target": "@tcg/lorcana-interaction",
+          "type": "static"
+        },
+        {
+          "source": "@tcg/lorcana-simulator",
+          "target": "@tcg/lorcana-types",
+          "type": "static"
+        },
+        {
+          "source": "@tcg/lorcana-simulator",
+          "target": "@tcg/shared",
+          "type": "static"
+        }
+      ],
+      "@tcg/lorcana-engine": [
+        {
+          "source": "@tcg/lorcana-engine",
+          "target": "@tcg/lorcana-types",
+          "type": "static"
+        }
+      ],
+      "@tcg/lorcana-cards": [
+        {
+          "source": "@tcg/lorcana-cards",
+          "target": "@tcg/lorcana-engine",
+          "type": "static"
+        },
+        {
+          "source": "@tcg/lorcana-cards",
+          "target": "@tcg/lorcana-types",
+          "type": "static"
+        },
+        {
+          "source": "@tcg/lorcana-cards",
+          "target": "@tcg/shared",
+          "type": "static"
+        }
+      ],
+      "@tcg/lorcana-types": [],
+      "@tcg/typescript-config": [],
+      "@tcg/shared": [
+        {
+          "source": "@tcg/shared",
+          "target": "@tcg/typescript-config",
+          "type": "static"
+        }
+      ]
+    }
+  }
+}
