@@ -47,11 +47,18 @@ jobs:
       - name: Install dependencies
         run: vp install
 
+      - name: Start Nx Cloud CI run
+        run: pnpm exec nx start-ci-run
+
       - name: Project Graph
         run: pnpm exec nx graph --file=nx-graph.json
 
       - name: Run Continuous integration
         run: pnpm run ci-check-full:verbose
+
+      - name: Run Nx Cloud Self-Healing CI
+        if: always()
+        run: pnpm exec nx fix-ci
 
       - name: Upload Nx project graph
         if: always()

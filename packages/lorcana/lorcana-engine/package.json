@@ -49,7 +49,7 @@
     "i18n:check": "bun run ./src/i18n/check-log-translations.ts && bun run ./src/i18n/check-custom-event-usage.ts",
     "audit:action-effect-coverage": "bun run ./scripts/audit-action-effect-resolver-coverage.ts",
     "format": "bun x oxfmt --write './src/**/*.ts'",
-    "lint": "bun x oxlint --fix ./src",
+    "lint": "vp lint ./src",
     "test": "AGENT=1 bun test --silent --reporter=junit --reporter-outfile=./bun.xml",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",

@@ -34,7 +34,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "format": "bun x oxfmt --write ./src",
-    "lint": "bun x oxlint --fix ./src",
+    "lint": "vp lint ./src",
     "check-types": "tsc --noEmit",
     "test": "bun test"
   },

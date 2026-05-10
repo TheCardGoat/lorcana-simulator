@@ -40,7 +40,7 @@
     "typecheck": "tsc --noEmit",
     "check-types": "tsc --noEmit",
     "format": "bun x oxfmt --write ./src",
-    "lint": "bun x oxlint --fix ./src",
+    "lint": "vp lint ./src",
     "test": "bun test src",
     "check": "bun run format && bun run lint && bun run check-types && bun run test"
   },
