@@ -1,0 +1,112 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "sharedGlobals": [
+      "{workspaceRoot}/.env",
+      "{workspaceRoot}/tsconfig.json",
+      "{workspaceRoot}/nx.json",
+      {
+        "env": "NODE_ENV"
+      },
+      {
+        "env": "CI"
+      },
+      {
+        "env": "AGENT"
+      },
+      {
+        "env": "PLATFORM"
+      },
+      {
+        "env": "CLOUDFLARE_API_TOKEN"
+      }
+    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"]
+  },
+  "targetDefaults": {
+    "topo": {
+      "dependsOn": ["^topo"],
+      "cache": true
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "{projectRoot}/src/**",
+        "{projectRoot}/static/**",
+        "{projectRoot}/public/**",
+        "{projectRoot}/package.json",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/next.config.js",
+        "{projectRoot}/next.config.mjs",
+        "{projectRoot}/postcss.config.js",
+        "{projectRoot}/postcss.config.mjs",
+        "{projectRoot}/tailwind.config.js",
+        "{projectRoot}/tailwind.config.ts",
+        "{projectRoot}/svelte.config.js",
+        "{projectRoot}/vite.config.js",
+        "{projectRoot}/vite.config.ts",
+        "{projectRoot}/babel.config.json",
+        "{projectRoot}/../../packages/typescript-config/**"
+      ],
+      "outputs": [
+        "{projectRoot}/dist/**",
+        "{projectRoot}/.next/**",
+        "{projectRoot}/build/**",
+        "{projectRoot}/.svelte-kit/output/**",
+        "{projectRoot}/.svelte-kit/cloudflare/**",
+        "!{projectRoot}/.next/cache/**"
+      ],
+      "cache": true
+    },
+    "check-types": {
+      "inputs": [
+        "{projectRoot}/**/*.ts",
+        "{projectRoot}/**/*.tsx",
+        "{projectRoot}/**/*.svelte",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/tsconfig.*.json"
+      ],
+      "cache": true
+    },
+    "i18n:verify": {
+      "cache": false
+    },
+    "test": {
+      "cache": true
+    },
+    "dev": {
+      "cache": false
+    },
+    "dev:general": {
+      "cache": false
+    },
+    "dev:game": {
+      "cache": false
+    },
+    "build:node": {
+      "dependsOn": ["^build"],
+      "outputs": ["{projectRoot}/build/**", "{projectRoot}/.svelte-kit/output/**"],
+      "cache": true
+    },
+    "build:cloudflare": {
+      "dependsOn": ["^build"],
+      "outputs": ["{projectRoot}/.svelte-kit/output/**", "{projectRoot}/.svelte-kit/cloudflare/**"],
+      "cache": true
+    },
+    "cf-typegen": {
+      "cache": false
+    },
+    "deploy": {
+      "dependsOn": ["build:cloudflare"],
+      "cache": false
+    },
+    "deploy:staging": {
+      "dependsOn": ["build:cloudflare"],
+      "cache": false
+    },
+    "preview": {
+      "dependsOn": ["build"],
+      "cache": false
+    }
+  }
+}

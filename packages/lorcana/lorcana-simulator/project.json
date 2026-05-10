@@ -1,0 +1,53 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "@tcg/lorcana-simulator",
+  "tags": ["lorcana"],
+  "targets": {
+    "i18n:compile": {
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/project.inlang/**",
+        "{projectRoot}/messages/**",
+        "{projectRoot}/package.json"
+      ],
+      "outputs": ["{projectRoot}/src/lib/paraglide/**"]
+    },
+    "check-types": {
+      "dependsOn": ["i18n:compile"]
+    },
+    "test": {
+      "dependsOn": ["i18n:compile"]
+    },
+    "dev": {
+      "dependsOn": ["i18n:compile"]
+    },
+    "build": {
+      "dependsOn": ["^build", "i18n:compile"],
+      "inputs": [
+        "{projectRoot}/src/**",
+        "{projectRoot}/static/**",
+        "{projectRoot}/package.json",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/svelte.config.js",
+        "{projectRoot}/vite.config.ts",
+        { "env": "PLATFORM" },
+        { "env": "NODE_ENV" }
+      ],
+      "outputs": ["{projectRoot}/build/**", "{projectRoot}/.svelte-kit/output/**"]
+    },
+    "build:node": {
+      "dependsOn": ["^build", "i18n:compile"],
+      "inputs": [
+        "{projectRoot}/src/**",
+        "{projectRoot}/static/**",
+        "{projectRoot}/package.json",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/svelte.config.js",
+        "{projectRoot}/vite.config.ts",
+        { "env": "PLATFORM" },
+        { "env": "NODE_ENV" }
+      ],
+      "outputs": ["{projectRoot}/build/**", "{projectRoot}/.svelte-kit/output/**"]
+    }
+  }
+}

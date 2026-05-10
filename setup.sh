@@ -191,8 +191,32 @@ else
 fi
 echo ""
 
-# Step 6: Install project dependencies
-echo "📦 Step 6: Installing project dependencies..."
+# Step 6: Install pnpm + global nx (for Turbo→Nx migration)
+echo "📦 Step 6: Installing pnpm and global nx..."
+# corepack ships with Node 24; use it to activate the pinned pnpm version
+corepack enable
+corepack prepare pnpm@10.33.0 --activate
+
+if ! command -v pnpm &> /dev/null; then
+    echo "❌ ERROR: pnpm not available after corepack activation"
+    exit 1
+fi
+echo "✅ pnpm version: $(pnpm -v)"
+
+pnpm add --global --allow-build=nx nx
+# pnpm global bin must be on PATH for `nx` to be callable
+ensure_path "$(pnpm bin --global)"
+
+if ! command -v nx &> /dev/null; then
+    echo "❌ ERROR: nx installed but not available in PATH"
+    echo "   pnpm global bin: $(pnpm bin --global)"
+    exit 1
+fi
+echo "✅ nx version: $(nx --version | head -1)"
+echo ""
+
+# Step 7: Install project dependencies
+echo "📦 Step 7: Installing project dependencies..."
 if ! command -v bun &> /dev/null; then
     echo "❌ ERROR: Bun not available for installing dependencies"
     exit 1
@@ -212,6 +236,7 @@ if command -v bunx &> /dev/null; then
 else
     echo "   bunx: not found"
 fi
+echo "   nx:   $(command -v nx) ($(nx --version | head -1))"
 echo ""
 
 echo "✨ Setup complete!"
@@ -223,6 +248,7 @@ if [ "$NON_INTERACTIVE" = false ]; then
     echo "      - npm -v   (should show 11.x)"
     echo "      - bun -v   (should show 1.2.18 or later)"
     echo "      - bunx --version  (should be available)"
+    echo "      - nx --version  (should be available)"
     echo "   2. Run project commands:"
     echo "      - bun run build"
     echo "      - bun test"

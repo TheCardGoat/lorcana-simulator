@@ -15,5 +15,16 @@
       "packages/lorcana/lorcana-simulator/node_modules",
       "packages/lorcana/lorcana-types/node_modules"
     ]
+  },
+  "extraKnownMarketplaces": {
+    "nx-claude-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "nrwl/nx-ai-agents-config"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "nx@nx-claude-plugins": true
   }
 }

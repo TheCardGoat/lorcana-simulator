@@ -76,7 +76,7 @@ timed_out=0
 
 echo "ci check running: $script_name ($log_path)"
 
-bun run "$script_name" -- --output-logs=errors-only --log-order=grouped "$@" >"$log_path" 2>&1 &
+bun run "$script_name" -- --output-style=static "$@" >"$log_path" 2>&1 &
 command_pid=$!
 
 max_polls=$(( (timeout_seconds + poll_interval - 1) / poll_interval + 1 ))
