@@ -11,14 +11,12 @@ env:
   TURBO_RUN_SUMMARY: true
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-  BUN_INSTALL_CACHE_DIR: ~/.bun/install/cache
 
 jobs:
   build:
     name: Build, Type Check, Format, Lint, and Test
     timeout-minutes: 10
-    # runs-on: ubuntu-latest
-    runs-on: ubicloud-standard-8-arm
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -27,54 +25,37 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version-file: ".bun-version"
+          bun-version: 1.3.5
 
-      - uses: actions/setup-node@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+          run_install: false
+
+      - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: 22
+          cache: true
 
-      # Cache the Bun global cache directory
-      # - name: Cache Bun dependencies
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: |
-      #       ~/.bun/install/cache
-      #       node_modules/.cache
-      #     key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-bun-
-
-      # Cache all Turbo folders for reusing build artifacts
-      # - name: Cache all Turbo folders
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: |
-      #       .turbo
-      #       **/node_modules/.cache/turbo
-      #       **/.turbo
-      #     key: ${{ runner.os }}-turbo-${{ github.sha }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-turbo-
-
-      # Use hardlink backend for faster installation
-      - name: Install dependencies
-        # CI is not getting the right lockfile for some reason
-        # run: bun install --backend=hardlink --frozen-lockfile --no-progress
-        run: bun install
-
-      - name: Turbo Repo Graph
-        run: bun run ci-check:verbose --graph
-
-      - name: Debug Turbo Environment
+      - name: Debug Environment
         run: |
+          vp env doctor || echo "vp env doctor not available"
           echo "Runner OS: ${{ runner.os }}"
           echo "Runner Arch: ${{ runner.arch }}"
           echo "TURBO_TEAM: $TURBO_TEAM"
           echo "Bun version: $(bun --version)"
           echo "Node version: $(node --version)"
+          echo "pnpm version: $(pnpm --version)"
+
+      - name: Install dependencies
+        run: vp install
+
+      - name: Turbo Repo Graph
+        run: pnpm run ci-check:verbose --graph
 
       - name: Run Continuous integration
-        run: bun run ci-check-full:verbose --summarize
+        run: pnpm run ci-check-full:verbose --summarize
 
       - name: Upload Turbo run summary
         if: always()
@@ -82,10 +63,3 @@ jobs:
         with:
           name: turbo-run-summary
           path: .turbo/runs/*.json
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bun-xml-test-results
-          path: "**/bun.xml"

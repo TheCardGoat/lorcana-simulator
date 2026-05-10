@@ -1,6 +1,6 @@
 ---
 name: parser-pattern-create
-description: Add new patterns to the split pattern files in packages/lorcana-cards/src/parser/patterns/. Handles proper pattern placement, type definitions, and extractor functions.
+description: Add new patterns to the split pattern files in packages/lorcana/lorcana-cards/src/parser/patterns/. Handles proper pattern placement, type definitions, and extractor functions.
 ---
 
 # Parser Pattern Create Skill
@@ -14,7 +14,7 @@ Add new patterns to the appropriate pattern files following the split pattern ar
 ### V1 Pattern Files
 
 ```
-packages/lorcana-cards/src/parser/patterns/
+packages/lorcana/lorcana-cards/src/parser/patterns/
 ├── costs.ts        # Exert, ink cost patterns
 ├── conditions.ts   # If, while, may patterns
 ├── effects.ts      # Draw, damage, banish patterns
@@ -27,7 +27,7 @@ packages/lorcana-cards/src/parser/patterns/
 ### V2 Atomic Effects
 
 ```
-packages/lorcana-cards/src/parser/v2/effects/atomic/
+packages/lorcana/lorcana-cards/src/parser/v2/effects/atomic/
 ├── banish-effect.ts
 ├── damage-effect.ts
 ├── discard-effect.ts
@@ -85,7 +85,7 @@ const patternFiles = {
 
 ```bash
 # Read the target pattern file
-cat packages/lorcana-cards/src/parser/patterns/effects.ts
+cat packages/lorcana/lorcana-cards/src/parser/patterns/effects.ts
 ```
 
 ### Step 3: Add Pattern
@@ -123,7 +123,7 @@ export const EFFECT_PATTERNS = {
 If new effect type, add to types:
 
 ```typescript
-// In packages/lorcana-types/src/abilities/effect-types/ directory
+// In packages/lorcana/lorcana-types/src/abilities/effect-types/ directory
 // Create new file or add to existing effect type file
 export interface OpponentChoiceDiscardEffect {
   type: "opponent-choice-discard";
@@ -147,7 +147,7 @@ export type ParsedEffect =
 If creating new category, update index:
 
 ```typescript
-// packages/lorcana-cards/src/parser/patterns/index.ts
+// packages/lorcana/lorcana-cards/src/parser/patterns/index.ts
 export * from "./costs";
 export * from "./keywords";
 export * from "./triggers";
@@ -168,7 +168,7 @@ export * from "./targets"; // Add if new
 ### Step 1: Create Atomic Effect File
 
 ```typescript
-// packages/lorcana-cards/src/parser/v2/effects/atomic/opponent-choice-effect.ts
+// packages/lorcana/lorcana-cards/src/parser/v2/effects/atomic/opponent-choice-effect.ts
 
 import type { AtomicEffect, EffectParser } from "../../types";
 
@@ -206,7 +206,7 @@ export function parseOpponentChoice(text: string): OpponentChoiceEffect | null {
 ### Step 2: Register in Index
 
 ```typescript
-// packages/lorcana-cards/src/parser/v2/effects/atomic/index.ts
+// packages/lorcana/lorcana-cards/src/parser/v2/effects/atomic/index.ts
 
 export * from "./banish-effect";
 export * from "./damage-effect";
@@ -217,7 +217,7 @@ export * from "./opponent-choice-effect"; // Add new
 ### Step 3: Add to Effect Registry
 
 ```typescript
-// packages/lorcana-cards/src/parser/v2/effects/registry.ts
+// packages/lorcana/lorcana-cards/src/parser/v2/effects/registry.ts
 
 import { parseOpponentChoice } from "./atomic/opponent-choice-effect";
 
@@ -272,19 +272,19 @@ const patterns = [
 ### Step 1: Type Check
 
 ```bash
-cd packages/lorcana-cards && bun run check-types
+cd packages/lorcana/lorcana-cards && bun run check-types
 ```
 
 ### Step 2: Run Pattern Tests
 
 ```bash
-cd packages/lorcana-cards && bun test patterns
+cd packages/lorcana/lorcana-cards && bun test patterns
 ```
 
 ### Step 3: Test Integration
 
 ```bash
-cd packages/lorcana-cards && bun test parser
+cd packages/lorcana/lorcana-cards && bun test parser
 ```
 
 ## Code Templates
@@ -378,8 +378,8 @@ Report pattern creation result:
 {
   success: true,
   patternName: "opponent-choice-discard",
-  patternFile: "packages/lorcana-cards/src/parser/patterns/effects.ts",
-  typeFile: "packages/lorcana-types/src/abilities/effect-types/",
+  patternFile: "packages/lorcana/lorcana-cards/src/parser/patterns/effects.ts",
+  typeFile: "packages/lorcana/lorcana-types/src/abilities/effect-types/",
   changes: [
     { file: "effects.ts", action: "added-pattern" },
     { file: "effect-types/index.ts", action: "added-type" }
@@ -403,12 +403,12 @@ Report pattern creation result:
 
 ### Type Files
 
-- `packages/lorcana-types/src/abilities/ability-types.ts`
-- `packages/lorcana-types/src/abilities/effect-types/` (directory)
-- `packages/lorcana-types/src/abilities/effect-types/index.ts`
-- `packages/lorcana-types/src/abilities/trigger-types.ts`
-- `packages/lorcana-types/src/abilities/condition-types.ts`
-- `packages/lorcana-types/src/abilities/target-types.ts`
+- `packages/lorcana/lorcana-types/src/abilities/ability-types.ts`
+- `packages/lorcana/lorcana-types/src/abilities/effect-types/` (directory)
+- `packages/lorcana/lorcana-types/src/abilities/effect-types/index.ts`
+- `packages/lorcana/lorcana-types/src/abilities/trigger-types.ts`
+- `packages/lorcana/lorcana-types/src/abilities/condition-types.ts`
+- `packages/lorcana/lorcana-types/src/abilities/target-types.ts`
 
 ## Keywords
 

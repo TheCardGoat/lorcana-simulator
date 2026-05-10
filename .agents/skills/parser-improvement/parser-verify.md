@@ -20,10 +20,10 @@ Perform comprehensive verification after parser improvements to ensure:
 
 ```bash
 # Check parser package
-cd packages/lorcana-cards && bun run check-types
+cd packages/lorcana/lorcana-cards && bun run check-types
 
 # Check dependent packages
-cd packages/lorcana-engine && bun run check-types
+cd packages/lorcana/lorcana-engine && bun run check-types
 
 # Check all packages
 bun run check-types
@@ -33,30 +33,30 @@ bun run check-types
 
 ```bash
 # Run all parser tests
-cd packages/lorcana-cards && bun test parser
+cd packages/lorcana/lorcana-cards && bun test parser
 
 # Run specific pattern tests
-cd packages/lorcana-cards && bun test patterns
+cd packages/lorcana/lorcana-cards && bun test patterns
 
 # Run V2 parser tests
-cd packages/lorcana-cards && bun test v2
+cd packages/lorcana/lorcana-cards && bun test v2
 ```
 
 ### 3. Card Tests
 
 ```bash
 # Run tests for affected cards
-cd packages/lorcana-cards && bun test "Card Name"
+cd packages/lorcana/lorcana-cards && bun test "Card Name"
 
 # Run tests for entire set
-cd packages/lorcana-cards && bun test cards/010
+cd packages/lorcana/lorcana-cards && bun test cards/010
 ```
 
 ### 4. Integration Tests
 
 ```bash
 # Run parser integration tests
-cd packages/lorcana-cards && bun test parser-integration
+cd packages/lorcana/lorcana-cards && bun test parser-integration
 
 # Run full test suite
 bun test
@@ -109,7 +109,7 @@ function verifySemantics(text: string, ability: Ability): SemanticCheck {
 // NOTE: Trigger shape in this codebase is an object: { type: string, ... }
 // e.g., trigger: { type: "play-this-character" }
 // NOT a string like trigger: "play-this-character"
-// See packages/lorcana-types/src/abilities/trigger-types.ts for schema
+// See packages/lorcana/lorcana-types/src/abilities/trigger-types.ts for schema
 
 function verifyTrigger(text: string, ability: Ability): boolean {
   const triggerKeywords: Record<string, RegExp> = {
@@ -180,9 +180,9 @@ function verifyOptionality(text: string, ability: Ability): boolean {
 
 ### Type Check
 
-- [x] packages/lorcana-cards: PASS
-- [x] packages/lorcana-engine: PASS
-- [x] packages/lorcana-types: PASS
+- [x] packages/lorcana/lorcana-cards: PASS
+- [x] packages/lorcana/lorcana-engine: PASS
+- [x] packages/lorcana/lorcana-types: PASS
 
 ### Tests
 
@@ -248,7 +248,7 @@ All verifications passed. Ready for merge.
 
 ```bash
 # If type check fails
-cd packages/lorcana-cards && bun run check-types
+cd packages/lorcana/lorcana-cards && bun run check-types
 
 # Common issues:
 # 1. Missing type exports
@@ -262,10 +262,10 @@ cd packages/lorcana-cards && bun run check-types
 
 ```bash
 # If tests fail
-cd packages/lorcana-cards && bun test --verbose parser
+cd packages/lorcana/lorcana-cards && bun test --verbose parser
 
 # Debug specific test
-cd packages/lorcana-cards && bun test -t "test name"
+cd packages/lorcana/lorcana-cards && bun test -t "test name"
 
 # Check for:
 # 1. Pattern order issues
@@ -329,7 +329,7 @@ bun run check-types && bun test parser
 bun run ci-check
 
 # Specific package
-cd packages/lorcana-cards && bun run check-types && bun test
+cd packages/lorcana/lorcana-cards && bun run check-types && bun test
 ```
 
 ### Common Issues

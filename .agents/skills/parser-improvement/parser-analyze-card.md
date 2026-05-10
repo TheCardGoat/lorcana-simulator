@@ -75,16 +75,16 @@ Check each component against existing patterns:
 ```typescript
 // V1 Pattern files
 const patternFiles = {
-  triggers: "packages/lorcana-cards/src/parser/patterns/triggers.ts",
-  effects: "packages/lorcana-cards/src/parser/patterns/effects.ts",
-  conditions: "packages/lorcana-cards/src/parser/patterns/conditions.ts",
-  keywords: "packages/lorcana-cards/src/parser/patterns/keywords.ts",
-  targets: "packages/lorcana-cards/src/parser/patterns/targets.ts",
-  costs: "packages/lorcana-cards/src/parser/patterns/costs.ts",
+  triggers: "packages/lorcana/lorcana-cards/src/parser/patterns/triggers.ts",
+  effects: "packages/lorcana/lorcana-cards/src/parser/patterns/effects.ts",
+  conditions: "packages/lorcana/lorcana-cards/src/parser/patterns/conditions.ts",
+  keywords: "packages/lorcana/lorcana-cards/src/parser/patterns/keywords.ts",
+  targets: "packages/lorcana/lorcana-cards/src/parser/patterns/targets.ts",
+  costs: "packages/lorcana/lorcana-cards/src/parser/patterns/costs.ts",
 };
 
 // V2 Atomic effects
-const atomicEffects = "packages/lorcana-cards/src/parser/v2/effects/atomic/";
+const atomicEffects = "packages/lorcana/lorcana-cards/src/parser/v2/effects/atomic/";
 ```
 
 ## Analysis Commands
@@ -93,10 +93,10 @@ const atomicEffects = "packages/lorcana-cards/src/parser/v2/effects/atomic/";
 
 ```bash
 # Run parser on specific text (requires test helper)
-cd packages/lorcana-cards && bun test -t "parse specific text"
+cd packages/lorcana/lorcana-cards && bun test -t "parse specific text"
 
 # Or use REPL
-cd packages/lorcana-cards && bun repl
+cd packages/lorcana/lorcana-cards && bun repl
 # Then: import { parseCardText } from './src/parser'
 ```
 
@@ -104,10 +104,10 @@ cd packages/lorcana-cards && bun repl
 
 ```bash
 # Search for trigger pattern
-grep -n "when you play" packages/lorcana-cards/src/parser/patterns/triggers.ts
+grep -n "when you play" packages/lorcana/lorcana-cards/src/parser/patterns/triggers.ts
 
 # Search for effect pattern
-grep -n "draw.*card" packages/lorcana-cards/src/parser/patterns/effects.ts
+grep -n "draw.*card" packages/lorcana/lorcana-cards/src/parser/patterns/effects.ts
 ```
 
 ## Example Analysis
@@ -145,7 +145,7 @@ const analysis: TextAnalysis = {
       type: "effect",
       text: "have each opponent choose and discard",
       suggestion: "opponent-choice-discard",
-      patternFile: "packages/lorcana-cards/src/parser/patterns/effects.ts",
+      patternFile: "packages/lorcana/lorcana-cards/src/parser/patterns/effects.ts",
       reason: "No pattern handles opponent-choice effects",
     },
   ],
@@ -254,7 +254,7 @@ interface Recommendation {
     {
       "priority": "high",
       "type": "new-pattern",
-      "patternFile": "packages/lorcana-cards/src/parser/patterns/effects.ts",
+      "patternFile": "packages/lorcana/lorcana-cards/src/parser/patterns/effects.ts",
       "description": "Add pattern for opponent-choice-discard effects",
       "suggestedPattern": "/(?:have )?(?:each )?opponent(?:s)? choose (?:and )?discard/i"
     }

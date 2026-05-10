@@ -3,32 +3,52 @@ name: lorcana-find-card
 description: Locate Lorcana cards in `packages/lorcana/lorcana-cards` and return deterministic, ranked similar-card references for implementation work. Use when a user asks to find a card by name/slug/set-number, needs definition/test file paths, or needs similar implementation examples.
 ---
 
-``
-
-````
 # Lorcana Find Card
-``
+
 Resolve card identity and provide ranked implementation references.
 
 ## Required Memory Step
 
 1. Read `memory/schema.md`.
-2. Read the latest 5 entries in `memory/bank.md`.
+2. Read the Guardrails and Promoted Rules sections of `memory/bank.md`.
 3. Apply guardrails before returning results.
 
-## Card Lookup
+## Input Contract
+
+```ts
+type FindCardInput = {
+  query: string; // card id, set-number, slug, or name (required)
+  k?: number; // number of similar cards to return (default: 10, max: 25)
+  filter?: {
+    cardType?: "character" | "action" | "item" | "location";
+    requireActiveTest?: boolean; // exclude empty/legacy-only test files
+    excludeKeywordOnly?: boolean; // exclude pure keyword-smoke cards
+    hasTriggerEvent?: string; // e.g. "play", "quest", "challenge", "banish"
+    hasEffectType?: string; // e.g. "deal-damage", "draw", "play-card"
+    sameSet?: boolean; // restrict similar pool to the target's set
+  };
+};
+```
+
+`k` is the canonical name for the requested neighbor count. Callers should always pass `k` explicitly; defaulting is for ad-hoc CLI use.
 
 ## Fast Path CLI (Preferred)
 
-Run this first to avoid broad filesystem scans:
+```bash
+bun packages/lorcana/lorcana-cards/src/cards/similarity.ts \
+  --query "<card name|id|set-number|set-number-slug>" \
+  --limit <k>
+```
 
-`bun packages/lorcana/lorcana-cards/src/cards/similarity.ts --query "<card name|id|set-number|set-number-slug>" --limit 8`
+`--limit` maps to `k`. Filter flags are applied client-side (see Output Contract — callers post-filter on `reason[]` until the CLI grows native filter flags; tracked as a known gap).
 
 Interpret the JSON result:
 
 - `status: "ok"`: Use returned `files` and `similarCards` directly.
-- `status: "ambiguous"`: Show candidates and ask the user to choose one.
+- `status: "ambiguous"`: Show candidates and ask the user to choose one. Never guess.
 - `status: "not_found"`: Continue with manual deterministic lookup below.
+
+## Manual Deterministic Lookup (Fallback)
 
 Search canonical card files in:
 
@@ -37,11 +57,11 @@ Search canonical card files in:
 - `packages/lorcana/lorcana-cards/src/cards/{SET}/items/{NUM}-*.ts`
 - `packages/lorcana/lorcana-cards/src/cards/{SET}/locations/{NUM}-*.ts`
 
-Use `rg --files` + name/slug filtering for deterministic results.
+Use `rg --files` + name/slug filtering. When punctuation drift is suspected (apostrophes), compare both legacy (`world-s-...`) and current (`worlds-...`) slug forms.
 
-## Similarity Scoring (Deterministic)
+## Similarity Scoring (Deterministic, v1)
 
-Score each candidate with additive weights:
+Additive weights, frozen at `scoringVersion: "v1"`:
 
 - `+40` same card type (`character`/`action`/`item`/`location`)
 - `+25` shared effect verbs (`draw`, `banish`, `damage`, `discard`, `ready`, `exert`, `quest`, `move`)
@@ -51,16 +71,19 @@ Score each candidate with additive weights:
 - `+5` newer set tie-break preference
 
 Tie-break order:
+
 1. Higher score
 2. Higher set number
 3. Lexicographic card id
 
-## Output Contract
+When changing weights or signals, bump `scoringVersion` and document the change in `memory/bank.md` under Promoted Rules.
 
-Return normalized JSON:
+## Output Contract
 
 ```json
 {
+  "scoringVersion": "v1",
+  "status": "ok",
   "name": "string",
   "title": "string",
   "cardId": "set-number-slug",
@@ -83,20 +106,15 @@ Return normalized JSON:
 }
 ```
 
-Return top 5 similar cards by default.
+Return `k` similar cards (default 10).
 
 ## Ambiguity Handling
 
-If multiple cards match the lookup term, return candidates with:
-- full name/title
-- set/number
-- definition path
-
-Then ask for explicit selection.
+If multiple cards match the lookup term, return `status: "ambiguous"` with full candidates. Ask for explicit selection. Do not auto-pick on score.
 
 ## Post-Execution Memory Update
 
-Append one entry to `memory/bank.md` using `memory/schema.md`.
-- Capture bad matches or ranking mistakes.
-- Add repeated mismatch patterns to guardrails.
-````
+Follow `memory/schema.md`. Capture:
+
+- bad matches (wrong neighbor was returned at top-k) — file as a candidate observation
+- ranking mistakes that recur — promote to a guardrail when seen ≥ 3 times across distinct queries

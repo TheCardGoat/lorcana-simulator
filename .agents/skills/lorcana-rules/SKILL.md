@@ -9,9 +9,9 @@ Use indexed references first, then load only required deep sections.
 
 ## Required Memory Step
 
-1. Read `memory/schema.md`.
-2. Read the latest 5 entries in `memory/bank.md`.
-3. Apply existing guardrails before answering.
+1. Read [`memory/schema.md`](./memory/schema.md). It points to the canonical schema in `lorcana-cards/memory/schema.md`.
+2. Read the **Guardrails** and **Promoted Rules** sections of [`memory/bank.md`](./memory/bank.md). Skim Candidates if the request is in a domain with active observation.
+3. Apply existing guardrails before answering. After substantive work, follow the canonical Memory Update Protocol.
 
 ## Source Priority
 
@@ -58,7 +58,8 @@ Return this JSON:
 
 ## Post-Execution Memory Update
 
-Append one entry to `memory/bank.md` using `memory/schema.md`.
+Follow the canonical Memory Update Protocol in [`memory/schema.md`](./memory/schema.md).
 
-- Capture citation misses, wrong interpretation paths, and ambiguity patterns.
-- Promote repeated misses into guardrails.
+- Append an Observation for citation misses, wrong interpretation paths, and ambiguity patterns.
+- Promote a Candidate to a Promoted Rule only when both a CR citation and a runnable section-spec test exist.
+- Bump CR version pin in `bank.md` when the indexed comprehensive rules update.

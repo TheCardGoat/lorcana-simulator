@@ -338,3 +338,6 @@ Thumbs.db
 .cache/
 tmp/
 temp/
+
+# Vite Plus
+.vite-hooks/

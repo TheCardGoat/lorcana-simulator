@@ -14,13 +14,13 @@ Write comprehensive tests for parser patterns following TDD methodology. Ensures
 ### V2 Pattern Tests
 
 ```
-packages/lorcana-cards/src/parser/v2/__tests__/
+packages/lorcana/lorcana-cards/src/parser/v2/__tests__/
 ├── patterns.test.ts
 ├── trigger-patterns.test.ts
 ├── action-effects.test.ts
 └── ...
 
-packages/lorcana-cards/src/parser/v2/effects/atomic/__tests__/
+packages/lorcana/lorcana-cards/src/parser/v2/effects/atomic/__tests__/
 ├── draw-effect.test.ts
 ├── damage-effect.test.ts
 ├── banish-effect.test.ts
@@ -32,7 +32,7 @@ packages/lorcana-cards/src/parser/v2/effects/atomic/__tests__/
 ### Step 1: Write Failing Test First (RED)
 
 ```typescript
-// packages/lorcana-cards/src/parser/__tests__/opponent-choice.test.ts
+// packages/lorcana/lorcana-cards/src/parser/__tests__/opponent-choice.test.ts
 
 import { describe, it, expect } from "bun:test";
 import { parseEffect } from "../parsers/effect-parser";
@@ -64,7 +64,7 @@ describe("opponent-choice-discard pattern", () => {
 ### Step 2: Run Test (Should Fail)
 
 ```bash
-cd packages/lorcana-cards && bun test opponent-choice
+cd packages/lorcana/lorcana-cards && bun test opponent-choice
 
 # Expected output: FAIL - pattern not implemented yet
 ```
@@ -76,7 +76,7 @@ Add pattern to make test pass (see `parser-pattern-create` skill).
 ### Step 4: Verify Tests Pass
 
 ```bash
-cd packages/lorcana-cards && bun test opponent-choice
+cd packages/lorcana/lorcana-cards && bun test opponent-choice
 
 # Expected output: PASS
 ```
@@ -223,32 +223,32 @@ describe("edge cases", () => {
 ### Run Specific Test File
 
 ```bash
-cd packages/lorcana-cards && bun test opponent-choice
+cd packages/lorcana/lorcana-cards && bun test opponent-choice
 ```
 
 ### Run All Pattern Tests
 
 ```bash
-cd packages/lorcana-cards && bun test patterns
-cd packages/lorcana-cards && bun test parser
+cd packages/lorcana/lorcana-cards && bun test patterns
+cd packages/lorcana/lorcana-cards && bun test parser
 ```
 
 ### Run with Verbose Output
 
 ```bash
-cd packages/lorcana-cards && bun test --verbose patterns
+cd packages/lorcana/lorcana-cards && bun test --verbose patterns
 ```
 
 ### Run Single Test
 
 ```bash
-cd packages/lorcana-cards && bun test -t "should parse opponent choice"
+cd packages/lorcana/lorcana-cards && bun test -t "should parse opponent choice"
 ```
 
 ### Watch Mode
 
 ```bash
-cd packages/lorcana-cards && bun test --watch patterns
+cd packages/lorcana/lorcana-cards && bun test --watch patterns
 ```
 
 ## Test File Template
@@ -309,7 +309,7 @@ Report test results:
 ```typescript
 {
   success: true,
-  testFile: "packages/lorcana-cards/src/parser/__tests__/opponent-choice.test.ts",
+  testFile: "packages/lorcana/lorcana-cards/src/parser/__tests__/opponent-choice.test.ts",
   testsWritten: 12,
   testsPass: true,
   coverage: {

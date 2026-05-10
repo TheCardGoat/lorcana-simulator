@@ -1,0 +1,12 @@
+packages:
+  - "packages/*"
+  - "packages/lorcana/*"
+
+catalog:
+  vite: "npm:@voidzero-dev/vite-plus-core@latest"
+  vite-plus: latest
+  vitest: "npm:@voidzero-dev/vite-plus-test@latest"
+  "@types/node": ^24.12.0
+  typescript: ^5
+  "@better-auth/infra": ^0.2.5
+  better-auth: ^1.6.9

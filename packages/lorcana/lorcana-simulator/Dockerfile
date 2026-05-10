@@ -1,22 +1,3 @@
-# Stage 0: Clone repo with submodules resolved at their pinned commits
-# A separate clone stage is required because .dockerignore excludes .git,
-# so `git submodule update` cannot run against the COPY-ed source.
-# RAILWAY_GIT_COMMIT_SHA is declared so Railway can pass it as a build arg for cache busting.
-FROM alpine/git AS source
-ARG GHA_PAT_TOKEN
-ARG RAILWAY_GIT_COMMIT_SHA
-
-RUN git config --global url."https://${GHA_PAT_TOKEN}@github.com/".insteadOf "https://github.com/"
-
-WORKDIR /repo
-RUN git clone --depth 1 "https://github.com/TheCardGoat/the-card-goat-online.git" . && \
-    if [ -n "$RAILWAY_GIT_COMMIT_SHA" ]; then \
-      git fetch --depth 1 origin "$RAILWAY_GIT_COMMIT_SHA" && \
-      git checkout "$RAILWAY_GIT_COMMIT_SHA"; \
-    fi && \
-    git submodule update --init --recursive --depth 1 && \
-    rm -rf .git submodules/cyberpunk/.git submodules/gundam/.git
-
 FROM node:24-alpine AS build
 WORKDIR /app
 

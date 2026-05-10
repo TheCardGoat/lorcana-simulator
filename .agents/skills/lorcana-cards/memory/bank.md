@@ -1,246 +1,259 @@
 # Lorcana Cards Memory Bank
 
-## Current State
-
-- `actions`: most mature surface
-  - 340 definitions
-  - 2 still marked missing
-- `locations`: mature surface
-  - 87 definitions
-  - 0 still marked missing
-- `items`: mixed migration state
-  - 204 definitions
-  - 125 still marked missing
-- `characters`: largest backlog
-  - 1936 definitions
-  - 1569 still marked missing
-  - many tests are placeholders, legacy comments, or keyword-smoke-only
+Schema: [`schema.md`](./schema.md). Demoted/expired entries: [`archive.md`](./archive.md).
 
 ## Guardrails
 
-- Resolve the exact card file and test file before editing.
-- Check `missingImplementation` and `missingTests` before trusting a file as a reference.
-- Treat active Bun tests as the real source of truth, not commented Jest history.
-- Use actions and locations as the safest syntax/style references.
-- Inspect `lorcana-engine` and `lorcana-types` before deciding a card is blocked.
-- Keep missing flags honest only after engine investigation and bounded-extension attempts.
-- Metadata-only blocker tests do not count as migration coverage.
-- If the same blocker repeats in a batch, stop and fix the shared engine support.
-- Prefer live engine helpers and semantic matchers over hand-rolled harness code.
+- **G-01**: Resolve the exact card file and test file before editing. Why: avoid acting on a generated stub or stale legacy file. Applies: every card task.
+- **G-02**: Probe engine support before declaring a gap. Why: most "gaps" are authoring drift from current DSL. Applies: any card with `missingImplementation: true` or a failing behavior test.
+- **G-03**: Treat active Bun tests as the only source of truth, not commented Jest history. Why: legacy comments rot and mislead. Applies: when picking reference examples.
+- **G-04**: A test asserting only `missingImplementation`, `missingTests`, or empty `abilities` is not coverage. Why: hides regressions and inflates green metrics. Applies: review and authoring.
+- **G-05**: If the same engine gap blocks 2+ cards in one batch, stop and fix shared support first. Why: repeated per-card workarounds calcify. Applies: batch implementation work.
+- **G-06**: Use authoritative server state for hidden-zone, under-card, facedown-ink, or chooser-projection assertions. Why: client snapshots can be optimistically successful. Applies: tests touching hidden zones.
+- **G-07**: Enchanted/epic variants share `canonicalId` and must have abilities identical to the base card. Why: drift breaks Shift and reprint logic. Applies: variant authoring.
 
-## Trusted Patterns
+## Promoted Rules
 
-- Actions:
-  - `type: "action"` with `sequence`, `choice`, `or`, `optional`, `conditional`, `for-each`, and `scry`
-  - reuse follow-up targets with `target: { ref: "previous-target" }`
-  - use `count: "all"` with `selector: "all"`
-  - use `count: { upTo: N }` for optional targeting
-- Items:
-  - default to `activateAbility(...)` tests
-  - verify real cost shape first
-- Engine behavior:
-  - activated once-per-turn uses `usesPerTurn`
-  - triggered `once-per-turn` and `first-time-each-turn` use trigger restrictions
-  - trigger subject filters support `cost-comparison` against printed card cost
-  - single-classification pending cost reductions already work
-  - nested `play-card` action effects can carry optional Bodyguard entry choice into the resulting character play
-  - `reveal-top-card` plus `put-in-hand`, `put-on-top`, and `put-on-bottom` already works
-  - chosen discard filters already support card type, max cost, and a single classification
-  - `OPPONENT_CHARACTERS` trigger `on` value works for `event: "challenge"`
-  - `event: "remove-damage"` with `on: "YOUR_CHARACTERS"` triggers on damage removal from your characters
-  - `turn-metric` conditions support `damage-removed-by-player` and `played-character-with-classification`
-  - `may-enter-play-exerted` restriction allows optional exerted entry, paired with `is-exerted` condition on a triggered ability
-  - `property-modification` with `operation: "add-alias"` adds an alternate name for Shift targeting
-  - `trigger-amount` as effect amount captures the quantity from the triggering event
-- Locations:
-  - trust "while here" and location activation patterns from live tests
-  - `CHARACTERS_HERE` trigger `on` value works for location-triggered abilities
-- Characters:
-  - keyword helpers (`rush`, `ward`, `evasive`, `resist(N)`, `challenger(N)`, `singer(N)`, `shift(N)`, `alert`) are safe and tested
-  - "may enter play exerted" always requires two abilities: static restriction + triggered with `is-exerted` condition
-  - enchanted/epic variants share `canonicalId` and should have identical abilities to their base card
-- Tests:
-  - `playCardWithChoice(...)`, `playCardWithDestinations(...)`, `resolvePendingEffect(...)`, `respondWith(...)`, `respondWithChoice(...)`, `activateAbility(...)`
-  - `toHaveZoneCounts(...)`, `toHaveKeyword(...)`, `toBeAtLocation(...)`
+### PR-01 — actions-and-locations-as-syntax-references
 
-## Known Gaps
+- **claim**: Actions are the most mature DSL surface; locations are second. Items are mixed; characters are least reliable.
+- **scope**: Picking reference examples for new card authoring.
+- **evidence**: O-2026-03-14, O-2026-03-15-engine-first, set-001/002/003/004/005 item batches all required corrections starting from non-action templates.
+- **verification**: `rg -l 'missingImplementation: true' packages/lorcana/lorcana-cards/src/cards/<SET>/<TYPE>` — current counts: actions 2/340, locations 0/87, items 125/204, characters 1569/1936.
+- **last_checked**: 2026-04-27
 
-- Character migration is still uneven; many numbered tests are not executable coverage.
-- Item coverage is incomplete and varies sharply by set.
-- Hidden-zone, under-card, and chooser-projection flows still need authoritative-state checks.
-- Generated stubs can be structurally plausible while still being wrong for real gameplay.
-- `PLAYED_CARD` exists in types and parser mapping, but runtime targeting support may still be missing.
-- Union classification semantics like `Princess or Queen` are not first-class in single-classification discard and cost-reduction surfaces.
-- `cant-play-actions` restriction does not support cost-based filtering (e.g., "can't play actions with cost 4 or more"). Cards needing this must use the restriction without the cost filter, which is slightly broader than printed text.
+### PR-02 — may-enter-play-exerted-two-ability-shape
 
-## Do Not Trust
+- **claim**: "May enter play exerted" is two abilities — a static `restriction: "may-enter-play-exerted"` plus a triggered ability gated by `condition: { type: "is-exerted" }`.
+- **scope**: Character authoring with optional exerted entry.
+- **evidence**: `012/characters/078-lord-macguffin-clever-swordsman.ts`, set-012 batch (2026-04-21), engine-first proof (2026-03-15).
+- **verification**: `bun test packages/lorcana/lorcana-cards/src/cards/012/characters/078-lord-macguffin-clever-swordsman.test.ts`
+- **last_checked**: 2026-04-27
 
-- Empty `.test.ts` files
-- Commented `LEGACY IMPLEMENTATION` blocks
-- Keyword-smoke-only tests as full behavior proof
-- Client-side success without checking authoritative state on suspicious paths
-- Non-action files as default syntax references when a mature action/location example already exists
+### PR-03 — printed-cost-vs-discounted-cost-for-triggers
 
-## Recent Learnings
+- **claim**: Trigger eligibility checks like "cost X or less" must filter against printed cost, not discounted play cost.
+- **scope**: Authoring triggered abilities with cost predicates.
+- **evidence**: O-2026-03-15-nested-play-bodyguard, Stitch–Rock Star case via Lantern.
+- **verification**: `bun test packages/lorcana/lorcana-cards/src/cards/001/items/033-lantern.test.ts`
+- **last_checked**: 2026-04-27
 
-## 2026-04-21 - set-012-batch-missing-cards-ability-authoring
+### PR-04 — that-card-needs-trigger-ref-and-zone
 
-- signal: 15 cards in set 012 had `missingImplementation: true` with text but no `abilities` array. All were resolved without engine changes using existing DSL patterns: keyword helpers, triggered abilities, static conditions, "may enter play exerted" two-ability pattern, `property-modification` for name aliases, and location `CHARACTERS_HERE` triggers. The `cant-play-actions` restriction does not yet support cost-based filtering (needed for Gizmoduck's "cost 4 or more" clause).
-- impact: future batch card implementation should start by finding `missingImplementation` flags, then match printed text against the common patterns in PATTERNS.md before investigating engine support. Enchanted/epic variants should copy abilities directly from their base card. The `OPPONENT_CHARACTERS` trigger `on` value exists and works for challenge events.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards src/cards/012/`; `rg -l 'missingImplementation: true' packages/lorcana/lorcana-cards/src/cards/012/ --type ts` (returns empty)
+- **claim**: Card text using "that card from your <zone>" must use `source: { ref: "trigger-subject", zones: ["<zone>"] }`. Plain `source: "<zone>"` lets the resolver pick unrelated cards; plain `ref` without `zones` ignores zone movement.
+- **scope**: Triggered abilities referencing a specific prior card identity.
+- **evidence**: O-2026-03-27-that-card-zone-lock (Belle Snowfield Strategist), CR `6.1.11`/`6.1.11.1`.
+- **verification**: `bun test packages/lorcana/lorcana-cards/src/cards/011/characters/158-belle-snowfield-strategist.test.ts`
+- **last_checked**: 2026-04-27
 
-## 2026-03-19 - sapphire-aura-static-target
+### PR-05 — optional-no-legal-targets-still-bags
 
-- signal: Daisy Duck - Sapphire Champion needed a static aura target for "your other Sapphire characters", and static target projection required `getCardOwner` plus an explicit legacy matcher case.
-- impact: future color-specific static auras should verify both the static target matcher and the static ability context before calling the card blocked.
-- verification: `bun test packages/lorcana/lorcana-cards/src/cards/010/characters/158-daisy-duck-sapphire-champion.test.ts`
+- **claim**: A triggered optional ability whose later target choice has zero legal candidates still enters the bag and resolves with no effect. Do not author or assert it as suppressed.
+- **scope**: Triggered optional abilities with chosen-target effects.
+- **evidence**: O-2026-03-27-optional-no-legal (Be Prepared multi-trigger), CR `6.2.2`, `6.2.9`, `1.7.7`.
+- **verification**: `bun test packages/lorcana/lorcana-engine/src/triggered-abilities/index.ts` and `bun test packages/lorcana/lorcana-simulator/src/testing/triggered-abilities/multiple-triggers.test.ts`
+- **last_checked**: 2026-04-27
 
-## 2026-03-19 - explicit-discard-to-play-song-support
+### PR-06 — turn-owner-not-priority-holder
 
-- signal: `Circle of Life` style song actions that play a character from discard already resolve cleanly with the existing `play-card` effect and explicit discard target selection.
-- impact: future migration work for this effect shape should stay at the card layer unless a different target constraint exposes a real runtime gap.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/001/actions/210-circle-of-life-enchanted.test.ts`
+- **claim**: `passTurn` and similar turn-ownership checks must derive turn owner from OTP + completed turns, not from priority holder. Priority can transfer to opponents during opponent-choice bag flows without changing turn ownership.
+- **scope**: Engine work on turn transitions and opponent-choice triggered effects on the active player's turn.
+- **evidence**: O-2026-03-28-turn-owner-vs-priority, Cursed Merfolk repro, CR `1.3.4.1`, `3.4.2`, `7.7.4.5`.
+- **verification**: `bun test packages/lorcana/lorcana-engine/src/runtime-moves/moves/turn/pass-turn.test.ts`
+- **last_checked**: 2026-04-27
 
-## 2026-03-18 - support-needs-triggered-quest-effect
+### PR-07 — set-counts (current-state)
 
-- signal: support-only character definitions can pass keyword smoke checks while still missing the actual quest-triggered strength boost.
-- impact: when migrating Support characters, add the explicit quest trigger with the optional support effect; do not treat the keyword alone as gameplay coverage.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/007/characters/018-bolt-dependable-friend.test.ts`
+- **claim**: Migration state by card type — actions 340 defs / 2 missing; locations 87 / 0; items 204 / 125; characters 1936 / 1569.
+- **scope**: Sizing batches and choosing reference surfaces.
+- **evidence**: Migration audit 2026-04-21.
+- **verification**: `rg -l 'missingImplementation: true' packages/lorcana/lorcana-cards/src/cards/<TYPE>/ | wc -l`
+- **last_checked**: 2026-04-21
 
-## 2026-03-14 - skill-rewrite-full-card-reality
+## Candidates
 
-- signal: the skill was still action-only while the package had already become a mixed card-definition, parser, and generation workspace with very uneven non-action migration quality.
-- impact: future guidance must branch by card type and explicitly call out placeholder-test false positives before using a file as a reference.
-- verification: `bun run --cwd packages/lorcana/lorcana-cards check-types`; repo inventory and test-state scans across `src/cards`.
+### C-01 — cant-play-actions-cost-filter-gap
 
-## 2026-03-15 - engine-first-blocker-proof
+- **pattern**: `cant-play-actions` restriction does not support cost-based filtering ("can't play actions with cost 4 or more"). Cards needing this currently broaden to all actions.
+- **hits**: 1 (most recent: 2026-04-21)
+- **promote_when**: ≥3 distinct cards request the cost filter.
+- **demote_at**: 2026-06-20
 
-- signal: recent migration work treated several cards as blocked before proving what the current engine already supports, and some blocker tests only asserted missing flags.
-- impact: future card work must inspect engine support first, prefer bounded engine extensions, and reject metadata-only tests as real coverage.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/008/items/178-television-set.test.ts`; `bun test --cwd packages/lorcana/lorcana-engine ./src/runtime-moves/effects/triggered-abilities.test.ts`; `bun test --cwd packages/lorcana/lorcana-engine ./src/projection/card-derived-parity.test.ts`; `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/005/locations/135-sugar-rush-speedway-starting-line.test.ts`
+### C-02 — union-classification-not-first-class
 
-## 2026-03-15 - nested-play-bodyguard-and-printed-cost-triggers
+- **pattern**: Single-classification discard and cost-reduction surfaces don't model unions like "Princess or Queen".
+- **hits**: 1 (most recent: 2026-04-21)
+- **promote_when**: ≥3 distinct cards or a clean engine surface to add the union.
+- **demote_at**: 2026-06-20
 
-- signal: `Just in Time` needed the optional free-play choice to reach nested Bodyguard entry, and `Lantern` exposed that temporary discounts must not satisfy printed-cost trigger checks like Stitch - Rock Star.
-- impact: future migrations can use nested `play-card` effects for free-play Bodyguard parity, but trigger eligibility that says "cost X or less" must filter against printed cost rather than discounted play cost.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/001/actions/029-just-in-time.test.ts`; `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/001/items/033-lantern.test.ts`; `bun test --cwd packages/lorcana/lorcana-simulator ./src/testing/rules/section-08-bodyguard.test.ts`; `bun test --cwd packages/lorcana/lorcana-engine ./src/runtime-moves/resolution/action-effects/composed-effect-resolver-parity.test.ts`
+### C-03 — apostrophe-slug-drift
 
-## 2026-03-15 - dynamic-classification-trigger-snapshots
+- **pattern**: Inventory rows mark cards `MISSING` with apostrophe-split slugs (`world-s-...`) when the repo uses normalized slugs (`worlds-...`). Affects audit triage, not authoring.
+- **hits**: 3 (2026-03-15, 2026-03-15, 2026-03-18)
+- **promote_when**: stable across the next two audit batches without contradiction.
+- **demote_at**: 2026-06-20
 
-- signal: `The Thunderquack` and `Darkwing Tower` required trigger matching against a Villain classification that exists only while the target is in play, while `Containment Unit` exposed a second gap where challenge validation ignored active `cant-challenge` restrictions even though preview helpers already respected them.
-- impact: when a trigger depends on printed or static classifications at banish time, snapshot the derived classifications before moving the card out of play; when a restriction says a character cannot challenge, validate the live move with the same restriction checks used by eligibility previews; and when an `or` branch self-banishes a non-character source, prefer typed self-target enums like `THIS_ITEM`.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/011/items/202-the-thunderquack.test.ts ./src/cards/011/items/203-containment-unit.test.ts ./src/cards/011/locations/204-darkwing-tower-icy-headquarters.test.ts`; `bun run --cwd packages/lorcana/lorcana-engine check-types`; `bun run ci-check`
+## Observations
 
-## 2026-03-15 - self-banish-trigger-candidates
+Recent observations move to `archive.md` after 30 days unless they back a Candidate or Promoted Rule. The full prior log lives in [`archive.md`](./archive.md).
 
-- signal: printed `When this character is banished` abilities still failed after the source left play because trigger discovery scanned current zones only, and debug lethal-damage setup left banish events buffered until something else flushed the trigger boundary.
-- impact: snapshot eligible triggered abilities from the source before clearing play-state, carry those candidates on the emitted banish event, and flush manual damage changes through the normal trigger boundary so self-banish behavior matches gameplay moves.
-- verification: `bun test --cwd packages/lorcana/lorcana-engine ./src/runtime-moves/effects/triggered-abilities.test.ts`; `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/002/characters/006-dopey-always-playful.test.ts`; `bun run --cwd packages/lorcana/lorcana-engine check-types`; `bun run --cwd packages/lorcana/lorcana-cards check-types`
+### O-2026-05-05-sugar-rush-speedway-visual-fixture
 
-## 2026-03-15 - fixture-self-discounts-and-heal-draw-snapshots
+- **signal**: Sugar Rush Speedway Starting Line and Finish Line can be staged in one simulator visual fixture by placing a ready racer at Starting Line, Finish Line as the free move destination, and another racer at a different location to expose the Starting Line same-location target filter.
+- **impact**: Future location-to-location move visual repros should include an off-location character when the reported behavior depends on source-location target filtering, not only the happy-path destination.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-simulator ./src/lib/features/simulator-devtools/fixtures/registry.test.ts ./src/lib/features/simulator-devtools/routes/test-routes.test.ts`
+- **candidate_for**: new
 
-- signal: `Tramp - Street-Smart Dog` showed that hand-active self cost reductions were invisible when the static resolver did not support `characters-in-play`, and `Rapunzel - Gifted with Healing` showed that heal-follow-up sequences need a shared `eventSnapshot` plus the `DAMAGE_REMOVED` amount string rather than an ad hoc amount object.
-- impact: future migrations should author self-discount characters with `sourceZones: ["hand"]` and `cardType` while confirming the static amount resolver supports the chosen counter; heal/draw follow-ups should prefer `DAMAGE_REMOVED` and add engine coverage whenever the follow-up depends on snapshot state from an earlier step in the same sequence.
-- verification: `bun test --cwd packages/lorcana/lorcana-engine ./src/runtime-moves/rules/static-ability-utils.test.ts ./src/runtime-moves/resolution/action-effects/composed-effect-resolver.test.ts`; `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/001/characters/018-rapunzel-gifted-with-healing.test.ts ./src/cards/007/characters/010-tramp-street-smart-dog.test.ts`; `bun run ci-check`
+### O-2026-05-05-optional-scry-reveal-play
 
-## 2026-03-18 - inventory-slug-drift-before-blocking
+- **signal**: Mufasa - Betrayed Leader and Chief Bogo - Commanding Officer both needed the printed "you may reveal the top card" modeled as an `optional` wrapper around `scry`, not as mandatory scry or a separate `reveal-top-card` plus `if-you-do` sequence. Chief Bogo also needed the play destination to keep the printed cost-5-or-less character filter and omit `entersExerted`.
+- **impact**: Future reveal-top/free-play reports should first compare against the optional `scry` destination pattern, including printed destination filters and entry-state text, before adding reveal/conditional sequences.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/002/characters/014-mufasa-betrayed-leader.test.ts ./src/cards/008/characters/018-chief-bogo-commanding-officer.test.ts`
+- **candidate_for**: new
 
-- signal: chunk-10 set-006 inventory rows marked three cards as `MISSING` even though the current repo already had working definitions/tests under normalized possessive slugs.
-- impact: before treating an audit row as missing authoring work, check for current-slug variants without apostrophe fragments; inventory cleanup may be the only required change.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/006/items/168-jumbo-pop.test.ts ./src/cards/006/items/200-kings-sensor-core.test.ts ./src/cards/006/items/201-training-dummy.test.ts ./src/cards/006/items/202-sunglasses.test.ts ./src/cards/006/locations/034-hundred-acre-island-poohs-home.test.ts ./src/cards/006/locations/035-sugar-rush-speedway-finish-line.test.ts ./src/cards/006/locations/068-fairy-ship-royal-vessel.test.ts ./src/cards/006/locations/069-mystical-tree-mama-odies-home.test.ts ./src/cards/006/locations/101-perilous-maze-watery-labyrinth.test.ts ./src/cards/006/locations/102-owl-island-secluded-entrance.test.ts`
+### O-2026-05-05-mufasa-bogo-visual-fixture
 
-## 2026-03-18 - draw-then-discard-character-sequence
+- **signal**: The simulator visual route `/tests/triage-2026-05-05-mufasa-bogo-reveal-play` can stage both reported reveal/free-play flows on one board by stacking playerOne's deck with two eligible characters: Mufasa can challenge into an exerted Maui to reveal/play the top character exerted, then after passing turn Maui can banish an exerted Bodyguard to trigger Chief Bogo for the next top character.
+- **impact**: Future paired visual repros can combine sequential trigger paths in one fixture when deck order and turn passing keep the validation steps deterministic.
+- **verification**: `bun run --cwd packages/lorcana/lorcana-simulator check-types`; `bun test --cwd packages/lorcana/lorcana-simulator ./src/lib/features/simulator-devtools/fixtures/registry.test.ts ./src/lib/features/simulator-devtools/routes/test-routes.test.ts`
+- **candidate_for**: new
 
-- signal: Bobby Zimuruski's play trigger initially modeled only the discard step, which left the draw step invisible to the engine.
-- impact: when a triggered ability says "draw a card, then choose and discard a card," author it as a `sequence` with the draw step first and the discard step explicitly coming from `hand`.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/009/characters/078-bobby-zimuruski-spray-cheese-kid.test.ts`
+### O-2026-05-05-fixed-move-to-location-slots
 
-## 2026-03-19 - sing-event-song-triggers
+- **signal**: Goofy - Set for Adventure exposed that `move-to-location` prompts with a fixed `trigger-destination` can have only one user target DSL entry while still carrying `expectedSlottedKind: "move-to-location"`; the interaction view and simulator session must fill the location slot from the source card's current `atLocationId` instead of waiting for a location click.
+- **impact**: Future fixed-destination move prompts should distinguish user-selected subject count from total slotted payload count, and serialize the fixed location even when `maxSelections` is 1.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-interaction ./src/build-player-interaction-view.test.ts`; `bun test --cwd packages/lorcana/lorcana-simulator ./src/lib/features/simulator/context/game-context.mobile-actions.test.ts ./src/lib/features/simulator/board/resolution-target-overlay.test.ts`
+- **candidate_for**: new
 
-- signal: a song-triggered character ability did not fire when modeled as `event: "play"`; the runtime emits a distinct `sing` trigger for the singer during song resolution.
-- impact: author "whenever this character sings a song" abilities with `event: "sing"` and resolve the effect directly when the runtime auto-queues and resolves the bag.
-- verification: `bun test packages/lorcana/lorcana-cards/src/cards/004/characters/004-cinderella-melody-weaver.test.ts`
+### O-2026-05-04-pongo-inkwell-reveal-log-detail
 
-## 2026-03-19 - pay-cost-triggered-item-banish
+- **signal**: Pongo - Dear Old Dad's inkwell reveal is best represented as private detail attached to the pending bag-resolution move log, so the chooser sees "Started resolving..." plus the revealed inkwell card names in one row while the primary ability flow remains intact.
+- **impact**: Future hidden-zone reveal reports should preserve the action/bag log as the primary row and append scoped reveal detail instead of letting reveal/lookup entries displace the main move.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-simulator ./src/testing/ui-state/pongo-dear-old-dad.test.ts`; `bun run ci-check`
+- **candidate_for**: new
 
-- signal: Clarabelle - Clumsy Guest's play trigger needed the additional 2 ink payment modeled as a nested `pay-cost` effect before the chosen-item banish resolved.
-- impact: for "may pay N to banish chosen item" character triggers, prefer `chooser: "CONTROLLER"` with `type: "pay-cost"` wrapping the chosen-item banish effect; the bag resolution can then target any item in play cleanly.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/005/characters/086-clarabelle-clumsy-guest.test.ts`
+### O-2026-05-01-bibbidi-bobbidi-boo-visual-target-flow
 
-## 2026-03-19 - discard-play-action-still-covered
+- **signal**: Bibbidi Bobbidi Boo's current card DSL and simulator visual route support a sequential two-target flow: first choose your character in play to return, then the UI narrows the hand choices using that character's cost before resolving the free character play. Returning Tamatoa enabled cost-2 follow-up characters; returning Flynn narrowed the second choice to cost-1 Flynn copies and disabled higher-cost hand cards.
+- **impact**: Future reports that Bibbidi Bobbidi Boo cannot be played should inspect the simulator target-gathering UI/version first, especially the second target's projected eligibility after the first target is selected, before changing the action definition.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/002/actions/096-bibbidi-bobbidi-boo.test.ts`; Playwright manual route check at `/tests/bibbidi-bobbidi-boo`.
+- **candidate_for**: new
 
-- signal: `Circle of Life` migrated cleanly with the existing `play-card` from `discard` action effect; no engine patch was needed.
-- impact: for similar song/actions, check the current action DSL before inventing a runtime gap.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/001/actions/065-circle-of-life.test.ts`
+### O-2026-05-01-meeko-or-branch-auto-banish
 
-## 2026-03-19 - trigger-time-board-state-conditions
+- **signal**: Meeko - Skittish Scrounger's `or` trigger already auto-resolves to the banish branch when the discard branch becomes illegal after another pending discard empties the controller's hand; the prior card regression test expected a stale bag choice and was asserting against intended engine behavior.
+- **impact**: Future reports involving mandatory `or` choices should distinguish "requested branch became illegal, auto-pick only legal branch" from optional decline or empty-target fizzle before changing engine flow.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-cards "./src/cards/011/characters/046-meeko-skittish-scrounger.test.ts"`
+- **candidate_for**: new
 
-- signal: triggered abilities with board-state `comparison` or `resource-count` conditions were still queuing a bag even when the condition was false.
-- impact: check those conditions eagerly in triggered-ability matching so end-turn "if" text does not surface a dead prompt.
-- verification: `bun test --cwd packages/lorcana/lorcana-engine ./src/runtime-moves/effects/triggered-abilities.test.ts`; `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/005/characters/084-clarabelle-light-on-her-hooves.test.ts`
+### O-2026-05-01-nested-free-play-bodyguard-exert
 
-## 2026-03-19 - support-aura-static-filter
+- **signal**: Optional play-card effects must keep "accept the free play" (`resolveOptional`) separate from the Bodyguard entry-mode choice (`enterPlayExerted`); pending prompts such as Woody - Jungle Guide and Just in Time now play Bodyguard cards ready by default and only exert them when the player explicitly chooses that mode.
+- **impact**: Future nested free-play Bodyguard reports should inspect the `enterPlayExerted` plumbing and target-selection UI before treating optional acceptance as an exert intent.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-cards "./src/cards/012/characters/015-woody-jungle-guide.test.ts" "./src/cards/001/actions/029-just-in-time.test.ts"`
+- **candidate_for**: new
 
-- signal: a character aura that buffs "your other characters with Support" is expressed cleanly with a static `modify-stat` effect targeting `owner: "you"`, `zones: ["play"]`, `excludeSelf: true`, and a `has-keyword` filter.
-- impact: future Support-aura cards can reuse the same static target shape instead of introducing card-specific runtime behavior.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/010/characters/181-clarabelle-news-reporter.test.ts`
+### O-2026-04-30-choice-option-labels-and-card-text
 
-## 2026-03-19 - discard-classification-condition-needs-explicit-target-query
+- **signal**: Education or Elimination's choice prompt needed explicit `optionLabels` on the card to avoid generic option text, while the engine selection context now derives readable labels for common unlabeled choice branches and falls back to `Option N` only for unrecognized shapes. Follow-up scan found older choice cards such as Trust In Me, Prepare Your Bot, Hot Potato, Wrong Lever!, She's Your Person, and Firefly Swarm relying on unlabeled branches; fallback coverage now includes damage, ready, remove-damage, return-to-hand, bottom-deck, and conditional branches. The simulator choice overlay renders the source card's flattened printed text near the card identity.
+- **impact**: Future choice-prompt UX reports should check card-authored `optionLabels` first, then engine-derived fallback labels, before changing simulator presentation.
+- **verification**: `bun run ci-check`
+- **candidate_for**: new
 
-- signal: Coldstone's "2 or more Gargoyle character cards in your discard" trigger is safest as a structured `target-query` condition instead of a natural-language `expression` string.
-- impact: future filtered discard-count triggers should prefer explicit query conditions so the runtime can evaluate the zone, type, and classification deterministically.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/010/characters/051-coldstone-reincarnated-cyborg.test.ts`
+### O-2026-04-30-auto-resolved-slotted-target-offset
 
-## 2026-03-19 - conditional-enters-play-exerted-static-ability
+- **signal**: Madam Mim - Elephant's `move-damage` prompt auto-resolves the `from` slot to the source card, so the active visual slot index is `1` while the only explicit `targetDsl` entry is index `0` for the destination. Candidate filtering in `@tcg/lorcana-interaction` must subtract auto-resolved leading slots before indexing `targetDsl`; otherwise the destination prompt falls back to the full candidate pool and can offer the source card.
+- **impact**: Future slotted prompt bugs with `{ ref: "self" }` / auto-resolved leading slots should inspect visual-slot-to-DSL index mapping before changing card DSL.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-interaction ./src/build-player-interaction-view.test.ts`
+- **candidate_for**: new
 
-- signal: conditional "enters play exerted unless you have X in play" cards need the play-card helper to evaluate the static ability condition before applying `enters-play-exerted`.
-- impact: future conditional enter-play exerted cards can stay on the static restriction pattern as long as the condition is checked in play resolution.
-- verification: `bun test --cwd packages/lorcana/lorcana-engine ./src/runtime-moves/moves/core/play-card.test.ts`; `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/006/characters/007-dale-friend-in-need.test.ts`
+### O-2026-04-29-scry-play-destination-uses-play-card
 
-## 2026-03-19 - classification-limited-ready-challenge-grant
+- **signal**: Robin Hood - Sharpshooter playing Vision of the Future from a `scry` `zone: "play"` destination exposed that direct zone movement bypassed the played action's own effects; `scry` play destinations now route through `resolvePlayCardEffect`, move non-play destinations first so looked-at remainder cards are no longer deck-top for nested effects, and nested played actions clear inherited reveal snapshots before resolving their own effects.
+- **impact**: Future "played for free from scry/reveal did not resolve" reports should test with a real action that creates a pending effect, not an empty mock action.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-cards "./src/cards/005/characters/118-robin-hood-sharpshooter.test.ts"`
+- **candidate_for**: new
 
-- signal: "can challenge ready Villain characters" can be represented as a static `grant-ability` with a `classification` payload, and the challenge rule can gate ready defenders by that classification.
-- impact: future ready-challenge permissions that are classification-limited should keep the classification on the granted ability payload and assert against a ready defender of the matching class.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/011/characters/192-darkwing-duck-cool-under-pressure.test.ts`
+### O-2026-05-01-meeko-ui-discard-branch-legality
 
-## 2026-03-19 - return-from-discard-trigger-selection
+- **signal**: Meeko - Skittish Scrounger's visible simulator UI needed resolution-target candidates included in hand-card selectable state and projected legal `or` options; otherwise the empty-hand discard branch could remain clickable even though the engine should force banish.
+- **impact**: Future visible UI skip reports around `or` choices plus target prompts should validate both wrapper disabled state for resolution targets and projected choice legality, not only harness moves.
+- **verification**: `bun run --cwd packages/lorcana/lorcana-simulator test:e2e -- e2e/regressions/bug-13-meeko-skittish-scrounger.e2e.ts --project=chromium`
+- **candidate_for**: new
 
-- signal: mandatory `return-from-discard` play triggers need `target-analysis` to count discard-card selection as explicit targeting, and pending selection context must not treat `target: "CONTROLLER"` as a player choice.
-- impact: future discard-return triggers should surface a real discard-card prompt only when eligible discard cards exist; empty discard piles should resolve cleanly without a bogus pending target-selection.
-- verification: `bun test packages/lorcana/lorcana-cards/src/cards/001/characters/006-hades-lord-of-the-underworld.test.ts`
+### O-2026-04-29-all-hand-inkwell-and-any-discard-card
 
-## 2026-03-19 - quest-triggered-opponent-discard-pending-flow
+- **signal**: HeiHei - Expanded Consciousness needed an all-card hand source selector for CLEAR YOUR MIND, and Anna - Little Sister's discard target needed no `cardTypes` restriction because the printed text says "a card."
+- **impact**: Future generated `put-into-inkwell` from hand definitions should distinguish single chosen hand cards from mandatory all-hand movement; discard "a card" effects should avoid character-only filters unless printed.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-cards "./src/cards/007/characters/163-heihei-expanded-consciousness.test.ts" "./src/cards/011/characters/052-anna-little-sister.test.ts"`
+- **candidate_for**: new
 
-- signal: Daisy Duck - Secret Agent quests into an opponent-facing discard choice that resolves as opponent pending input; the controller does not need an explicit visible bag-count assertion in the card test.
-- impact: future "each opponent chooses and discards a card" quest triggers should resolve the opponent pending directly and assert zone changes on the chosen hand card.
-- verification: `bun test packages/lorcana/lorcana-cards/src/cards/002/characters/076-daisy-duck-secret-agent.test.ts`
+### O-2026-04-28-sid-phillips-opponent-banish-mandatory
 
-## 2026-03-19 - evasive-challenge-gameplay-check
+- **signal**: Sid Phillips - Toy Surgeon's `PLAYTIME'S OVER` already keeps only the controller sacrifice optional; the opponent's follow-up banish is a mandatory `chosenBy: "opponent"` pending target selection. An explicit empty target selection is rejected while the opponent has a legal character, and the continuation drains only when they have no characters.
+- **impact**: Future reports that Sid lets the opponent skip should check simulator/UI prompt behavior or deployed version drift before changing the card DSL.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-cards "./src/cards/012/characters/126-sid-phillips-toy-surgeon.test.ts"`
+- **candidate_for**: new
 
-- signal: keyword-only Evasive character cards are better proven with multiplayer challenge restrictions than with a metadata-only `hasEvasive` smoke check.
-- impact: future Evasive-only character tests should assert `canChallenge` against exerted defenders with both non-Evasive and Evasive attackers.
-- verification: `bun test packages/lorcana/lorcana-cards/src/cards/005/characters/111-daisy-duck-spotless-food-fighter.test.ts`
+### O-2026-04-28-prevented-damage-no-deal-damage-trigger
 
-## 2026-03-19 - rush-challenge-gameplay-check
+- **signal**: Merida - Formidable Archer's `deal-damage` trigger does not fire when an action's damage is fully prevented by Resist; `Three Arrows` into `Tiana - Celebrating Princess` leaves the target at 0 damage and no `STEADY AIM` bonus applies.
+- **impact**: Future "whenever your action deals damage" tests can assert fully prevented damage as no trigger without engine changes, using a Resist value equal to or greater than the action damage.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-cards "./src/cards/012/characters/191-merida-formidable-archer.test.ts"`
+- **candidate_for**: new
 
-- signal: Rush-only character cards are better proven with a multiplayer immediate-challenge assertion than with a metadata-only `hasRush` smoke check.
-- impact: future Rush-only character tests should keep the keyword assertion, but also verify the card can challenge an exerted defender on the turn it is played.
-- verification: `bun test packages/lorcana/lorcana-cards/src/cards/011/characters/043-darkwing-duck-darkwolf-dog.test.ts`
+### O-2026-04-28-special-printings-spread-base
 
-## 2026-03-21 - during-your-turn-evasive-plus-discard-activated-challenger
+- **signal**: All 306 special-rarity source files now spread their same-canonical base card; the new aux `reprintSharedFields` validation passes across 404 same-set special printings with 9,696 shared-field comparisons.
+- **impact**: Future alternate-art/promo source drift should be caught by aux generation, and special printing authoring should keep only printing identity plus i18n overrides in the variant file.
+- **verification**: `bun --cwd packages/lorcana/lorcana-cards scripts/generate-card-aux.ts`
+- **candidate_for**: reinforces G-07
 
-- signal: Jasmine - Fearless Princess had a static "during your turn gains Evasive" ability that was modeled correctly, but the activated ability cost was missing `discardCards: 1, discardChosen: true`; the ability also lacked `name:` for activation routing.
-- impact: activated abilities with "choose and discard a card" as a cost must include `discardCards: 1, discardChosen: true` in the cost object and a `name:` field for `activateAbility(... ability: "NAME" ...)` targeting; "during your turn" static Evasive is tested via `canChallenge` against exerted defenders on your own turn and the opponent's turn.
-- verification: `bun test packages/lorcana/lorcana-cards/src/cards/009/characters/178-jasmine-fearless-princess.test.ts`
+### O-2026-04-28-optional-pay-cost-unpayable-drains
 
-## 2026-03-22 - chosen-opponent-bag-then-discard-choice
+- **signal**: Clarabelle - Clumsy Guest exposed that `optional -> pay-cost -> chosen target` triggers could leave a target-selection bag prompt even when the controller could not pay the nested ink cost. Optional-skip analysis now validates nested pay-cost costs and drains/suppresses unpayable optionals; related tests for Ursula's Shell Necklace, Ariel - Sonic Warrior, Go Go Tomago, and Finnick now assert no bag/pending prompt when the cost cannot be paid.
+- **impact**: Future "stuck on pending action" reports for "you may pay N ink to..." cards should check nested pay-cost affordability before UI/presenter changes.
+- **verification**: `bun run ci-check`
+- **candidate_for**: new
 
-- signal: triggered character abilities authored with `target: "OPPONENT"` now surface a bag-resolution step before the controller-facing discard-choice pending effect, while the same effects auto-resolve fully when the filtered opponent hand has no legal discard candidates.
-- impact: future tests for "chosen opponent reveals their hand and discards ..." should resolve the bag before `respondWith(...)` only when a valid discard target exists; zero-candidate cases should assert the final zone state without forcing a bag resolution. Optional targeted buffs with no legal candidates should expect no bag at all.
-- verification: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/008/characters/007-ludwig-von-drake-all-around-expert.test.ts ./src/cards/008/characters/155-anita-radcliffe-dog-lover.test.ts ./src/cards/004/characters/024-ursula-erics-bride.test.ts ./src/cards/011/characters/016-timon-snowball-swiper.test.ts`
+### O-2026-04-28-reprint-each-player-choice-parity
 
-## 2026-03-22 - ordered-put-on-bottom-target-snapshots
+- **signal**: Kida - Crystal Scion base and enchanted reprint needed identical split `FLOOD OF POWER` controller/opponent effects; opponent-side put-into-inkwell effects need `chosenBy: "opponent"` (not only `chooser: "OPPONENT"`) for pending target selection to be assigned to the opponent.
+- **impact**: Future "each player may..." reprint fixes should sync base/enchanted ability arrays and use `chosenBy` when the opponent chooses their own source cards.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/012/characters/160-kida-crystal-scion.test.ts`
+- **candidate_for**: reinforces G-07
 
-- signal: `Under the Sea` exposed that ordered `put-on-bottom` pending effects were queued without a `selectionContext`, so pending resolution re-ran live target legality after the first card moved and rejected the rest of the ordered batch.
-- impact: future ordered bottom-of-deck effects must snapshot the full candidate set, min/max selection count, and chooser when the pending effect is created; do not rely on recomputing `selector: "all"` legality during resolution.
-- verification: `bun test --cwd packages/lorcana/lorcana-engine ./src/runtime-moves/resolution/action-effects/composed-effect-resolver.test.ts`; `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/004/actions/095-under-the-sea.test.ts ./src/cards/009/actions/097-under-the-sea.test.ts`; `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/004/actions/028-look-at-this-family.test.ts ./src/cards/004/actions/061-second-star-to-the-right.test.ts ./src/cards/004/actions/095-under-the-sea.test.ts ./src/cards/004/actions/128-a-pirates-life.test.ts ./src/cards/004/actions/162-dig-a-little-deeper.test.ts ./src/cards/004/actions/198-the-mob-song.test.ts ./src/cards/009/actions/025-look-at-this-family.test.ts ./src/cards/009/actions/026-circle-of-life.test.ts ./src/cards/009/actions/060-second-star-to-the-right.test.ts ./src/cards/009/actions/097-under-the-sea.test.ts ./src/cards/009/actions/130-i2i.test.ts ./src/cards/009/actions/132-a-pirates-life.test.ts ./src/cards/009/actions/166-dig-a-little-deeper.test.ts ./src/cards/009/actions/202-the-mob-song.test.ts ./src/cards/009/actions/225-circle-of-life-enchanted.test.ts ./src/cards/009/actions/234-i2i-enchanted.test.ts ./src/cards/008/actions/042-it-means-no-worries.test.ts ./src/cards/008/actions/079-fantastical-and-magical.test.ts ./src/cards/008/actions/115-stopped-chaos-in-its-tracks.test.ts ./src/cards/008/actions/147-nothing-we-wont-do.test.ts ./src/cards/008/actions/175-heads-held-high.test.ts ./src/cards/008/actions/202-beyond-the-horizon.test.ts ./src/cards/008/actions/212-fantastical-and-magical-enchanted.test.ts`
+### O-2026-04-28-optional-chosen-target-bag-scope
+
+- **signal**: CI exposed that trigger-fire suppression must distinguish optional chosen-target effects from source-pool optionals. Chosen-target optionals with zero legal candidates must still enter the bag, but return-from-discard / play-from-hand source-pool optionals may still suppress when their source pool is empty.
+- **impact**: Future optional no-target fixes should check for chosen target slots before disabling skip logic globally.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-engine "./src/lorcana-engine-base.zero-candidate-auto-resolve.test.ts" "./src/lorcana-engine-base.auto-resolve-bag.test.ts" "./src/targeting/runtime/resolution-requirements.test.ts"`; `bun test --cwd packages/lorcana/lorcana-cards "./src/cards/008/characters/023-king-candy-sugar-rush-nightmare.test.ts" "./src/cards/001/characters/193-tinker-bell-giant-fairy.test.ts" "./src/cards/010/characters/074-finnick-tiny-terror.test.ts"`
+- **candidate_for**: reinforces PR-05
+
+### O-2026-04-28-lady-miss-park-avenue-ui-prompt
+
+- **signal**: Lady - Miss Park Avenue's card-side resolver already returns 2 eligible cost-2-or-less character cards from discard, and simulator UI regression coverage expects the return-to-hand prompt to expose 2 slots and stay on slot 2 after the first selection.
+- **impact**: For future "up to N only allows 1" reports, check simulator prompt state (`maxSelections`, active slot, repeated-slot copy) before changing card DSL that already has `count: { upTo: N }`.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-simulator ./src/testing/ui-state/lady-miss-park-avenue.test.ts ./src/lib/features/simulator/model/resolution-target-prompt.test.ts`; `bun test --cwd packages/lorcana/lorcana-cards ./src/cards/007/characters/028-lady-miss-park-avenue.test.ts`
+- **candidate_for**: new
+
+### O-2026-04-28-right-behind-you-no-repro
+
+- **signal**: Right Behind You's current action DSL and simulator regression tests correctly require both a Seven Dwarfs character and a Princess character in play before offering the optional free Seven Dwarfs play. Even forced input with `resolveOptional: true` and a Seven Dwarfs hand target leaves the character in hand when the board condition is false.
+- **impact**: If this player report recurs, inspect simulator UI/projection or stale deployed code before changing the card definition or condition resolver.
+- **verification**: `bun test packages/lorcana/lorcana-simulator/src/testing/effects/right-behind-you.test.ts`; `bun --cwd packages/lorcana/lorcana-simulator -e '<forced resolveOptional repro>'`
+- **candidate_for**: new
+
+### O-2026-04-21-set-012-batch-missing-cards
+
+- **signal**: 15 cards in set 012 had `missingImplementation: true` with text but no abilities array. All resolved without engine changes using existing DSL — keyword helpers, triggered abilities, static conditions, "may enter play exerted" two-ability pattern, `property-modification` for name aliases, `CHARACTERS_HERE` location triggers.
+- **impact**: Batch authoring should start by matching printed text against PATTERNS.md before considering engine work.
+- **verification**: `bun test --cwd packages/lorcana/lorcana-cards src/cards/012/`; `rg -l 'missingImplementation: true' packages/lorcana/lorcana-cards/src/cards/012/ --type ts` (empty).
+- **candidate_for**: reinforces PR-01, PR-02. Adds support to C-01 (Gizmoduck cost filter).
+
+### O-2026-04-11-shift-trigger-rules-handoff
+
+- **signal**: THE-958 reproduced as a shift-trigger interaction; rules already covered it (CR `4.3.2`, `4.3.3.1`, `6.2.2`, `6.2.7`, `6.7.2.1`, `8.10.1`). No engine bug.
+- **impact**: For "if you used Shift" bug reports, validate both shift and hard-cast branches; intervening-if checks resolve at trigger resolution time.
+- **verification**: Indexed CR sections under `lorcana-rules/indexes/by-section/04` and `08`.
+- **candidate_for**: new (shift-trigger-handoff).

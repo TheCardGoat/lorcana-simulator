@@ -15,14 +15,14 @@ Re-run the parser on card text after pattern updates to regenerate abilities. Up
 
 ```typescript
 // Card file path pattern
-const cardPath = `packages/lorcana-cards/src/cards/${set}/${type}/${number}-${cardId}.ts`;
+const cardPath = `packages/lorcana/lorcana-cards/src/cards/${set}/${type}/${number}-${cardId}.ts`;
 
-// Example: packages/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts
+// Example: packages/lorcana/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts
 ```
 
 ```bash
 # Read card file
-cat packages/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts
+cat packages/lorcana/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts
 ```
 
 ### Step 2: Extract Current State
@@ -96,7 +96,7 @@ if (hasChanges && !hasManualOverride) {
 
 ```bash
 # Find all cards in set
-find packages/lorcana-cards/src/cards/010 -name "*.ts" ! -name "*.test.ts" ! -name "index.ts"
+find packages/lorcana/lorcana-cards/src/cards/010 -name "*.ts" ! -name "*.test.ts" ! -name "index.ts"
 
 # Regenerate each
 for card in $(find ...); do
@@ -206,13 +206,13 @@ for (const ability of newAbilities) {
 ### Step 2: Type Check
 
 ```bash
-cd packages/lorcana-cards && bun run check-types
+cd packages/lorcana/lorcana-cards && bun run check-types
 ```
 
 ### Step 3: Run Card Tests
 
 ```bash
-cd packages/lorcana-cards && bun test "Card Name"
+cd packages/lorcana/lorcana-cards && bun test "Card Name"
 ```
 
 ## Commands
@@ -221,7 +221,7 @@ cd packages/lorcana-cards && bun test "Card Name"
 
 ```bash
 # 1. Identify card path
-CARD_PATH="packages/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts"
+CARD_PATH="packages/lorcana/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts"
 
 # 2. Read current state
 cat "$CARD_PATH"
@@ -229,15 +229,15 @@ cat "$CARD_PATH"
 # 3. Parse and update (manual process with editor)
 
 # 4. Verify
-cd packages/lorcana-cards && bun run check-types
-cd packages/lorcana-cards && bun test "Iago"
+cd packages/lorcana/lorcana-cards && bun run check-types
+cd packages/lorcana/lorcana-cards && bun test "Iago"
 ```
 
 ### Regenerate All in Set
 
 ```bash
 # Find cards with empty abilities
-grep -l "abilities: \[\]" packages/lorcana-cards/src/cards/010/**/*.ts
+grep -l "abilities: \[\]" packages/lorcana/lorcana-cards/src/cards/010/**/*.ts
 
 # Process each (manual or scripted)
 ```
@@ -250,7 +250,7 @@ grep -l "abilities: \[\]" packages/lorcana-cards/src/cards/010/**/*.ts
 {
   success: true,
   cardId: "010-043",
-  path: "packages/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts",
+  path: "packages/lorcana/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts",
   status: "updated",
   changes: {
     before: { abilities: [] },
@@ -325,10 +325,10 @@ export const iagoStompinMad: CharacterCard = {
 ### Common Paths
 
 ```
-packages/lorcana-cards/src/cards/{SET}/{TYPE}/{NUMBER}-{card-id}.ts
-packages/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts
-packages/lorcana-cards/src/cards/010/actions/001-action-name.ts
-packages/lorcana-cards/src/cards/010/items/001-item-name.ts
+packages/lorcana/lorcana-cards/src/cards/{SET}/{TYPE}/{NUMBER}-{card-id}.ts
+packages/lorcana/lorcana-cards/src/cards/010/characters/043-iago-stompin-mad.ts
+packages/lorcana/lorcana-cards/src/cards/010/actions/001-action-name.ts
+packages/lorcana/lorcana-cards/src/cards/010/items/001-item-name.ts
 ```
 
 ## Keywords
