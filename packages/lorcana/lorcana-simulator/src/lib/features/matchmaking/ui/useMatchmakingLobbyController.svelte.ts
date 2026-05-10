@@ -845,7 +845,7 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
   }
 
   selectMatchType(matchType: "ranked" | "casual" | "testing"): void {
-    if (this.selectionDisabled || matchType === "ranked") {
+    if (this.selectionDisabled) {
       return;
     }
 

@@ -118,8 +118,6 @@
     onDeclineMatch,
   }: Props = $props();
 
-  const RANKED_TOOLTIP_TEXT = m['sim.matchmaking.matchmaking.rankedComingSoon']({});
-
   function formatProfileName(displayName: string | null | undefined): string {
     return displayName?.trim().length ? displayName : 'Unnamed profile';
   }
@@ -132,36 +130,21 @@
     role="tablist"
     aria-label="Match type"
   >
-    <Tooltip.Root delayDuration={120}>
-      <Tooltip.Trigger>
-        {#snippet child({ props })}
-          <span class="inline-flex flex-1" {...props}>
-            <button
-              type="button"
-              role="tab"
-              class={cn(
-                'w-full rounded-full px-4 py-2 text-sm font-semibold text-slate-500 transition-colors',
-                'cursor-not-allowed opacity-80',
-              )}
-              aria-selected={false}
-              aria-disabled="true"
-              disabled
-            >
-              Ranked
-              <span
-                class="ml-1.5 inline-block rounded-full border border-amber-400/30 bg-amber-500/15 px-1.5 py-0 text-[0.6rem] align-middle font-semibold uppercase tracking-wider text-amber-300"
-              >Soon</span>
-            </button>
-          </span>
-        {/snippet}
-      </Tooltip.Trigger>
-      <Tooltip.Content
-        side="top"
-        class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
-      >
-        {RANKED_TOOLTIP_TEXT}
-      </Tooltip.Content>
-    </Tooltip.Root>
+    <button
+      type="button"
+      role="tab"
+      class={cn(
+        'flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors',
+        selectedMatchType === 'ranked'
+          ? 'bg-white text-slate-950'
+          : 'text-slate-300 hover:bg-white/8 hover:text-white',
+      )}
+      aria-selected={selectedMatchType === 'ranked'}
+      disabled={selectionDisabled}
+      onclick={() => onSelectMatchType('ranked')}
+    >
+      Ranked
+    </button>
 
     <button
       type="button"

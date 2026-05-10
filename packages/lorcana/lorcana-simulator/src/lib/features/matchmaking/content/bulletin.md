@@ -1,3 +1,13 @@
+## Ranked Queue is Now Live
+
+**May 10, 2026**
+
+The **Ranked queue** is now open for the _Wilds Unknown_ season! Jump in and climb the ladder across Core Constructed and Infinity formats in both Best of 1 and Best of 3.
+
+See the [Wilds Unknown season page](/matchmaking/season/wilds-unknown) for the full prize structure.
+
+---
+
 ## Wilds Unknown: Early Access Queue Now in Normal Queues
 
 **May 9, 2026**
