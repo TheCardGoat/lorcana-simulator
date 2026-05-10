@@ -108,5 +108,6 @@
       "dependsOn": ["build"],
       "cache": false
     }
-  }
+  },
+  "analytics": true
 }
