@@ -12,7 +12,8 @@ RUN vp env on
 RUN vp env setup
 RUN vp env print
 
-RUN vp install --frozen-lockfile
+RUN vp install --frozen-lockfile --ignore-scripts
+RUN pnpm rebuild esbuild
 
 ENV NODE_ENV=production
 ENV PLATFORM=node

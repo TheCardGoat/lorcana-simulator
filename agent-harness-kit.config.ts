@@ -2,9 +2,9 @@ import { defineHarness } from "@cardor/agent-harness-kit";
 
 export default defineHarness({
   project: {
-    name: "lorcana-engine",
+    name: "lorcana-simulator",
     description:
-      "Disney Lorcana TCG engine and simulator: rules, card behavior, parser/generator, and multiplayer test harness. Consumed as a submodule by the-card-goat-online.",
+      "A trading card game simulator for Disney Lorcana TCG, written in typescript. It contains the Tabletop Simulator (UI), Engine rules, and card definitions.",
     docsPath: "./docs",
   },
 
@@ -12,12 +12,15 @@ export default defineHarness({
 
   agents: {
     lead: { instructionsPath: null },
-    explorer: { instructionsPath: null, allowedPaths: ["./docs", "./packages"] },
-    builder: { instructionsPath: null, writablePaths: ["./packages"] },
+    explorer: { instructionsPath: null, allowedPaths: ["./docs", "./src"] },
+    builder: { instructionsPath: null, writablePaths: ["./src", "./tests"] },
     reviewer: { instructionsPath: null },
     custom: [],
   },
 
+  // SQLite (default). Switch to postgres/mysql by changing database.type.
+  // database: { type: 'postgres', connectionString: process.env.DATABASE_URL },
+  // database: { type: 'mysql',    connectionString: process.env.DATABASE_URL },
   database: { type: "sqlite", path: ".harness/harness.db" },
 
   storage: {
@@ -35,7 +38,7 @@ export default defineHarness({
 
   health: {
     scriptPath: "./health.sh",
-    required: false,
+    required: true,
   },
 
   tools: {
