@@ -28,6 +28,15 @@ export async function lorcanaCreateServerEngine(
   input: ServerEngineCreateInput,
 ): Promise<ServerGameEngine> {
   const players: Player[] = [{ id: input.player1Id }, { id: input.player2Id }];
+  // Series rule: when the play module designates a chooser (loser of the
+  // most recent decisive game in a best-of-N), that player gets the
+  // chooseWhoGoesFirst privilege. Game 1 has no designation, so we fall
+  // back to a coin flip.
+  const goingFirst = input.firstPlayerChooserId
+    ? createPlayerId(input.firstPlayerChooserId)
+    : Math.random() < 0.5
+      ? createPlayerId(input.player1Id)
+      : createPlayerId(input.player2Id);
   const init: LorcanaEngineInit = {
     seed: input.seed,
     cardsMaps: input.cardsMaps,
@@ -35,8 +44,7 @@ export async function lorcanaCreateServerEngine(
     gameID: input.gameID,
     players,
     cardCatalog: getLorcanaCardCatalogSync(),
-    goingFirst:
-      Math.random() < 0.5 ? createPlayerId(input.player1Id) : createPlayerId(input.player2Id),
+    goingFirst,
     timeControl: toLorcanaTimeControl(input.timeControl),
   };
   const engine = new LorcanaServer({ ...init, players });
