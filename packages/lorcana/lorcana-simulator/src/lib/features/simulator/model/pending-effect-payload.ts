@@ -139,10 +139,33 @@ function unwrapOptionalEffect(
   if (!effectRecord) {
     return null;
   }
-  // Unwrap optional wrappers so the inner effect type is surfaced (e.g. "move-damage" inside
-  // an optional triggered ability shows the two-slot prompt instead of being treated as "optional").
-  if (getRecordString(effectRecord, "type") === "optional") {
-    return asRecord(effectRecord.effect) ?? effectRecord;
+  const type = getRecordString(effectRecord, "type");
+  // Unwrap optional wrappers so the inner effect type is surfaced (e.g.
+  // "move-damage" inside an optional triggered ability shows the two-slot
+  // prompt instead of being treated as "optional").
+  if (type === "optional") {
+    const inner = asRecord(effectRecord.effect);
+    return inner ? (unwrapOptionalEffect(inner) ?? inner) : effectRecord;
+  }
+  // Sequence wrappers (e.g. Julieta SIGNATURE RECIPE:
+  // `{type:"sequence", steps:[{type:"optional", effect:{type:"remove-damage", ...}}, ...]}`).
+  // The engine resolves steps in order; descend into the first step whose
+  // inner type is a supported resolution-target effect so the overlay (and
+  // amount picker) can engage. Without this, the bag payload's `effectType`
+  // is just "sequence", which isn't in `SUPPORTED_EFFECT_TYPES`, and the UI
+  // falls back to a generic modal that submits no `amount`.
+  if (type === "sequence" && Array.isArray(effectRecord.steps)) {
+    for (const step of effectRecord.steps) {
+      const stepRecord = asRecord(step);
+      if (!stepRecord) {
+        continue;
+      }
+      const unwrapped = unwrapOptionalEffect(stepRecord);
+      if (unwrapped) {
+        return unwrapped;
+      }
+    }
+    return effectRecord;
   }
   return effectRecord;
 }

@@ -1,9 +1,10 @@
-import type { ScryDestination, ScryEffect } from "@tcg/lorcana-types";
+import type { LorcanaCardDefinition, ScryDestination, ScryEffect } from "@tcg/lorcana-types";
 import { compareOperator } from "../../../rules/operator-utils";
 import type { CardInstanceId, PlayerId, RuntimeValidationResult } from "#core";
 import type { CardPlayedPayload } from "../../../types/index";
 import type { PlayCardExecutionContext } from "./types";
 import { hasTemporaryPlayerRestriction } from "../../effects/temporary-effects";
+import { hasBodyguard } from "../../../card-utils";
 
 export type ScryDestinationSelection = {
   zone: string;
@@ -16,6 +17,14 @@ type ResolvedScryEffectInput = {
   selectedPlayerIds?: PlayerId[];
   lookedAtCards?: readonly CardInstanceId[];
   revealWindowIds?: readonly string[];
+  /**
+   * Player-chosen "enter play exerted" decision for cards routed into the
+   * play zone via scry. Currently only honored for characters with the
+   * Bodyguard keyword (the only printed reason to opt into exerted entry on
+   * a card played for free). See triage 2026-05-11 #11 (Down in New Orleans
+   * → Thunderbolt - Wonder Dog).
+   */
+  enterPlayExerted?: boolean;
 };
 
 const VALID_SCRY_SELECTION: RuntimeValidationResult = { valid: true };
@@ -361,6 +370,7 @@ function moveDestinationCards(
   destination: ScryDestination,
   zonePlayerId: string,
   ctx: PlayCardExecutionContext,
+  options?: { enterPlayExerted?: boolean },
 ): void {
   switch (destination.zone) {
     case "hand":
@@ -456,7 +466,17 @@ function moveDestinationCards(
           playerId: zonePlayerId,
           zone: "play",
         });
-        if (playDest.entersExerted === true) {
+        // Per-destination `entersExerted` (from the scry rule definition) takes
+        // precedence. Otherwise, honor the player's `enterPlayExerted` choice
+        // only for characters with Bodyguard — that keyword is the printed
+        // source of the "may enter exerted" modal whenever the character is
+        // played, including via a card effect like Down in New Orleans.
+        const bodyguardOptIn =
+          options?.enterPlayExerted === true &&
+          cardType === "character" &&
+          definition !== undefined &&
+          hasBodyguard(definition as LorcanaCardDefinition);
+        if (playDest.entersExerted === true || bodyguardOptIn) {
           ctx.cards.patchMeta(cardId, { state: "exerted", isDrying: true });
         } else {
           ctx.cards.patchMeta(cardId, { isDrying: true });
@@ -578,7 +598,9 @@ export function resolveScryEffect(
   for (const move of resolvedDestinationMoves.filter(
     (entry) => entry.destination.zone === "play",
   )) {
-    moveDestinationCards(move.cards, move.destination, deckPlayerId, ctx);
+    moveDestinationCards(move.cards, move.destination, deckPlayerId, ctx, {
+      enterPlayExerted: resolvedInput.enterPlayExerted,
+    });
   }
 
   // Always clear the initial scry reveal windows (private "look" windows)

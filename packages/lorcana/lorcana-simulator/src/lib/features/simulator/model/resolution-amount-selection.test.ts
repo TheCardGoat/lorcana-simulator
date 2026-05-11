@@ -78,6 +78,87 @@ describe("resolution amount selection", () => {
     });
   });
 
+  it("descends into a sequence wrapping an optional remove-damage (Julieta SIGNATURE RECIPE shape)", () => {
+    const selection = buildResolutionAmountSelectionState({
+      payload: {
+        effect: {
+          type: "sequence",
+          steps: [
+            {
+              type: "optional",
+              effect: {
+                type: "remove-damage",
+                amount: { type: "up-to", value: 2 },
+              },
+            },
+            { type: "conditional" },
+          ],
+        },
+      },
+      selectedTargets: ["card-1"],
+      cardSnapshotsById: {
+        "card-1": {
+          cardId: "card-1",
+          definitionId: "card-1",
+          facePresentation: "faceUp",
+          isMasked: false,
+          label: "Damaged Ally",
+          ownerId: "player-one",
+          ownerSide: "playerOne",
+          zoneId: "play",
+          damage: 2,
+        },
+      },
+    });
+
+    expect(selection).toEqual({
+      label: "Damage to remove",
+      min: 0,
+      max: 2,
+      value: 2,
+    });
+  });
+
+  it("descends into a sequence wrapping a move-damage with up-to (Luisa I CAN TAKE IT shape)", () => {
+    const selection = buildResolutionAmountSelectionState({
+      payload: {
+        effect: {
+          type: "sequence",
+          steps: [
+            {
+              type: "move-damage",
+              amount: { type: "up-to", value: 1 },
+              from: "CHOSEN_CHARACTER_OF_YOURS",
+              to: "SELF",
+            },
+            { type: "conditional" },
+          ],
+        },
+      },
+      selectedTargets: ["card-1"],
+      cardSnapshotsById: {
+        "card-1": {
+          cardId: "card-1",
+          definitionId: "card-1",
+          facePresentation: "faceUp",
+          isMasked: false,
+          label: "Source",
+          ownerId: "player-one",
+          ownerSide: "playerOne",
+          zoneId: "play",
+          damage: 2,
+        },
+      },
+    });
+
+    expect(selection).toEqual({
+      label: "Damage to move",
+      min: 0,
+      max: 1,
+      value: 1,
+    });
+  });
+
   it("ignores fixed move-damage effects", () => {
     expect(
       buildResolutionAmountSelectionState({

@@ -53,12 +53,21 @@
     view: PlayerInteractionView;
     cardSnapshotsById?: Record<string, LorcanaCardSnapshot>;
     viewerSide?: LorcanaPlayerSide | null;
+    /**
+     * When a Bodyguard character is assigned to a `play` destination, the
+     * chooser must opt into / decline the keyword's "may enter exerted"
+     * mode before confirming. Presenter exposes the current value (or
+     * `null` for not-yet-chosen); `null` here means no Bodyguard
+     * assignment is staged and the toggle is hidden.
+     */
+    bodyguardEntryMode?: { selected: boolean | null } | null;
     onAssignCard?: (cardId: string, destinationId: string) => boolean;
     onReorderCard?: (
       destinationId: string,
       cardId: string,
       direction: 'up' | 'down',
     ) => boolean;
+    onSelectBodyguardEntryMode?: (enterPlayExerted: boolean) => boolean;
     onConfirm?: () => boolean;
     onDismiss?: () => void;
   }
@@ -67,8 +76,10 @@
     view,
     cardSnapshotsById = {},
     viewerSide: _viewerSide = null,
+    bodyguardEntryMode = null,
     onAssignCard,
     onReorderCard,
+    onSelectBodyguardEntryMode,
     onConfirm,
     onDismiss,
   }: ScryResolutionOverlayProps = $props();
@@ -1123,6 +1134,37 @@
         {/if}
       </div>
 
+      {#if bodyguardEntryMode}
+        <section
+          class="scry-overlay__bodyguard"
+          data-testid="scry-bodyguard-entry-mode"
+        >
+          <p class="scry-overlay__bodyguard-label">
+            Bodyguard — may enter play exerted?
+          </p>
+          <div class="scry-overlay__bodyguard-actions">
+            <button
+              type="button"
+              class="scry-overlay__bodyguard-button"
+              class:scry-overlay__bodyguard-button--active={bodyguardEntryMode.selected === true}
+              data-testid="scry-bodyguard-enter-exerted-yes"
+              onclick={() => onSelectBodyguardEntryMode?.(true)}
+            >
+              Yes, enter exerted
+            </button>
+            <button
+              type="button"
+              class="scry-overlay__bodyguard-button"
+              class:scry-overlay__bodyguard-button--active={bodyguardEntryMode.selected === false}
+              data-testid="scry-bodyguard-enter-exerted-no"
+              onclick={() => onSelectBodyguardEntryMode?.(false)}
+            >
+              No, enter ready
+            </button>
+          </div>
+        </section>
+      {/if}
+
       <footer class="scry-overlay__footer">
         <button
           type="button"
@@ -1134,7 +1176,8 @@
         <button
           type="button"
           class="scry-footer-button scry-footer-button--primary"
-          disabled={!canConfirm}
+          disabled={!canConfirm ||
+            (bodyguardEntryMode !== null && bodyguardEntryMode.selected === null)}
           data-testid="scry-confirm-button"
           onclick={onConfirm}
         >
@@ -1679,6 +1722,46 @@
     width: 100%;
     height: 100%;
     padding: 0.7rem;
+  }
+
+  .scry-overlay__bodyguard {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.6rem 0.75rem;
+    border-top: 1px solid rgba(194, 227, 198, 0.14);
+    background: rgba(8, 22, 36, 0.55);
+  }
+
+  .scry-overlay__bodyguard-label {
+    margin: 0;
+    color: #cbe8d2;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .scry-overlay__bodyguard-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .scry-overlay__bodyguard-button {
+    min-height: 2.25rem;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid rgba(190, 225, 195, 0.22);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.7);
+    color: #e2e8f0;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .scry-overlay__bodyguard-button--active {
+    border-color: rgba(125, 211, 252, 0.85);
+    background: linear-gradient(180deg, rgba(14, 116, 144, 0.85), rgba(8, 47, 73, 0.92));
+    color: #f0f9ff;
   }
 
   .scry-overlay__footer {
