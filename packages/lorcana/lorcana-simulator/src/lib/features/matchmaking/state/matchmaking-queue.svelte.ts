@@ -32,6 +32,14 @@ export type MatchmakingQueueFormat = "infinity" | "core-constructed";
 export type MatchmakingQueueMode = "1" | "3";
 export type MatchmakingQueueMatchType = "ranked" | "casual" | "testing";
 
+const SUPPORTED_QUEUE_FORMATS: readonly MatchmakingQueueFormat[] = ["infinity", "core-constructed"];
+
+function coerceQueuedFormat(value: string | undefined | null): MatchmakingQueueFormat | null {
+  return SUPPORTED_QUEUE_FORMATS.includes(value as MatchmakingQueueFormat)
+    ? (value as MatchmakingQueueFormat)
+    : null;
+}
+
 export class MatchmakingQueueStore {
   status: MatchmakingStatus = $state("idle");
   queuedAt: number | null = $state(null);
@@ -100,7 +108,7 @@ export class MatchmakingQueueStore {
         this.position = result.position ?? null;
         this.queuedGameProfileId = result.entry.gameProfileId;
         this.queuedDeckListId = result.entry.deckListId;
-        this.queuedFormat = result.entry.format as MatchmakingQueueFormat;
+        this.queuedFormat = coerceQueuedFormat(result.entry.format);
         this.queuedMode = result.entry.mode as MatchmakingQueueMode;
         this.queuedMatchType = (result.entry.matchType as MatchmakingQueueMatchType) ?? "ranked";
         this.status = "queued";
@@ -132,7 +140,7 @@ export class MatchmakingQueueStore {
       this.position = result.position ?? null;
       this.queuedGameProfileId = result.entry.gameProfileId;
       this.queuedDeckListId = result.entry.deckListId;
-      this.queuedFormat = result.entry.format as MatchmakingQueueFormat;
+      this.queuedFormat = coerceQueuedFormat(result.entry.format);
       this.queuedMode = result.entry.mode as MatchmakingQueueMode;
       this.queuedMatchType = (result.entry.matchType as MatchmakingQueueMatchType) ?? "ranked";
       this.status = "queued";
@@ -166,7 +174,7 @@ export class MatchmakingQueueStore {
       this.queuedAt = entry.queuedAt;
       this.expiresAt = entry.expiresAt;
       this.queuedGameProfileId = params.gameProfileId;
-      this.queuedFormat = params.format as MatchmakingQueueFormat;
+      this.queuedFormat = coerceQueuedFormat(params.format);
       this.queuedMode = params.mode as MatchmakingQueueMode;
       this.queuedMatchType = (params.matchType as MatchmakingQueueMatchType) ?? "ranked";
       this.status = "queued";
