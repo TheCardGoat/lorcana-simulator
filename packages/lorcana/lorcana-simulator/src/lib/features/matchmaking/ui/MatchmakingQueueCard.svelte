@@ -760,8 +760,8 @@
                   {/if}
                 </div>
 
-                {#if card.mmr == null}
-                  {@const played = card.placementGamesPlayed ?? 0}
+                {#if card.mmr == null && card.placementGamesPlayed != null}
+                  {@const played = card.placementGamesPlayed}
                   {@const remaining = PLACEMENT_THRESHOLD - played}
                   {@const pct = (played / PLACEMENT_THRESHOLD) * 100}
                   <div class="mt-auto pt-1">
