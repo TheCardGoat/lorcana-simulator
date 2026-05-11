@@ -7,6 +7,7 @@ import type {
   LeaderboardResponse,
   LeaderboardType,
 } from "$lib/features/matchmaking/api/leaderboard-api.js";
+import type { RankedStatusResponse } from "$lib/features/matchmaking/api/ranked-status-api.js";
 
 export interface GatewayAuthData {
   ticket: string;
@@ -19,29 +20,37 @@ export async function loadMatchmakingData(request: Request) {
   const cookie = request.headers.get("cookie");
   const apiOrigin = getServerApiOrigin(getApiOrigin());
 
-  const [matchmakingContextResult, dashboardResult, gatewayAuthResult, leaderboardsResult] =
-    await Promise.allSettled([
-      cookie
-        ? serverJsonOrNull<MatchmakingContext>(
-            `${apiOrigin}/v1/users/me/games/lorcana/matchmaking-context`,
-            { headers: { cookie } },
-          )
-        : Promise.resolve(null),
-      serverJsonOrNull<MatchmakingDashboardResponse>(
-        `${apiOrigin}/v1/games/lorcana/play/matchmaking/dashboard?limit=25`,
-        cookie ? { headers: { cookie } } : {},
-      ),
-      cookie
-        ? serverJsonOrNull<{ ticket: string; authToken: string }>(
-            `${apiOrigin}/v1/gateway/ticket`,
-            {
-              method: "POST",
-              headers: { cookie },
-            },
-          )
-        : Promise.resolve(null),
-      fetchLeaderboardsOnServer(apiOrigin),
-    ]);
+  const [
+    matchmakingContextResult,
+    dashboardResult,
+    gatewayAuthResult,
+    leaderboardsResult,
+    rankedStatusResult,
+  ] = await Promise.allSettled([
+    cookie
+      ? serverJsonOrNull<MatchmakingContext>(
+          `${apiOrigin}/v1/users/me/games/lorcana/matchmaking-context`,
+          { headers: { cookie } },
+        )
+      : Promise.resolve(null),
+    serverJsonOrNull<MatchmakingDashboardResponse>(
+      `${apiOrigin}/v1/games/lorcana/play/matchmaking/dashboard?limit=25`,
+      cookie ? { headers: { cookie } } : {},
+    ),
+    cookie
+      ? serverJsonOrNull<{ ticket: string; authToken: string }>(`${apiOrigin}/v1/gateway/ticket`, {
+          method: "POST",
+          headers: { cookie },
+        })
+      : Promise.resolve(null),
+    fetchLeaderboardsOnServer(apiOrigin),
+    cookie
+      ? serverJsonOrNull<RankedStatusResponse>(
+          `${apiOrigin}/v1/match-history/players/me/ranked-status`,
+          { headers: { cookie } },
+        )
+      : Promise.resolve(null),
+  ]);
 
   const matchmakingContext: MatchmakingContext | null =
     matchmakingContextResult.status === "fulfilled" ? matchmakingContextResult.value : null;
@@ -50,6 +59,8 @@ export async function loadMatchmakingData(request: Request) {
   const gatewayAuth = gatewayAuthResult.status === "fulfilled" ? gatewayAuthResult.value : null;
   const initialLeaderboards =
     leaderboardsResult.status === "fulfilled" ? leaderboardsResult.value : null;
+  const rankedStatus: RankedStatusResponse | null =
+    rankedStatusResult.status === "fulfilled" ? rankedStatusResult.value : null;
 
   return {
     matchmakingContext,
@@ -61,6 +72,7 @@ export async function loadMatchmakingData(request: Request) {
     matchmakingStatus: initialDashboard?.matchmakingStatus ?? null,
     initialLobbyRoom: initialDashboard?.lobbyRoom ?? null,
     initialLeaderboards,
+    rankedStatus,
   };
 }
 
