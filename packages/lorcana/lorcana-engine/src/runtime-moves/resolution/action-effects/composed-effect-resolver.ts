@@ -2316,6 +2316,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       revealWindowIds: resolutionInput.eventSnapshot?.revealWindowIds,
       scryAmount,
       selectedPlayerIds,
+      enterPlayExerted: resolutionInput.enterPlayExerted,
     });
 
     // Handle repeatOnHandMatch: if any card was placed into hand, re-queue this scry effect.
