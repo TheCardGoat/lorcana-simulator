@@ -775,47 +775,50 @@
                     </Tooltip.Root>
                   {/if}
                 </div>
-              </div>
 
-              {#if card.mmr == null}
-                {@const played = card.placementGamesPlayed ?? 0}
-                {@const remaining = PLACEMENT_THRESHOLD - played}
-                {@const pct = Math.round((played / PLACEMENT_THRESHOLD) * 100)}
-                <Tooltip.Root delayDuration={120}>
-                  <Tooltip.Trigger>
-                    {#snippet child({ props })}
-                      <div
-                        class="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg border border-sky-400/25 bg-sky-950/60 px-2 py-1 backdrop-blur-sm"
-                        {...props}
+                {#if card.mmr == null}
+                  {@const played = card.placementGamesPlayed ?? 0}
+                  {@const remaining = PLACEMENT_THRESHOLD - played}
+                  {@const pct = (played / PLACEMENT_THRESHOLD) * 100}
+                  <div class="mt-auto pt-1">
+                    <div class="flex items-center justify-between gap-2 pb-1.5">
+                      <span class="flex items-center gap-1 text-[0.65rem] font-medium text-sky-300/80">
+                        <Trophy class="size-3 shrink-0" aria-hidden="true" />
+                        Placement
+                      </span>
+                      <span class="text-[0.65rem] font-semibold tabular-nums text-sky-200">
+                        {played}<span class="text-sky-400/50">/{PLACEMENT_THRESHOLD}</span>
+                      </span>
+                    </div>
+                    <Tooltip.Root delayDuration={120}>
+                      <Tooltip.Trigger>
+                        {#snippet child({ props })}
+                          <div
+                            class="h-1 w-full overflow-hidden rounded-full bg-white/10"
+                            role="progressbar"
+                            aria-valuenow={played}
+                            aria-valuemin={0}
+                            aria-valuemax={PLACEMENT_THRESHOLD}
+                            aria-label="Placement progress"
+                            {...props}
+                          >
+                            <div
+                              class="h-full rounded-full bg-sky-400/70 transition-all duration-500"
+                              style="width: {pct}%"
+                            ></div>
+                          </div>
+                        {/snippet}
+                      </Tooltip.Trigger>
+                      <Tooltip.Content
+                        side="top"
+                        class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
                       >
-                        <div class="relative size-5 shrink-0">
-                          <svg class="size-5 -rotate-90" viewBox="0 0 20 20" aria-hidden="true">
-                            <circle cx="10" cy="10" r="7" fill="none" stroke="rgba(56,189,248,0.15)" stroke-width="2.5" />
-                            <circle
-                              cx="10" cy="10" r="7"
-                              fill="none"
-                              stroke="rgba(56,189,248,0.7)"
-                              stroke-width="2.5"
-                              stroke-linecap="round"
-                              stroke-dasharray={`${(pct / 100) * 43.98} 43.98`}
-                            />
-                          </svg>
-                          <Trophy class="absolute inset-0 m-auto size-2.5 text-sky-400" aria-hidden="true" />
-                        </div>
-                        <span class="text-[0.65rem] font-semibold tabular-nums text-sky-200">
-                          {played}<span class="text-sky-400/60">/{PLACEMENT_THRESHOLD}</span>
-                        </span>
-                      </div>
-                    {/snippet}
-                  </Tooltip.Trigger>
-                  <Tooltip.Content
-                    side="top"
-                    class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
-                  >
-                    Placement matches — play {remaining} more ranked {remaining === 1 ? 'game' : 'games'} to earn your MMR
-                  </Tooltip.Content>
-                </Tooltip.Root>
-              {/if}
+                        Placement matches — play {remaining} more ranked {remaining === 1 ? 'game' : 'games'} to earn your MMR
+                      </Tooltip.Content>
+                    </Tooltip.Root>
+                  </div>
+                {/if}
+              </div>
             </button>
           {/each}
         </div>

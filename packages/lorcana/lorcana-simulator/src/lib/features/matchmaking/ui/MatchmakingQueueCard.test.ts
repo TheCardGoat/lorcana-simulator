@@ -115,7 +115,7 @@ describe("MatchmakingQueueCard", () => {
     });
 
     // number and threshold are in separate spans; assert each is present
-    expect(body).toContain("border-sky-400/25");
+    expect(body).toContain("bg-sky-400/70");
     expect(body).toContain(">0<");
     expect(body).toContain(">/20<");
   });
@@ -128,7 +128,7 @@ describe("MatchmakingQueueCard", () => {
       },
     });
 
-    expect(body).toContain("border-sky-400/25");
+    expect(body).toContain("bg-sky-400/70");
     expect(body).toContain(">7<");
     expect(body).toContain(">/20<");
   });
@@ -141,7 +141,7 @@ describe("MatchmakingQueueCard", () => {
       },
     });
 
-    expect(body).not.toContain("border-sky-400/25");
+    expect(body).not.toContain("bg-sky-400/70");
     expect(body).toContain("border-amber-400/20");
   });
 
