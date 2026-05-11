@@ -193,6 +193,13 @@ export interface ServerEngineCreateInput {
    * non-`"none"` mode (Cyberpunk, until it grows clock support).
    */
   timeControl?: TimeControlConfig;
+  /**
+   * Player who has been granted the right to choose who goes first for this
+   * game. Set by the play module for games 2+ of a best-of-N series — the
+   * loser of the most recent decisive prior game. Omitted for game 1, in
+   * which case the adapter falls back to its own default (e.g. coin flip).
+   */
+  firstPlayerChooserId?: string;
 }
 
 /**
