@@ -2,6 +2,8 @@ import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, loadEnv, type UserConfig } from "vite-plus";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig(({ mode }) => {
@@ -9,7 +11,18 @@ export default defineConfig(({ mode }) => {
   const hotUpdateDelayMs = Number(env.HOT_UPDATE_DELAY_MS ?? 0);
   const shouldDelayHotUpdates = Number.isFinite(hotUpdateDelayMs) && hotUpdateDelayMs > 0;
   const paraglideWatchIgnore = ["**/src/lib/paraglide/**"];
-  const monorepoRoot = fileURLToPath(new URL("../../../../../", import.meta.url));
+  // When this package is nested as a submodule of the-card-goat-online, pnpm
+  // hoists deps like @sveltejs/kit to the outer monorepo's node_modules, which
+  // lives above this package's own workspace root and is rejected by Vite's
+  // default fs.allow. Probe for an outer-monorepo marker before extending the
+  // allow list — in a standalone checkout this candidate path resolves to "/"
+  // and must NOT be allowed (would expose readable files via /@fs when
+  // --host is used).
+  const candidateOuterRoot = fileURLToPath(new URL("../../../../../", import.meta.url));
+  const isNestedInConsumingMonorepo = existsSync(
+    join(candidateOuterRoot, "submodules/lorcana/pnpm-workspace.yaml"),
+  );
+  const extraFsAllow = isNestedInConsumingMonorepo ? [candidateOuterRoot] : undefined;
 
   // The union of these three plugins' return types blows TypeScript's
   // structural comparison budget under svelte-check on CI ("Excessive stack
@@ -26,13 +39,9 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173, // your preferred starting port
       strictPort: false, // fall through to next available
-      fs: {
-        // Vite auto-detects submodules/lorcana/ as the workspace root (it has
-        // its own pnpm-workspace.yaml), so the outer monorepo node_modules —
-        // where pnpm now hoists SvelteKit and friends — isn't allowed by
-        // default.
-        allow: [monorepoRoot],
-      },
+      ...(extraFsAllow && {
+        fs: { allow: extraFsAllow },
+      }),
       watch: {
         // Paraglide regenerates this directory during dev. Watching it causes
         // Vite to invalidate the graph from its own generated output.
