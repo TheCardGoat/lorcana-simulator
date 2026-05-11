@@ -677,6 +677,101 @@ describe("getPlayCardDisabledReason", () => {
     expect(codesHandledBySwitch.size).toBe(KNOWN_PLAY_CARD_DISABLED_REASON_CODES.length);
   });
 
+  // Per-category accessors give the UI a separate reason for each CTA (Play /
+  // Shift / Sing). Critical case: a card may have shift available but not
+  // standard — the "Play" button's tooltip should explain *the standard cost*,
+  // not be suppressed because shift works.
+  describe("per-category accessors", () => {
+    it("getStandardPlayDisabledReason returns INSUFFICIENT_INK even when shift is available", () => {
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [devotedHeraldLike, throwawayAction],
+        play: [diabloOnBoard],
+        inkwell: 0,
+        deck: 2,
+      });
+
+      // Shift is fully playable here (Diablo on board + action in hand) so the
+      // composite method returns null...
+      expect(engine.asPlayerOne().getPlayCardDisabledReason(devotedHeraldLike)).toBeNull();
+      // ...but standard-cost play still needs 3 ink, and the "Play" CTA's
+      // tooltip should say so.
+      expect(engine.asPlayerOne().getStandardPlayDisabledReason(devotedHeraldLike)).toEqual({
+        code: "INSUFFICIENT_INK",
+        params: { needed: devotedHeraldLike.cost, available: 0 },
+      });
+    });
+
+    it("getStandardPlayDisabledReason returns null when standard is playable", () => {
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [inkTestCharacter],
+        inkwell: inkTestCharacter.cost,
+        deck: 2,
+      });
+
+      expect(engine.asPlayerOne().getStandardPlayDisabledReason(inkTestCharacter)).toBeNull();
+    });
+
+    it("getShiftPlayDisabledReason returns null when the card has no Shift keyword", () => {
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [inkTestCharacter],
+        inkwell: 0,
+        deck: 2,
+      });
+
+      // No Shift keyword → null (UI shouldn't render a Shift CTA at all).
+      expect(engine.asPlayerOne().getShiftPlayDisabledReason(inkTestCharacter)).toBeNull();
+    });
+
+    it("getShiftPlayDisabledReason returns SHIFT_NO_DISCARD_AVAILABLE for Devoted Herald with no action card", () => {
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [devotedHeraldLike],
+        play: [diabloOnBoard],
+        inkwell: 0,
+        deck: 2,
+      });
+
+      expect(engine.asPlayerOne().getShiftPlayDisabledReason(devotedHeraldLike)).toEqual({
+        code: "SHIFT_NO_DISCARD_AVAILABLE",
+        params: { discardCardType: "action", count: 1 },
+      });
+    });
+
+    it("getShiftPlayDisabledReason returns null when shift is fully playable", () => {
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [devotedHeraldLike, throwawayAction],
+        play: [diabloOnBoard],
+        inkwell: 0,
+        deck: 2,
+      });
+
+      expect(engine.asPlayerOne().getShiftPlayDisabledReason(devotedHeraldLike)).toBeNull();
+    });
+
+    it("getSingPlayDisabledReason returns null for non-songs", () => {
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [inkTestCharacter],
+        inkwell: 0,
+        deck: 2,
+      });
+
+      expect(engine.asPlayerOne().getSingPlayDisabledReason(inkTestCharacter)).toBeNull();
+    });
+
+    it("getSingPlayDisabledReason returns SONG_NO_SINGER when no ready singer is available", () => {
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [songCardForReason],
+        play: [{ card: singerCharacterForReason, isDrying: true }],
+        inkwell: 0,
+        deck: 2,
+      });
+
+      expect(engine.asPlayerOne().getSingPlayDisabledReason(songCardForReason)).toEqual({
+        code: "SONG_NO_SINGER",
+        params: { songCost: songCardForReason.cost },
+      });
+    });
+  });
+
   it("stays in lock-step with canPlayCard (true iff reason is null)", () => {
     // Spot-check the contract across a few states.
     const scenarios = [

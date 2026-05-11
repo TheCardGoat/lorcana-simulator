@@ -2718,17 +2718,13 @@ export abstract class LorcanaEngineBase {
     }
 
     const cardDef = this.getCardDefinitionByInstanceId(playableCardId) as LorcanaCard;
-    const playerId = this.getScopedPlayerId() ?? String(this.getActivePlayer() ?? "");
 
     // Song fallback: if this is a song and a singer is available, it's playable.
     // Otherwise, SONG_NO_SINGER beats INSUFFICIENT_INK because it tells the player
     // *what's actually missing* (a ready character with sufficient cost).
     if (isSongCard(cardDef)) {
-      const songPlayOptions = this.getSongPlayOptions(playableCardId, playerId);
-      if (
-        songPlayOptions.singleSingerIds.length > 0 ||
-        songPlayOptions.singTogetherOption !== null
-      ) {
+      const songReason = this.computeSongDisabledReason(playableCardId, cardDef);
+      if (songReason === null) {
         return null;
       }
       // Standard-cost play might still be possible — check that before reporting
@@ -2736,71 +2732,156 @@ export abstract class LorcanaEngineBase {
       if (standardValidation.code !== "INSUFFICIENT_INK") {
         return this.mapValidateMoveErrorToDisabledReason(standardValidation.code, playableCardId);
       }
-      return { code: "SONG_NO_SINGER", params: { songCost: cardDef.cost } };
+      return songReason;
     }
 
     // Shift fallback: walk the same checks `canPlayCard` does, but capture
     // *which* check fails so we can name it.
     if (hasShift(cardDef)) {
-      const shiftRules = getShiftRules(cardDef);
-      const normalizedPlayerId = normalizeBoardPlayerId(playerId, this.getBoard().playerOrder);
-      const playerBoard = normalizedPlayerId
-        ? this.getBoard().players[normalizedPlayerId]
-        : undefined;
-      if (shiftRules && playerBoard) {
-        const playCandidates = playerBoard.play.map((pid) => pid as CardInstanceId);
-        const shiftTargets = resolveShiftTargetCandidates(
-          shiftRules,
-          playCandidates,
-          (cid) => this.getCardDefinitionByInstanceId(cid) as LorcanaCard,
-        );
-        if (shiftTargets.length === 0) {
-          return {
-            code: "SHIFT_NO_TARGET",
-            params: { targetName: cardDef.name },
-          };
-        }
-
-        // Check discard cost availability (for Devoted Herald-style "discard
-        // an action card") before checking ink cost. Both can fail; we pick
-        // the one the player is more likely to need explained.
-        if (shiftRules.discardCost) {
-          const selectableCosts = this.getSelectableCostsForShift(playerId, cardDef);
-          if (!this.hasSufficientSelectableCosts(selectableCosts)) {
-            return {
-              code: "SHIFT_NO_DISCARD_AVAILABLE",
-              params: {
-                discardCardType: shiftRules.discardCost.discardCardType ?? "card",
-                count: shiftRules.discardCost.discardCards,
-              },
-            };
-          }
-        }
-
-        // If we got here, the shift is structurally possible; the only
-        // remaining reason for canDiscoverShiftPlay to fail is the ink
-        // portion of the shift cost (when shiftRules.inkCost is set).
-        if (!shiftTargets.some((targetId) => this.canDiscoverShiftPlay(playableCardId, targetId))) {
-          if (typeof shiftRules.inkCost === "number") {
-            return {
-              code: "SHIFT_INSUFFICIENT_INK",
-              params: {
-                needed: shiftRules.inkCost,
-                available: this.getAvailableInk(playerId),
-              },
-            };
-          }
-          // No ink cost on shift and discard is available, yet shift still
-          // can't be played — fall through to the generic error.
-          return this.mapValidateMoveErrorToDisabledReason(standardValidation.code, playableCardId);
-        }
-
-        // Shift IS playable — same outcome as canPlayCard returning true.
+      const shiftReason = this.computeShiftDisabledReason(playableCardId, cardDef);
+      if (shiftReason === null) {
         return null;
       }
+      // For "no ink cost on shift and discard is available, yet shift still
+      // can't be played" — fall through to the generic standard-cost error.
+      if (shiftReason.code === "UNKNOWN") {
+        return this.mapValidateMoveErrorToDisabledReason(standardValidation.code, playableCardId);
+      }
+      return shiftReason;
     }
 
     return this.mapValidateMoveErrorToDisabledReason(standardValidation.code, playableCardId);
+  }
+
+  /**
+   * Reason the standard-cost Play CTA is disabled for `cardInput`, or `null`
+   * when standard play is available. Does NOT consider alternate-cost paths
+   * (shift, sing) — those have their own per-category accessors. Use this to
+   * drive the "Play" button's tooltip independently from "Shift" / "Sing".
+   */
+  getStandardPlayDisabledReason(cardInput: CardInput): PlayCardDisabledReason | null {
+    const resolvedCost = this.resolvePlayCardCostInput("standard");
+    const playableCardId = this.resolvePlayableCardId(cardInput, resolvedCost);
+    if (!playableCardId) {
+      return { code: "NOT_IN_HAND" };
+    }
+    const args = normalizePlayCardCost(playableCardId, resolvedCost, {}) as unknown as Record<
+      string,
+      unknown
+    >;
+    const moveInput = this.composeMoveByFixedArgs("playCard", args);
+    const result = this.validateMove("playCard", moveInput as LorcanaRuntimeMoveInputs["playCard"]);
+    if (result.valid) {
+      return null;
+    }
+    return this.mapValidateMoveErrorToDisabledReason(result.code, playableCardId);
+  }
+
+  /**
+   * Reason the Shift CTA is disabled for `cardInput`, or `null` when shift is
+   * available OR when the card has no Shift keyword (the UI shouldn't render
+   * a Shift CTA at all in that case, so "disabled reason" doesn't apply).
+   * Returns SHIFT_* codes specifically.
+   */
+  getShiftPlayDisabledReason(cardInput: CardInput): PlayCardDisabledReason | null {
+    const playableCardId = this.resolvePlayableCardId(cardInput, "standard");
+    if (!playableCardId) {
+      return { code: "NOT_IN_HAND" };
+    }
+    const cardDef = this.getCardDefinitionByInstanceId(playableCardId) as LorcanaCard;
+    if (!hasShift(cardDef)) {
+      return null;
+    }
+    return this.computeShiftDisabledReason(playableCardId, cardDef);
+  }
+
+  /**
+   * Reason the Sing CTA is disabled for `cardInput`, or `null` when sing is
+   * available OR when the card isn't a song.
+   */
+  getSingPlayDisabledReason(cardInput: CardInput): PlayCardDisabledReason | null {
+    const playableCardId = this.resolvePlayableCardId(cardInput, "standard");
+    if (!playableCardId) {
+      return { code: "NOT_IN_HAND" };
+    }
+    const cardDef = this.getCardDefinitionByInstanceId(playableCardId) as LorcanaCard;
+    if (!isSongCard(cardDef)) {
+      return null;
+    }
+    return this.computeSongDisabledReason(playableCardId, cardDef);
+  }
+
+  private computeShiftDisabledReason(
+    playableCardId: CardInstanceId,
+    cardDef: LorcanaCard,
+  ): PlayCardDisabledReason | null {
+    const playerId = this.getScopedPlayerId() ?? String(this.getActivePlayer() ?? "");
+    const shiftRules = getShiftRules(cardDef);
+    const normalizedPlayerId = normalizeBoardPlayerId(playerId, this.getBoard().playerOrder);
+    const playerBoard = normalizedPlayerId
+      ? this.getBoard().players[normalizedPlayerId]
+      : undefined;
+    if (!shiftRules || !playerBoard) {
+      // Card has Shift keyword but rules are missing/unsupported — surface a
+      // generic UNKNOWN so the caller can decide whether to fall back to a
+      // different reason or a generic tooltip.
+      return { code: "UNKNOWN", params: { validateMoveErrorCode: "SHIFT_RULES_MISSING" } };
+    }
+
+    const playCandidates = playerBoard.play.map((pid) => pid as CardInstanceId);
+    const shiftTargets = resolveShiftTargetCandidates(
+      shiftRules,
+      playCandidates,
+      (cid) => this.getCardDefinitionByInstanceId(cid) as LorcanaCard,
+    );
+    if (shiftTargets.length === 0) {
+      return { code: "SHIFT_NO_TARGET", params: { targetName: cardDef.name } };
+    }
+
+    // Discard-cost shift (e.g. Diablo - Devoted Herald): check the discard
+    // pool before the ink portion, because "no action card in hand" is more
+    // actionable than "no ink" for these cards.
+    if (shiftRules.discardCost) {
+      const selectableCosts = this.getSelectableCostsForShift(playerId, cardDef);
+      if (!this.hasSufficientSelectableCosts(selectableCosts)) {
+        return {
+          code: "SHIFT_NO_DISCARD_AVAILABLE",
+          params: {
+            discardCardType: shiftRules.discardCost.discardCardType ?? "card",
+            count: shiftRules.discardCost.discardCards,
+          },
+        };
+      }
+    }
+
+    if (!shiftTargets.some((targetId) => this.canDiscoverShiftPlay(playableCardId, targetId))) {
+      if (typeof shiftRules.inkCost === "number") {
+        return {
+          code: "SHIFT_INSUFFICIENT_INK",
+          params: {
+            needed: shiftRules.inkCost,
+            available: this.getAvailableInk(playerId),
+          },
+        };
+      }
+      // Discard available, no ink portion, yet shift still fails — caller
+      // can decide what to surface.
+      return { code: "UNKNOWN", params: { validateMoveErrorCode: "SHIFT_UNKNOWN" } };
+    }
+
+    return null;
+  }
+
+  private computeSongDisabledReason(
+    playableCardId: CardInstanceId,
+    cardDef: LorcanaCard,
+  ): PlayCardDisabledReason | null {
+    const playerId = this.getScopedPlayerId() ?? String(this.getActivePlayer() ?? "");
+    const songPlayOptions = this.getSongPlayOptions(playableCardId, playerId);
+    if (songPlayOptions.singleSingerIds.length > 0 || songPlayOptions.singTogetherOption !== null) {
+      return null;
+    }
+    return { code: "SONG_NO_SINGER", params: { songCost: cardDef.cost } };
   }
 
   private mapValidateMoveErrorToDisabledReason(
