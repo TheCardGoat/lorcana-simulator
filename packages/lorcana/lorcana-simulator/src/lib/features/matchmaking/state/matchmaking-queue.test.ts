@@ -290,4 +290,33 @@ describe("MatchmakingQueueStore", () => {
 
     store.destroy();
   });
+
+  it("handleStatusUpdate does not downgrade match_ready to queued on a stale { queued:true } poll", () => {
+    // Scenario: the second player joins and is instantly matched. The matchmaking_poll
+    // they sent just before match_ready arrives carries { queued: true } from the
+    // server (it was processed before the match was created). That stale response
+    // must NOT revert status from match_ready back to queued.
+    const store = new MatchmakingQueueStore();
+    const deadline = Date.now() + 15_000;
+
+    store.handleMatchReady({
+      pendingMatchId: "pm_instant",
+      opponentDisplayName: "Opponent",
+      acceptDeadline: deadline,
+    });
+    expect(store.status).toBe("match_ready");
+
+    store.handleStatusUpdate({
+      queued: true,
+      queuedAt: Date.now() - 100,
+      expiresAt: Date.now() + 300_000,
+      position: 1,
+    });
+
+    // Status must stay match_ready, not regress to queued
+    expect(store.status).toBe("match_ready");
+    expect(store.pendingMatchId).toBe("pm_instant");
+
+    store.destroy();
+  });
 });

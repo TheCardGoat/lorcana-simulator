@@ -318,7 +318,15 @@ export class MatchmakingQueueStore {
     if (msg.expiresAt !== undefined) this.expiresAt = msg.expiresAt;
     if (msg.position !== undefined) this.position = msg.position;
 
-    if (this.status !== "queued") {
+    // A stale poll response (queued:true) must never downgrade match_ready or
+    // match_found — the second player who is instantly matched gets a { queued:true }
+    // response for the poll they sent just before match_ready arrived, which would
+    // revert their status to "queued" and cause the UI to flicker/close.
+    if (
+      this.status !== "queued" &&
+      this.status !== "match_ready" &&
+      this.status !== "match_found"
+    ) {
       this.status = "queued";
       this.startTimer();
     }
