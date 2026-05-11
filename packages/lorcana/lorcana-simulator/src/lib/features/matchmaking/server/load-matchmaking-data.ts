@@ -7,7 +7,6 @@ import type {
   LeaderboardResponse,
   LeaderboardType,
 } from "$lib/features/matchmaking/api/leaderboard-api.js";
-import type { RankedStatusResponse } from "$lib/features/matchmaking/api/ranked-status-api.js";
 
 export interface GatewayAuthData {
   ticket: string;
@@ -25,7 +24,6 @@ export async function loadMatchmakingData(request: Request) {
     dashboardResult,
     gatewayAuthResult,
     leaderboardsResult,
-    rankedStatusResult,
   ] = await Promise.allSettled([
     cookie
       ? serverJsonOrNull<MatchmakingContext>(
@@ -44,12 +42,6 @@ export async function loadMatchmakingData(request: Request) {
         })
       : Promise.resolve(null),
     fetchLeaderboardsOnServer(apiOrigin),
-    cookie
-      ? serverJsonOrNull<RankedStatusResponse>(
-          `${apiOrigin}/v1/match-history/players/me/ranked-status`,
-          { headers: { cookie } },
-        )
-      : Promise.resolve(null),
   ]);
 
   const matchmakingContext: MatchmakingContext | null =
@@ -59,8 +51,6 @@ export async function loadMatchmakingData(request: Request) {
   const gatewayAuth = gatewayAuthResult.status === "fulfilled" ? gatewayAuthResult.value : null;
   const initialLeaderboards =
     leaderboardsResult.status === "fulfilled" ? leaderboardsResult.value : null;
-  const rankedStatus: RankedStatusResponse | null =
-    rankedStatusResult.status === "fulfilled" ? rankedStatusResult.value : null;
 
   return {
     matchmakingContext,
@@ -72,7 +62,6 @@ export async function loadMatchmakingData(request: Request) {
     matchmakingStatus: initialDashboard?.matchmakingStatus ?? null,
     initialLobbyRoom: initialDashboard?.lobbyRoom ?? null,
     initialLeaderboards,
-    rankedStatus,
   };
 }
 

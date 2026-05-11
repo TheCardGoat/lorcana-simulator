@@ -61,6 +61,8 @@ export type QueueCardView = {
   isDeckValid: boolean;
   winStreak: number;
   mmr: number | null;
+  /** Ranked games played in this format; null = never played ranked here */
+  placementGamesPlayed: number | null;
 };
 
 export function createQueueJoinLabel(

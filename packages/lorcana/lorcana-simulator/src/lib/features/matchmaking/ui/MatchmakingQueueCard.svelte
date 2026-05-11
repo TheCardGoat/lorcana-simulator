@@ -34,6 +34,8 @@
   import WifiOff from '@lucide/svelte/icons/wifi-off';
   import X from '@lucide/svelte/icons/x';
 
+  const PLACEMENT_THRESHOLD = 20;
+
   interface Props {
     status: MatchmakingStatus;
     position: number | null;
@@ -747,7 +749,7 @@
                     </Tooltip.Root>
                   {/if}
 
-                  {#if selectedMatchType === 'ranked' && card.mmr != null}
+                  {#if card.mmr != null}
                     <Tooltip.Root delayDuration={120}>
                       <Tooltip.Trigger>
                         {#snippet child({ props })}
@@ -769,6 +771,30 @@
                         class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
                       >
                         {m['sim.matchmaking.matchmaking.stats.mmrLabel']({})}
+                      </Tooltip.Content>
+                    </Tooltip.Root>
+                  {:else if card.placementGamesPlayed !== null && card.placementGamesPlayed < PLACEMENT_THRESHOLD}
+                    <Tooltip.Root delayDuration={120}>
+                      <Tooltip.Trigger>
+                        {#snippet child({ props })}
+                          <Badge
+                            variant="outline"
+                            class="border-sky-400/20 bg-sky-500/10 text-sky-200"
+                            {...props}
+                          >
+                            <Trophy
+                              class="size-3 text-sky-400"
+                              aria-hidden="true"
+                            />
+                            {card.placementGamesPlayed}/{PLACEMENT_THRESHOLD}
+                          </Badge>
+                        {/snippet}
+                      </Tooltip.Trigger>
+                      <Tooltip.Content
+                        side="top"
+                        class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
+                      >
+                        Placement matches — play {PLACEMENT_THRESHOLD - card.placementGamesPlayed} more ranked {PLACEMENT_THRESHOLD - card.placementGamesPlayed === 1 ? 'game' : 'games'} to earn your MMR
                       </Tooltip.Content>
                     </Tooltip.Root>
                   {/if}
