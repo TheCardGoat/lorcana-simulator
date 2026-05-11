@@ -106,11 +106,11 @@ describe("MatchmakingQueueCard", () => {
     }
   });
 
-  it("renders 0/20 placement indicator when player has never played ranked (placementGamesPlayed null)", () => {
+  it("renders 0/20 placement indicator when player has never played ranked (placementGamesPlayed 0)", () => {
     const { body } = render(MatchmakingQueueCard, {
       props: {
         ...baseProps,
-        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: null, placementGamesPlayed: null }],
+        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: null, placementGamesPlayed: 0 }],
       },
     });
 
@@ -118,6 +118,18 @@ describe("MatchmakingQueueCard", () => {
     expect(body).toContain("bg-sky-400/70");
     expect(body).toContain(">0<");
     expect(body).toContain(">/20<");
+  });
+
+  it("does not render placement indicator on casual queues (placementGamesPlayed null)", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: {
+        ...baseProps,
+        selectedMatchType: "casual" as const,
+        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: null, placementGamesPlayed: null }],
+      },
+    });
+
+    expect(body).not.toContain("bg-sky-400/70");
   });
 
   it("renders N/20 placement indicator when player has some ranked games but no mmr yet", () => {
