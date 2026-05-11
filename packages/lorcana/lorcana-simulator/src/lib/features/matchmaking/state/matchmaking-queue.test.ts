@@ -267,7 +267,7 @@ describe("MatchmakingQueueStore", () => {
     store.destroy();
   });
 
-  it("handleStatusUpdate resets match_ready when server reports no queue and no pending", () => {
+  it("handleStatusUpdate does not reset match_ready on a generic poll with no pending match", () => {
     const store = new MatchmakingQueueStore();
     const deadline = Date.now() + 20_000;
 
@@ -280,10 +280,13 @@ describe("MatchmakingQueueStore", () => {
     });
     expect(store.status).toBe("match_ready");
 
+    // A poll returning { queued: false } with no pendingMatchId must not reset
+    // match_ready — the server may clear the pending match before delivering
+    // match_found, so this response can race the WS event.
     store.handleStatusUpdate({ queued: false });
 
-    expect(store.status).toBe("idle");
-    expect(store.pendingMatchId).toBeNull();
+    expect(store.status).toBe("match_ready");
+    expect(store.pendingMatchId).toBe("pm_4");
 
     store.destroy();
   });
