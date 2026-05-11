@@ -458,8 +458,14 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
             !selectedDeck ||
             !selectedDeck.validFormats ||
             selectedDeck.validFormats.includes(definition.format),
-          winStreak: this.playerStats?.currentWinStreak ?? 0,
-          mmr: this.playerStats?.mmr ?? null,
+          winStreak:
+            this.playerStats?.byFormat.find((f) => f.formatId === definition.format)
+              ?.currentWinStreak ?? this.playerStats?.currentWinStreak ?? 0,
+          mmr:
+            this.playerStats?.byFormat.find((f) => f.formatId === definition.format)?.mmr ?? null,
+          placementGamesPlayed:
+            this.playerStats?.byFormat.find((f) => f.formatId === definition.format)
+              ?.gamesPlayed ?? null,
         };
       }),
       isDeckValidForSelectedFormat: this.isDeckValidForSelectedFormat,
