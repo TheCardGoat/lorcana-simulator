@@ -158,6 +158,7 @@ import {
   resolveReturnRandomFromInkwellEffect,
 } from "./return-random-from-inkwell-effect";
 import {
+  hasReturnFromDiscardCandidates,
   isReturnFromDiscardEffect,
   resolveReturnFromDiscardEffect,
 } from "./return-from-discard-effect";
@@ -1421,6 +1422,23 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         continue;
       }
       const stagedTargetCount = stagedSequence?.collectedTargetCounts[index] ?? 0;
+      // If this step is a return-from-discard with no legal candidates in the
+      // controller's discard, skip it and continue to subsequent steps. Per
+      // CR 1.2.3 ("do as much as you can") + 6.7.2.4, the resolving effect
+      // must still perform later instructions in the sequence (e.g. the
+      // optional play-for-free in Syndrome — Out for Revenge). Without this
+      // short-circuit, the sequence stages target collection for an
+      // unfillable slot and the player gets stuck on step 1.
+      if (!stagedSequence && isReturnFromDiscardEffect(nestedEffect)) {
+        const controllerId = cardPlayed?.playerId;
+        if (
+          controllerId &&
+          !hasReturnFromDiscardCandidates(ctx, controllerId, nestedEffect, cardPlayed?.cardId)
+        ) {
+          consumedTargets += stagedTargetCount;
+          continue;
+        }
+      }
       // If this step is a discard that the controller must pay from their own hand (chosen
       // from hand, targeting CONTROLLER/SELF) but has no legal candidates (empty hand),
       // the cost cannot be paid. Abort the entire sequence so that subsequent steps that

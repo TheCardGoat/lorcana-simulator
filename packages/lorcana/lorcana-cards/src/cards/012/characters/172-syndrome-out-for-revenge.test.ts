@@ -378,6 +378,47 @@ describe("Syndrome - Out for Revenge", () => {
     });
   });
 
+  it("offers the optional play-for-free even when discard contains no Robot (CR 1.2.3 do as much as you can)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: syndromeOutForRevenge }],
+      hand: [robotInHand],
+      // Discard has only a non-Robot — step 1 of the sequence has no legal target.
+      // Per CR 1.2.3 + 6.7.2.4 the resolving effect must still perform step 2
+      // (the optional "you may play or shift a Robot for free").
+      discard: [nonRobotInDiscard],
+      deck: 1,
+    });
+
+    expect(testEngine.asPlayerOne().quest(syndromeOutForRevenge)).toBeSuccessfulCommand();
+
+    const trigger = testEngine
+      .asPlayerOne()
+      .getBagEffects()
+      .find((bagEffect) => hasAbilityName(bagEffect, "GOT ME MONOLOGUING!"));
+    expect(trigger).toBeDefined();
+
+    expect(
+      testEngine.asPlayerOne().resolveBag(trigger!.id, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+
+    // Step 1 (return-from-discard) has no legal target and must be skipped per
+    // CR 1.2.3; step 2 (the optional play-for-free) must still resolve.
+    // Whether the engine suspends between steps or cascades the bag-level
+    // accept into the inner optional is an implementation detail. The
+    // observable invariant is: the Robot in hand ends up in play.
+    if (testEngine.asPlayerOne().getCardZone(robotInHand) === "hand") {
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          resolveOptional: true,
+          targets: [robotInHand],
+        }),
+      ).toBeSuccessfulCommand();
+    }
+    expect(testEngine.asPlayerOne().getCardZone(robotInHand)).toBe("play");
+    // And the non-Robot in discard was never touched.
+    expect(testEngine.asPlayerOne().getCardZone(nonRobotInDiscard)).toBe("discard");
+  });
+
   it("has Shift 4 keyword", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [syndromeOutForRevenge],

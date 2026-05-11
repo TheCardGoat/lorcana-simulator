@@ -135,6 +135,45 @@ describe("Goofy - Groundbreaking Chef", () => {
       expect(testEngine.asPlayerOne().isExerted(damagedAlly)).toBe(false);
     });
 
+    it("does NOT remove damage from opponent's damaged characters (player bug report 2026-05-09)", () => {
+      // Reporter "Slightly Uninvited" (gameId mgbZKN9BYqSm72mr13wz5on, turn 15)
+      // claimed Goofy was removing damage and readying the OPPONENT's exerted
+      // damaged characters. Card def declares owner: "you" + excludeSelf: true.
+      //
+      // We assert the verifiable half: opponent's damaged characters retain
+      // their damage after Goofy resolves. The "still exerted" half can't be
+      // asserted cleanly via passTurn() — by the time we can observe, the
+      // opponent's Ready step has run and readied all their characters
+      // regardless of Goofy. The reporter likely conflated the natural Ready
+      // step with Goofy's effect.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [goofyGroundbreakingChef, { card: damagedAlly, damage: 2, exerted: true }],
+          deck: 2,
+        },
+        {
+          play: [{ card: anotherDamagedAlly, damage: 2, exerted: true }],
+          deck: 2,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(goofyGroundbreakingChef, {
+          resolveOptional: true,
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Own damaged ally: healed and readied.
+      expect(testEngine.asPlayerOne().getDamage(damagedAlly)).toBe(1);
+      expect(testEngine.asPlayerOne().isExerted(damagedAlly)).toBe(false);
+
+      // Opponent's damaged ally: damage preserved. This proves the
+      // owner: "you" filter on remove-damage targets is being respected.
+      expect(testEngine.asPlayerTwo().getDamage(anotherDamagedAlly)).toBe(2);
+    });
+
     it("prevents Mr. Smee from damaging himself if Goofy readies and heals him first", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [goofyGroundbreakingChef, { card: mrSmeeBumblingMate, damage: 1, exerted: true }],
