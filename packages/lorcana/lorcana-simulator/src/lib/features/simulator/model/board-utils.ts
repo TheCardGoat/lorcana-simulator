@@ -1,4 +1,4 @@
-import { type MatchStaticResources } from "@tcg/lorcana-engine";
+import { type MatchStaticResources, hasMayEnterPlayExertedOption } from "@tcg/lorcana-engine";
 import type { LorcanaCard, LorcanaCardDefinition } from "@tcg/lorcana-engine";
 import type { Languages } from "@tcg/lorcana-types";
 import type { LorcanaProjectedBoardView, LorcanaProjectedCard } from "@tcg/lorcana-engine";
@@ -925,6 +925,8 @@ export function buildCardSnapshotMap(
       hasQuestRestriction: projectedCard.hasQuestRestriction ?? false,
       keywordValues: projectedCard.keywordValues,
       keywords: mergeDerivedKeywordSignals(projectedCard.keywords, projectedCard),
+      mayEnterPlayExertedOption:
+        definition !== undefined && hasMayEnterPlayExertedOption(definition) ? true : undefined,
       label: isMasked ? getHiddenCardLabel(zoneId) : (cardName ?? m["sim.card.unknown"]({})),
       loreValue:
         definition?.cardType === "character" || definition?.cardType === "location"

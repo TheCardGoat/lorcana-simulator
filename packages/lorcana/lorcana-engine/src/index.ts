@@ -217,6 +217,7 @@ export {
   getWillpower,
   hasAmpersandName,
   hasBodyguard,
+  hasMayEnterPlayExertedOption,
   hasEvasive,
   hasKeyword,
   hasReckless,

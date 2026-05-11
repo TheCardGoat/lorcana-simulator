@@ -38,6 +38,30 @@ const noBodyguardChar = createMockCharacter({
   strength: 2,
 });
 
+// Cards like Mickey Mouse — Expedition Leader and Hamish, Hubert & Harris print
+// a non-Bodyguard "may enter exerted" static ability. The scry resolver must
+// honor enterPlayExerted for these too (review feedback Codex P2).
+const mayEnterExertedChar = createMockCharacter({
+  id: "din-may-enter-exerted",
+  name: "Long Journey Mock",
+  cost: 4,
+  willpower: 5,
+  strength: 2,
+  abilities: [
+    {
+      id: "mock-long-journey",
+      name: "LONG JOURNEY",
+      type: "static",
+      text: "This character may enter play exerted.",
+      effect: {
+        type: "restriction",
+        restriction: "may-enter-play-exerted",
+        target: "SELF",
+      },
+    },
+  ],
+});
+
 const fillerA = createMockItem({ id: "din-bg-filler-a", name: "Filler A", cost: 1 });
 const fillerB = createMockItem({ id: "din-bg-filler-b", name: "Filler B", cost: 1 });
 
@@ -88,7 +112,30 @@ describe("Down in New Orleans — Bodyguard enter-exerted", () => {
     expect(testEngine.isExerted(bodyguardChar)).toBe(false);
   });
 
-  it("ignores enterPlayExerted: true for a character without Bodyguard (Bodyguard is the source of the modal)", () => {
+  it("plays a 'may enter play exerted' non-Bodyguard character exerted when chosen", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [downInNewOrleans],
+        inkwell: downInNewOrleans.cost,
+        deck: [fillerA, fillerB, mayEnterExertedChar],
+      },
+      { deck: 5 },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(downInNewOrleans, {
+        destinations: [
+          { zone: "play", cards: mayEnterExertedChar },
+          { zone: "deck-bottom", cards: [fillerA, fillerB] },
+        ],
+        enterPlayExerted: true,
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.isExerted(mayEnterExertedChar)).toBe(true);
+  });
+
+  it("ignores enterPlayExerted: true for a plain character with no entry-mode option", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [downInNewOrleans],
@@ -108,7 +155,7 @@ describe("Down in New Orleans — Bodyguard enter-exerted", () => {
       }),
     ).toBeSuccessfulCommand();
 
-    // No Bodyguard: enterPlayExerted has no effect, character lands ready.
+    // No entry-mode option: enterPlayExerted has no effect, character lands ready.
     expect(testEngine.isExerted(noBodyguardChar)).toBe(false);
   });
 });
