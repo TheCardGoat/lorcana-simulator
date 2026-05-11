@@ -774,14 +774,9 @@ function buildSupplementalCardSnapshot(args: {
     // never appear. See PR #73 review feedback (Codex P2).
     keywords: Array.isArray(definition.abilities)
       ? definition.abilities
-          .filter(
-            (ability): ability is { type: "keyword"; keyword: string } =>
-              ability !== null &&
-              typeof ability === "object" &&
-              (ability as { type?: unknown }).type === "keyword" &&
-              typeof (ability as { keyword?: unknown }).keyword === "string",
-          )
-          .map((ability) => ability.keyword)
+          .filter((ability) => ability?.type === "keyword")
+          .map((ability) => (ability as { keyword: string }).keyword)
+          .filter((keyword): keyword is string => typeof keyword === "string")
       : [],
     mayEnterPlayExertedOption: hasMayEnterPlayExertedOption(definition) ? true : undefined,
     damage: typeof meta?.damage === "number" ? meta.damage : 0,
