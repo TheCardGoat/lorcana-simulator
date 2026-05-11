@@ -242,6 +242,9 @@ export class MatchmakingQueueStore {
     this.matchFoundMatchId = msg.matchId;
     this.matchFoundGameId = msg.gameId;
     this.opponentDisplayName = msg.opponentDisplayName ?? null;
+    // Clear pending-accept state so any stale match_ready_expired WS message
+    // that arrives after match_found is ignored by handleMatchReadyExpired.
+    this.pendingMatchId = null;
     this.stopTimer();
     this.stopAcceptTimer();
     const waitSeconds = this.queuedAt ? Math.round((Date.now() - this.queuedAt) / 1000) : 0;
@@ -329,6 +332,12 @@ export class MatchmakingQueueStore {
    */
   handleCancelled(reason: "timeout" | "manual" | "match_creation_error"): void {
     console.log("[matchmaking-queue] cancelled", { reason, previousStatus: this.status });
+    // Never cancel once a match is confirmed — match_found is the terminal success
+    // state and the player is about to navigate to the game.
+    if (this.status === "match_found") {
+      console.log("[matchmaking-queue] ignoring cancellation, match already found");
+      return;
+    }
     if (reason === "timeout") {
       const waitSeconds = this.queuedAt ? Math.round((Date.now() - this.queuedAt) / 1000) : 0;
       trackEvent("queue_timeout", {

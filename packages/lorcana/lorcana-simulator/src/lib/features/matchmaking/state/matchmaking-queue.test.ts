@@ -290,4 +290,60 @@ describe("MatchmakingQueueStore", () => {
 
     store.destroy();
   });
+
+  it("handleCancelled does not reset when status is match_found", () => {
+    const store = new MatchmakingQueueStore();
+
+    store.handleMatchFound({
+      matchId: "match_1",
+      gameId: "game_1",
+      playerId: "player_1",
+      opponentDisplayName: "Opponent",
+      format: "infinity",
+      mode: "1",
+    });
+    expect(store.status).toBe("match_found");
+
+    // A stale or server-cleanup matchmaking_cancelled must not destroy the
+    // match-found state — the player is about to navigate to the game.
+    store.handleCancelled("manual");
+
+    expect(store.status).toBe("match_found");
+    expect(store.matchFoundMatchId).toBe("match_1");
+
+    store.destroy();
+  });
+
+  it("handleMatchFound clears pendingMatchId so stale match_ready_expired is ignored", () => {
+    const store = new MatchmakingQueueStore();
+    const deadline = Date.now() + 15_000;
+
+    store.handleMatchReady({
+      pendingMatchId: "pm_race",
+      opponentDisplayName: "Opponent",
+      acceptDeadline: deadline,
+    });
+    expect(store.pendingMatchId).toBe("pm_race");
+
+    store.handleMatchFound({
+      matchId: "match_2",
+      gameId: "game_2",
+      playerId: "player_2",
+      opponentDisplayName: "Opponent",
+      format: "infinity",
+      mode: "1",
+    });
+    expect(store.status).toBe("match_found");
+    // pendingMatchId must be cleared so the handleMatchReadyExpired guard
+    // (pendingMatchId !== msg.pendingMatchId) blocks stale expiry messages.
+    expect(store.pendingMatchId).toBeNull();
+
+    // A stale match_ready_expired for the same session must now be ignored.
+    store.handleMatchReadyExpired({ pendingMatchId: "pm_race", reason: "timeout" });
+
+    expect(store.status).toBe("match_found");
+    expect(store.matchFoundMatchId).toBe("match_2");
+
+    store.destroy();
+  });
 });
