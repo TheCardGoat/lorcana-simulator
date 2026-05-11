@@ -9,11 +9,11 @@ const CARD_DIRECTORY_BY_TYPE = {
   location: "locations",
 } as const;
 
-const REPO_REL_CARDS_ROOT = "submodules/lorcana/packages/lorcana/lorcana-cards/src/cards";
+const REPO_REL_CARDS_ROOT = "packages/lorcana/lorcana-cards/src/cards";
 
 const ABS_CARDS_ROOT = path.resolve(
   import.meta.dir,
-  "../../../../submodules/lorcana/packages/lorcana/lorcana-cards/src/cards",
+  "../../../../packages/lorcana/lorcana-cards/src/cards",
 );
 
 const dirCache = new Map<string, string[]>();
