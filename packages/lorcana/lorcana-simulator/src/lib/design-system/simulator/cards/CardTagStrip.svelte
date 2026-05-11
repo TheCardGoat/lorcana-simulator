@@ -55,7 +55,6 @@
           type="button"
           class={`relative inline-flex h-6 w-6 items-center justify-center rounded-full border backdrop-blur-sm transition-transform duration-150 ease-out group-hover:scale-[1.04] group-focus-within:scale-[1.04] ${getToneClass(collapsedTag.tone)}`}
           aria-label={`${collapsedTagCount} tags`}
-          onclick={(event) => event.stopPropagation()}
         >
           <span
             class={`absolute inset-0 rounded-full border opacity-70 transition-transform duration-150 ease-out group-hover:translate-y-[-3px] group-hover:translate-x-[3px] group-focus-within:translate-y-[-3px] group-focus-within:translate-x-[3px] ${getToneClass(getTagAt(collapsedStackTags, 1).tone)}`}
@@ -83,7 +82,6 @@
                     {...props}
                     class={`inline-flex h-6 w-6 items-center justify-center rounded-full border backdrop-blur-sm transition-transform duration-150 ease-out hover:scale-105 ${getToneClass(tag.tone)}`}
                     aria-label={tag.label}
-                    onclick={(event) => event.stopPropagation()}
                   >
                     <tag.icon class="h-3.5 w-3.5" />
                   </button>
@@ -113,7 +111,6 @@
                 {...props}
                 class={`group inline-flex items-center rounded-full border backdrop-blur-sm transition-colors ${compact ? "h-6 w-6 justify-center p-0 hover:z-10 hover:scale-105" : "gap-1.5 px-2 py-1 text-[0.68rem] font-semibold tracking-[0.02em]"} ${getToneClass(tag.tone)}`}
                 aria-label={tag.label}
-                onclick={(event) => event.stopPropagation()}
               >
                 <tag.icon class={compact ? "h-3.5 w-3.5" : "h-3.5 w-3.5 shrink-0"} />
                 {#if !compact}
