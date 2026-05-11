@@ -766,7 +766,24 @@ function buildSupplementalCardSnapshot(args: {
         : undefined,
     moveCost: definition.cardType === "location" ? definition.moveCost : undefined,
     classifications: definition.cardType === "character" ? definition.classifications : undefined,
-    keywords: [],
+    // Scry-revealed cards still live in the deck and have no projection yet,
+    // so derive the keyword list and the entry-mode flag from the definition
+    // directly. Without this, a Bodyguard / "may enter play exerted" card
+    // revealed via Down in New Orleans would be missed by the simulator's
+    // entry-mode detector and the play-into-zone destination toggle would
+    // never appear. See PR #73 review feedback (Codex P2).
+    keywords: Array.isArray(definition.abilities)
+      ? definition.abilities
+          .filter(
+            (ability): ability is { type: "keyword"; keyword: string } =>
+              ability !== null &&
+              typeof ability === "object" &&
+              (ability as { type?: unknown }).type === "keyword" &&
+              typeof (ability as { keyword?: unknown }).keyword === "string",
+          )
+          .map((ability) => ability.keyword)
+      : [],
+    mayEnterPlayExertedOption: hasMayEnterPlayExertedOption(definition) ? true : undefined,
     damage: typeof meta?.damage === "number" ? meta.damage : 0,
     readyState: getReadyState(meta),
     isDrying: meta?.isDrying === true,
