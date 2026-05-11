@@ -746,7 +746,7 @@
                               class="size-3 text-amber-400"
                               aria-hidden="true"
                             />
-                            {card.mmr}
+                            {Math.round(card.mmr)}
                           </Badge>
                         {/snippet}
                       </Tooltip.Trigger>
