@@ -110,6 +110,10 @@ export type {
   PlayCardDisabledReason,
   PlayCardDisabledReasonCode,
 } from "./play-card-disabled-reason";
+export {
+  KNOWN_PLAY_CARD_DISABLED_REASON_CODES,
+  assertNeverPlayCardDisabledReason,
+} from "./play-card-disabled-reason";
 
 export type {
   AvailableMove,

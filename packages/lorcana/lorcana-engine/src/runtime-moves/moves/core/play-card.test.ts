@@ -2,6 +2,11 @@ import { describe, expect, it } from "bun:test";
 import type { ActionCard } from "@tcg/lorcana-types";
 import { createCardI18n } from "../../../card-i18n";
 import {
+  KNOWN_PLAY_CARD_DISABLED_REASON_CODES,
+  type PlayCardDisabledReason,
+  assertNeverPlayCardDisabledReason,
+} from "../../../play-card-disabled-reason";
+import {
   LorcanaMultiplayerTestEngine,
   PLAYER_ONE,
   PLAYER_TWO,
@@ -571,6 +576,105 @@ describe("getPlayCardDisabledReason", () => {
     });
 
     expect(engine.asPlayerOne().getPlayCardDisabledReason(devotedHeraldLike)).toBeNull();
+  });
+
+  // Build a minimal-valid PlayCardDisabledReason value for a given code,
+  // covering every variant. If a new code is added to the union without
+  // a case here, TypeScript fails on the `assertNeverPlayCardDisabledReason`
+  // line below, just like the consumer switch.
+  function makeFakeReasonForCode(
+    code: (typeof KNOWN_PLAY_CARD_DISABLED_REASON_CODES)[number],
+  ): PlayCardDisabledReason {
+    switch (code) {
+      case "NOT_IN_HAND":
+        return { code };
+      case "INSUFFICIENT_INK":
+        return { code, params: { needed: 3, available: 1 } };
+      case "SHIFT_NO_TARGET":
+        return { code, params: { targetName: "Diablo" } };
+      case "SHIFT_NO_DISCARD_AVAILABLE":
+        return { code, params: { discardCardType: "action", count: 1 } };
+      case "SHIFT_INSUFFICIENT_INK":
+        return { code, params: { needed: 4, available: 2 } };
+      case "SONG_NO_SINGER":
+        return { code, params: { songCost: 4 } };
+      case "PLAYER_PLAY_RESTRICTED":
+        return { code };
+      case "SELF_PLAY_CONDITION_NOT_MET":
+        return { code };
+      case "BAG_PENDING":
+        return { code };
+      case "UNKNOWN":
+        return { code, params: { validateMoveErrorCode: "TEST" } };
+      default: {
+        // Drift trap: forces a compile error when a code is added to
+        // KNOWN_PLAY_CARD_DISABLED_REASON_CODES without a case here.
+        const _exhaustive: never = code;
+        throw new Error(`unhandled code in makeFakeReasonForCode: ${_exhaustive as string}`);
+      }
+    }
+  }
+
+  // This switch is the consumer-pattern reference (and the type-safety lever).
+  // The `default: assertNeverPlayCardDisabledReason(...)` arm makes TypeScript
+  // refuse to compile if a new variant is added to PlayCardDisabledReason
+  // without being handled here. The UI's i18n catalog should use the same
+  // shape, so adding a code without a translation key is also a build error.
+  function describeReasonForTooltip(reason: PlayCardDisabledReason): string {
+    switch (reason.code) {
+      case "NOT_IN_HAND":
+        return "not-in-hand";
+      case "INSUFFICIENT_INK":
+        return `insufficient-ink:${reason.params.needed}/${reason.params.available}`;
+      case "SHIFT_NO_TARGET":
+        return `shift-no-target:${reason.params.targetName}`;
+      case "SHIFT_NO_DISCARD_AVAILABLE":
+        return `shift-no-discard:${reason.params.discardCardType}x${reason.params.count}`;
+      case "SHIFT_INSUFFICIENT_INK":
+        return `shift-ink:${reason.params.needed}/${reason.params.available}`;
+      case "SONG_NO_SINGER":
+        return `song-no-singer:${reason.params.songCost}`;
+      case "PLAYER_PLAY_RESTRICTED":
+        return "player-restricted";
+      case "SELF_PLAY_CONDITION_NOT_MET":
+        return "self-condition";
+      case "BAG_PENDING":
+        return "bag-pending";
+      case "UNKNOWN":
+        return `unknown:${reason.params.validateMoveErrorCode}`;
+      default:
+        return assertNeverPlayCardDisabledReason(reason);
+    }
+  }
+
+  it("typed params narrow per code (exhaustive consumer pattern compiles and runs)", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [devotedHeraldLike],
+      play: [diabloOnBoard],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    const reason = engine.asPlayerOne().getPlayCardDisabledReason(devotedHeraldLike);
+    expect(reason).not.toBeNull();
+    expect(describeReasonForTooltip(reason!)).toBe("shift-no-discard:actionx1");
+  });
+
+  it("KNOWN_PLAY_CARD_DISABLED_REASON_CODES is in sync with the union (no missing or stale entries)", () => {
+    // The compile-time `satisfies` + `_ListIsExhaustive` checks in
+    // play-card-disabled-reason.ts guarantee both directions of containment.
+    // This runtime check pins that the consumer-pattern switch above covers
+    // exactly the same set — if either side drifts, this test fails first.
+    const codesHandledBySwitch = new Set<string>();
+    for (const code of KNOWN_PLAY_CARD_DISABLED_REASON_CODES) {
+      // Construct a minimal-valid PlayCardDisabledReason for each code by
+      // round-tripping through the consumer switch.
+      const fake = makeFakeReasonForCode(code);
+      const tag = describeReasonForTooltip(fake);
+      expect(tag.length).toBeGreaterThan(0);
+      codesHandledBySwitch.add(code);
+    }
+    expect(codesHandledBySwitch.size).toBe(KNOWN_PLAY_CARD_DISABLED_REASON_CODES.length);
   });
 
   it("stays in lock-step with canPlayCard (true iff reason is null)", () => {
