@@ -59,6 +59,7 @@ import { DECK_FIXTURES } from "@/features/simulator-devtools/deck-fixtures/index
 import type { HumanVsAiMatchConfig } from "@/features/simulator-devtools/vs-ai/types.js";
 import type { MatchmakingStatus } from "../state/matchmaking-queue.svelte.js";
 import {
+  PLACEMENT_THRESHOLD,
   QUEUE_CARD_DEFINITIONS,
   createQueueJoinLabel,
   type QueueCardView,
@@ -461,8 +462,16 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
           winStreak:
             this.playerStats?.byFormat.find((f) => f.formatId === definition.format)
               ?.currentWinStreak ?? this.playerStats?.currentWinStreak ?? 0,
-          mmr:
-            this.playerStats?.byFormat.find((f) => f.formatId === definition.format)?.mmr ?? null,
+          mmr: (() => {
+            const formatStats = this.playerStats?.byFormat.find(
+              (f) => f.formatId === definition.format,
+            );
+            if (!formatStats) return null;
+            // Suppress MMR until placement is complete — the API always
+            // returns a numeric mmr even during placement matches.
+            if (formatStats.gamesPlayed < PLACEMENT_THRESHOLD) return null;
+            return formatStats.mmr;
+          })(),
           placementGamesPlayed:
             this.playerStats?.byFormat.find((f) => f.formatId === definition.format)
               ?.gamesPlayed ?? null,

@@ -15,6 +15,7 @@
     ProfileMatchmakingContext,
   } from '../api/player-context-api.js';
   import {
+    PLACEMENT_THRESHOLD,
     type QueueCardView,
   } from './matchmaking-lobby.constants.js';
   import { Badge } from '$lib/design-system/primitives/badge';
@@ -33,8 +34,6 @@
   import Users from '@lucide/svelte/icons/users';
   import WifiOff from '@lucide/svelte/icons/wifi-off';
   import X from '@lucide/svelte/icons/x';
-
-  const PLACEMENT_THRESHOLD = 20;
 
   interface Props {
     status: MatchmakingStatus;
