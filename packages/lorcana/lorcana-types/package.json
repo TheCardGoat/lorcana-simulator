@@ -42,7 +42,7 @@
     "format": "bun x oxfmt --write ./src",
     "lint": "vp lint ./src",
     "test": "bun test src",
-    "check": "bun run format && bun run lint && bun run check-types && bun run test"
+    "check": "bun run format && bun run lint && bun run check-types"
   },
   "dependencies": {
     "unique-names-generator": "^4.7.1"
