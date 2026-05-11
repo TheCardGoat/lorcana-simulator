@@ -2742,6 +2742,22 @@ export abstract class LorcanaEngineBase {
       if (shiftReason === null) {
         return null;
       }
+      // Hard blockers (player-level restrictions, self-play conditions, a
+      // pending bag) apply to ALL play paths — `validateMove` checks them
+      // before any cost validation, for both standard and shift. When
+      // standard failed with one of these, the shift fallback's failure is
+      // a *symptom* (no target / no discard / ink); the player needs to see
+      // the root cause instead. The per-category accessors
+      // (`getShiftPlayDisabledReason`) keep returning the shift-specific
+      // reason for the Shift CTA's own tooltip — only the composite answer
+      // gets preempted here.
+      if (
+        standardValidation.code === "PLAYER_PLAY_RESTRICTED" ||
+        standardValidation.code === "SELF_PLAY_CONDITION_NOT_MET" ||
+        standardValidation.code === "BAG_PENDING"
+      ) {
+        return this.mapValidateMoveErrorToDisabledReason(standardValidation.code, playableCardId);
+      }
       // For "no ink cost on shift and discard is available, yet shift still
       // can't be played" — fall through to the generic standard-cost error.
       if (shiftReason.code === "UNKNOWN") {
@@ -2856,10 +2872,19 @@ export abstract class LorcanaEngineBase {
 
     if (!shiftTargets.some((targetId) => this.canDiscoverShiftPlay(playableCardId, targetId))) {
       if (typeof shiftRules.inkCost === "number") {
+        // Use the projected `shiftPlayCost` (cost-reduction-adjusted) so the
+        // tooltip matches what `canDiscoverShiftPlay` → `validateMove`
+        // actually enforced. Fall back to the raw shift rules cost only if
+        // the projection is unavailable.
+        const projected = this.getBoard().cards[playableCardId];
+        const adjustedShiftCost =
+          typeof projected?.shiftPlayCost === "number"
+            ? projected.shiftPlayCost
+            : shiftRules.inkCost;
         return {
           code: "SHIFT_INSUFFICIENT_INK",
           params: {
-            needed: shiftRules.inkCost,
+            needed: adjustedShiftCost,
             available: this.getAvailableInk(playerId),
           },
         };
@@ -2892,10 +2917,17 @@ export abstract class LorcanaEngineBase {
       case "INSUFFICIENT_INK": {
         const playerId = this.getScopedPlayerId() ?? String(this.getActivePlayer() ?? "");
         const cardDef = this.getCardDefinitionByInstanceId(playableCardId) as LorcanaCard;
+        // Use the projected `playCost` (cost-reduction- and cost-increase-
+        // adjusted) so the tooltip matches the amount `validateMove` actually
+        // checked. Fall back to the printed cost only if the projection is
+        // unavailable (e.g. during early init).
+        const projected = this.getBoard().cards[playableCardId];
+        const adjustedCost =
+          typeof projected?.playCost === "number" ? projected.playCost : cardDef.cost;
         return {
           code: "INSUFFICIENT_INK",
           params: {
-            needed: cardDef.cost,
+            needed: adjustedCost,
             available: this.getAvailableInk(playerId),
           },
         };

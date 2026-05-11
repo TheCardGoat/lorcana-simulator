@@ -757,6 +757,169 @@ describe("getPlayCardDisabledReason", () => {
       expect(engine.asPlayerOne().getSingPlayDisabledReason(inkTestCharacter)).toBeNull();
     });
 
+    it("INSUFFICIENT_INK reports the cost-reduction-adjusted needed value, not the printed cost", () => {
+      // Regression for PR #51 review: the tooltip must match what
+      // `validateMove` actually checks. With a cost reduction in play, the
+      // engine validates against the reduced cost, so the tooltip's `needed`
+      // param has to use the reduced cost too — otherwise the player sees
+      // "Needs 5 ink" while the engine secretly only requires 3.
+      const expensiveCharacter = createMockCharacter({
+        id: "reason-cost-adjusted",
+        name: "Expensive Character",
+        cost: 5,
+      });
+      const costReducer = createMockCharacter({
+        id: "reason-cost-reducer",
+        name: "Cost Reducer",
+        cost: 2,
+        abilities: [
+          {
+            id: "reason-cost-reducer-1",
+            type: "static",
+            text: "Your characters cost 1 ink less to play.",
+            effect: { type: "cost-reduction", amount: 1, cardType: "character" },
+          },
+        ],
+      });
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [expensiveCharacter],
+        play: [costReducer],
+        inkwell: 2, // less than 5-1=4, so still insufficient
+        deck: 2,
+      });
+
+      const reason = engine.asPlayerOne().getStandardPlayDisabledReason(expensiveCharacter);
+      // Cost reducer makes 5 → 4. Player has 2. So `needed` should be 4, not 5.
+      expect(reason).toEqual({
+        code: "INSUFFICIENT_INK",
+        params: { needed: 4, available: 2 },
+      });
+    });
+
+    it("composite getPlayCardDisabledReason preempts shift fallback when a hard blocker (SELF_PLAY_CONDITION_NOT_MET) applies to both paths", () => {
+      // Regression for PR #51 review: hard blockers — self-play-condition,
+      // player-play-restricted, bag-pending — apply to BOTH standard and
+      // shift play. Without the preemption, the composite method would
+      // run the shift fallback, fail (because validateMove rejects shift
+      // for the same root cause), and return a misleading SHIFT_NO_TARGET
+      // or SHIFT_INSUFFICIENT_INK. The composite should report the actual
+      // blocker. The per-category accessors still return their own reasons.
+      const shiftTarget = createMockCharacter({
+        id: "reason-hard-blocker-target",
+        name: "Diablo",
+        version: "Target",
+        cost: 2,
+      });
+      const cardWithBothShiftAndSelfPlayCondition = createMockCharacter({
+        id: "reason-hard-blocker-card",
+        name: "Diablo",
+        version: "Conditional Shift",
+        cost: 6,
+        abilities: [
+          {
+            id: "reason-hard-blocker-shift",
+            keyword: "Shift",
+            type: "keyword",
+            text: "Shift 4",
+            cost: { ink: 4 },
+          },
+          {
+            id: "reason-hard-blocker-condition",
+            type: "static",
+            text: "You can play this character only if you have Chip in play.",
+            // Condition is "has-named-character Chip" — when no Chip in play,
+            // the condition is NOT met, so `getSelfPlayConditionError` blocks
+            // the play with SELF_PLAY_CONDITION_NOT_MET.
+            condition: {
+              controller: "you",
+              name: "Chip",
+              type: "has-named-character",
+            },
+            effect: { type: "self-play-condition" },
+          },
+        ],
+      });
+
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [cardWithBothShiftAndSelfPlayCondition],
+        play: [shiftTarget],
+        inkwell: 0, // would also fail SHIFT_INSUFFICIENT_INK
+        deck: 2,
+      });
+
+      // Composite: should preempt the shift fallback's "no ink" complaint
+      // with the actual root cause (the self-play condition).
+      expect(
+        engine.asPlayerOne().getPlayCardDisabledReason(cardWithBothShiftAndSelfPlayCondition),
+      ).toEqual({ code: "SELF_PLAY_CONDITION_NOT_MET" });
+
+      // Per-category getShiftPlayDisabledReason: still surfaces the
+      // shift-specific reason for the Shift CTA's own tooltip — the
+      // independent-path semantics are preserved.
+      expect(
+        engine.asPlayerOne().getShiftPlayDisabledReason(cardWithBothShiftAndSelfPlayCondition),
+      ).toEqual({
+        code: "SHIFT_INSUFFICIENT_INK",
+        params: expect.objectContaining({ available: 0 }),
+      });
+    });
+
+    it("SHIFT_INSUFFICIENT_INK reports the cost-reduction-adjusted shift cost", () => {
+      // Same regression for shift: `shiftRules.inkCost` is the printed cost,
+      // but `canDiscoverShiftPlay` validates the reduced cost. The tooltip
+      // must follow `validateMove`.
+      const shiftTarget = createMockCharacter({
+        id: "reason-shift-adjust-target",
+        name: "Shift Hero",
+        cost: 2,
+      });
+      const shiftCharacter = createMockCharacter({
+        id: "reason-shift-adjust",
+        name: "Shift Hero",
+        cost: 6,
+        abilities: [
+          {
+            id: "reason-shift-adjust-kw",
+            keyword: "Shift",
+            text: "Shift 4",
+            type: "keyword",
+            cost: { ink: 4 },
+          },
+        ],
+      });
+      const shiftReducer = createMockCharacter({
+        id: "reason-shift-reducer",
+        name: "Shift Reducer",
+        cost: 2,
+        abilities: [
+          {
+            id: "reason-shift-reducer-1",
+            type: "static",
+            text: "Your characters cost 1 ink less to shift.",
+            effect: {
+              type: "cost-reduction",
+              amount: 1,
+              cardType: "character",
+              playMethod: "shift",
+            },
+          },
+        ],
+      });
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [shiftCharacter],
+        play: [shiftTarget, shiftReducer],
+        inkwell: 2, // less than 4-1=3, so still insufficient
+        deck: 2,
+      });
+
+      const reason = engine.asPlayerOne().getShiftPlayDisabledReason(shiftCharacter);
+      // Shift cost 4 - 1 reduction = 3. Player has 2. `needed` should be 3.
+      expect(reason).toEqual({
+        code: "SHIFT_INSUFFICIENT_INK",
+        params: { needed: 3, available: 2 },
+      });
+    });
+
     it("getSingPlayDisabledReason returns SONG_NO_SINGER when no ready singer is available", () => {
       const engine = LorcanaMultiplayerTestEngine.createWithFixture({
         hand: [songCardForReason],
