@@ -461,7 +461,7 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
             selectedDeck.validFormats.includes(definition.format),
           winStreak:
             this.playerStats?.byFormat.find((f) => f.formatId === definition.format)
-              ?.currentWinStreak ?? this.playerStats?.currentWinStreak ?? 0,
+              ?.currentWinStreak ?? 0,
           mmr: (() => {
             const formatStats = this.playerStats?.byFormat.find(
               (f) => f.formatId === definition.format,
