@@ -31,7 +31,19 @@ export async function lorcanaCreateServerEngine(
   // Series rule: when the play module designates a chooser (loser of the
   // most recent decisive game in a best-of-N), that player gets the
   // chooseWhoGoesFirst privilege. Game 1 has no designation, so we fall
-  // back to a coin flip.
+  // back to a coin flip. We refuse a chooser id that is neither seat —
+  // silently coercing one would produce a "player" the engine has no
+  // record of and break the setup phase.
+  if (
+    input.firstPlayerChooserId !== undefined &&
+    input.firstPlayerChooserId !== input.player1Id &&
+    input.firstPlayerChooserId !== input.player2Id
+  ) {
+    throw new Error(
+      `lorcanaCreateServerEngine: firstPlayerChooserId "${input.firstPlayerChooserId}" ` +
+        `must match player1Id ("${input.player1Id}") or player2Id ("${input.player2Id}")`,
+    );
+  }
   const goingFirst = input.firstPlayerChooserId
     ? createPlayerId(input.firstPlayerChooserId)
     : Math.random() < 0.5
