@@ -37,18 +37,29 @@ export const mickeyMousePirateCaptain: CharacterCard = {
     shift(3),
     {
       effect: {
-        duration: "this-turn",
-        modifier: 2,
-        stat: "strength",
-        target: {
-          cardTypes: ["character"],
-          count: 1,
-          filter: [{ type: "has-classification", classification: "Pirate" }],
-          owner: "any",
-          selector: "chosen",
-          zones: ["play"],
-        },
-        type: "modify-stat",
+        type: "sequence",
+        steps: [
+          {
+            type: "modify-stat",
+            stat: "strength",
+            modifier: 2,
+            duration: "this-turn",
+            target: {
+              cardTypes: ["character"],
+              count: 1,
+              filter: [{ type: "has-classification", classification: "Pirate" }],
+              owner: "any",
+              selector: "chosen",
+              zones: ["play"],
+            },
+          },
+          {
+            type: "grant-ability",
+            ability: "takes-no-damage-from-challenges",
+            duration: "this-turn",
+            target: { ref: "previous-target" },
+          },
+        ],
       },
       id: "adf-2",
       name: "MARINER'S MIGHT",

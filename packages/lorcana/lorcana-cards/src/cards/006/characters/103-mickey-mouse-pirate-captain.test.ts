@@ -20,7 +20,7 @@ describe("Mickey Mouse - Pirate Captain", () => {
     expect(testEngine.asPlayerOne().hasKeyword(mickeyMousePirateCaptain, "Shift")).toBe(true);
   });
 
-  describe("MARINER'S MIGHT - Whenever this character quests, chosen Pirate character gets +2 {S}.", () => {
+  describe('MARINER\'S MIGHT - Whenever this character quests, chosen Pirate character gets +2 {S} and gains "This character takes no damage from challenges" this turn.', () => {
     it("gives chosen Pirate character +2 strength when questing", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [mickeyMousePirateCaptain, pirateCharacter],
@@ -40,6 +40,32 @@ describe("Mickey Mouse - Pirate Captain", () => {
       expect(testEngine.asPlayerOne().getCardStrength(pirateCharacter)).toBe(
         pirateCharacter.strength + 2,
       );
+    });
+
+    it("grants chosen Pirate 'takes no damage from challenges' this turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mickeyMousePirateCaptain, pirateCharacter],
+        deck: 3,
+      });
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .hasTemporaryAbility(pirateCharacter, "takes-no-damage-from-challenges"),
+      ).toBe(false);
+
+      expect(testEngine.asPlayerOne().quest(mickeyMousePirateCaptain)).toBeSuccessfulCommand();
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mickeyMousePirateCaptain, { targets: [pirateCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .hasTemporaryAbility(pirateCharacter, "takes-no-damage-from-challenges"),
+      ).toBe(true);
     });
   });
 });
