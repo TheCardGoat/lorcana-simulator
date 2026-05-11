@@ -608,63 +608,56 @@
                       : m['sim.matchmaking.matchmaking.tabs.bo3']({})}
                   </p>
 
-                  <!-- Format icon with validity badge overlaid -->
-                  <div class="relative shrink-0">
-                    {#if card.definition.format === 'infinity'}
-                      <InfinityIcon
-                        class="size-8 text-sky-300/50"
-                        aria-hidden="true"
-                      />
-                    {:else}
-                      <Layers
-                        class="size-8 text-amber-300/50"
-                        aria-hidden="true"
-                      />
-                    {/if}
-
-                    {#if !card.isDeckValid}
-                      <Tooltip.Root delayDuration={120}>
-                        <Tooltip.Trigger>
-                          {#snippet child({ props })}
-                            <span
-                              class="absolute -bottom-1 -right-1 inline-flex size-4.5 items-center justify-center rounded-full border border-rose-400/30 bg-rose-500/15 text-rose-300"
-                              {...props}
-                            >
-                              <ShieldAlert class="size-3" aria-hidden="true" />
-                            </span>
-                          {/snippet}
-                        </Tooltip.Trigger>
-                        <Tooltip.Content
-                          side="top"
-                          class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
-                        >
-                          {m['sim.matchmaking.queue.deckNotLegalForFormat']({
-                            format: m[card.definition.labelKey]({}),
-                          })}
-                        </Tooltip.Content>
-                      </Tooltip.Root>
-                    {:else if card.isActive}
-                      <Tooltip.Root delayDuration={120}>
-                        <Tooltip.Trigger>
-                          {#snippet child({ props })}
-                            <span
-                              class="absolute -bottom-1 -right-1 inline-flex size-4.5 items-center justify-center rounded-full border border-sky-300/30 bg-sky-400/12 text-sky-100"
-                              {...props}
-                            >
-                              <CheckCircle class="size-3" aria-hidden="true" />
-                            </span>
-                          {/snippet}
-                        </Tooltip.Trigger>
-                        <Tooltip.Content
-                          side="top"
-                          class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
-                        >
-                          {m['sim.matchmaking.matchmaking.selectedBadge']({})}
-                        </Tooltip.Content>
-                      </Tooltip.Root>
-                    {/if}
-                  </div>
+                  <!-- Format icon — purely decorative -->
+                  {#if card.definition.format === 'infinity'}
+                    <InfinityIcon class="size-8 shrink-0 text-sky-300/50" aria-hidden="true" />
+                  {:else}
+                    <Layers class="size-8 shrink-0 text-amber-300/50" aria-hidden="true" />
+                  {/if}
                 </div>
+
+                <!-- Validity / selected badge pinned to card top-right corner -->
+                {#if !card.isDeckValid}
+                  <Tooltip.Root delayDuration={120}>
+                    <Tooltip.Trigger>
+                      {#snippet child({ props })}
+                        <span
+                          class="absolute right-2.5 top-2.5 inline-flex size-5 items-center justify-center rounded-full border border-rose-400/30 bg-rose-500/15 text-rose-300"
+                          {...props}
+                        >
+                          <ShieldAlert class="size-3" aria-hidden="true" />
+                        </span>
+                      {/snippet}
+                    </Tooltip.Trigger>
+                    <Tooltip.Content
+                      side="top"
+                      class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
+                    >
+                      {m['sim.matchmaking.queue.deckNotLegalForFormat']({
+                        format: m[card.definition.labelKey]({}),
+                      })}
+                    </Tooltip.Content>
+                  </Tooltip.Root>
+                {:else if card.isActive}
+                  <Tooltip.Root delayDuration={120}>
+                    <Tooltip.Trigger>
+                      {#snippet child({ props })}
+                        <span
+                          class="absolute right-2.5 top-2.5 inline-flex size-5 items-center justify-center rounded-full border border-sky-300/30 bg-sky-400/12 text-sky-100"
+                          {...props}
+                        >
+                          <CheckCircle class="size-3" aria-hidden="true" />
+                        </span>
+                      {/snippet}
+                    </Tooltip.Trigger>
+                    <Tooltip.Content
+                      side="top"
+                      class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
+                    >
+                      {m['sim.matchmaking.matchmaking.selectedBadge']({})}
+                    </Tooltip.Content>
+                  </Tooltip.Root>
+                {/if}
 
                 <div class="flex flex-wrap gap-2">
                   <Tooltip.Root delayDuration={120}>
