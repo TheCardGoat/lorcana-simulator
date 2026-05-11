@@ -58,8 +58,12 @@ type HasReturnFromDiscardCtx = Pick<MoveExecutionContext<never>, "framework" | "
  *    effect with filters and no matching hand cards. Other first-step patterns return `false`.
  *
  * 3. `sequence { [mandatory-first-step, ...] }` (no optional wrapper) — skip if the first step
- *    is a return-from-discard with no valid discard candidates. The whole sequence fizzles when
- *    the first step has nothing to act on.
+ *    is a return-from-discard with no valid discard candidates AND every subsequent step is
+ *    gated on a `returned-card-*` condition (so the whole sequence would fizzle). Multi-step
+ *    sequences with at least one returned-card-independent step (e.g. Syndrome's
+ *    "Then, you may play or shift a Robot for free") are NOT skipped — per CR 1.2.3 the
+ *    independent step must still resolve. The sequence resolver itself skips the empty
+ *    step 1 at runtime.
  *
  * Mill sequences are intentionally not skipped here: mill does not require explicit target
  * selection in this helper's analysis model, and resolving as much of the mill as possible is
