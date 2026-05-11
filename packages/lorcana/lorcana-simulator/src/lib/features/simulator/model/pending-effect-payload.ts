@@ -4,6 +4,7 @@ import type {
 } from "@tcg/lorcana-engine";
 import type { CardFilter, ScryCardOrdering } from "@tcg/lorcana-types";
 import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
+import { isSupportedResolutionTargetEffectType } from "@/features/simulator/model/resolution-target-prompt.js";
 import type { CardSnapshotMap } from "./board-utils.js";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -149,11 +150,10 @@ function unwrapOptionalEffect(
   }
   // Sequence wrappers (e.g. Julieta SIGNATURE RECIPE:
   // `{type:"sequence", steps:[{type:"optional", effect:{type:"remove-damage", ...}}, ...]}`).
-  // The engine resolves steps in order; descend into the first step whose
-  // inner type is a supported resolution-target effect so the overlay (and
-  // amount picker) can engage. Without this, the bag payload's `effectType`
-  // is just "sequence", which isn't in `SUPPORTED_EFFECT_TYPES`, and the UI
-  // falls back to a generic modal that submits no `amount`.
+  // Scan for the first step whose unwrapped type is a supported resolution-
+  // target effect type. Earlier non-target steps (e.g. Miracle Candle's
+  // `gain-lore` preceding `remove-damage`) would otherwise short-circuit the
+  // scan and hide the target overlay / amount picker.
   if (type === "sequence" && Array.isArray(effectRecord.steps)) {
     for (const step of effectRecord.steps) {
       const stepRecord = asRecord(step);
@@ -161,10 +161,14 @@ function unwrapOptionalEffect(
         continue;
       }
       const unwrapped = unwrapOptionalEffect(stepRecord);
-      if (unwrapped) {
+      const unwrappedType = getRecordString(unwrapped, "type");
+      if (isSupportedResolutionTargetEffectType(unwrappedType)) {
         return unwrapped;
       }
     }
+    // No step matched a supported resolution-target type. Return the
+    // original sequence so callers can fall back to generic copy/handling
+    // (resolveBag still drains correctly; the overlay just won't engage).
     return effectRecord;
   }
   return effectRecord;

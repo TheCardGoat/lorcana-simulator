@@ -43,12 +43,14 @@ describe("Fergus two-step bag (accept then pick)", () => {
     // selectionContext should advertise the locations as candidates.
     const bagEffects = testEngine.asPlayerOne().getBagEffects();
     expect(bagEffects.length).toBeGreaterThan(0);
-    const ctx = (bagEffects[0] as any)?.selectionContext;
-    expect(ctx?.kind).toBe("target-selection");
-    expect(ctx?.allowedZones).toEqual(expect.arrayContaining(["hand"]));
+    const ctx = bagEffects[0]?.selectionContext;
+    if (ctx?.kind !== "target-selection") {
+      throw new Error(`expected target-selection context, got ${ctx?.kind ?? "undefined"}`);
+    }
+    expect(ctx.allowedZones).toEqual(expect.arrayContaining(["hand"]));
 
     const locBId = testEngine.findCardInstanceId(locB, "hand");
-    expect(ctx?.cardCandidateIds).toEqual(expect.arrayContaining([locBId]));
+    expect(ctx.cardCandidateIds).toEqual(expect.arrayContaining([locBId]));
 
     // Step 2: send targets — this resolves the play-card effect.
     expect(

@@ -3669,13 +3669,15 @@ function getScryUnassignedCardIds(
 }
 
 /**
- * True when at least one card assigned to a `play` scry destination has
- * the Bodyguard keyword. Used to gate forwarding of `enterPlayExerted` on
- * the resolveEffect submission, since Bodyguard is the only printed
- * source of a "may enter exerted" choice for cards played via a scry
- * destination. See triage 2026-05-11 #11 (Down in New Orleans).
+ * True when at least one card assigned to a `play` scry destination prints a
+ * "may enter play exerted" option — either via the Bodyguard keyword or via
+ * a static `may-enter-play-exerted` ability (e.g. Mickey Mouse — Expedition
+ * Leader's LONG JOURNEY, Hamish, Hubert & Harris — Making Mischief). Used to
+ * gate forwarding of `enterPlayExerted` on the resolveEffect submission and
+ * to decide whether to render the entry-mode toggle in the scry overlay.
+ * See triage 2026-05-11 #11 (Down in New Orleans).
  */
-function scryAssignsBodyguardToPlay(
+function scryAssignsEntryModeCardToPlay(
   context: Extract<ResolutionSelectionContext, { kind: "scry-selection" }>,
   manualDestinations: ScryResolutionSelection[],
   cardSnapshotsById: CardSnapshotMap,
@@ -3692,7 +3694,10 @@ function scryAssignsBodyguardToPlay(
     }
     for (const cardId of destination.cards) {
       const card = cardSnapshotsById[cardId];
-      if (card?.keywords?.includes("Bodyguard")) {
+      if (!card) {
+        continue;
+      }
+      if (card.keywords?.includes("Bodyguard") || card.mayEnterPlayExertedOption === true) {
         return true;
       }
     }
@@ -4503,7 +4508,11 @@ export class LorcanaSidebarPresenter {
       return null;
     }
     if (
-      !scryAssignsBodyguardToPlay(session.context, session.scryDestinations, this.cardSnapshotsById)
+      !scryAssignsEntryModeCardToPlay(
+        session.context,
+        session.scryDestinations,
+        this.cardSnapshotsById,
+      )
     ) {
       return null;
     }
@@ -8234,7 +8243,11 @@ export class LorcanaSidebarPresenter {
       hasPlayCardEntryModeSelection(session.context, session.selectedTargets);
     const isScryBodyguardEntryMode =
       session.context.kind === "scry-selection" &&
-      scryAssignsBodyguardToPlay(session.context, session.scryDestinations, this.cardSnapshotsById);
+      scryAssignsEntryModeCardToPlay(
+        session.context,
+        session.scryDestinations,
+        this.cardSnapshotsById,
+      );
     if (!isTargetEntryMode && !isScryBodyguardEntryMode) {
       return false;
     }
@@ -8436,7 +8449,7 @@ export class LorcanaSidebarPresenter {
                   // Bodyguard plays, so forwarding it unconditionally is safe.
                   // See triage 2026-05-11 #11 (Down in New Orleans → Bodyguard).
                   ...(typeof session.selectedEnterPlayExerted === "boolean" &&
-                  scryAssignsBodyguardToPlay(
+                  scryAssignsEntryModeCardToPlay(
                     session.context,
                     session.scryDestinations,
                     this.cardSnapshotsById,

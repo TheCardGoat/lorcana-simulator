@@ -159,6 +159,47 @@ describe("resolution amount selection", () => {
     });
   });
 
+  it("skips earlier non-up-to steps in a sequence (Miracle Candle ABUELA'S GIFT shape)", () => {
+    // Miracle Candle: sequence([gain-lore 2, remove-damage up-to 2]).
+    // The amount picker must reflect the remove-damage step's up-to range,
+    // not be hidden by the leading gain-lore.
+    const selection = buildResolutionAmountSelectionState({
+      payload: {
+        effect: {
+          type: "sequence",
+          steps: [
+            { type: "gain-lore", amount: 2 },
+            {
+              type: "remove-damage",
+              amount: { type: "up-to", value: 2 },
+            },
+          ],
+        },
+      },
+      selectedTargets: ["card-1"],
+      cardSnapshotsById: {
+        "card-1": {
+          cardId: "card-1",
+          definitionId: "card-1",
+          facePresentation: "faceUp",
+          isMasked: false,
+          label: "Damaged Location",
+          ownerId: "player-one",
+          ownerSide: "playerOne",
+          zoneId: "play",
+          damage: 2,
+        },
+      },
+    });
+
+    expect(selection).toEqual({
+      label: "Damage to remove",
+      min: 0,
+      max: 2,
+      value: 2,
+    });
+  });
+
   it("ignores fixed move-damage effects", () => {
     expect(
       buildResolutionAmountSelectionState({
