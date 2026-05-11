@@ -471,7 +471,9 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
           // returns a numeric mmr even during placement matches.
           mmr:
             formatStats && formatStats.gamesPlayed >= PLACEMENT_THRESHOLD ? formatStats.mmr : null,
-          placementGamesPlayed: formatStats?.gamesPlayed ?? null,
+          // On ranked, default to 0 so new players see "0/20" placement progress.
+          // On casual/testing, formatStats is undefined → null hides the bar.
+          placementGamesPlayed: isRanked ? (formatStats?.gamesPlayed ?? 0) : null,
         };
       }),
       isDeckValidForSelectedFormat: this.isDeckValidForSelectedFormat,
