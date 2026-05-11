@@ -610,6 +610,28 @@ describe("createMatchmakingLobbyController", () => {
     });
   });
 
+  it("snaps queue mode to BO3 when switching to ranked from a BO1 selection", () => {
+    const controller = createControllerWithFlags({ rankedEnabled: true });
+    controller.selectMatchType("casual");
+    controller.selectQueueMode("1");
+    expect(controller.queue.selectedQueueMode).toBe("1");
+
+    controller.selectMatchType("ranked");
+
+    expect(controller.queue.selectedMatchType).toBe("ranked");
+    expect(controller.queue.selectedQueueMode).toBe("3");
+  });
+
+  it("rejects selectQueueMode('1') while ranked is selected", () => {
+    const controller = createControllerWithFlags({ rankedEnabled: true });
+    controller.selectMatchType("ranked");
+    expect(controller.queue.selectedQueueMode).toBe("3");
+
+    controller.selectQueueMode("1");
+
+    expect(controller.queue.selectedQueueMode).toBe("3");
+  });
+
   it("passes selected bot fixture and strategy into AI quick-play URL", async () => {
     const controller = createController();
     controller.handleBotFixtureChange("amber-amethyst-control");
