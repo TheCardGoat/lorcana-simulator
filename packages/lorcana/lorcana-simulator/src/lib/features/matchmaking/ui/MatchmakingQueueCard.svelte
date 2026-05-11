@@ -602,40 +602,35 @@
               ></div>
               <div class="relative flex h-full flex-col gap-3">
                 <div class="flex items-start justify-between gap-3">
-                  <div class="space-y-1">
-                    <div class="flex items-center gap-2">
-                      {#if card.definition.format === 'infinity'}
-                        <InfinityIcon
-                          class="size-4 text-sky-200"
-                          aria-hidden="true"
-                        />
-                      {:else}
-                        <Layers
-                          class="size-4 text-amber-200"
-                          aria-hidden="true"
-                        />
-                      {/if}
-                      <p class="text-base font-semibold text-white">
-                        {m[card.definition.labelKey]({})} · {selectedQueueMode ===
-                        '1'
-                          ? m['sim.matchmaking.matchmaking.tabs.bo1']({})
-                          : m['sim.matchmaking.matchmaking.tabs.bo3']({})}
-                      </p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-1.5">
+                  <p class="text-base font-semibold leading-snug text-white">
+                    {m[card.definition.labelKey]({})} · {selectedQueueMode === '1'
+                      ? m['sim.matchmaking.matchmaking.tabs.bo1']({})
+                      : m['sim.matchmaking.matchmaking.tabs.bo3']({})}
+                  </p>
+
+                  <!-- Format icon with validity badge overlaid -->
+                  <div class="relative shrink-0">
+                    {#if card.definition.format === 'infinity'}
+                      <InfinityIcon
+                        class="size-8 text-sky-300/50"
+                        aria-hidden="true"
+                      />
+                    {:else}
+                      <Layers
+                        class="size-8 text-amber-300/50"
+                        aria-hidden="true"
+                      />
+                    {/if}
+
                     {#if !card.isDeckValid}
                       <Tooltip.Root delayDuration={120}>
                         <Tooltip.Trigger>
                           {#snippet child({ props })}
                             <span
-                              class="inline-flex size-6 items-center justify-center rounded-full border border-rose-400/30 bg-rose-500/15 text-rose-300"
+                              class="absolute -bottom-1 -right-1 inline-flex size-4.5 items-center justify-center rounded-full border border-rose-400/30 bg-rose-500/15 text-rose-300"
                               {...props}
                             >
-                              <ShieldAlert
-                                class="size-3.5"
-                                aria-hidden="true"
-                              />
+                              <ShieldAlert class="size-3" aria-hidden="true" />
                             </span>
                           {/snippet}
                         </Tooltip.Trigger>
@@ -653,13 +648,10 @@
                         <Tooltip.Trigger>
                           {#snippet child({ props })}
                             <span
-                              class="inline-flex size-6 items-center justify-center rounded-full border border-sky-300/30 bg-sky-400/12 text-sky-100"
+                              class="absolute -bottom-1 -right-1 inline-flex size-4.5 items-center justify-center rounded-full border border-sky-300/30 bg-sky-400/12 text-sky-100"
                               {...props}
                             >
-                              <CheckCircle
-                                class="size-3.5"
-                                aria-hidden="true"
-                              />
+                              <CheckCircle class="size-3" aria-hidden="true" />
                             </span>
                           {/snippet}
                         </Tooltip.Trigger>
