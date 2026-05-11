@@ -311,7 +311,9 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
   practiceLoading = $state(false);
   practiceError = $state<string | null>(null);
   playerStats = $state<PlayerStats | null>(null);
-  selectedQueueFormat = $state<QueueStatsFormat>(restoreSupportedQueueFormat(loadMatchmakingPrefs().format));
+  selectedQueueFormat = $state<QueueStatsFormat>(
+    restoreSupportedQueueFormat(loadMatchmakingPrefs().format),
+  );
   selectedQueueMode = $state<QueueStatsMode>(loadMatchmakingPrefs().mode ?? "1");
   selectedMatchType = $state<"ranked" | "casual" | "testing">("casual");
   selectedBotFixtureId = $state("");
@@ -460,10 +462,10 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
             !selectedDeck.validFormats ||
             selectedDeck.validFormats.includes(definition.format),
           winStreak:
-            this.playerStats?.byFormat.find((f) => f.formatId === definition.format)
+            this.playerStats?.byFormat?.find((f) => f.formatId === definition.format)
               ?.currentWinStreak ?? 0,
           mmr: (() => {
-            const formatStats = this.playerStats?.byFormat.find(
+            const formatStats = this.playerStats?.byFormat?.find(
               (f) => f.formatId === definition.format,
             );
             if (!formatStats) return null;
@@ -473,7 +475,7 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
             return formatStats.mmr;
           })(),
           placementGamesPlayed:
-            this.playerStats?.byFormat.find((f) => f.formatId === definition.format)
+            this.playerStats?.byFormat?.find((f) => f.formatId === definition.format)
               ?.gamesPlayed ?? null,
         };
       }),
