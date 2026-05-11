@@ -448,6 +448,10 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
       rankedEnabled: this.rankedEnabled,
       queueCards: QUEUE_CARD_DEFINITIONS.map((definition) => {
         const selectedDeck = this.playerContext.selectedDeck;
+        const isRanked = this.selectedMatchType === "ranked";
+        const formatStats = isRanked
+          ? this.playerStats?.byFormat?.find((f) => f.formatId === definition.format)
+          : undefined;
         return {
           definition,
           stats: this.queueStatsStore.statsByPartition(
@@ -461,22 +465,13 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
             !selectedDeck ||
             !selectedDeck.validFormats ||
             selectedDeck.validFormats.includes(definition.format),
-          winStreak:
-            this.playerStats?.byFormat?.find((f) => f.formatId === definition.format)
-              ?.currentWinStreak ?? 0,
-          mmr: (() => {
-            const formatStats = this.playerStats?.byFormat?.find(
-              (f) => f.formatId === definition.format,
-            );
-            if (!formatStats) return null;
-            // Suppress MMR until placement is complete — the API always
-            // returns a numeric mmr even during placement matches.
-            if (formatStats.gamesPlayed < PLACEMENT_THRESHOLD) return null;
-            return formatStats.mmr;
-          })(),
-          placementGamesPlayed:
-            this.playerStats?.byFormat?.find((f) => f.formatId === definition.format)
-              ?.gamesPlayed ?? null,
+          winStreak: formatStats?.currentWinStreak ?? 0,
+          // MMR and placement are ranked-only concepts — suppress in casual/testing.
+          // Also suppress MMR until placement is complete — the API always
+          // returns a numeric mmr even during placement matches.
+          mmr:
+            formatStats && formatStats.gamesPlayed >= PLACEMENT_THRESHOLD ? formatStats.mmr : null,
+          placementGamesPlayed: formatStats?.gamesPlayed ?? null,
         };
       }),
       isDeckValidForSelectedFormat: this.isDeckValidForSelectedFormat,
