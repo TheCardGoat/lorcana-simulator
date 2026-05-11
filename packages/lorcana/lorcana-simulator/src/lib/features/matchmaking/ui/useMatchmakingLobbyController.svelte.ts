@@ -310,7 +310,7 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
   practiceLoading = $state(false);
   practiceError = $state<string | null>(null);
   playerStats = $state<PlayerStats | null>(null);
-  selectedQueueFormat = $state<QueueStatsFormat>(loadMatchmakingPrefs().format ?? "infinity");
+  selectedQueueFormat = $state<QueueStatsFormat>(restoreSupportedQueueFormat(loadMatchmakingPrefs().format));
   selectedQueueMode = $state<QueueStatsMode>(loadMatchmakingPrefs().mode ?? "1");
   selectedMatchType = $state<"ranked" | "casual" | "testing">("casual");
   selectedBotFixtureId = $state("");
@@ -1611,6 +1611,12 @@ type MatchmakingPrefs = {
   mode: QueueStatsMode;
   matchType: "ranked" | "casual" | "testing";
 };
+
+function restoreSupportedQueueFormat(persisted: QueueStatsFormat | undefined): QueueStatsFormat {
+  if (!persisted) return "infinity";
+  const supported = QUEUE_CARD_DEFINITIONS.some((def) => def.format === persisted);
+  return supported ? persisted : "infinity";
+}
 
 function loadMatchmakingPrefs(): Partial<MatchmakingPrefs> {
   try {
