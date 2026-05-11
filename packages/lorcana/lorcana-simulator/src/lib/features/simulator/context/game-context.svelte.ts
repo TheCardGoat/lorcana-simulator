@@ -14,6 +14,7 @@ import type {
   LorcanaCardDefinition,
   MoveOptionSelectableCost,
   MoveOptionSelectableCostKind,
+  PlayCardDisabledReason,
   ProtocolError,
   ResolutionSelectionContext,
   ResolutionSelectionDestinationRule,
@@ -330,6 +331,15 @@ export interface LorcanaGameContextValue {
     categoryId: ExecutableMovePresentationCategoryId,
   ) => ExecutableMoveEntry[];
   expandCategoryMoves: (categoryId: ExecutableMovePresentationCategoryId) => ExecutableMoveEntry[];
+  /**
+   * Per-category disabled-reason accessors. Each returns the structured
+   * engine reason for why a given CTA can't be triggered, or `null` if it
+   * can (or doesn't apply — e.g. shift on a non-shift card). The UI maps
+   * the reason to a localized tooltip via `formatPlayCardDisabledReason`.
+   */
+  getStandardPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
+  getShiftPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
+  getSingPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
   challengeReadyCardIds: () => string[];
   moveLogEntries: () => MoveLogEntrySnapshot[];
   pendingResolutionMoves: () => PendingResolutionMoveEntry[];
@@ -1020,6 +1030,12 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
   };
   readonly moveLogEntries = (): MoveLogEntrySnapshot[] => this.#moveLogEntries;
   readonly challengeReadyCardIds = (): string[] => this.#challengeReadyCardIds;
+  readonly getStandardPlayDisabledReason = (cardId: string): PlayCardDisabledReason | null =>
+    this.#engine?.getStandardPlayDisabledReason(cardId) ?? null;
+  readonly getShiftPlayDisabledReason = (cardId: string): PlayCardDisabledReason | null =>
+    this.#engine?.getShiftPlayDisabledReason(cardId) ?? null;
+  readonly getSingPlayDisabledReason = (cardId: string): PlayCardDisabledReason | null =>
+    this.#engine?.getSingPlayDisabledReason(cardId) ?? null;
   readonly pendingResolutionMoves = (): PendingResolutionMoveEntry[] =>
     this.#pendingResolutionMoves;
   readonly playableHandCardIds = (): string[] => this.#playableHandCardIds;
@@ -6584,6 +6600,11 @@ export class LorcanaSidebarPresenter {
         this.moveCategorySummaries
           .find((summary) => summary.categoryId === "move-to-location")
           ?.sourceCardIds.slice() ?? [],
+      disabledReasonAccessors: {
+        getStandardPlayDisabledReason: this.#game.getStandardPlayDisabledReason,
+        getShiftPlayDisabledReason: this.#game.getShiftPlayDisabledReason,
+        getSingPlayDisabledReason: this.#game.getSingPlayDisabledReason,
+      },
     });
 
   getSingleClickItemAbilityAction = (card: LorcanaCardSnapshot): CardActionView | null => {

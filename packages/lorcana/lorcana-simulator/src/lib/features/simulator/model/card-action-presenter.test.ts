@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { CardInstanceId } from "@tcg/lorcana-engine";
+import type { CardInstanceId, PlayCardDisabledReason } from "@tcg/lorcana-engine";
 import { buildCardActionViews } from "./card-action-presenter.js";
 import type { ExecutableMoveEntry, LorcanaCardSnapshot } from "./contracts.js";
 
@@ -413,6 +413,126 @@ describe("buildCardActionViews", () => {
         moves: [],
       },
     ]);
+  });
+
+  describe("disabledReasonAccessors — structured tooltips on blocked actions", () => {
+    function makeAccessors(opts: {
+      standard?: PlayCardDisabledReason | null;
+      shift?: PlayCardDisabledReason | null;
+      sing?: PlayCardDisabledReason | null;
+    }) {
+      return {
+        getStandardPlayDisabledReason: () => opts.standard ?? null,
+        getShiftPlayDisabledReason: () => opts.shift ?? null,
+        getSingPlayDisabledReason: () => opts.sing ?? null,
+      };
+    }
+
+    it("renders the localized standard-cost reason on a blocked Play chip", () => {
+      const card = createCard({ zoneId: "hand", label: "Some Card" });
+      const actions = buildCardActionViews({
+        card,
+        executableMoves: [],
+        ownerSide: "playerOne",
+        challengeReadyCardIds: [],
+        movableToLocationCardIds: [],
+        disabledReasonAccessors: makeAccessors({
+          standard: { code: "INSUFFICIENT_INK", params: { needed: 3, available: 1 } },
+        }),
+      });
+
+      const play = actions.find((a) => a.categoryId === "play-card");
+      expect(play?.enabled).toBe(false);
+      // Wording is engine-agnostic; we just assert the substituted values
+      // show up. The exact template lives in messages/en.json.
+      expect(play?.reason).toContain("3");
+      expect(play?.reason).toContain("1");
+    });
+
+    it("renders the SHIFT_NO_DISCARD_AVAILABLE reason on a blocked Shift chip (Devoted Herald case)", () => {
+      const card = createCard({
+        zoneId: "hand",
+        label: "Diablo - Devoted Herald",
+        keywords: ["Shift"],
+      });
+      const actions = buildCardActionViews({
+        card,
+        executableMoves: [],
+        ownerSide: "playerOne",
+        challengeReadyCardIds: [],
+        movableToLocationCardIds: [],
+        disabledReasonAccessors: makeAccessors({
+          shift: {
+            code: "SHIFT_NO_DISCARD_AVAILABLE",
+            params: { discardCardType: "action", count: 1 },
+          },
+        }),
+      });
+
+      const shift = actions.find((a) => a.categoryId === "shift-card");
+      expect(shift?.enabled).toBe(false);
+      expect(shift?.reason).toContain("action");
+    });
+
+    it("renders SHIFT_NO_TARGET on a blocked Shift chip when no matching-named target is on board", () => {
+      const card = createCard({
+        zoneId: "hand",
+        label: "Stitch - Rock Star",
+        keywords: ["Shift"],
+      });
+      const actions = buildCardActionViews({
+        card,
+        executableMoves: [],
+        ownerSide: "playerOne",
+        challengeReadyCardIds: [],
+        movableToLocationCardIds: [],
+        disabledReasonAccessors: makeAccessors({
+          shift: { code: "SHIFT_NO_TARGET", params: { targetName: "Stitch" } },
+        }),
+      });
+
+      const shift = actions.find((a) => a.categoryId === "shift-card");
+      expect(shift?.reason).toContain("Stitch");
+    });
+
+    it("renders SONG_NO_SINGER on a blocked Sing chip for song cards", () => {
+      const card = createCard({
+        zoneId: "hand",
+        cardType: "action",
+        actionSubtype: "song",
+        label: "Reflection",
+      });
+      const actions = buildCardActionViews({
+        card,
+        executableMoves: [],
+        ownerSide: "playerOne",
+        challengeReadyCardIds: [],
+        movableToLocationCardIds: [],
+        disabledReasonAccessors: makeAccessors({
+          sing: { code: "SONG_NO_SINGER", params: { songCost: 4 } },
+        }),
+      });
+
+      const sing = actions.find((a) => a.categoryId === "sing-card");
+      expect(sing?.enabled).toBe(false);
+      expect(sing?.reason).toContain("4");
+    });
+
+    it("falls back to generic strings when accessors are not provided (preserves current behavior)", () => {
+      const card = createCard({ zoneId: "hand", keywords: ["Shift"] });
+      const actions = buildCardActionViews({
+        card,
+        executableMoves: [],
+        ownerSide: "playerOne",
+        challengeReadyCardIds: [],
+        movableToLocationCardIds: [],
+      });
+
+      const play = actions.find((a) => a.categoryId === "play-card");
+      const shift = actions.find((a) => a.categoryId === "shift-card");
+      expect(play?.reason).toBe("This card cannot be played right now.");
+      expect(shift?.reason).toBe("This card cannot be shifted right now.");
+    });
   });
 
   it("splits put-on-deck-bottom alternative cost into a separate action chip", () => {
