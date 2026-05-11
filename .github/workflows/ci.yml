@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_OPTIONS: --max-old-space-size=4096
+  NX_NO_CLOUD: "true"
 
 jobs:
   build:
@@ -55,10 +56,6 @@ jobs:
 
       - name: Enforce module boundaries
         run: pnpm run boundaries
-
-      - name: Run Nx Cloud Self-Healing CI
-        if: always()
-        run: pnpm exec nx fix-ci
 
       - name: Upload Nx project graph
         if: always()
