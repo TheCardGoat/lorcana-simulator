@@ -32,6 +32,7 @@ const baseProps = {
       isDeckValid: true,
       winStreak: 0,
       mmr: null,
+      placementGamesPlayed: null,
     },
   ],
   isDeckValidForSelectedFormat: true,
@@ -74,7 +75,7 @@ describe("MatchmakingQueueCard", () => {
     const { body } = render(MatchmakingQueueCard, {
       props: {
         ...baseProps,
-        cards: [{ ...baseProps.cards[0]!, winStreak: 3, mmr: null }],
+        cards: [{ ...baseProps.cards[0]!, winStreak: 3, mmr: null, placementGamesPlayed: null }],
       },
     });
 
@@ -90,30 +91,43 @@ describe("MatchmakingQueueCard", () => {
     expect(body).not.toContain("border-orange-400/20");
   });
 
-  it("renders MMR badge in ranked mode when mmr is set", () => {
-    const { body } = render(MatchmakingQueueCard, {
-      props: {
-        ...baseProps,
-        selectedMatchType: "ranked" as const,
-        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: 1250 }],
-      },
-    });
+  it("renders MMR badge when mmr is set, regardless of match type", () => {
+    for (const selectedMatchType of ["ranked", "casual"] as const) {
+      const { body } = render(MatchmakingQueueCard, {
+        props: {
+          ...baseProps,
+          selectedMatchType,
+          cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: 1250, placementGamesPlayed: null }],
+        },
+      });
 
-    // MMR value is displayed in the badge; unique amber class confirms the badge rendered
-    expect(body).toContain("1250");
-    expect(body).toContain("border-amber-400/20");
+      expect(body).toContain("1250");
+      expect(body).toContain("border-amber-400/20");
+    }
   });
 
-  it("does not render MMR badge in casual mode even when mmr is set", () => {
+  it("renders placement progress badge when in placement phase (gamesPlayed < 20, mmr null)", () => {
     const { body } = render(MatchmakingQueueCard, {
       props: {
         ...baseProps,
-        selectedMatchType: "casual" as const,
-        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: 1250 }],
+        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: null, placementGamesPlayed: 7 }],
       },
     });
 
-    expect(body).not.toContain("border-amber-400/20");
+    expect(body).toContain("7/20");
+    expect(body).toContain("border-sky-400/20");
+  });
+
+  it("does not render placement badge when mmr is set (placement complete)", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: {
+        ...baseProps,
+        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: 1200, placementGamesPlayed: 20 }],
+      },
+    });
+
+    expect(body).not.toContain("border-sky-400/20");
+    expect(body).toContain("border-amber-400/20");
   });
 
   it("renders the ranked tab as disabled with a coming-soon badge when rankedEnabled is false", () => {
