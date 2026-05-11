@@ -11,6 +11,7 @@ const baseProps = {
   selectionDisabled: false,
   selectedQueueMode: "1" as const,
   selectedMatchType: "ranked" as const,
+  rankedEnabled: false,
   cards: [
     {
       definition: {
@@ -31,6 +32,7 @@ const baseProps = {
       isDeckValid: true,
       winStreak: 0,
       mmr: null,
+      placementGamesPlayed: null,
     },
   ],
   isDeckValidForSelectedFormat: true,
@@ -73,7 +75,7 @@ describe("MatchmakingQueueCard", () => {
     const { body } = render(MatchmakingQueueCard, {
       props: {
         ...baseProps,
-        cards: [{ ...baseProps.cards[0]!, winStreak: 3, mmr: null }],
+        cards: [{ ...baseProps.cards[0]!, winStreak: 3, mmr: null, placementGamesPlayed: null }],
       },
     });
 
@@ -89,30 +91,95 @@ describe("MatchmakingQueueCard", () => {
     expect(body).not.toContain("border-orange-400/20");
   });
 
-  it("renders MMR badge in ranked mode when mmr is set", () => {
+  it("renders MMR badge when mmr is set, regardless of match type", () => {
+    for (const selectedMatchType of ["ranked", "casual"] as const) {
+      const { body } = render(MatchmakingQueueCard, {
+        props: {
+          ...baseProps,
+          selectedMatchType,
+          cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: 1250, placementGamesPlayed: null }],
+        },
+      });
+
+      expect(body).toContain("1250");
+      expect(body).toContain("border-amber-400/20");
+    }
+  });
+
+  it("renders 0/20 placement indicator when player has never played ranked (placementGamesPlayed null)", () => {
     const { body } = render(MatchmakingQueueCard, {
       props: {
         ...baseProps,
-        selectedMatchType: "ranked" as const,
-        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: 1250 }],
+        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: null, placementGamesPlayed: null }],
       },
     });
 
-    // MMR value is displayed in the badge; unique amber class confirms the badge rendered
-    expect(body).toContain("1250");
+    // number and threshold are in separate spans; assert each is present
+    expect(body).toContain("bg-sky-400/70");
+    expect(body).toContain(">0<");
+    expect(body).toContain(">/20<");
+  });
+
+  it("renders N/20 placement indicator when player has some ranked games but no mmr yet", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: {
+        ...baseProps,
+        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: null, placementGamesPlayed: 7 }],
+      },
+    });
+
+    expect(body).toContain("bg-sky-400/70");
+    expect(body).toContain(">7<");
+    expect(body).toContain(">/20<");
+  });
+
+  it("renders MMR badge (not placement indicator) once mmr is set", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: {
+        ...baseProps,
+        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: 1200, placementGamesPlayed: 20 }],
+      },
+    });
+
+    expect(body).not.toContain("bg-sky-400/70");
     expect(body).toContain("border-amber-400/20");
   });
 
-  it("does not render MMR badge in casual mode even when mmr is set", () => {
+  it("renders the ranked tab as disabled with a coming-soon badge when rankedEnabled is false", () => {
     const { body } = render(MatchmakingQueueCard, {
-      props: {
-        ...baseProps,
-        selectedMatchType: "casual" as const,
-        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: 1250 }],
-      },
+      props: { ...baseProps, rankedEnabled: false },
     });
 
-    expect(body).not.toContain("border-amber-400/20");
+    expect(body).toContain('aria-disabled="true"');
+    expect(body).toContain("Soon");
+  });
+
+  it("renders the ranked tab as a selectable button when rankedEnabled is true", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: { ...baseProps, rankedEnabled: true, selectedMatchType: "casual" as const },
+    });
+
+    expect(body).not.toContain("Soon");
+    // Ranked tab is now an enabled button alongside Casual
+    expect(body).toContain(">Ranked<");
+  });
+
+  it("hides the BO1/BO3 selector entirely when ranked is selected", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: { ...baseProps, selectedMatchType: "ranked" as const },
+    });
+
+    expect(body).not.toContain(">BO1<");
+    expect(body).not.toContain(">BO3<");
+  });
+
+  it("shows both BO1 and BO3 tabs in casual", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: { ...baseProps, selectedMatchType: "casual" as const },
+    });
+
+    expect(body).toContain(">BO1<");
+    expect(body).toContain(">BO3<");
   });
 
   it("renders elapsed and remaining queue timers with the leave-queue CTA while queued", () => {

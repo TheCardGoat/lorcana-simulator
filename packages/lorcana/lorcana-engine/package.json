@@ -49,11 +49,11 @@
     "i18n:check": "bun run ./src/i18n/check-log-translations.ts && bun run ./src/i18n/check-custom-event-usage.ts",
     "audit:action-effect-coverage": "bun run ./scripts/audit-action-effect-resolver-coverage.ts",
     "format": "bun x oxfmt --write './src/**/*.ts'",
-    "lint": "bun x oxlint --fix ./src",
+    "lint": "vp lint ./src",
     "test": "AGENT=1 bun test --silent --reporter=junit --reporter-outfile=./bun.xml",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
-    "check": "turbo format lint check-types test"
+    "check": "bun run format && bun run lint && bun run check-types && bun run test"
   },
   "dependencies": {
     "@logtape/logtape": "^2.0.4",
@@ -71,5 +71,10 @@
   },
   "peerDependencies": {
     "typescript": "5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "game-engine"
+    ]
   }
 }

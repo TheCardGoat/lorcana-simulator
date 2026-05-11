@@ -672,7 +672,7 @@
     <div class="simulator-dark simulator-v2">
       <SimulatorHotkeyLayer descriptors={alwaysOnHotkeyDescriptors} paused={gameplayHotkeysPaused} />
       <SimulatorHotkeyLayer descriptors={gameplayHotkeyDescriptors} paused={gameplayHotkeysPaused} />
-      <Toaster theme="dark"/>
+      <Toaster theme="dark" position="top-right"/>
       {#if !isCompactLayout}
         <LorcanaSimulatorSidebar
           readOnly={readOnlyMode}

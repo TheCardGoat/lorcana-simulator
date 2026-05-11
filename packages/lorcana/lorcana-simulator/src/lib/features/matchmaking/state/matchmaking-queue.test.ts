@@ -1,5 +1,31 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 
+const testGlobals = globalThis as any;
+
+testGlobals.$state = Object.assign(<T>(value: T): T => value, {
+  eager: <T>(value: T): T => value,
+  raw: <T>(value: T): T => value,
+  snapshot: <T>(value: T): T => value,
+});
+
+testGlobals.$derived = Object.assign(<T>(value: T): T => value, {
+  by: <T>(fn: () => T): T => fn(),
+});
+
+testGlobals.$effect = Object.assign(
+  (fn: () => void | (() => void)): void => {
+    fn();
+  },
+  {
+    pre: (fn: () => void | (() => void)): void => {
+      fn();
+    },
+    pending: (): boolean => false,
+    tracking: (): boolean => false,
+    root: <T>(fn: () => T): T => fn(),
+  },
+);
+
 const joinMatchmakingQueue = mock();
 const leaveMatchmakingQueue = mock();
 const getMatchmakingStatus = mock();
@@ -25,10 +51,41 @@ mock.module("../api/matchmaking-api.js", () => ({
 
 mock.module("$lib/analytics/analytics.js", () => ({
   trackEvent,
+  setUserProperties: () => {},
+  isAnalyticsConfigured: () => false,
+  normalizePathForAnalytics: (p: string) => p,
+  initAnalytics: () => {},
+  trackPageView: () => {},
+  truncateForAnalytics: (input: unknown) =>
+    typeof input === "string" ? input.slice(0, 100) : undefined,
+  analyticsErrorFields: (error: unknown) => {
+    const code = error instanceof Error ? error.name : undefined;
+    const rawMessage =
+      error instanceof Error ? error.message : typeof error === "string" ? error : undefined;
+    const message =
+      typeof rawMessage === "string" && rawMessage.length > 0
+        ? rawMessage.slice(0, 100)
+        : undefined;
+    return {
+      ...(code ? { error_code: code } : {}),
+      ...(message ? { error_message: message } : {}),
+    };
+  },
+  trackException: () => {},
+  updateConsent: () => {},
+  ANALYTICS_TEXT_MAX_LENGTH: 100,
 }));
 
 mock.module("$app/navigation", () => ({
   goto,
+}));
+
+mock.module("$env/dynamic/public", () => ({
+  env: {},
+}));
+
+mock.module("$lib/features/practice-match/practice-match-storage.js", () => ({
+  saveRankedMatchSession: () => {},
 }));
 
 const { MatchmakingQueueStore } = await import("./matchmaking-queue.svelte.ts");
@@ -210,7 +267,7 @@ describe("MatchmakingQueueStore", () => {
     store.destroy();
   });
 
-  it("handleStatusUpdate resets match_ready when server reports no queue and no pending", () => {
+  it("handleStatusUpdate does not reset match_ready on a generic poll with no pending match", () => {
     const store = new MatchmakingQueueStore();
     const deadline = Date.now() + 20_000;
 
@@ -223,10 +280,69 @@ describe("MatchmakingQueueStore", () => {
     });
     expect(store.status).toBe("match_ready");
 
+    // A poll returning { queued: false } with no pendingMatchId must not reset
+    // match_ready — the server may clear the pending match before delivering
+    // match_found, so this response can race the WS event.
     store.handleStatusUpdate({ queued: false });
 
-    expect(store.status).toBe("idle");
+    expect(store.status).toBe("match_ready");
+    expect(store.pendingMatchId).toBe("pm_4");
+
+    store.destroy();
+  });
+
+  it("handleCancelled does not reset when status is match_found", () => {
+    const store = new MatchmakingQueueStore();
+
+    store.handleMatchFound({
+      matchId: "match_1",
+      gameId: "game_1",
+      playerId: "player_1",
+      opponentDisplayName: "Opponent",
+      format: "infinity",
+      mode: "1",
+    });
+    expect(store.status).toBe("match_found");
+
+    // A stale or server-cleanup matchmaking_cancelled must not destroy the
+    // match-found state — the player is about to navigate to the game.
+    store.handleCancelled("manual");
+
+    expect(store.status).toBe("match_found");
+    expect(store.matchFoundMatchId).toBe("match_1");
+
+    store.destroy();
+  });
+
+  it("handleMatchFound clears pendingMatchId so stale match_ready_expired is ignored", () => {
+    const store = new MatchmakingQueueStore();
+    const deadline = Date.now() + 15_000;
+
+    store.handleMatchReady({
+      pendingMatchId: "pm_race",
+      opponentDisplayName: "Opponent",
+      acceptDeadline: deadline,
+    });
+    expect(store.pendingMatchId).toBe("pm_race");
+
+    store.handleMatchFound({
+      matchId: "match_2",
+      gameId: "game_2",
+      playerId: "player_2",
+      opponentDisplayName: "Opponent",
+      format: "infinity",
+      mode: "1",
+    });
+    expect(store.status).toBe("match_found");
+    // pendingMatchId must be cleared so the handleMatchReadyExpired guard
+    // (pendingMatchId !== msg.pendingMatchId) blocks stale expiry messages.
     expect(store.pendingMatchId).toBeNull();
+
+    // A stale match_ready_expired for the same session must now be ignored.
+    store.handleMatchReadyExpired({ pendingMatchId: "pm_race", reason: "timeout" });
+
+    expect(store.status).toBe("match_found");
+    expect(store.matchFoundMatchId).toBe("match_2");
 
     store.destroy();
   });

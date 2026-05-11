@@ -19,29 +19,30 @@ export async function loadMatchmakingData(request: Request) {
   const cookie = request.headers.get("cookie");
   const apiOrigin = getServerApiOrigin(getApiOrigin());
 
-  const [matchmakingContextResult, dashboardResult, gatewayAuthResult, leaderboardsResult] =
-    await Promise.allSettled([
-      cookie
-        ? serverJsonOrNull<MatchmakingContext>(
-            `${apiOrigin}/v1/users/me/games/lorcana/matchmaking-context`,
-            { headers: { cookie } },
-          )
-        : Promise.resolve(null),
-      serverJsonOrNull<MatchmakingDashboardResponse>(
-        `${apiOrigin}/v1/games/lorcana/play/matchmaking/dashboard?limit=25`,
-        cookie ? { headers: { cookie } } : {},
-      ),
-      cookie
-        ? serverJsonOrNull<{ ticket: string; authToken: string }>(
-            `${apiOrigin}/v1/gateway/ticket`,
-            {
-              method: "POST",
-              headers: { cookie },
-            },
-          )
-        : Promise.resolve(null),
-      fetchLeaderboardsOnServer(apiOrigin),
-    ]);
+  const [
+    matchmakingContextResult,
+    dashboardResult,
+    gatewayAuthResult,
+    leaderboardsResult,
+  ] = await Promise.allSettled([
+    cookie
+      ? serverJsonOrNull<MatchmakingContext>(
+          `${apiOrigin}/v1/users/me/games/lorcana/matchmaking-context`,
+          { headers: { cookie } },
+        )
+      : Promise.resolve(null),
+    serverJsonOrNull<MatchmakingDashboardResponse>(
+      `${apiOrigin}/v1/games/lorcana/play/matchmaking/dashboard?limit=25`,
+      cookie ? { headers: { cookie } } : {},
+    ),
+    cookie
+      ? serverJsonOrNull<{ ticket: string; authToken: string }>(`${apiOrigin}/v1/gateway/ticket`, {
+          method: "POST",
+          headers: { cookie },
+        })
+      : Promise.resolve(null),
+    fetchLeaderboardsOnServer(apiOrigin),
+  ]);
 
   const matchmakingContext: MatchmakingContext | null =
     matchmakingContextResult.status === "fulfilled" ? matchmakingContextResult.value : null;

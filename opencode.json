@@ -26,6 +26,11 @@
       "enabled": true,
       "type": "local",
       "command": ["npx", "ahk", "serve", "--port", "3742"]
+    },
+    "nx-mcp": {
+      "type": "local",
+      "command": ["npx", "nx", "mcp"],
+      "enabled": true
     }
   }
 }

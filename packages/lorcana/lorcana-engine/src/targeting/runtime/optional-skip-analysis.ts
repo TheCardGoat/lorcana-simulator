@@ -58,8 +58,12 @@ type HasReturnFromDiscardCtx = Pick<MoveExecutionContext<never>, "framework" | "
  *    effect with filters and no matching hand cards. Other first-step patterns return `false`.
  *
  * 3. `sequence { [mandatory-first-step, ...] }` (no optional wrapper) — skip if the first step
- *    is a return-from-discard with no valid discard candidates. The whole sequence fizzles when
- *    the first step has nothing to act on.
+ *    is a return-from-discard with no valid discard candidates AND every subsequent step is
+ *    gated on a `returned-card-*` condition (so the whole sequence would fizzle). Multi-step
+ *    sequences with at least one returned-card-independent step (e.g. Syndrome's
+ *    "Then, you may play or shift a Robot for free") are NOT skipped — per CR 1.2.3 the
+ *    independent step must still resolve. The sequence resolver itself skips the empty
+ *    step 1 at runtime.
  *
  * Mill sequences are intentionally not skipped here: mill does not require explicit target
  * selection in this helper's analysis model, and resolving as much of the mill as possible is
@@ -361,12 +365,36 @@ function shouldSkipMandatoryReturnFromDiscardSequence(
   const firstStep = steps[0];
   if (!firstStep || typeof firstStep !== "object") return false;
   if (!isReturnFromDiscardEffect(firstStep)) return false;
+  // Per CR 1.2.3 ("do as much as you can"), a multi-step sequence whose first
+  // step (return-from-discard) has no legal candidates must still perform
+  // later steps that are independent of that step. We only suppress the bag
+  // entry when every subsequent step is gated on the returned card itself
+  // (e.g. `conditional` with a `returned-card-*` condition) — those steps can
+  // never produce an effect when nothing was returned, so the trigger as a
+  // whole would fizzle, and suppressing it avoids a no-op bag entry.
+  const subsequentSteps = steps.slice(1);
+  if (
+    subsequentSteps.length > 0 &&
+    !subsequentSteps.every((step) => isStepDependentOnReturnedCard(step))
+  ) {
+    return false;
+  }
   return !hasReturnFromDiscardCandidates(
     ctx as unknown as HasReturnFromDiscardCtx,
     playerId,
     firstStep,
     sourceCardId,
   );
+}
+
+function isStepDependentOnReturnedCard(step: unknown): boolean {
+  if (!step || typeof step !== "object") return false;
+  const record = step as Record<string, unknown>;
+  if (record.type !== "conditional") return false;
+  const condition = record.condition as Record<string, unknown> | undefined;
+  if (!condition || typeof condition !== "object") return false;
+  const conditionType = condition.type as string | undefined;
+  return typeof conditionType === "string" && conditionType.startsWith("returned-card-");
 }
 
 function shouldSkipDiscardFirstStep(

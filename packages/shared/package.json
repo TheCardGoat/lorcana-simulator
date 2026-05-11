@@ -34,7 +34,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "format": "bun x oxfmt --write ./src",
-    "lint": "bun x oxlint --fix ./src",
+    "lint": "vp lint ./src",
     "check-types": "tsc --noEmit",
     "test": "bun test"
   },
@@ -45,5 +45,10 @@
     "@tcg/typescript-config": "workspace:*",
     "@types/node": "^22.13.4",
     "svelte": "^5.49.2"
+  },
+  "nx": {
+    "tags": [
+      "foundation"
+    ]
   }
 }

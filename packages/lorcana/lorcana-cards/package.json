@@ -84,11 +84,11 @@
     "typecheck": "tsc --noEmit",
     "check-types": "tsc --noEmit",
     "format": "bun x oxfmt --write ./src",
-    "lint": "bun x oxlint --fix ./src",
+    "lint": "vp lint ./src",
     "test": "bun test src --bail=10 --only-failures",
     "test:watch": "bun test --watch src",
     "test:coverage": "bun test --coverage src",
-    "check": "turbo format lint check-types test",
+    "check": "bun run format && bun run lint && bun run check-types && bun run test",
     "fetch": "bun scripts/fetch-inputs.ts",
     "fetch:all-locales": "bun scripts/fetch-inputs.ts",
     "generate": "bun scripts/generate-cards.ts && bun run format",
@@ -112,5 +112,10 @@
   },
   "peerDependencies": {
     "typescript": "5.8.3"
+  },
+  "nx": {
+    "tags": [
+      "card-data"
+    ]
   }
 }

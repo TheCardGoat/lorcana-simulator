@@ -1,6 +1,7 @@
 packages:
   - "packages/*"
   - "packages/lorcana/*"
+  - "packages/tools/*"
 
 catalog:
   vite: "npm:@voidzero-dev/vite-plus-core@latest"

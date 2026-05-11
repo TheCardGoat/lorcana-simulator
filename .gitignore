@@ -193,7 +193,6 @@ dist
 
 ### Wrangler ###
 .wrangler/
-.turbo/
 .env*
 !.env.example
 .dev.vars*
@@ -243,8 +242,6 @@ packages/core-ui/dist
 */.svelte-kit/
 */dist
 
-# Turborepo
-.turbo
 
 # Riptide artifacts (cloud-synced)
 .humanlayer/tasks/
@@ -273,7 +270,6 @@ node_modules/
 .yarn/install-state.gz
 
 # Monorepo / build caches
-.turbo/
 *.tsbuildinfo
 
 # SvelteKit
@@ -346,3 +342,10 @@ temp/
 .harness/harness.db-shm
 .harness/harness.db-wal
 .harness/current.md
+
+.nx/polygraph
+.claude/worktrees
+
+
+.nx/cache
+.nx/workspace-data

@@ -5,6 +5,7 @@ import { authSession } from "$lib/auth/session.svelte.js";
 import { fetchPlayerStats } from "@/features/match-history/api/player-stats-api.js";
 import type { PlayerStats } from "@/features/match-history/types.js";
 import { getGatewayWsUrl } from "$lib/config/public-url-config.js";
+import { getFeatureFlags } from "$lib/config/feature-flags.js";
 import { analyticsErrorFields, trackEvent } from "$lib/analytics/analytics.js";
 import { m } from "$lib/i18n/messages.js";
 import { initSoundService, playSound } from "@/features/simulator/animations/sound-service.js";
@@ -58,6 +59,7 @@ import { DECK_FIXTURES } from "@/features/simulator-devtools/deck-fixtures/index
 import type { HumanVsAiMatchConfig } from "@/features/simulator-devtools/vs-ai/types.js";
 import type { MatchmakingStatus } from "../state/matchmaking-queue.svelte.js";
 import {
+  PLACEMENT_THRESHOLD,
   QUEUE_CARD_DEFINITIONS,
   createQueueJoinLabel,
   type QueueCardView,
@@ -85,6 +87,7 @@ type FetchMatchmakingDashboardLike = typeof fetchMatchmakingDashboard;
 
 type ControllerDeps = {
   getGatewayWsUrl: typeof getGatewayWsUrl;
+  getFeatureFlags: typeof getFeatureFlags;
 
   importDeckForProfile: ImportDeckForProfileLike;
   importLegacyDecksForProfile: ImportLegacyDecksForProfileLike;
@@ -105,6 +108,7 @@ type ControllerDeps = {
 
 const DEFAULT_DEPS: ControllerDeps = {
   getGatewayWsUrl,
+  getFeatureFlags,
   importDeckForProfile,
   importLegacyDecksForProfile,
   fetchDeckListSnapshotByDeckListId,
@@ -193,6 +197,7 @@ export interface MatchmakingLobbyController {
     readonly status: MatchmakingStatus;
     readonly selectedQueueMode: QueueStatsMode;
     readonly selectedMatchType: "ranked" | "casual" | "testing";
+    readonly rankedEnabled: boolean;
     readonly queueCards: QueueCardView[];
     readonly isDeckValidForSelectedFormat: boolean;
     readonly activeQueueFormat: QueueStatsFormat;
@@ -306,11 +311,9 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
   practiceLoading = $state(false);
   practiceError = $state<string | null>(null);
   playerStats = $state<PlayerStats | null>(null);
-  selectedQueueFormat = $state<QueueStatsFormat>(loadMatchmakingPrefs().format ?? "infinity");
+  selectedQueueFormat = $state<QueueStatsFormat>(restoreSupportedQueueFormat(loadMatchmakingPrefs().format));
   selectedQueueMode = $state<QueueStatsMode>(loadMatchmakingPrefs().mode ?? "1");
-  selectedMatchType = $state<"ranked" | "casual" | "testing">(
-    loadMatchmakingPrefs().matchType ?? "casual",
-  );
+  selectedMatchType = $state<"ranked" | "casual" | "testing">("casual");
   selectedBotFixtureId = $state("");
   selectedBotStrategyId = $state("");
 
@@ -324,6 +327,7 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
   #gateway: GatewayClientStore;
   #deps: ControllerDeps;
   #gatewayWsUrl: string;
+  readonly rankedEnabled: boolean;
   #initialRoomCode: string | null = null;
   #initialLobbyRoom: LobbyRoomResponse | null = null;
   #initialGatewayTicket: string | null = null;
@@ -335,6 +339,14 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
     this.lobbyStore = new LobbyRoomStore();
     this.#deps = deps;
     this.#gatewayWsUrl = deps.getGatewayWsUrl();
+    this.rankedEnabled = deps.getFeatureFlags().rankedEnabled;
+    const persistedMatchType = loadMatchmakingPrefs().matchType;
+    if (persistedMatchType && (persistedMatchType !== "ranked" || this.rankedEnabled)) {
+      this.selectedMatchType = persistedMatchType;
+    }
+    if (this.selectedMatchType === "ranked" && this.selectedQueueMode === "1") {
+      this.selectedQueueMode = "3";
+    }
     this.#initialRoomCode = options.initialRoomCode ?? options.initialLobbyRoom?.roomCode ?? null;
     this.#initialLobbyRoom = options.initialLobbyRoom ?? null;
     this.#initialGatewayTicket = options.gatewayTicket ?? null;
@@ -431,6 +443,7 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
       status: this.queueStore.status,
       selectedQueueMode: this.selectedQueueMode,
       selectedMatchType: this.selectedMatchType,
+      rankedEnabled: this.rankedEnabled,
       queueCards: QUEUE_CARD_DEFINITIONS.map((definition) => {
         const selectedDeck = this.playerContext.selectedDeck;
         return {
@@ -446,8 +459,22 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
             !selectedDeck ||
             !selectedDeck.validFormats ||
             selectedDeck.validFormats.includes(definition.format),
-          winStreak: this.playerStats?.currentWinStreak ?? 0,
-          mmr: this.playerStats?.mmr ?? null,
+          winStreak:
+            this.playerStats?.byFormat.find((f) => f.formatId === definition.format)
+              ?.currentWinStreak ?? 0,
+          mmr: (() => {
+            const formatStats = this.playerStats?.byFormat.find(
+              (f) => f.formatId === definition.format,
+            );
+            if (!formatStats) return null;
+            // Suppress MMR until placement is complete — the API always
+            // returns a numeric mmr even during placement matches.
+            if (formatStats.gamesPlayed < PLACEMENT_THRESHOLD) return null;
+            return formatStats.mmr;
+          })(),
+          placementGamesPlayed:
+            this.playerStats?.byFormat.find((f) => f.formatId === definition.format)
+              ?.gamesPlayed ?? null,
         };
       }),
       isDeckValidForSelectedFormat: this.isDeckValidForSelectedFormat,
@@ -839,17 +866,26 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
     if (this.selectionDisabled) {
       return;
     }
+    if (mode === "1" && this.selectedMatchType === "ranked") {
+      return;
+    }
 
     this.selectedQueueMode = mode;
     this.#deps.trackEvent("matchmaking_mode_select", { mode });
   }
 
   selectMatchType(matchType: "ranked" | "casual" | "testing"): void {
-    if (this.selectionDisabled || matchType === "ranked") {
+    if (this.selectionDisabled) {
+      return;
+    }
+    if (matchType === "ranked" && !this.rankedEnabled) {
       return;
     }
 
     this.selectedMatchType = matchType;
+    if (matchType === "ranked" && this.selectedQueueMode === "1") {
+      this.selectedQueueMode = "3";
+    }
     this.#deps.trackEvent("matchmaking_match_type_select", { matchType });
   }
 
@@ -865,6 +901,12 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
   async handleJoinQueue(): Promise<void> {
     if (!this.#deps.authSession.isAuthenticated) {
       this.openSignInDialog();
+      return;
+    }
+
+    if (this.selectedMatchType === "ranked" && !this.rankedEnabled) {
+      this.queueStore.error = m["sim.matchmaking.queue.error.rankedUnavailable"]();
+      this.#deps.trackEvent("queue_join_blocked", { reason: "ranked_disabled" });
       return;
     }
 
@@ -955,7 +997,10 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
       await forfeitMatch(matchId);
       this.queueStore.forfeiting = false;
       this.queueStore.forfeitSuccess = true;
-      trackEvent("match_forfeit", { source: "matchmaking_page" });
+      trackEvent("match_forfeit", {
+        source: "matchmaking_page",
+        matchType: this.queueStore.queuedMatchType ?? this.selectedMatchType,
+      });
 
       // Brief success feedback before refreshing
       await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -1590,6 +1635,12 @@ type MatchmakingPrefs = {
   mode: QueueStatsMode;
   matchType: "ranked" | "casual" | "testing";
 };
+
+function restoreSupportedQueueFormat(persisted: QueueStatsFormat | undefined): QueueStatsFormat {
+  if (!persisted) return "infinity";
+  const supported = QUEUE_CARD_DEFINITIONS.some((def) => def.format === persisted);
+  return supported ? persisted : "infinity";
+}
 
 function loadMatchmakingPrefs(): Partial<MatchmakingPrefs> {
   try {

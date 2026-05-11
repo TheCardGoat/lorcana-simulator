@@ -15,6 +15,7 @@
     ProfileMatchmakingContext,
   } from '../api/player-context-api.js';
   import {
+    PLACEMENT_THRESHOLD,
     type QueueCardView,
   } from './matchmaking-lobby.constants.js';
   import { Badge } from '$lib/design-system/primitives/badge';
@@ -43,6 +44,7 @@
     wsConnected: boolean;
     selectedQueueMode: QueueStatsMode;
     selectedMatchType: 'ranked' | 'casual' | 'testing';
+    rankedEnabled: boolean;
     cards: QueueCardView[];
     isDeckValidForSelectedFormat: boolean;
     hasDeckSelected: boolean;
@@ -85,6 +87,7 @@
     wsConnected,
     selectedQueueMode,
     selectedMatchType,
+    rankedEnabled,
     cards,
     isDeckValidForSelectedFormat,
     hasDeckSelected,
@@ -132,36 +135,54 @@
     role="tablist"
     aria-label="Match type"
   >
-    <Tooltip.Root delayDuration={120}>
-      <Tooltip.Trigger>
-        {#snippet child({ props })}
-          <span class="inline-flex flex-1" {...props}>
-            <button
-              type="button"
-              role="tab"
-              class={cn(
-                'w-full rounded-full px-4 py-2 text-sm font-semibold text-slate-500 transition-colors',
-                'cursor-not-allowed opacity-80',
-              )}
-              aria-selected={false}
-              aria-disabled="true"
-              disabled
-            >
-              Ranked
-              <span
-                class="ml-1.5 inline-block rounded-full border border-amber-400/30 bg-amber-500/15 px-1.5 py-0 text-[0.6rem] align-middle font-semibold uppercase tracking-wider text-amber-300"
-              >Soon</span>
-            </button>
-          </span>
-        {/snippet}
-      </Tooltip.Trigger>
-      <Tooltip.Content
-        side="top"
-        class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
+    {#if rankedEnabled}
+      <button
+        type="button"
+        role="tab"
+        class={cn(
+          'flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors',
+          selectedMatchType === 'ranked'
+            ? 'bg-white text-slate-950'
+            : 'text-slate-300 hover:bg-white/8 hover:text-white',
+        )}
+        aria-selected={selectedMatchType === 'ranked'}
+        disabled={selectionDisabled}
+        onclick={() => onSelectMatchType('ranked')}
       >
-        {RANKED_TOOLTIP_TEXT}
-      </Tooltip.Content>
-    </Tooltip.Root>
+        Ranked
+      </button>
+    {:else}
+      <Tooltip.Root delayDuration={120}>
+        <Tooltip.Trigger>
+          {#snippet child({ props })}
+            <span class="inline-flex flex-1" {...props}>
+              <button
+                type="button"
+                role="tab"
+                class={cn(
+                  'w-full rounded-full px-4 py-2 text-sm font-semibold text-slate-500 transition-colors',
+                  'cursor-not-allowed opacity-80',
+                )}
+                aria-selected={false}
+                aria-disabled="true"
+                disabled
+              >
+                Ranked
+                <span
+                  class="ml-1.5 inline-block rounded-full border border-amber-400/30 bg-amber-500/15 px-1.5 py-0 text-[0.6rem] align-middle font-semibold uppercase tracking-wider text-amber-300"
+                >Soon</span>
+              </button>
+            </span>
+          {/snippet}
+        </Tooltip.Trigger>
+        <Tooltip.Content
+          side="top"
+          class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
+        >
+          {RANKED_TOOLTIP_TEXT}
+        </Tooltip.Content>
+      </Tooltip.Root>
+    {/if}
 
     <button
       type="button"
@@ -198,7 +219,8 @@
     {/if}
   </div>
 
-  <!-- BO1 / BO3 selector -->
+  <!-- BO1 / BO3 selector — hidden for ranked (BO3 only) -->
+  {#if selectedMatchType !== 'ranked'}
   <div class="flex items-center justify-end gap-3">
     <div
       class="inline-flex w-full rounded-full border border-white/10 bg-black/35 p-1 sm:w-auto"
@@ -253,6 +275,7 @@
       {/each}
     </div>
   </div>
+  {/if}
 
   <div class="space-y-4">
       {#if status === 'match_found'}
@@ -578,77 +601,62 @@
               ></div>
               <div class="relative flex h-full flex-col gap-3">
                 <div class="flex items-start justify-between gap-3">
-                  <div class="space-y-1">
-                    <div class="flex items-center gap-2">
-                      {#if card.definition.format === 'infinity'}
-                        <InfinityIcon
-                          class="size-4 text-sky-200"
-                          aria-hidden="true"
-                        />
-                      {:else}
-                        <Layers
-                          class="size-4 text-amber-200"
-                          aria-hidden="true"
-                        />
-                      {/if}
-                      <p class="text-base font-semibold text-white">
-                        {m[card.definition.labelKey]({})} · {selectedQueueMode ===
-                        '1'
-                          ? m['sim.matchmaking.matchmaking.tabs.bo1']({})
-                          : m['sim.matchmaking.matchmaking.tabs.bo3']({})}
-                      </p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-1.5">
-                    {#if !card.isDeckValid}
-                      <Tooltip.Root delayDuration={120}>
-                        <Tooltip.Trigger>
-                          {#snippet child({ props })}
-                            <span
-                              class="inline-flex size-6 items-center justify-center rounded-full border border-rose-400/30 bg-rose-500/15 text-rose-300"
-                              {...props}
-                            >
-                              <ShieldAlert
-                                class="size-3.5"
-                                aria-hidden="true"
-                              />
-                            </span>
-                          {/snippet}
-                        </Tooltip.Trigger>
-                        <Tooltip.Content
-                          side="top"
-                          class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
-                        >
-                          {m['sim.matchmaking.queue.deckNotLegalForFormat']({
-                            format: m[card.definition.labelKey]({}),
-                          })}
-                        </Tooltip.Content>
-                      </Tooltip.Root>
-                    {:else if card.isActive}
-                      <Tooltip.Root delayDuration={120}>
-                        <Tooltip.Trigger>
-                          {#snippet child({ props })}
-                            <span
-                              class="inline-flex size-6 items-center justify-center rounded-full border border-sky-300/30 bg-sky-400/12 text-sky-100"
-                              {...props}
-                            >
-                              <CheckCircle
-                                class="size-3.5"
-                                aria-hidden="true"
-                              />
-                            </span>
-                          {/snippet}
-                        </Tooltip.Trigger>
-                        <Tooltip.Content
-                          side="top"
-                          class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
-                        >
-                          {m['sim.matchmaking.matchmaking.selectedBadge']({})}
-                        </Tooltip.Content>
-                      </Tooltip.Root>
-                    {/if}
-                  </div>
+                  <p class="text-base font-semibold leading-snug text-white">
+                    {m[card.definition.labelKey]({})} · {selectedQueueMode === '1'
+                      ? m['sim.matchmaking.matchmaking.tabs.bo1']({})
+                      : m['sim.matchmaking.matchmaking.tabs.bo3']({})}
+                  </p>
+
+                  <!-- Format icon — purely decorative -->
+                  {#if card.definition.format === 'infinity'}
+                    <InfinityIcon class="size-8 shrink-0 text-sky-300/50" aria-hidden="true" />
+                  {:else}
+                    <Layers class="size-8 shrink-0 text-amber-300/50" aria-hidden="true" />
+                  {/if}
                 </div>
+
+                <!-- Validity / selected badge pinned to card top-right corner -->
+                {#if !card.isDeckValid}
+                  <Tooltip.Root delayDuration={120}>
+                    <Tooltip.Trigger>
+                      {#snippet child({ props })}
+                        <span
+                          class="absolute right-2.5 top-2.5 inline-flex size-5 items-center justify-center rounded-full border border-rose-400/30 bg-rose-500/15 text-rose-300"
+                          {...props}
+                        >
+                          <ShieldAlert class="size-3" aria-hidden="true" />
+                        </span>
+                      {/snippet}
+                    </Tooltip.Trigger>
+                    <Tooltip.Content
+                      side="top"
+                      class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
+                    >
+                      {m['sim.matchmaking.queue.deckNotLegalForFormat']({
+                        format: m[card.definition.labelKey]({}),
+                      })}
+                    </Tooltip.Content>
+                  </Tooltip.Root>
+                {:else if card.isActive}
+                  <Tooltip.Root delayDuration={120}>
+                    <Tooltip.Trigger>
+                      {#snippet child({ props })}
+                        <span
+                          class="absolute right-2.5 top-2.5 inline-flex size-5 items-center justify-center rounded-full border border-sky-300/30 bg-sky-400/12 text-sky-100"
+                          {...props}
+                        >
+                          <CheckCircle class="size-3" aria-hidden="true" />
+                        </span>
+                      {/snippet}
+                    </Tooltip.Trigger>
+                    <Tooltip.Content
+                      side="top"
+                      class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
+                    >
+                      {m['sim.matchmaking.matchmaking.selectedBadge']({})}
+                    </Tooltip.Content>
+                  </Tooltip.Root>
+                {/if}
 
                 <div class="flex flex-wrap gap-2">
                   <Tooltip.Root delayDuration={120}>
@@ -725,7 +733,7 @@
                     </Tooltip.Root>
                   {/if}
 
-                  {#if selectedMatchType === 'ranked' && card.mmr != null}
+                  {#if card.mmr != null}
                     <Tooltip.Root delayDuration={120}>
                       <Tooltip.Trigger>
                         {#snippet child({ props })}
@@ -751,6 +759,49 @@
                     </Tooltip.Root>
                   {/if}
                 </div>
+
+                {#if card.mmr == null}
+                  {@const played = card.placementGamesPlayed ?? 0}
+                  {@const remaining = PLACEMENT_THRESHOLD - played}
+                  {@const pct = (played / PLACEMENT_THRESHOLD) * 100}
+                  <div class="mt-auto pt-1">
+                    <div class="flex items-center justify-between gap-2 pb-1.5">
+                      <span class="flex items-center gap-1 text-[0.65rem] font-medium text-sky-300/80">
+                        <Trophy class="size-3 shrink-0" aria-hidden="true" />
+                        Placement
+                      </span>
+                      <span class="text-[0.65rem] font-semibold tabular-nums text-sky-200">
+                        {played}<span class="text-sky-400/50">/{PLACEMENT_THRESHOLD}</span>
+                      </span>
+                    </div>
+                    <Tooltip.Root delayDuration={120}>
+                      <Tooltip.Trigger>
+                        {#snippet child({ props })}
+                          <div
+                            class="h-1 w-full overflow-hidden rounded-full bg-white/10"
+                            role="progressbar"
+                            aria-valuenow={played}
+                            aria-valuemin={0}
+                            aria-valuemax={PLACEMENT_THRESHOLD}
+                            aria-label="Placement progress"
+                            {...props}
+                          >
+                            <div
+                              class="h-full rounded-full bg-sky-400/70 transition-all duration-500"
+                              style="width: {pct}%"
+                            ></div>
+                          </div>
+                        {/snippet}
+                      </Tooltip.Trigger>
+                      <Tooltip.Content
+                        side="top"
+                        class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
+                      >
+                        Placement matches — play {remaining} more ranked {remaining === 1 ? 'game' : 'games'} to earn your MMR
+                      </Tooltip.Content>
+                    </Tooltip.Root>
+                  </div>
+                {/if}
               </div>
             </button>
           {/each}

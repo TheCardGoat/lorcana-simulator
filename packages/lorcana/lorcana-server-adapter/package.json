@@ -18,7 +18,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "format": "bun x oxfmt --write ./src",
-    "lint": "bun x oxlint --fix ./src",
+    "lint": "vp lint ./src",
     "check-types": "tsc --noEmit",
     "test": "bun test --pass-with-no-tests"
   },
@@ -31,5 +31,10 @@
   "devDependencies": {
     "@tcg/typescript-config": "workspace:*",
     "@types/node": "^22.13.4"
+  },
+  "nx": {
+    "tags": [
+      "lorcana"
+    ]
   }
 }

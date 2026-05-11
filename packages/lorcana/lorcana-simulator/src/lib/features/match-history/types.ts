@@ -30,6 +30,18 @@ export type MatchListResponse = {
   nextCursor: string | null;
 };
 
+export type PlayerStatsByFormat = {
+  formatId: string;
+  mmr: number;
+  highestMmr: number | null;
+  bracket: string | null;
+  gamesPlayed: number;
+  gamesWon: number;
+  losses: number;
+  currentWinStreak: number;
+  currentLossStreak: number;
+};
+
 export type PlayerStats = {
   gamesPlayed: number;
   gamesWon: number;
@@ -48,6 +60,7 @@ export type PlayerStats = {
   takebacksGranted: number;
   takebacksReceived: number;
   sportsmanshipTier: string | null;
+  byFormat: PlayerStatsByFormat[];
 };
 
 export type MmrHistoryPoint = {

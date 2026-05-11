@@ -91,12 +91,13 @@ Custom matchers: `toBeSuccessfulCommand()` — available globally via bunfig.tom
 
 ### Workspace Context
 
-This is part of a Turborepo monorepo (`the-card-goat-online`). Root-level commands:
-- `bun run ci-check` — Types + tests across all packages
+This is part of an Nx monorepo (`the-card-goat-online`). Root-level commands:
+- `bun run ci-check` — Types + tests across all packages (via `nx run-many`)
 - `bun run quality` — Lint + format check (oxlint + oxfmt)
 - `bun run quality:fix` — Auto-fix lint and format issues
+- `pnpm exec nx graph` — Inspect the project graph
 
-Turborepo boundaries enforce: types → foundation → game-engine → card-data. The simulator sits at the card-data/app layer.
+Project tags express the layered boundary `types → foundation → game-engine → card-data`. The simulator sits at the card-data/app layer. Tags are declared in each project's `package.json` (`nx.tags`); enforcement via `@nx/eslint-plugin` is a follow-up.
 
 ## Key Conventions
 

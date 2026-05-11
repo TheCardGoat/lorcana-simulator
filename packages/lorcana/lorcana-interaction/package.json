@@ -23,10 +23,10 @@
     "typecheck": "bun run check-types",
     "check-types": "tsc --noEmit",
     "format": "bun x oxfmt --write './src/**/*.ts'",
-    "lint": "bun x oxlint --fix ./src",
+    "lint": "vp lint ./src",
     "test": "bun test",
     "test:watch": "bun test --watch",
-    "check": "turbo format lint check-types test"
+    "check": "bun run format && bun run lint && bun run check-types && bun run test"
   },
   "dependencies": {
     "@tcg/lorcana-engine": "workspace:*",
@@ -38,5 +38,10 @@
   },
   "peerDependencies": {
     "typescript": "5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "game-engine"
+    ]
   }
 }

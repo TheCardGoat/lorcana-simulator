@@ -16,6 +16,14 @@
       "port": 5190
     },
     {
+      "name": "lorcana-simulator-ranked-on",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "packages/lorcana/lorcana-simulator",
+      "env": { "PUBLIC_RANKED_ENABLED": "true" },
+      "port": 5173
+    },
+    {
       "name": "storybook",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["run", "storybook"],

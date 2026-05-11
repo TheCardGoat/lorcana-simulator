@@ -40,9 +40,9 @@
     "typecheck": "tsc --noEmit",
     "check-types": "tsc --noEmit",
     "format": "bun x oxfmt --write ./src",
-    "lint": "bun x oxlint --fix ./src",
+    "lint": "vp lint ./src",
     "test": "bun test src",
-    "check": "turbo format lint check-types"
+    "check": "bun run format && bun run lint && bun run check-types"
   },
   "dependencies": {
     "unique-names-generator": "^4.7.1"
@@ -53,5 +53,10 @@
   },
   "peerDependencies": {
     "typescript": "5.8.3"
+  },
+  "nx": {
+    "tags": [
+      "types"
+    ]
   }
 }
