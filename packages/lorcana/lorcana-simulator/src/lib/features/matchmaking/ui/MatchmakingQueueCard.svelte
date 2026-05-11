@@ -773,7 +773,9 @@
                         {m['sim.matchmaking.matchmaking.stats.mmrLabel']({})}
                       </Tooltip.Content>
                     </Tooltip.Root>
-                  {:else if card.placementGamesPlayed !== null && card.placementGamesPlayed < PLACEMENT_THRESHOLD}
+                  {:else}
+                    {@const played = card.placementGamesPlayed ?? 0}
+                    {@const remaining = PLACEMENT_THRESHOLD - played}
                     <Tooltip.Root delayDuration={120}>
                       <Tooltip.Trigger>
                         {#snippet child({ props })}
@@ -786,7 +788,7 @@
                               class="size-3 text-sky-400"
                               aria-hidden="true"
                             />
-                            {card.placementGamesPlayed}/{PLACEMENT_THRESHOLD}
+                            {played}/{PLACEMENT_THRESHOLD}
                           </Badge>
                         {/snippet}
                       </Tooltip.Trigger>
@@ -794,7 +796,7 @@
                         side="top"
                         class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
                       >
-                        Placement matches — play {PLACEMENT_THRESHOLD - card.placementGamesPlayed} more ranked {PLACEMENT_THRESHOLD - card.placementGamesPlayed === 1 ? 'game' : 'games'} to earn your MMR
+                        Placement matches — play {remaining} more ranked {remaining === 1 ? 'game' : 'games'} to earn your MMR
                       </Tooltip.Content>
                     </Tooltip.Root>
                   {/if}
