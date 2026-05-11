@@ -343,6 +343,9 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
     if (persistedMatchType && (persistedMatchType !== "ranked" || this.rankedEnabled)) {
       this.selectedMatchType = persistedMatchType;
     }
+    if (this.selectedMatchType === "ranked" && this.selectedQueueMode === "1") {
+      this.selectedQueueMode = "3";
+    }
     this.#initialRoomCode = options.initialRoomCode ?? options.initialLobbyRoom?.roomCode ?? null;
     this.#initialLobbyRoom = options.initialLobbyRoom ?? null;
     this.#initialGatewayTicket = options.gatewayTicket ?? null;
@@ -848,6 +851,9 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
     if (this.selectionDisabled) {
       return;
     }
+    if (mode === "1" && this.selectedMatchType === "ranked") {
+      return;
+    }
 
     this.selectedQueueMode = mode;
     this.#deps.trackEvent("matchmaking_mode_select", { mode });
@@ -862,6 +868,9 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
     }
 
     this.selectedMatchType = matchType;
+    if (matchType === "ranked" && this.selectedQueueMode === "1") {
+      this.selectedQueueMode = "3";
+    }
     this.#deps.trackEvent("matchmaking_match_type_select", { matchType });
   }
 
