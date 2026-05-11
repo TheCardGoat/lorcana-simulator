@@ -41,5 +41,25 @@ describe("Mickey Mouse - Pirate Captain", () => {
         pirateCharacter.strength + 2,
       );
     });
+
+    it("grants the chosen Pirate character 'takes no damage from challenges' this turn", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [mickeyMousePirateCaptain, pirateCharacter],
+        deck: 3,
+      });
+
+      expect(testEngine.asPlayerOne().quest(mickeyMousePirateCaptain)).toBeSuccessfulCommand();
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(mickeyMousePirateCaptain, { targets: [pirateCharacter] }),
+      ).toBeSuccessfulCommand();
+
+      expect(
+        testEngine
+          .asPlayerOne()
+          .hasTemporaryAbility(pirateCharacter, "takes-no-damage-from-challenges"),
+      ).toBe(true);
+    });
   });
 });

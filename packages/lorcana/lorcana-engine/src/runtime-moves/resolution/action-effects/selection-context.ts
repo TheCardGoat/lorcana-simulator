@@ -1214,6 +1214,15 @@ function buildPlayCardSelectionContext(
     return undefined;
   }
 
+  // Play from the reveal zone (e.g. We Know the Way's reveal-and-route): candidates are the
+  // just-revealed card(s) — never the controller's hand. Without an explicit branch the
+  // selection-context falls through to the hand-enumeration path below, which surfaces
+  // unrelated hand cards (Bug #9 — replay mgUZQdmZMdWBS5p5pT1gDqI). Return undefined here
+  // so the play-card resolver auto-uses `eventSnapshot.revealedCardIds`.
+  if (from === "revealed") {
+    return undefined;
+  }
+
   // Play from discard or inkwell: always require an explicit choice so the player picks the card.
   if (from === "discard" || from === "inkwell") {
     const eligibleCards = getEligibleZoneCardsForPlayCardEffect(

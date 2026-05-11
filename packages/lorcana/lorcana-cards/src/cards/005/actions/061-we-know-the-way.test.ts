@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { PLAYER_ONE, LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { simbaProtectiveCub } from "../../001";
+import { monstroInfamousWhale } from "../../008/characters/064-monstro-infamous-whale";
 import { weKnowTheWay } from "./061-we-know-the-way";
 
 describe("We Know the Way", () => {
@@ -94,6 +95,94 @@ describe("We Know the Way", () => {
     expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, discard: 1 });
     expect(testEngine.getCardDefinitionIdsInZone("limbo", PLAYER_ONE)).toHaveLength(1);
     expect(testEngine.getCardDefinitionIdsInZone("discard", PLAYER_ONE)).toContain(weKnowTheWay.id);
+  });
+
+  it("regression (Bug #9, prod replay mgUZQdmZMdWBS5p5pT1gDqI): when extra copies of We Know the Way sit in hand, the optional free-play candidates must be the revealed card, not the hand copies", () => {
+    // Replay context: player had multiple We Know the Way copies in hand and sang one via Monstro.
+    // After shuffle+reveal, the optional offered hand copies (wrong) instead of the revealed card.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [weKnowTheWay, weKnowTheWay, weKnowTheWay],
+      play: [{ card: monstroInfamousWhale, isDrying: false }],
+      discard: [simbaProtectiveCub],
+      deck: [],
+    });
+
+    // Pick the specific hand copy we will sing (first one) and a target to shuffle.
+    expect(
+      testEngine.asPlayerOne().singSong(weKnowTheWay, monstroInfamousWhale),
+    ).toBeSuccessfulCommand();
+
+    // First pending: shuffle-into-deck target selection — pick simba.
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [simbaProtectiveCub] }),
+    ).toBeSuccessfulCommand();
+
+    // Second pending: optional free-play of the revealed card.
+    // The candidate list MUST be the revealed card (simba), not the other We Know the Way copies in hand.
+    // Accepting the optional should put simba into play.
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.getCardDefinitionIdsInZone("play", PLAYER_ONE)).toContain(
+      simbaProtectiveCub.id,
+    );
+  });
+
+  it("regression: empty deck + sung via singer — shuffled card reveals itself and offers free play", () => {
+    // Bug #9 (replay mgUZQdmZMdWBS5p5pT1gDqI turn 18): player sang We Know the Way with Monstro
+    // (combo cleared the deck), then expected to play the just-shuffled revealed card for free.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [weKnowTheWay],
+      play: [{ card: monstroInfamousWhale, isDrying: false }],
+      discard: [simbaProtectiveCub],
+      deck: [],
+    });
+
+    expect(
+      testEngine.asPlayerOne().singSong(weKnowTheWay, monstroInfamousWhale),
+    ).toBeSuccessfulCommand();
+
+    // First pending: choose the discard target for shuffle-into-deck
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ targets: [simbaProtectiveCub] }),
+    ).toBeSuccessfulCommand();
+
+    // Second pending: optional free-play of the revealed card (which is the just-shuffled card)
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.getCardDefinitionIdsInZone("play", PLAYER_ONE)).toContain(
+      simbaProtectiveCub.id,
+    );
+  });
+
+  it("regression: empty deck — shuffled card is its own top reveal and can be played for free", () => {
+    // Bug #9 (replay mgUZQdmZMdWBS5p5pT1gDqI turn 18): empty deck means the just-shuffled
+    // discard card IS the revealed top card. Name self-matches → free play should be offered
+    // for the revealed card.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [weKnowTheWay],
+      inkwell: weKnowTheWay.cost,
+      discard: [simbaProtectiveCub],
+      deck: [],
+    });
+
+    expect(
+      testEngine.asPlayerOne().playCard(weKnowTheWay, {
+        targets: [simbaProtectiveCub],
+      }),
+    ).toBeSuccessfulCommand();
+
+    expect(
+      testEngine.asPlayerOne().resolveNextPending({ resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+
+    expect(testEngine.getCardDefinitionIdsInZone("play", PLAYER_ONE)).toContain(
+      simbaProtectiveCub.id,
+    );
+    expect(testEngine.asPlayerOne()).toHaveZoneCounts({ hand: 0, discard: 1, play: 1, deck: 0 });
   });
 
   it("regression: puts revealed card into hand when name does not match chosen card", () => {

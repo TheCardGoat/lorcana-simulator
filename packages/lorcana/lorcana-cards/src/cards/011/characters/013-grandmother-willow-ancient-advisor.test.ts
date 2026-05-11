@@ -6,6 +6,7 @@ import {
   createMockItem,
 } from "@tcg/lorcana-engine/testing";
 import { grandmotherWillowAncientAdvisor } from "./013-grandmother-willow-ancient-advisor";
+import { grandmotherWillowAncientAdvisorEpic } from "./206-grandmother-willow-ancient-advisor-epic";
 import { befuddle } from "../../001/actions/062-befuddle";
 
 const discountedCharacter = createMockCharacter({
@@ -98,6 +99,79 @@ describe("Grandmother Willow - Ancient Advisor", () => {
     expect(testEngine.asPlayerOne().playCard(discountedCharacter)).toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerOne().canPlayCard(secondCharacter)).toBe(false);
+  });
+
+  it("regression: SMOOTH THE WAY does not fire at start of turn when Grandmother Willow has only ever been in hand", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [grandmotherWillowAncientAdvisor, discountedCharacter],
+      inkwell: 1,
+      deck: 5,
+    });
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+    expect(testEngine.asPlayerOne().canPlayCard(discountedCharacter)).toBe(false);
+  });
+
+  it("regression (Bug #3, prod replay mgOHDgI0QtKNC7NV7cPFeSZ): SMOOTH THE WAY does not fire when Grandmother Willow is drawn at the start of the turn (still in hand)", () => {
+    // Place Willow at the TOP of the deck so the start-of-turn draw places her in hand.
+    // The bug: production fires SMOOTH THE WAY for Willow even though she's now in hand,
+    // never having been in play.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [discountedCharacter],
+      deck: [grandmotherWillowAncientAdvisor],
+      inkwell: 1,
+    });
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(grandmotherWillowAncientAdvisor)).toBe("hand");
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+    expect(testEngine.asPlayerOne().canPlayCard(discountedCharacter)).toBe(false);
+  });
+
+  it("regression (Bug #3, prod-shape: putCardIntoInkwell while Willow sits in hand must not enqueue SMOOTH THE WAY)", () => {
+    // Reconstructs the prod replay step sequence: Willow in hand, player inks an unrelated card,
+    // confirms the bag never gets a SMOOTH THE WAY entry from Willow-in-hand.
+    const inkbait = createMockCharacter({ id: "willow-ink-bait", name: "Ink Bait", cost: 1 });
+    const inkbait2 = createMockCharacter({ id: "willow-ink-bait-2", name: "Ink Bait 2", cost: 1 });
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [grandmotherWillowAncientAdvisor, inkbait, inkbait2, discountedCharacter],
+      inkwell: 0,
+      deck: 5,
+    });
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().ink(inkbait).success).toBe(true);
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().ink(inkbait2).success).toBe(true);
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+  });
+
+  it("regression (Bug #3, EPIC variant, prod replay mgOHDgI0QtKNC7NV7cPFeSZ): SMOOTH THE WAY does not fire for the Epic variant while still in hand", () => {
+    // Production replay involved the Epic variant (defId 05w). Asserts the same hand-only
+    // invariant for that printing.
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [discountedCharacter],
+      deck: [grandmotherWillowAncientAdvisorEpic],
+      inkwell: 1,
+    });
+
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+    expect(testEngine.asPlayerTwo().passTurn()).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerOne().getCardZone(grandmotherWillowAncientAdvisorEpic)).toBe("hand");
+    expect(testEngine.asPlayerOne().getBagEffects()).toHaveLength(0);
+    expect(testEngine.asPlayerOne().canPlayCard(discountedCharacter)).toBe(false);
   });
 
   it("regression: no start-of-turn bag effect is created after Grandmother Willow is bounced to hand", () => {
