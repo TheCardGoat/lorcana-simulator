@@ -2033,6 +2033,130 @@ describe("LorcanaSidebarPresenter", () => {
     ]);
   });
 
+  it("surfaces a Bodyguard enter-exerted choice when a Bodyguard card is assigned to a scry play destination and forwards enterPlayExerted on confirm (triage 2026-05-11 #11)", () => {
+    const executedMoves: Array<Record<string, unknown>> = [];
+    const sourceCard = createCardSnapshot("playerOne", "play", {
+      id: "dino-source",
+      name: "Down in New Orleans",
+      type: "action",
+    });
+    const bodyguardCard = createCardSnapshot("playerOne", "deck", {
+      id: "thunderbolt",
+      name: "Thunderbolt - Wonder Dog",
+      type: "character",
+      keywords: ["Bodyguard"],
+    });
+    const filler = createCardSnapshot("playerOne", "deck", {
+      id: "filler",
+      name: "Filler",
+      type: "action",
+    });
+    const board = createBoardWithPendingEffect({
+      id: "pending-1",
+      sourceId: sourceCard.cardId as CardInstanceId,
+      sourceCardId: sourceCard.cardId as CardInstanceId,
+      controllerId: "player_one",
+      chooserId: "player_one",
+      kind: "scry-selection",
+      effect: { type: "custom" },
+    });
+    board.pendingEffects = [
+      {
+        ...board.pendingEffects[0]!,
+        selectionContext: {
+          origin: "pending-effect",
+          requestId: "pending-1",
+          kind: "scry-selection",
+          sourceCardId: sourceCard.cardId as CardInstanceId,
+          chooserId: playerOneId,
+          currentSelection: {},
+          submitField: "destinations",
+          amount: 2,
+          revealedCardIds: [
+            bodyguardCard.cardId as CardInstanceId,
+            filler.cardId as CardInstanceId,
+          ],
+          revealedCards: [
+            {
+              cardId: bodyguardCard.cardId as CardInstanceId,
+              label: bodyguardCard.label,
+              cardType: "character",
+              cost: 5,
+              classifications: ["Hero"],
+            },
+            {
+              cardId: filler.cardId as CardInstanceId,
+              label: filler.label,
+              cardType: "action",
+              cost: 1,
+            },
+          ],
+          destinationRules: [
+            { id: "play", zone: "play", min: 0, max: 1, remainder: false },
+            { id: "bottom", zone: "deck-bottom", min: 0, max: null, remainder: true },
+          ],
+        },
+      },
+    ];
+
+    const presenter = new LorcanaSidebarPresenter(
+      createGameContextStub({
+        boardSnapshot: () => board,
+        cardSnapshotsById: () => ({
+          [sourceCard.cardId]: sourceCard,
+          [bodyguardCard.cardId]: bodyguardCard,
+          [filler.cardId]: filler,
+        }),
+        pendingResolutionMoves: () => [
+          {
+            id: "resolveEffect:pending-1",
+            moveId: "resolveEffect",
+            params: { effectId: "pending-1" },
+          },
+        ],
+        executeMove: (_moveId, params) => {
+          executedMoves.push(params as Record<string, unknown>);
+          return true;
+        },
+      }),
+    );
+
+    presenter.handleResolvePendingEffect({
+      id: "resolveEffect:pending-1",
+      moveId: "resolveEffect",
+      params: { effectId: "pending-1" },
+    });
+
+    // Before any play assignment, no Bodyguard toggle is visible.
+    expect(presenter.scryBodyguardEntryMode).toBeNull();
+
+    // Assign Bodyguard to play, filler to bottom.
+    expect(presenter.handleAvailableMovesScryAssignment(bodyguardCard.cardId, "play")).toBe(true);
+    expect(presenter.handleAvailableMovesScryAssignment(filler.cardId, "bottom")).toBe(true);
+
+    // Now the toggle appears, defaulting to not-yet-chosen.
+    expect(presenter.scryBodyguardEntryMode).toEqual({ selected: null });
+
+    // Player opts into Bodyguard exerted entry.
+    expect(presenter.selectResolutionEnterPlayExerted(true)).toBe(true);
+    expect(presenter.scryBodyguardEntryMode).toEqual({ selected: true });
+
+    expect(presenter.confirmActionSelection()).toBe(true);
+
+    expect(executedMoves).toEqual([
+      {
+        effectId: "pending-1",
+        params: {
+          destinations: [
+            { zone: "play", cards: [bodyguardCard.cardId] },
+            { zone: "deck-bottom", cards: [filler.cardId] },
+          ],
+          enterPlayExerted: true,
+        },
+      },
+    ]);
+  });
+
   it("auto-opens the single bag resolution selection after a card play", () => {
     const sourceCard = createCardSnapshot("playerOne", "play", {
       id: "card-1",

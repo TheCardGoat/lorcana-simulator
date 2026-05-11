@@ -21,17 +21,16 @@ import { createFixture } from "./fixture-factory";
  *      simulator UI surfaces a Bodyguard "may enter exerted" choice and the
  *      player opts in.
  *
- * Current state (post engine fix, pre simulator UI control):
- *   - Engine: accepts `params.enterPlayExerted: true` on the playCard move
- *     and applies it when the played card has Bodyguard. Verified by the
- *     bun test at
- *     packages/lorcana/lorcana-cards/src/cards/008/actions/177-din-bodyguard-enter-exerted.test.ts
- *   - Simulator UI: the scry-confirm path in `confirmResolutionSelection`
- *     (game-context.svelte.ts ~8355) does **not** yet send
- *     `enterPlayExerted`, and the ScryResolutionOverlay does not yet render
- *     a checkbox. So in this fixture today, Thunderbolt will still enter
- *     play **ready** (the visible bug). Use this fixture to validate the
- *     UI fix once the toggle is wired up.
+ * Engine: accepts `params.enterPlayExerted: true` on the scry confirm and
+ * applies it when the played card has Bodyguard. Verified by the bun test at
+ *   packages/lorcana/lorcana-cards/.../177-din-bodyguard-enter-exerted.test.ts
+ *
+ * Simulator UI: the scry overlay surfaces "Bodyguard — may enter play
+ * exerted?" with Yes / No buttons whenever a Bodyguard card is assigned to
+ * a `play` destination. Confirm stays disabled until the chooser picks.
+ * Wiring verified by the presenter test "surfaces a Bodyguard enter-exerted
+ * choice when a Bodyguard card is assigned to a scry play destination" in
+ *   packages/lorcana/lorcana-simulator/.../lorcana-sidebar-presenter.test.ts
  */
 export const triage20260511DinBodyguardEnterExertedFixture = createFixture({
   id: "triage-2026-05-11-din-bodyguard-enter-exerted",

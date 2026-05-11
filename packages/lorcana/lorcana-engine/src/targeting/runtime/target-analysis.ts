@@ -513,6 +513,13 @@ function collectRemoveDamageTargetDescriptors(effect: unknown): RemoveDamageTarg
     // moving damage from/to the same card is a no-op the resolver silently
     // skips (would surface in the UI as an unconfirmable picker). See triage
     // 2026-05-11 #13 (Luisa Madrigal — Confident Climber).
+    //
+    // Edge case (both endpoints SELF): no chooser candidates contributed at
+    // all. Intentional — no card prints "move damage from this character to
+    // this character" because the result is always a no-op. If a future
+    // card does, the resolver's source-equals-destination guard already
+    // produces a clean no-op execution, so leaving the candidate list empty
+    // here is safe: the bag/pending-effect drains without prompting.
     const fromIsSelf = effectRecord.from === "SELF";
     const toIsSelf = effectRecord.to === "SELF";
     const descriptors: RemoveDamageTargetDescriptor[] = [];
