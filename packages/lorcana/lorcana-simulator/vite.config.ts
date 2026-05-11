@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   const hotUpdateDelayMs = Number(env.HOT_UPDATE_DELAY_MS ?? 0);
   const shouldDelayHotUpdates = Number.isFinite(hotUpdateDelayMs) && hotUpdateDelayMs > 0;
   const paraglideWatchIgnore = ["**/src/lib/paraglide/**"];
+  const monorepoRoot = fileURLToPath(new URL("../../../../../", import.meta.url));
 
   // The union of these three plugins' return types blows TypeScript's
   // structural comparison budget under svelte-check on CI ("Excessive stack
@@ -25,6 +26,13 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173, // your preferred starting port
       strictPort: false, // fall through to next available
+      fs: {
+        // Vite auto-detects submodules/lorcana/ as the workspace root (it has
+        // its own pnpm-workspace.yaml), so the outer monorepo node_modules —
+        // where pnpm now hoists SvelteKit and friends — isn't allowed by
+        // default.
+        allow: [monorepoRoot],
+      },
       watch: {
         // Paraglide regenerates this directory during dev. Watching it causes
         // Vite to invalidate the graph from its own generated output.
