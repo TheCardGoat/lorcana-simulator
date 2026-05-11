@@ -218,7 +218,8 @@
     {/if}
   </div>
 
-  <!-- BO1 / BO3 selector -->
+  <!-- BO1 / BO3 selector — hidden for ranked (BO3 only) -->
+  {#if selectedMatchType !== 'ranked'}
   <div class="flex items-center justify-end gap-3">
     <div
       class="inline-flex w-full rounded-full border border-white/10 bg-black/35 p-1 sm:w-auto"
@@ -273,6 +274,7 @@
       {/each}
     </div>
   </div>
+  {/if}
 
   <div class="space-y-4">
       {#if status === 'match_found'}

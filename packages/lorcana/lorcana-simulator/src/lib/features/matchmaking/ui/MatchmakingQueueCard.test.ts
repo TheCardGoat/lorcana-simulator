@@ -135,6 +135,24 @@ describe("MatchmakingQueueCard", () => {
     expect(body).toContain(">Ranked<");
   });
 
+  it("hides the BO1/BO3 selector entirely when ranked is selected", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: { ...baseProps, selectedMatchType: "ranked" as const },
+    });
+
+    expect(body).not.toContain(">BO1<");
+    expect(body).not.toContain(">BO3<");
+  });
+
+  it("shows both BO1 and BO3 tabs in casual", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: { ...baseProps, selectedMatchType: "casual" as const },
+    });
+
+    expect(body).toContain(">BO1<");
+    expect(body).toContain(">BO3<");
+  });
+
   it("renders elapsed and remaining queue timers with the leave-queue CTA while queued", () => {
     const { body } = render(MatchmakingQueueCard, {
       props: {
