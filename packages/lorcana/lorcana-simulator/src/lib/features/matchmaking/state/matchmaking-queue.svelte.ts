@@ -243,6 +243,7 @@ export class MatchmakingQueueStore {
     this.matchFoundGameId = msg.gameId;
     this.opponentDisplayName = msg.opponentDisplayName ?? null;
     this.stopTimer();
+    this.stopAcceptTimer();
     const waitSeconds = this.queuedAt ? Math.round((Date.now() - this.queuedAt) / 1000) : 0;
     trackEvent("queue_match_found", {
       wait_seconds: waitSeconds,
@@ -303,7 +304,11 @@ export class MatchmakingQueueStore {
     }
 
     if (!msg.queued) {
-      if (this.status === "queued" || this.status === "match_ready") {
+      // Only reset when queued — match_ready exits exclusively via match_found /
+      // match_ready_expired WS events or the local deadline timer, never via a
+      // generic poll response (which can race against the server clearing the
+      // pending match right before it sends match_found).
+      if (this.status === "queued") {
         this.reset();
       }
       return;
