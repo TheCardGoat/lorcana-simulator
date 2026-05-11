@@ -111,6 +111,136 @@ describe("mergeSupplementalScryCardSnapshots", () => {
       cardNumber: "65",
     });
   });
+
+  it("surfaces Bodyguard keyword and may-enter-play-exerted option for scry-revealed cards (PR #73 review feedback)", () => {
+    const board = {
+      stateID: 42,
+      cards: {},
+      players: {
+        player_one: {
+          hand: [],
+          play: [],
+          inkwell: [],
+          discard: [],
+          deckCount: 4,
+        },
+        player_two: {
+          hand: [],
+          play: [],
+          inkwell: [],
+          discard: [],
+          deckCount: 0,
+        },
+      },
+      playerOrder: ["player_one", "player_two"],
+      pendingEffects: [
+        {
+          id: "pending-scry-1",
+          selectionContext: {
+            kind: "scry-selection",
+            revealedCardIds: ["reveal-bg", "reveal-may"],
+          },
+        },
+      ],
+      bagEffects: [],
+    } as unknown as LorcanaProjectedBoardView;
+
+    const staticResources = {
+      instances: new Map([
+        [
+          "reveal-bg",
+          {
+            instanceId: "reveal-bg",
+            definitionId: "BG-001",
+            ownerID: "player_one",
+          },
+        ],
+        [
+          "reveal-may",
+          {
+            instanceId: "reveal-may",
+            definitionId: "MAY-001",
+            ownerID: "player_one",
+          },
+        ],
+      ]),
+      cards: new Map([
+        [
+          "BG-001",
+          {
+            id: "BG-001",
+            name: "Bodyguard Char",
+            cardType: "character",
+            cost: 4,
+            willpower: 5,
+            strength: 2,
+            inkable: true,
+            abilities: [{ type: "keyword", keyword: "Bodyguard" }],
+          },
+        ],
+        [
+          "MAY-001",
+          {
+            id: "MAY-001",
+            name: "May-Enter-Exerted Char",
+            cardType: "character",
+            cost: 4,
+            willpower: 5,
+            strength: 2,
+            inkable: true,
+            abilities: [
+              {
+                id: "may-1",
+                name: "LONG JOURNEY",
+                type: "static",
+                text: "This character may enter play exerted.",
+                effect: {
+                  type: "restriction",
+                  restriction: "may-enter-play-exerted",
+                  target: "SELF",
+                },
+              },
+            ],
+          },
+        ],
+      ]),
+    } as unknown as MatchStaticResources;
+
+    const merged = mergeSupplementalScryCardSnapshots({
+      board,
+      snapshots: {},
+      staticResources,
+      authoritativeState: {
+        ctx: {
+          zones: {
+            private: {
+              cardIndex: {
+                "reveal-bg": {
+                  zoneKey: "deck:player_one",
+                  ownerID: "player_one",
+                  controllerID: "player_one",
+                },
+                "reveal-may": {
+                  zoneKey: "deck:player_one",
+                  ownerID: "player_one",
+                  controllerID: "player_one",
+                },
+              },
+              cardMeta: {
+                "reveal-bg": {},
+                "reveal-may": {},
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(merged["reveal-bg"]?.keywords).toEqual(["Bodyguard"]);
+    expect(merged["reveal-bg"]?.mayEnterPlayExertedOption).toBeUndefined();
+    expect(merged["reveal-may"]?.keywords).toEqual([]);
+    expect(merged["reveal-may"]?.mayEnterPlayExertedOption).toBe(true);
+  });
 });
 
 describe("buildCardSnapshotMap", () => {

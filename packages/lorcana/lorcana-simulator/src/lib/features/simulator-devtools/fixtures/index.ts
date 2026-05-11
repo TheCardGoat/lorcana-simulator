@@ -37,6 +37,7 @@ import { triage20260505ThreeArrowsMeridaBanishFixture } from "./triage-2026-05-0
 import { triage20260505TouchTheSkyFixture } from "./triage-2026-05-05-touch-the-sky.js";
 import { triage20260506BrawlCastMauiRushChallengeFixture } from "./triage-2026-05-06-brawl-cast-maui-rush-challenge.js";
 import { triage20260508ShereKhanSkipOptionalFixture } from "./triage-2026-05-08-shere-khan-skip-optional.js";
+import { triage20260511DinBodyguardEnterExertedFixture } from "./triage-2026-05-11-din-bodyguard-enter-exerted.js";
 import { createFixtureRegistry } from "./registry.js";
 
 export const DEFAULT_LORCANA_FIXTURE_ID = "empty-board";
@@ -86,6 +87,7 @@ const fixtureRegistry = createFixtureRegistry(
     triage20260505EmeraldChromiconBanishTriggerFixture,
     triage20260506BrawlCastMauiRushChallengeFixture,
     triage20260508ShereKhanSkipOptionalFixture,
+    triage20260511DinBodyguardEnterExertedFixture,
   ] satisfies LorcanaSimulatorFixture[],
   "general simulator fixtures",
 );

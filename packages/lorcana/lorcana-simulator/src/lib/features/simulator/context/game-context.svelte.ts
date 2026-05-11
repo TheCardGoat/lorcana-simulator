@@ -3668,6 +3668,43 @@ function getScryUnassignedCardIds(
   return context.revealedCardIds.filter((cardId) => !assignedIds.has(cardId));
 }
 
+/**
+ * True when at least one card assigned to a `play` scry destination prints a
+ * "may enter play exerted" option — either via the Bodyguard keyword or via
+ * a static `may-enter-play-exerted` ability (e.g. Mickey Mouse — Expedition
+ * Leader's LONG JOURNEY, Hamish, Hubert & Harris — Making Mischief). Used to
+ * gate forwarding of `enterPlayExerted` on the resolveEffect submission and
+ * to decide whether to render the entry-mode toggle in the scry overlay.
+ * See triage 2026-05-11 #11 (Down in New Orleans).
+ */
+function scryAssignsEntryModeCardToPlay(
+  context: Extract<ResolutionSelectionContext, { kind: "scry-selection" }>,
+  manualDestinations: ScryResolutionSelection[],
+  cardSnapshotsById: CardSnapshotMap,
+): boolean {
+  const playDestinationIds = new Set(
+    context.destinationRules.filter((rule) => rule.zone === "play").map((rule) => rule.id),
+  );
+  if (playDestinationIds.size === 0) {
+    return false;
+  }
+  for (const destination of manualDestinations) {
+    if (!playDestinationIds.has(destination.id)) {
+      continue;
+    }
+    for (const cardId of destination.cards) {
+      const card = cardSnapshotsById[cardId];
+      if (!card) {
+        continue;
+      }
+      if (card.keywords?.includes("Bodyguard") || card.mayEnterPlayExertedOption === true) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 function isInlineResolutionSelectionContext(context: ResolutionSelectionContext): boolean {
   return (
     isTargetResolutionSelectionContext(context) &&
@@ -4456,6 +4493,30 @@ export class LorcanaSidebarPresenter {
 
   get actionSelectionSession(): ActionSelectionSession | null {
     return this.#actionSelectionSession;
+  }
+
+  /**
+   * Surfaces the scry-overlay's Bodyguard "may enter exerted" control state.
+   * Returns `null` when no scry-assigned `play` card has Bodyguard (so the
+   * overlay can skip rendering the toggle). Returns the current selection
+   * (`true`/`false`/`null` for not-yet-chosen) when a Bodyguard play
+   * assignment is staged. See triage 2026-05-11 #11.
+   */
+  get scryBodyguardEntryMode(): { selected: boolean | null } | null {
+    const session = this.#resolutionSelectionSession;
+    if (!session || session.context.kind !== "scry-selection") {
+      return null;
+    }
+    if (
+      !scryAssignsEntryModeCardToPlay(
+        session.context,
+        session.scryDestinations,
+        this.cardSnapshotsById,
+      )
+    ) {
+      return null;
+    }
+    return { selected: session.selectedEnterPlayExerted };
   }
 
   get resolutionSelectionSession(): ResolutionSelectionSession | null {
@@ -8168,11 +8229,26 @@ export class LorcanaSidebarPresenter {
 
   selectResolutionEnterPlayExerted = (value: boolean): boolean => {
     const session = this.#resolutionSelectionSession;
-    if (
-      !session ||
-      !isTargetResolutionSelectionContext(session.context) ||
-      !hasPlayCardEntryModeSelection(session.context, session.selectedTargets)
-    ) {
+    if (!session) {
+      return false;
+    }
+
+    // Two legal entry points for this selection:
+    //   1. target-selection where a Bodyguard candidate from hand is chosen
+    //      (existing flow — e.g. playing a Bodyguard character normally).
+    //   2. scry-selection where a Bodyguard card is assigned to a `play`
+    //      destination (triage 2026-05-11 #11 — Down in New Orleans).
+    const isTargetEntryMode =
+      isTargetResolutionSelectionContext(session.context) &&
+      hasPlayCardEntryModeSelection(session.context, session.selectedTargets);
+    const isScryBodyguardEntryMode =
+      session.context.kind === "scry-selection" &&
+      scryAssignsEntryModeCardToPlay(
+        session.context,
+        session.scryDestinations,
+        this.cardSnapshotsById,
+      );
+    if (!isTargetEntryMode && !isScryBodyguardEntryMode) {
       return false;
     }
 
@@ -8181,6 +8257,11 @@ export class LorcanaSidebarPresenter {
       selectedEnterPlayExerted: value,
     };
     this.#game.setPendingError(null);
+    // Scry's confirm is gated on full destination assignment, not on
+    // selectedEnterPlayExerted; don't auto-submit on toggle.
+    if (isScryBodyguardEntryMode) {
+      return true;
+    }
     return this.canConfirmResolutionSelection ? this.confirmResolutionSelection() : true;
   };
 
@@ -8362,6 +8443,19 @@ export class LorcanaSidebarPresenter {
                     zone: destination.zone,
                     cards: [...destination.cards],
                   })),
+                  // Forward the chooser's Bodyguard "may enter exerted" choice
+                  // when any scry-assigned `play` destination contains a card
+                  // with Bodyguard. The engine ignores this flag for non-
+                  // Bodyguard plays, so forwarding it unconditionally is safe.
+                  // See triage 2026-05-11 #11 (Down in New Orleans → Bodyguard).
+                  ...(typeof session.selectedEnterPlayExerted === "boolean" &&
+                  scryAssignsEntryModeCardToPlay(
+                    session.context,
+                    session.scryDestinations,
+                    this.cardSnapshotsById,
+                  )
+                    ? { enterPlayExerted: session.selectedEnterPlayExerted }
+                    : {}),
                 }
               : {
                   ...(isTargetResolutionSelectionContext(session.context) &&

@@ -507,17 +507,34 @@ function collectRemoveDamageTargetDescriptors(effect: unknown): RemoveDamageTarg
   }
 
   if (effectRecord.type === "move-damage") {
+    // When move-damage has one endpoint fixed to SELF and the other endpoint
+    // is a chosen target, the SELF endpoint is not a picker — it is fixed to
+    // the source card. The chosen-side picker must also exclude SELF, since
+    // moving damage from/to the same card is a no-op the resolver silently
+    // skips (would surface in the UI as an unconfirmable picker). See triage
+    // 2026-05-11 #13 (Luisa Madrigal — Confident Climber).
+    //
+    // Edge case (both endpoints SELF): no chooser candidates contributed at
+    // all. Intentional — no card prints "move damage from this character to
+    // this character" because the result is always a no-op. If a future
+    // card does, the resolver's source-equals-destination guard already
+    // produces a clean no-op execution, so leaving the candidate list empty
+    // here is safe: the bag/pending-effect drains without prompting.
+    const fromIsSelf = effectRecord.from === "SELF";
+    const toIsSelf = effectRecord.to === "SELF";
     const descriptors: RemoveDamageTargetDescriptor[] = [];
-    if (effectRecord.from !== undefined) {
+    if (effectRecord.from !== undefined && !fromIsSelf) {
       descriptors.push({
         owner: normalizeMoveDamageParticipantOwner(effectRecord.from),
         cardTypes: ["character"],
+        ...(toIsSelf ? { excludeSelf: true } : {}),
       });
     }
-    if (effectRecord.to !== undefined) {
+    if (effectRecord.to !== undefined && !toIsSelf) {
       descriptors.push({
         owner: normalizeMoveDamageParticipantOwner(effectRecord.to),
         cardTypes: ["character"],
+        ...(fromIsSelf ? { excludeSelf: true } : {}),
       });
     }
     return descriptors;
@@ -1016,6 +1033,15 @@ function collectChosenCardTargetDescriptors(
   if (moveLocationTarget?.selector === "chosen") {
     descriptors.push(moveLocationTarget as LorcanaCardTarget);
   }
+  // For move-damage, when one endpoint is SELF, the other endpoint must
+  // exclude the source card from its candidate pool. Otherwise the picker
+  // surfaces the source card itself as a chosen candidate but selecting it
+  // produces a no-op (the resolver skips `source === destination`), leaving
+  // the player unable to confirm a meaningful selection. See triage
+  // 2026-05-11 #13 (Luisa Madrigal — Confident Climber).
+  const isMoveDamage = effectRecord.type === "move-damage";
+  const moveDamageToIsSelf = isMoveDamage && effectRecord.to === "SELF";
+  const moveDamageFromIsSelf = isMoveDamage && effectRecord.from === "SELF";
   const moveDamageSourceTarget =
     typeof effectRecord.from === "object" &&
     effectRecord.from !== null &&
@@ -1023,7 +1049,10 @@ function collectChosenCardTargetDescriptors(
       ? undefined
       : normalizeTargetDescriptor(effectRecord.from);
   if (moveDamageSourceTarget?.selector === "chosen") {
-    descriptors.push(moveDamageSourceTarget as LorcanaCardTarget);
+    const finalSourceTarget = moveDamageToIsSelf
+      ? ({ ...moveDamageSourceTarget, excludeSelf: true } as LorcanaCardTarget)
+      : (moveDamageSourceTarget as LorcanaCardTarget);
+    descriptors.push(finalSourceTarget);
   }
   const moveDamageDestinationTarget =
     typeof effectRecord.to === "object" &&
@@ -1032,7 +1061,10 @@ function collectChosenCardTargetDescriptors(
       ? undefined
       : normalizeTargetDescriptor(effectRecord.to);
   if (moveDamageDestinationTarget?.selector === "chosen") {
-    descriptors.push(moveDamageDestinationTarget as LorcanaCardTarget);
+    const finalDestinationTarget = moveDamageFromIsSelf
+      ? ({ ...moveDamageDestinationTarget, excludeSelf: true } as LorcanaCardTarget)
+      : (moveDamageDestinationTarget as LorcanaCardTarget);
+    descriptors.push(finalDestinationTarget);
   }
   const sourceTarget =
     typeof effectRecord.source === "object" &&

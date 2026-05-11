@@ -1,4 +1,4 @@
-import { type MatchStaticResources } from "@tcg/lorcana-engine";
+import { type MatchStaticResources, hasMayEnterPlayExertedOption } from "@tcg/lorcana-engine";
 import type { LorcanaCard, LorcanaCardDefinition } from "@tcg/lorcana-engine";
 import type { Languages } from "@tcg/lorcana-types";
 import type { LorcanaProjectedBoardView, LorcanaProjectedCard } from "@tcg/lorcana-engine";
@@ -766,7 +766,19 @@ function buildSupplementalCardSnapshot(args: {
         : undefined,
     moveCost: definition.cardType === "location" ? definition.moveCost : undefined,
     classifications: definition.cardType === "character" ? definition.classifications : undefined,
-    keywords: [],
+    // Scry-revealed cards still live in the deck and have no projection yet,
+    // so derive the keyword list and the entry-mode flag from the definition
+    // directly. Without this, a Bodyguard / "may enter play exerted" card
+    // revealed via Down in New Orleans would be missed by the simulator's
+    // entry-mode detector and the play-into-zone destination toggle would
+    // never appear. See PR #73 review feedback (Codex P2).
+    keywords: Array.isArray(definition.abilities)
+      ? definition.abilities
+          .filter((ability) => ability?.type === "keyword")
+          .map((ability) => (ability as { keyword: string }).keyword)
+          .filter((keyword): keyword is string => typeof keyword === "string")
+      : [],
+    mayEnterPlayExertedOption: hasMayEnterPlayExertedOption(definition) ? true : undefined,
     damage: typeof meta?.damage === "number" ? meta.damage : 0,
     readyState: getReadyState(meta),
     isDrying: meta?.isDrying === true,
@@ -925,6 +937,8 @@ export function buildCardSnapshotMap(
       hasQuestRestriction: projectedCard.hasQuestRestriction ?? false,
       keywordValues: projectedCard.keywordValues,
       keywords: mergeDerivedKeywordSignals(projectedCard.keywords, projectedCard),
+      mayEnterPlayExertedOption:
+        definition !== undefined && hasMayEnterPlayExertedOption(definition) ? true : undefined,
       label: isMasked ? getHiddenCardLabel(zoneId) : (cardName ?? m["sim.card.unknown"]({})),
       loreValue:
         definition?.cardType === "character" || definition?.cardType === "location"

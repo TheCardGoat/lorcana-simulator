@@ -1143,8 +1143,10 @@ $effect(() => {
       view={interactionView}
       cardSnapshotsById={board.cardSnapshotsById}
       viewerSide={ownerSide}
+      bodyguardEntryMode={sidebar.scryBodyguardEntryMode}
       onAssignCard={sidebar.handleAvailableMovesScryAssignment}
       onReorderCard={sidebar.handleAvailableMovesScryReorder}
+      onSelectBodyguardEntryMode={sidebar.selectResolutionEnterPlayExerted}
       onConfirm={sidebar.confirmActionSelection}
       onDismiss={sidebar.cancelActionSelectionSession}
     />

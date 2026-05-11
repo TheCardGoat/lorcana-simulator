@@ -4,6 +4,7 @@ import type {
 } from "@tcg/lorcana-engine";
 import type { CardFilter, ScryCardOrdering } from "@tcg/lorcana-types";
 import type { LorcanaCardSnapshot } from "@/features/simulator/model/contracts.js";
+import { isSupportedResolutionTargetEffectType } from "@/features/simulator/model/resolution-target-prompt.js";
 import type { CardSnapshotMap } from "./board-utils.js";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -139,10 +140,36 @@ function unwrapOptionalEffect(
   if (!effectRecord) {
     return null;
   }
-  // Unwrap optional wrappers so the inner effect type is surfaced (e.g. "move-damage" inside
-  // an optional triggered ability shows the two-slot prompt instead of being treated as "optional").
-  if (getRecordString(effectRecord, "type") === "optional") {
-    return asRecord(effectRecord.effect) ?? effectRecord;
+  const type = getRecordString(effectRecord, "type");
+  // Unwrap optional wrappers so the inner effect type is surfaced (e.g.
+  // "move-damage" inside an optional triggered ability shows the two-slot
+  // prompt instead of being treated as "optional").
+  if (type === "optional") {
+    const inner = asRecord(effectRecord.effect);
+    return inner ? (unwrapOptionalEffect(inner) ?? inner) : effectRecord;
+  }
+  // Sequence wrappers (e.g. Julieta SIGNATURE RECIPE:
+  // `{type:"sequence", steps:[{type:"optional", effect:{type:"remove-damage", ...}}, ...]}`).
+  // Scan for the first step whose unwrapped type is a supported resolution-
+  // target effect type. Earlier non-target steps (e.g. Miracle Candle's
+  // `gain-lore` preceding `remove-damage`) would otherwise short-circuit the
+  // scan and hide the target overlay / amount picker.
+  if (type === "sequence" && Array.isArray(effectRecord.steps)) {
+    for (const step of effectRecord.steps) {
+      const stepRecord = asRecord(step);
+      if (!stepRecord) {
+        continue;
+      }
+      const unwrapped = unwrapOptionalEffect(stepRecord);
+      const unwrappedType = getRecordString(unwrapped, "type");
+      if (isSupportedResolutionTargetEffectType(unwrappedType)) {
+        return unwrapped;
+      }
+    }
+    // No step matched a supported resolution-target type. Return the
+    // original sequence so callers can fall back to generic copy/handling
+    // (resolveBag still drains correctly; the overlay just won't engage).
+    return effectRecord;
   }
   return effectRecord;
 }
