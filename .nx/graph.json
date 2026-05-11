@@ -449,7 +449,7 @@
                 "script": "i18n:verify"
               },
               "metadata": {
-                "scriptContent": "vp run i18n:compile && vp run i18n:check",
+                "scriptContent": "pnpm run i18n:compile && pnpm run i18n:check",
                 "runCommand": "pnpm run i18n:verify"
               },
               "configurations": {},
@@ -759,13 +759,6 @@
                 "scriptContent": "storybook build",
                 "runCommand": "pnpm run build-storybook"
               },
-              "configurations": {},
-              "parallelism": true
-            },
-            "nx-release-publish": {
-              "executor": "@nx/js:release-publish",
-              "dependsOn": ["^nx-release-publish"],
-              "options": {},
               "configurations": {},
               "parallelism": true
             }
@@ -1593,7 +1586,7 @@
                 "script": "check"
               },
               "metadata": {
-                "scriptContent": "bun run format && bun run lint && bun run check-types && bun run test",
+                "scriptContent": "bun run format && bun run lint && bun run check-types",
                 "runCommand": "pnpm run check"
               },
               "configurations": {},
