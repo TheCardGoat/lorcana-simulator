@@ -387,6 +387,235 @@ describe("canPlayCard — Shift with discard-only cost (no ink available)", () =
   });
 });
 
+// Structured "why is the Play CTA disabled?" taxonomy. The UI keeps the
+// button visible-but-disabled and shows a tooltip mapped from the returned
+// `code` + `params`. canPlayCard remains a thin wrapper (returns false iff
+// this method returns non-null), so the two cannot drift apart.
+describe("getPlayCardDisabledReason", () => {
+  const diabloOnBoard = createMockCharacter({
+    id: "reason-diablo-base",
+    name: "Diablo",
+    version: "Maleficent's Spy",
+    cost: 2,
+  });
+
+  const throwawayAction = createMockActionCard({
+    id: "reason-throwaway-action",
+    name: "Throwaway Action",
+    cost: 1,
+    text: "Do nothing.",
+    abilities: [],
+  });
+
+  const devotedHeraldLike = createMockCharacter({
+    id: "reason-devoted-herald",
+    name: "Diablo",
+    version: "Devoted Herald-like",
+    cost: 3,
+    abilities: [
+      {
+        id: "reason-shift-action",
+        keyword: "Shift",
+        type: "keyword",
+        shiftTarget: "Diablo",
+        cost: {
+          discardCards: 1,
+          discardChosen: true,
+          discardCardType: "action",
+        },
+        text: "Shift: Discard an action card",
+      },
+    ],
+  });
+
+  const inkShiftCharacter = createMockCharacter({
+    id: "reason-shift-ink",
+    name: "Diablo",
+    version: "Ink-Shift",
+    cost: 6,
+    abilities: [
+      {
+        id: "reason-shift-ink-kw",
+        keyword: "Shift",
+        type: "keyword",
+        text: "Shift 4",
+        cost: { ink: 4 },
+      },
+    ],
+  });
+
+  const songCardForReason = createMockSong({
+    id: "reason-song",
+    name: "Reason Song",
+    cost: 4,
+    text: "Gain 1 lore.",
+    abilities: [
+      {
+        type: "action",
+        effect: { amount: 1, target: "CONTROLLER", type: "gain-lore" },
+      },
+    ],
+  });
+
+  const singerCharacterForReason = createMockCharacter({
+    id: "reason-song-singer",
+    name: "Reason Singer",
+    cost: 5,
+  });
+
+  it("returns null when the card can be played at standard cost", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [inkTestCharacter],
+      inkwell: inkTestCharacter.cost,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().getPlayCardDisabledReason(inkTestCharacter)).toBeNull();
+  });
+
+  it("reports INSUFFICIENT_INK with needed/available params", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [inkTestCharacter],
+      inkwell: 2,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().getPlayCardDisabledReason(inkTestCharacter)).toEqual({
+      code: "INSUFFICIENT_INK",
+      params: { needed: inkTestCharacter.cost, available: 2 },
+    });
+  });
+
+  it("reports SHIFT_NO_DISCARD_AVAILABLE when discard-cost shift can't be paid", () => {
+    // Devoted Herald-style: Diablo on board, herald in hand, but no action
+    // card to discard. Player has 0 ink, so standard play also fails — and
+    // we want the *shift* reason to win because it's more actionable than
+    // "needs 3 ink".
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [devotedHeraldLike],
+      play: [diabloOnBoard],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().getPlayCardDisabledReason(devotedHeraldLike)).toEqual({
+      code: "SHIFT_NO_DISCARD_AVAILABLE",
+      params: { discardCardType: "action", count: 1 },
+    });
+  });
+
+  it("reports SHIFT_NO_TARGET when the shift card has no matching-named board target", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [devotedHeraldLike, throwawayAction],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().getPlayCardDisabledReason(devotedHeraldLike)).toEqual({
+      code: "SHIFT_NO_TARGET",
+      params: { targetName: "Diablo" },
+    });
+  });
+
+  it("reports SHIFT_INSUFFICIENT_INK when an ink-cost shift can't be paid", () => {
+    const inkShiftTarget = createMockCharacter({
+      id: "reason-shift-ink-target",
+      name: "Diablo",
+      version: "Target",
+      cost: 2,
+    });
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [inkShiftCharacter],
+      play: [inkShiftTarget],
+      inkwell: 2,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().getPlayCardDisabledReason(inkShiftCharacter)).toEqual({
+      code: "SHIFT_INSUFFICIENT_INK",
+      params: { needed: 4, available: 2 },
+    });
+  });
+
+  it("reports SONG_NO_SINGER when a song can't be sung and there's no ink", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [songCardForReason],
+      play: [{ card: singerCharacterForReason, isDrying: true }],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().getPlayCardDisabledReason(songCardForReason)).toEqual({
+      code: "SONG_NO_SINGER",
+      params: { songCost: songCardForReason.cost },
+    });
+  });
+
+  it("returns null for a song when a ready singer is available even with 0 ink", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [songCardForReason],
+      play: [singerCharacterForReason],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().getPlayCardDisabledReason(songCardForReason)).toBeNull();
+  });
+
+  it("returns null for shift when discard + target are both available even with 0 ink", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [devotedHeraldLike, throwawayAction],
+      play: [diabloOnBoard],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().getPlayCardDisabledReason(devotedHeraldLike)).toBeNull();
+  });
+
+  it("stays in lock-step with canPlayCard (true iff reason is null)", () => {
+    // Spot-check the contract across a few states.
+    const scenarios = [
+      {
+        label: "playable standard",
+        state: { hand: [inkTestCharacter], inkwell: inkTestCharacter.cost, deck: 2 },
+        card: inkTestCharacter,
+      },
+      {
+        label: "ink-blocked",
+        state: { hand: [inkTestCharacter], inkwell: 0, deck: 2 },
+        card: inkTestCharacter,
+      },
+      {
+        label: "shift playable",
+        state: {
+          hand: [devotedHeraldLike, throwawayAction],
+          play: [diabloOnBoard],
+          inkwell: 0,
+          deck: 2,
+        },
+        card: devotedHeraldLike,
+      },
+      {
+        label: "shift blocked: no discard",
+        state: { hand: [devotedHeraldLike], play: [diabloOnBoard], inkwell: 0, deck: 2 },
+        card: devotedHeraldLike,
+      },
+    ];
+
+    for (const { label, state, card } of scenarios) {
+      const engine = LorcanaMultiplayerTestEngine.createWithFixture(state);
+      const reason = engine.asPlayerOne().getPlayCardDisabledReason(card);
+      const playable = engine.asPlayerOne().canPlayCard(card);
+      expect({ label, playable, reasonIsNull: reason === null }).toEqual({
+        label,
+        playable,
+        reasonIsNull: playable,
+      });
+    }
+  });
+});
+
 describe("playCard logging", () => {
   it("respects conditional enters-play-exerted static abilities", () => {
     const engine = LorcanaMultiplayerTestEngine.createWithFixture({

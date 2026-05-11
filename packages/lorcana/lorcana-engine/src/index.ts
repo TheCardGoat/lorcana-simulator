@@ -107,6 +107,11 @@ export type {
 } from "./lorcana-engine-base";
 
 export type {
+  PlayCardDisabledReason,
+  PlayCardDisabledReasonCode,
+} from "./play-card-disabled-reason";
+
+export type {
   AvailableMove,
   AvailableMoveId,
   MoveOption,
