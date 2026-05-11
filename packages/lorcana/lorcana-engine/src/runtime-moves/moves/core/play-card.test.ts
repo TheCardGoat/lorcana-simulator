@@ -291,6 +291,102 @@ describe("drag-and-drop ink-only enforcement", () => {
   });
 });
 
+// Regression: canPlayCard for a Shift card whose cost is "discard an action card"
+// (e.g. Diablo - Devoted Herald, set 4 #70). Reported 2026-05-08 by multiple
+// players in replays mgBjTEQGKlTomohGsQ2XVQ3 and mgFKq3PR-583ZptOV-Y8myO — the
+// UI's Play CTA stayed hidden because canPlayCard ran standard-cost validation,
+// got INSUFFICIENT_INK, and never tried the shift fallback. Fixed by adding a
+// hasShift fallback to canPlayCard alongside the existing isSongCard fallback.
+// These tests pin the contract so the fallback can't silently regress.
+describe("canPlayCard — Shift with discard-only cost (no ink available)", () => {
+  const diabloOnBoard = createMockCharacter({
+    id: "regression-diablo-base",
+    name: "Diablo",
+    version: "Maleficent's Spy",
+    cost: 2,
+  });
+
+  const throwawayAction = createMockActionCard({
+    id: "regression-action-discard",
+    name: "Throwaway Action",
+    cost: 1,
+    text: "Do nothing.",
+    abilities: [],
+  });
+
+  const devotedHeraldLike = createMockCharacter({
+    id: "regression-devoted-herald",
+    name: "Diablo",
+    version: "Devoted Herald-like",
+    cost: 3,
+    abilities: [
+      {
+        id: "regression-shift-action",
+        keyword: "Shift",
+        type: "keyword",
+        shiftTarget: "Diablo",
+        cost: {
+          discardCards: 1,
+          discardChosen: true,
+          discardCardType: "action",
+        },
+        text: "Shift: Discard an action card",
+      },
+    ],
+  });
+
+  it("returns true when no ink is available but a legal shift discard exists", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [devotedHeraldLike, throwawayAction],
+      play: [diabloOnBoard],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().canPlayCard(devotedHeraldLike)).toBe(true);
+  });
+
+  it("playCard with explicit shift cost + action discard succeeds with 0 ink", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [devotedHeraldLike, throwawayAction],
+      play: [diabloOnBoard],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    const p1 = engine.asPlayerOne();
+    const shiftTarget = engine.findCardInstanceId(diabloOnBoard, "play", PLAYER_ONE);
+    const discardId = engine.findCardInstanceId(throwawayAction, "hand", PLAYER_ONE);
+
+    expect(
+      p1.playCard(devotedHeraldLike, {
+        cost: { cost: "shift", shiftTarget, discardCards: [discardId] },
+      }),
+    ).toBeSuccessfulCommand();
+  });
+
+  it("returns false when no action card is in hand (cost cannot be paid)", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [devotedHeraldLike],
+      play: [diabloOnBoard],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().canPlayCard(devotedHeraldLike)).toBe(false);
+  });
+
+  it("returns false when no shift target with the matching name is on the board", () => {
+    const engine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [devotedHeraldLike, throwawayAction],
+      inkwell: 0,
+      deck: 2,
+    });
+
+    expect(engine.asPlayerOne().canPlayCard(devotedHeraldLike)).toBe(false);
+  });
+});
+
 describe("playCard logging", () => {
   it("respects conditional enters-play-exerted static abilities", () => {
     const engine = LorcanaMultiplayerTestEngine.createWithFixture({
