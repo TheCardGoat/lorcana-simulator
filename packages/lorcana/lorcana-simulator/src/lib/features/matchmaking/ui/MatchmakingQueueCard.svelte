@@ -773,35 +773,49 @@
                         {m['sim.matchmaking.matchmaking.stats.mmrLabel']({})}
                       </Tooltip.Content>
                     </Tooltip.Root>
-                  {:else}
-                    {@const played = card.placementGamesPlayed ?? 0}
-                    {@const remaining = PLACEMENT_THRESHOLD - played}
-                    <Tooltip.Root delayDuration={120}>
-                      <Tooltip.Trigger>
-                        {#snippet child({ props })}
-                          <Badge
-                            variant="outline"
-                            class="border-sky-400/20 bg-sky-500/10 text-sky-200"
-                            {...props}
-                          >
-                            <Trophy
-                              class="size-3 text-sky-400"
-                              aria-hidden="true"
-                            />
-                            {played}/{PLACEMENT_THRESHOLD}
-                          </Badge>
-                        {/snippet}
-                      </Tooltip.Trigger>
-                      <Tooltip.Content
-                        side="top"
-                        class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
-                      >
-                        Placement matches — play {remaining} more ranked {remaining === 1 ? 'game' : 'games'} to earn your MMR
-                      </Tooltip.Content>
-                    </Tooltip.Root>
                   {/if}
                 </div>
               </div>
+
+              {#if card.mmr == null}
+                {@const played = card.placementGamesPlayed ?? 0}
+                {@const remaining = PLACEMENT_THRESHOLD - played}
+                {@const pct = Math.round((played / PLACEMENT_THRESHOLD) * 100)}
+                <Tooltip.Root delayDuration={120}>
+                  <Tooltip.Trigger>
+                    {#snippet child({ props })}
+                      <div
+                        class="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg border border-sky-400/25 bg-sky-950/60 px-2 py-1 backdrop-blur-sm"
+                        {...props}
+                      >
+                        <div class="relative size-5 shrink-0">
+                          <svg class="size-5 -rotate-90" viewBox="0 0 20 20" aria-hidden="true">
+                            <circle cx="10" cy="10" r="7" fill="none" stroke="rgba(56,189,248,0.15)" stroke-width="2.5" />
+                            <circle
+                              cx="10" cy="10" r="7"
+                              fill="none"
+                              stroke="rgba(56,189,248,0.7)"
+                              stroke-width="2.5"
+                              stroke-linecap="round"
+                              stroke-dasharray={`${(pct / 100) * 43.98} 43.98`}
+                            />
+                          </svg>
+                          <Trophy class="absolute inset-0 m-auto size-2.5 text-sky-400" aria-hidden="true" />
+                        </div>
+                        <span class="text-[0.65rem] font-semibold tabular-nums text-sky-200">
+                          {played}<span class="text-sky-400/60">/{PLACEMENT_THRESHOLD}</span>
+                        </span>
+                      </div>
+                    {/snippet}
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    side="top"
+                    class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
+                  >
+                    Placement matches — play {remaining} more ranked {remaining === 1 ? 'game' : 'games'} to earn your MMR
+                  </Tooltip.Content>
+                </Tooltip.Root>
+              {/if}
             </button>
           {/each}
         </div>

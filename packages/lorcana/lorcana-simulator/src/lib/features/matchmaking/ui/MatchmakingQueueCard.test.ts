@@ -106,7 +106,7 @@ describe("MatchmakingQueueCard", () => {
     }
   });
 
-  it("renders 0/20 placement badge when player has never played ranked (placementGamesPlayed null)", () => {
+  it("renders 0/20 placement indicator when player has never played ranked (placementGamesPlayed null)", () => {
     const { body } = render(MatchmakingQueueCard, {
       props: {
         ...baseProps,
@@ -114,11 +114,13 @@ describe("MatchmakingQueueCard", () => {
       },
     });
 
-    expect(body).toContain("0/20");
-    expect(body).toContain("border-sky-400/20");
+    // number and threshold are in separate spans; assert each is present
+    expect(body).toContain("border-sky-400/25");
+    expect(body).toContain(">0<");
+    expect(body).toContain(">/20<");
   });
 
-  it("renders N/20 placement badge when player has some ranked games but no mmr yet", () => {
+  it("renders N/20 placement indicator when player has some ranked games but no mmr yet", () => {
     const { body } = render(MatchmakingQueueCard, {
       props: {
         ...baseProps,
@@ -126,11 +128,12 @@ describe("MatchmakingQueueCard", () => {
       },
     });
 
-    expect(body).toContain("7/20");
-    expect(body).toContain("border-sky-400/20");
+    expect(body).toContain("border-sky-400/25");
+    expect(body).toContain(">7<");
+    expect(body).toContain(">/20<");
   });
 
-  it("renders MMR badge (not placement) once mmr is set", () => {
+  it("renders MMR badge (not placement indicator) once mmr is set", () => {
     const { body } = render(MatchmakingQueueCard, {
       props: {
         ...baseProps,
@@ -138,7 +141,7 @@ describe("MatchmakingQueueCard", () => {
       },
     });
 
-    expect(body).not.toContain("border-sky-400/20");
+    expect(body).not.toContain("border-sky-400/25");
     expect(body).toContain("border-amber-400/20");
   });
 
