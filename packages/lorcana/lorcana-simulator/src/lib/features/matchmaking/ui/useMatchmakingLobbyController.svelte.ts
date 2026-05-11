@@ -3,7 +3,7 @@ import { goto } from "$app/navigation";
 import { getContext, setContext } from "svelte";
 import { authSession } from "$lib/auth/session.svelte.js";
 import { fetchPlayerStats } from "@/features/match-history/api/player-stats-api.js";
-import type { PlayerStats } from "@/features/match-history/types.js";
+import { RANKED_PLACEMENT_GAMES, type PlayerStats } from "@/features/match-history/types.js";
 import { getGatewayWsUrl } from "$lib/config/public-url-config.js";
 import { getFeatureFlags } from "$lib/config/feature-flags.js";
 import { analyticsErrorFields, trackEvent } from "$lib/analytics/analytics.js";
@@ -445,6 +445,11 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
       rankedEnabled: this.rankedEnabled,
       queueCards: QUEUE_CARD_DEFINITIONS.map((definition) => {
         const selectedDeck = this.playerContext.selectedDeck;
+        const formatStats = this.playerStats?.byFormat?.find(
+          (f) => f.formatId === definition.format,
+        );
+        const rankedGamesPlayed = formatStats?.gamesPlayed ?? 0;
+        const placementComplete = rankedGamesPlayed >= RANKED_PLACEMENT_GAMES;
         return {
           definition,
           stats: this.queueStatsStore.statsByPartition(
@@ -459,7 +464,9 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
             !selectedDeck.validFormats ||
             selectedDeck.validFormats.includes(definition.format),
           winStreak: this.playerStats?.currentWinStreak ?? 0,
-          mmr: this.playerStats?.mmr ?? null,
+          mmr: placementComplete ? Math.round(formatStats?.mmr ?? 0) : null,
+          rankedGamesPlayed,
+          placementComplete,
         };
       }),
       isDeckValidForSelectedFormat: this.isDeckValidForSelectedFormat,

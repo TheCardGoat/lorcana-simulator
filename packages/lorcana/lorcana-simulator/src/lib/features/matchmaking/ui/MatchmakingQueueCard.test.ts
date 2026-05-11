@@ -32,6 +32,8 @@ const baseProps = {
       isDeckValid: true,
       winStreak: 0,
       mmr: null,
+      rankedGamesPlayed: 0,
+      placementComplete: false,
     },
   ],
   isDeckValidForSelectedFormat: true,
@@ -90,12 +92,20 @@ describe("MatchmakingQueueCard", () => {
     expect(body).not.toContain("border-orange-400/20");
   });
 
-  it("renders MMR badge in ranked mode when mmr is set", () => {
+  it("renders MMR badge in ranked mode after placement is complete", () => {
     const { body } = render(MatchmakingQueueCard, {
       props: {
         ...baseProps,
         selectedMatchType: "ranked" as const,
-        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: 1250 }],
+        cards: [
+          {
+            ...baseProps.cards[0]!,
+            winStreak: 0,
+            mmr: 1250,
+            rankedGamesPlayed: 25,
+            placementComplete: true,
+          },
+        ],
       },
     });
 
@@ -104,16 +114,47 @@ describe("MatchmakingQueueCard", () => {
     expect(body).toContain("border-amber-400/20");
   });
 
+  it("renders placement progress in ranked mode before placement is complete", () => {
+    const { body } = render(MatchmakingQueueCard, {
+      props: {
+        ...baseProps,
+        selectedMatchType: "ranked" as const,
+        cards: [
+          {
+            ...baseProps.cards[0]!,
+            winStreak: 0,
+            mmr: null,
+            rankedGamesPlayed: 7,
+            placementComplete: false,
+          },
+        ],
+      },
+    });
+
+    expect(body).toContain("7/20 placement");
+    expect(body).toContain("border-violet-400/30");
+    expect(body).not.toContain("border-amber-400/20");
+  });
+
   it("does not render MMR badge in casual mode even when mmr is set", () => {
     const { body } = render(MatchmakingQueueCard, {
       props: {
         ...baseProps,
         selectedMatchType: "casual" as const,
-        cards: [{ ...baseProps.cards[0]!, winStreak: 0, mmr: 1250 }],
+        cards: [
+          {
+            ...baseProps.cards[0]!,
+            winStreak: 0,
+            mmr: 1250,
+            rankedGamesPlayed: 25,
+            placementComplete: true,
+          },
+        ],
       },
     });
 
     expect(body).not.toContain("border-amber-400/20");
+    expect(body).not.toContain("border-violet-400/30");
   });
 
   it("renders the ranked tab as disabled with a coming-soon badge when rankedEnabled is false", () => {

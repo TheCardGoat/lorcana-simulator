@@ -17,6 +17,7 @@
   import {
     type QueueCardView,
   } from './matchmaking-lobby.constants.js';
+  import { RANKED_PLACEMENT_GAMES as PLACEMENT_GAMES } from '@/features/match-history/types.js';
   import { Badge } from '$lib/design-system/primitives/badge';
   import { getInkSymbolUrl } from '@/features/simulator/model/asset-urls.js';
   import { LORCANA_INK_NAMES } from '@/features/simulator/model/lorcana-colors.js';
@@ -747,30 +748,56 @@
                     </Tooltip.Root>
                   {/if}
 
-                  {#if selectedMatchType === 'ranked' && card.mmr != null}
-                    <Tooltip.Root delayDuration={120}>
-                      <Tooltip.Trigger>
-                        {#snippet child({ props })}
-                          <Badge
-                            variant="outline"
-                            class="border-amber-400/20 bg-amber-500/10 text-amber-200"
-                            {...props}
-                          >
-                            <Trophy
-                              class="size-3 text-amber-400"
-                              aria-hidden="true"
-                            />
-                            {card.mmr}
-                          </Badge>
-                        {/snippet}
-                      </Tooltip.Trigger>
-                      <Tooltip.Content
-                        side="top"
-                        class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
-                      >
-                        {m['sim.matchmaking.matchmaking.stats.mmrLabel']({})}
-                      </Tooltip.Content>
-                    </Tooltip.Root>
+                  {#if selectedMatchType === 'ranked'}
+                    {#if card.placementComplete && card.mmr != null}
+                      <Tooltip.Root delayDuration={120}>
+                        <Tooltip.Trigger>
+                          {#snippet child({ props })}
+                            <Badge
+                              variant="outline"
+                              class="border-amber-400/20 bg-amber-500/10 text-amber-200"
+                              {...props}
+                            >
+                              <Trophy
+                                class="size-3 text-amber-400"
+                                aria-hidden="true"
+                              />
+                              {card.mmr}
+                            </Badge>
+                          {/snippet}
+                        </Tooltip.Trigger>
+                        <Tooltip.Content
+                          side="top"
+                          class="border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
+                        >
+                          {m['sim.matchmaking.matchmaking.stats.mmrLabel']({})}
+                        </Tooltip.Content>
+                      </Tooltip.Root>
+                    {:else}
+                      <Tooltip.Root delayDuration={120}>
+                        <Tooltip.Trigger>
+                          {#snippet child({ props })}
+                            <Badge
+                              variant="outline"
+                              class="border-violet-400/30 bg-violet-500/10 text-violet-200"
+                              {...props}
+                            >
+                              <Trophy
+                                class="size-3 text-violet-300"
+                                aria-hidden="true"
+                              />
+                              {card.rankedGamesPlayed}/{PLACEMENT_GAMES} placement
+                            </Badge>
+                          {/snippet}
+                        </Tooltip.Trigger>
+                        <Tooltip.Content
+                          side="top"
+                          class="max-w-56 border border-white/15 bg-slate-950/98 px-2.5 py-1.5 text-xs text-slate-100 shadow-xl"
+                        >
+                          Play {PLACEMENT_GAMES - card.rankedGamesPlayed} more ranked {PLACEMENT_GAMES - card.rankedGamesPlayed === 1 ? 'match' : 'matches'} in this format to reveal your MMR.
+                        </Tooltip.Content>
+                      </Tooltip.Root>
+                    {/if}
                   {/if}
                 </div>
               </div>

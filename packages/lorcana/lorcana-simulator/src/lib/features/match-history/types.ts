@@ -30,6 +30,18 @@ export type MatchListResponse = {
   nextCursor: string | null;
 };
 
+export type FormatRankStats = {
+  formatId: string;
+  mmr: number;
+  highestMmr: number | null;
+  bracket: string | null;
+  gamesPlayed: number;
+  gamesWon: number;
+  losses: number;
+  currentWinStreak: number;
+  currentLossStreak: number;
+};
+
 export type PlayerStats = {
   gamesPlayed: number;
   gamesWon: number;
@@ -48,7 +60,11 @@ export type PlayerStats = {
   takebacksGranted: number;
   takebacksReceived: number;
   sportsmanshipTier: string | null;
+  byFormat: FormatRankStats[];
 };
+
+/** Number of ranked games per format before MMR is "real" (placement complete). */
+export const RANKED_PLACEMENT_GAMES = 20;
 
 export type MmrHistoryPoint = {
   matchId: string;

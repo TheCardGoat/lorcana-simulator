@@ -61,6 +61,10 @@ export type QueueCardView = {
   isDeckValid: boolean;
   winStreak: number;
   mmr: number | null;
+  /** Ranked games completed in this format. Used to drive placement progress UI. */
+  rankedGamesPlayed: number;
+  /** True when player has finished their placement matches (rankedGamesPlayed >= threshold). */
+  placementComplete: boolean;
 };
 
 export function createQueueJoinLabel(
