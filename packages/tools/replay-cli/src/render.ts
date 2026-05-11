@@ -1,3 +1,4 @@
+import { apply, type Patch } from "mutative";
 import type { PersistedReplayData } from "./fetch";
 import type { ExtractedTurn } from "./turn-extractor";
 import type { ResolvedCard } from "./card-resolver";
@@ -7,6 +8,51 @@ export interface RenderInput {
   turn: number;
   extracted: ExtractedTurn;
   resolvedCards: Map<string, ResolvedCard>;
+}
+
+interface PendingSelectionView {
+  pendingEffectId: unknown;
+  pendingEffectKind: unknown;
+  sourceCardId: unknown;
+  chooserId: unknown;
+  selectionContext: unknown;
+}
+
+function extractPendingSelections(state: unknown): PendingSelectionView[] {
+  if (!state || typeof state !== "object") return [];
+  const g = (state as { G?: unknown }).G;
+  if (!g || typeof g !== "object") return [];
+  const pending = (g as { pendingEffects?: unknown }).pendingEffects;
+  if (!Array.isArray(pending)) return [];
+  const out: PendingSelectionView[] = [];
+  for (const pe of pending) {
+    if (!pe || typeof pe !== "object") continue;
+    const peObj = pe as Record<string, unknown>;
+    if (peObj.selectionContext === undefined) continue;
+    out.push({
+      pendingEffectId: peObj.id,
+      pendingEffectKind: peObj.kind,
+      sourceCardId: peObj.sourceCardId ?? peObj.sourceId,
+      chooserId: peObj.chooserId ?? peObj.controllerId,
+      selectionContext: peObj.selectionContext,
+    });
+  }
+  return out;
+}
+
+function pushPendingSelectionsBlock(
+  lines: string[],
+  label: string,
+  selections: PendingSelectionView[],
+): void {
+  lines.push(label);
+  if (selections.length === 0) {
+    lines.push("(none — no pending player selection at this point)");
+    return;
+  }
+  for (const sel of selections) {
+    lines.push(JSON.stringify(sel));
+  }
 }
 
 export function renderTurn(input: RenderInput): string {
@@ -54,8 +100,17 @@ export function renderTurn(input: RenderInput): string {
   lines.push(JSON.stringify(extracted.preTurnState, null, 2));
   lines.push("");
 
+  // PENDING SELECTIONS (pre-turn)
+  pushPendingSelectionsBlock(
+    lines,
+    `--- PENDING SELECTIONS (before turn ${turn}) ---`,
+    extractPendingSelections(extracted.preTurnState),
+  );
+  lines.push("");
+
   // STEPS
   lines.push("--- STEPS ---");
+  let state: unknown = extracted.preTurnState;
   for (const { globalIndex, step } of extracted.turnSteps) {
     const move = step.acceptedMove;
     lines.push(`[step ${globalIndex} · turn ${turn} · actor ${move.actorId}]`);
@@ -71,6 +126,30 @@ export function renderTurn(input: RenderInput): string {
     } else {
       lines.push("patches:");
       for (const p of step.patches) lines.push(`  ${JSON.stringify(p)}`);
+    }
+    // Advance the running state and surface any pending player selection
+    // that exists *after* this step resolves. This is what diagnoses
+    // targeting bugs: it shows the candidate set the engine offered to
+    // the next chooser, against which the player's actual input (in the
+    // following step) can be compared.
+    const patches = step.patches as Patch[];
+    if (Array.isArray(patches) && patches.length > 0) {
+      try {
+        state = apply(state as object, patches);
+      } catch (err) {
+        lines.push(
+          `pendingSelections: (state reconstruction failed at step ${globalIndex}: ${(err as Error).message})`,
+        );
+        lines.push("");
+        continue;
+      }
+    }
+    const post = extractPendingSelections(state);
+    if (post.length === 0) {
+      lines.push("pendingSelections: []");
+    } else {
+      lines.push("pendingSelections:");
+      for (const sel of post) lines.push(`  ${JSON.stringify(sel)}`);
     }
     lines.push("");
   }
