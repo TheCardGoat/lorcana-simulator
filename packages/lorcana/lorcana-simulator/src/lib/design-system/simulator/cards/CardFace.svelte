@@ -316,7 +316,6 @@ const damageIndicatorClass = $derived(
                     data-testid={`card-face-stat-badge-${badge.stat}`}
                     class={`pointer-events-auto relative flex items-center justify-center rounded-full border backdrop-blur-sm ${badgeSizeClass} ${getBadgeToneClass(badge.tone)}`}
                     aria-label={badge.label}
-                    onclick={(event) => event.stopPropagation()}
                   >
                     <img src={badge.iconUrl} alt="" class="absolute inset-0 m-auto h-full w-full opacity-75" />
                     <span class={`relative leading-none font-bold tabular-nums ${badgeValueClass}`}>
