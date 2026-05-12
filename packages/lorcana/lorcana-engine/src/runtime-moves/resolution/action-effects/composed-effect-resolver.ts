@@ -158,6 +158,7 @@ import {
   resolveReturnRandomFromInkwellEffect,
 } from "./return-random-from-inkwell-effect";
 import {
+  hasReturnFromDiscardCandidates,
   isReturnFromDiscardEffect,
   resolveReturnFromDiscardEffect,
 } from "./return-from-discard-effect";
@@ -1421,6 +1422,23 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         continue;
       }
       const stagedTargetCount = stagedSequence?.collectedTargetCounts[index] ?? 0;
+      // If this step is a return-from-discard with no legal candidates in the
+      // controller's discard, skip it and continue to subsequent steps. Per
+      // CR 1.2.3 ("do as much as you can") + 6.7.2.4, the resolving effect
+      // must still perform later instructions in the sequence (e.g. the
+      // optional play-for-free in Syndrome — Out for Revenge). Without this
+      // short-circuit, the sequence stages target collection for an
+      // unfillable slot and the player gets stuck on step 1.
+      if (!stagedSequence && isReturnFromDiscardEffect(nestedEffect)) {
+        const controllerId = cardPlayed?.playerId;
+        if (
+          controllerId &&
+          !hasReturnFromDiscardCandidates(ctx, controllerId, nestedEffect, cardPlayed?.cardId)
+        ) {
+          consumedTargets += stagedTargetCount;
+          continue;
+        }
+      }
       // If this step is a discard that the controller must pay from their own hand (chosen
       // from hand, targeting CONTROLLER/SELF) but has no legal candidates (empty hand),
       // the cost cannot be paid. Abort the entire sequence so that subsequent steps that
@@ -1798,7 +1816,18 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         resolutionInput.resolveOptional !== undefined
           ? { ...baseResolutionInput, resolveOptional: undefined }
           : baseResolutionInput;
-      return resolveActionEffect(ctx, cardPlayed, effect.effect, nestedResolutionInput, options);
+      // When the chooser differs from the controller (e.g. OPPONENT chooser on
+      // Chernabog — Unnatural Force's "that player may play a character from
+      // their discard for free"), thread the chooser id through resolutionInput
+      // so the inner play-card resolver can default `from: discard` to the
+      // chooser's discard when no explicit `target` is set. We do NOT swap
+      // cardPlayed.playerId — explicit relative targets like `target: "OPPONENT"`
+      // must continue to resolve relative to the original controller.
+      const inputWithChooser =
+        chooserId !== cardPlayed.playerId
+          ? { ...nestedResolutionInput, chooserPlayerId: chooserId }
+          : nestedResolutionInput;
+      return resolveActionEffect(ctx, cardPlayed, effect.effect, inputWithChooser, options);
     }
 
     return RESOLVED_ACTION_EFFECT;
@@ -2298,6 +2327,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       revealWindowIds: resolutionInput.eventSnapshot?.revealWindowIds,
       scryAmount,
       selectedPlayerIds,
+      enterPlayExerted: resolutionInput.enterPlayExerted,
     });
 
     // Handle repeatOnHandMatch: if any card was placed into hand, re-queue this scry effect.

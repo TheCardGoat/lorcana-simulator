@@ -249,6 +249,55 @@ describe("Cheshire Cat - Inexplicable", () => {
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
     });
 
+    it("planner enumerates a usable resolveBag candidate when no damage exists anywhere (regression: bugrepeC0YFNhAyqyulBLpwiHWT — bot freeze)", () => {
+      // Mirrors the reported bot-freeze scenario: Cheshire Cat triggers
+      // IT'S LOADS OF FUN with the optional move-damage; nothing on the board
+      // has damage. The bot must be able to enumerate at least one resolveBag
+      // candidate so the planner can advance (auto-decline or fizzle).
+      const undamagedAlly = createMockCharacter({
+        id: "cheshire-bot-undamaged-ally",
+        name: "Undamaged Ally",
+        cost: 2,
+        strength: 2,
+        willpower: 4,
+      });
+      const undamagedOpponent = createMockCharacter({
+        id: "cheshire-bot-undamaged-opponent",
+        name: "Undamaged Opponent",
+        cost: 2,
+        strength: 2,
+        willpower: 4,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: cheshireCatInexplicable, isDrying: false },
+            { card: undamagedAlly, isDrying: false },
+          ],
+          inkwell: 2,
+          deck: [deckFiller],
+        },
+        {
+          play: [{ card: undamagedOpponent, isDrying: false }],
+          deck: 5,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(cheshireCatInexplicable),
+      ).toBeSuccessfulCommand();
+
+      // The planner must produce at least one resolveBag candidate so the bot
+      // has something to take. Zero candidates here is the freeze condition.
+      const bagCandidates = testEngine
+        .asPlayerOne()
+        .enumerateAutomatedActions()
+        .candidates.filter((candidate) => candidate.family === "resolveBag");
+
+      expect(bagCandidates.length).toBeGreaterThan(0);
+    });
+
     it("can decline the optional ability", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

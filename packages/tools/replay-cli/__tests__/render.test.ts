@@ -111,6 +111,67 @@ describe("renderTurn", () => {
     expect(out).toMatch(/patches:[\s\S]*"op":"replace"/);
   });
 
+  it("emits PENDING SELECTIONS block with the raw selectionContext when pendingEffects carry one", () => {
+    const extracted = fakeExtracted();
+    // Pre-turn state has no pending selection.
+    extracted.preTurnState = {
+      ctx: { matchID: "test-match" },
+      G: { lore: { alice: 0, bob: 0 }, pendingEffects: [] },
+    };
+    // The step's patches add a pending effect with a selectionContext —
+    // simulating a card play that opens a target-selection prompt. After
+    // the step resolves, render should emit it under `pendingSelections:`.
+    extracted.turnSteps = [
+      {
+        globalIndex: 12,
+        step: {
+          patches: [
+            {
+              op: "add",
+              path: ["G", "pendingEffects", 0],
+              value: {
+                id: "pe-1",
+                kind: "target-selection",
+                sourceCardId: "WeA",
+                chooserId: "alice",
+                selectionContext: {
+                  origin: "pending-effect",
+                  kind: "target-selection",
+                  cardCandidateIds: ["inst-B", "inst-C"],
+                  playerCandidateIds: [],
+                  minSelections: 1,
+                  maxSelections: 1,
+                },
+              },
+            },
+          ],
+          logs: [],
+          acceptedMove: {
+            stateVersion: 1,
+            turnNumber: 2,
+            actorId: "alice",
+            moveId: "playCard",
+            input: { instanceId: "inst-A" },
+            timestamp: 0,
+          },
+        },
+      },
+    ];
+
+    const out = renderTurn({
+      replay: fakeReplay(),
+      turn: 2,
+      extracted,
+      resolvedCards: resolved(),
+    });
+
+    expect(out).toContain(`--- PENDING SELECTIONS (before turn 2) ---`);
+    expect(out).toContain("(none — no pending player selection at this point)");
+    expect(out).toMatch(/pendingSelections:[\s\S]*"kind":"target-selection"/);
+    expect(out).toContain('"cardCandidateIds":["inst-B","inst-C"]');
+    expect(out).toContain('"chooserId":"alice"');
+  });
+
   it("falls back gracefully when an instance has no resolved card", () => {
     const extracted = fakeExtracted();
     extracted.cardInstances = { "inst-A": "MISSING" }; // no entry in resolved()

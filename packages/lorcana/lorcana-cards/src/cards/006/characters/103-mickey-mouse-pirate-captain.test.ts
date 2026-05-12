@@ -20,7 +20,7 @@ describe("Mickey Mouse - Pirate Captain", () => {
     expect(testEngine.asPlayerOne().hasKeyword(mickeyMousePirateCaptain, "Shift")).toBe(true);
   });
 
-  describe("MARINER'S MIGHT - Whenever this character quests, chosen Pirate character gets +2 {S}.", () => {
+  describe('MARINER\'S MIGHT - Whenever this character quests, chosen Pirate character gets +2 {S} and gains "This character takes no damage from challenges" this turn.', () => {
     it("gives chosen Pirate character +2 strength when questing", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
         play: [mickeyMousePirateCaptain, pirateCharacter],

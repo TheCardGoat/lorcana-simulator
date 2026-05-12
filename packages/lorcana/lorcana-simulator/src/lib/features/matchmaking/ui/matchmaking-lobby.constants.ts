@@ -53,6 +53,9 @@ export const QUEUE_CARD_DEFINITIONS: QueueCardDefinition[] = [
   },
 ];
 
+/** Number of ranked matches required before a player's MMR is considered established. */
+export const PLACEMENT_THRESHOLD = 20;
+
 export type QueueCardView = {
   definition: QueueCardDefinition;
   stats: QueueStatsPartition | null;
@@ -61,6 +64,8 @@ export type QueueCardView = {
   isDeckValid: boolean;
   winStreak: number;
   mmr: number | null;
+  /** Ranked games played in this format; null = never played ranked here */
+  placementGamesPlayed: number | null;
 };
 
 export function createQueueJoinLabel(

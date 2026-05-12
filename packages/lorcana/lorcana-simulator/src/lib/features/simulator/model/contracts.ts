@@ -148,6 +148,15 @@ export interface LorcanaCardSnapshot {
     challenger?: number;
     resist?: number;
   };
+  /**
+   * Set when the card's printed text offers a non-Bodyguard "may enter play
+   * exerted" option (e.g. Mickey Mouse — Expedition Leader's LONG JOURNEY,
+   * Hamish/Hubert/Harris — Making Mischief). Combined with the `keywords`
+   * Bodyguard signal, the simulator uses this to decide whether to surface
+   * an entry-mode picker when the card is played via a card-effect path
+   * (scry, free-play, etc.). See triage 2026-05-11 #11.
+   */
+  mayEnterPlayExertedOption?: boolean;
   damage?: number;
   readyState?: CardReadyState;
   isDrying?: boolean;

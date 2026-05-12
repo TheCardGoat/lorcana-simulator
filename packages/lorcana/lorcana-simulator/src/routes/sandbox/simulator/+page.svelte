@@ -10,7 +10,7 @@
     import {LORCANA_HARNESS_DEFAULT_FIXTURE_ID, LORCANA_HARNESS_DEFAULT_VIEW} from "@/features/simulator-devtools/harness/browser-harness";
     import {resolveBrowserTransportConfig} from "@/features/simulator-devtools/harness/browser-route";
     import LorcanaTabletopSimulatorStoryWrapper
-        from "@/features/simulator-devtools/storybook/LorcanaTabletopSimulatorStoryWrapper.svelte";
+        from "@/features/simulator-devtools/harness/LorcanaTabletopSimulatorStoryWrapper.svelte";
 
     function normalizeView(value: string | null): LorcanaSimulatorView {
         return LORCANA_SIMULATOR_VIEWS.includes(value as LorcanaSimulatorView)

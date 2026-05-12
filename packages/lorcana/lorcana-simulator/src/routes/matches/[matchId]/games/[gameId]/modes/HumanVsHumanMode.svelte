@@ -869,7 +869,7 @@
     align-items: center;
     gap: 0.85rem;
     padding: 0.65rem 0.85rem 0.65rem 1.15rem;
-    border-radius: 9999px;
+    border-radius: 1.25rem;
     background: rgba(30, 30, 40, 0.97);
     border: 1px solid rgba(99, 102, 241, 0.6);
     box-shadow:
@@ -878,7 +878,42 @@
     animation:
       resync-fade-in 0.3s ease-out both,
       proposal-pulse 2.4s ease-in-out 0.3s infinite;
-    white-space: nowrap;
+    max-width: min(36rem, calc(100vw - 1.25rem));
+    width: max-content;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 480px) {
+    .undo-proposal-banner {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.55rem;
+      padding: 0.7rem 0.85rem calc(0.7rem + env(safe-area-inset-bottom));
+      border-radius: 1rem;
+      width: calc(100vw - 1rem);
+      max-width: calc(100vw - 1rem);
+      top: auto;
+      bottom: max(0.75rem, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+    }
+
+    .undo-proposal-banner__text {
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    .undo-proposal-banner__actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.45rem;
+      width: 100%;
+    }
+
+    .undo-proposal-banner__btn {
+      min-height: 2.6rem;
+      font-size: 0.85rem;
+      padding: 0.55rem 0.75rem;
+    }
   }
 
   @keyframes proposal-pulse {

@@ -4,12 +4,18 @@
     Activity,
     BookOpenText,
     CircleHelp,
+    ClipboardEdit,
+    Crown,
     Eye,
     Flag,
+    Gem,
     Hand,
     Layers,
+    MessageSquare,
     PaintBucket,
     Settings,
+    Sparkles,
+    Star,
     Swords,
     Trash2,
     X,
@@ -23,6 +29,9 @@
   import { m } from "$lib/i18n/messages.js";
   import SimulatorSupportActions from "@/features/simulator/support/SimulatorSupportActions.svelte";
   import SimulatorSupportReminder from "@/features/simulator/support/SimulatorSupportReminder.svelte";
+  import { resolvePatronTierConfig } from "@/features/simulator/model/player-tier.js";
+  import MatchChatPanel from "@/features/match-chat/MatchChatPanel.svelte";
+  import { maybeUseMatchChatControllerContext } from "@/features/match-chat/match-chat-controller.svelte.js";
   import type { BugReportContext } from "@/features/simulator/support/feedback-api.js";
   import type {
     ActionAvailableMovesSelectionState,
@@ -51,6 +60,10 @@
 
   interface CompactPlayerSummary {
     label: string;
+    /** Real account display name when available (preferred). */
+    displayName?: string | null;
+    /** Subscription tier id (tier2..tier5) for badge styling. */
+    subscriptionTier?: string | null;
     side: LorcanaPlayerSide;
     summary: LorcanaPlayerSummary | null;
     isActive: boolean;
@@ -84,6 +97,11 @@
     selectedCard?: LorcanaCardSnapshot | null;
     selectedCardPlayable?: boolean;
     canConcede?: boolean;
+    /** Whether the seat can request Board State Correction right now. */
+    canRequestBoardStateCorrection?: boolean;
+    /** Whether Board State Correction is currently active (toggles label). */
+    isCorrectionActive?: boolean;
+    onRequestBoardStateCorrection?: () => void;
     onOpenDetails?: () => void;
     onOpenMoves?: () => void;
     onExecuteMoveCategory?: (categoryId: ExecutableMovePresentationCategoryId) => void;
@@ -125,6 +143,9 @@
     selectedCard = null,
     selectedCardPlayable = false,
     canConcede = false,
+    canRequestBoardStateCorrection = false,
+    isCorrectionActive = false,
+    onRequestBoardStateCorrection,
     onOpenDetails,
     onOpenMoves,
     onExecuteMoveCategory,
@@ -152,6 +173,20 @@
   let confirmDialogOpen = $state(false);
   let moveConfirmation = $state<MoveConfirmationState | null>(null);
   let revealedBottomControls = $state<RevealedBottomControlState>(null);
+  let chatDrawerOpen = $state(false);
+  let lastSeenChatCount = $state(0);
+  const chatControllerContext = maybeUseMatchChatControllerContext();
+  const chatController = $derived(chatControllerContext?.controller ?? null);
+  const chatMessageCount = $derived(chatController?.messages.length ?? 0);
+  const chatUnreadCount = $derived(Math.max(0, chatMessageCount - lastSeenChatCount));
+  $effect(() => {
+    if (chatDrawerOpen) {
+      lastSeenChatCount = chatMessageCount;
+    }
+  });
+  function handleOpenChat(): void {
+    chatDrawerOpen = true;
+  }
 
   const loreIconUrl = getLoreIconUrl();
   const exertIconUrl = getExertIconUrl();
@@ -162,6 +197,18 @@
   const inkSummary = $derived(`${player.summary?.availableInk ?? 0}/${player.summary?.inkwellCount ?? 0}`);
   const seatLabel = $derived(seat === "top" ? "opponent" : "player");
   const detailsSide = $derived(seat === "top" ? "top" : "bottom");
+  const seatEyebrow = $derived(
+    seat === "top" ? m["sim.player.opponent"]({}) : m["sim.player.you"]({}),
+  );
+  const displayName = $derived(
+    player.displayName && player.displayName.trim().length > 0
+      ? player.displayName
+      : player.label,
+  );
+  const hasDistinctDisplayName = $derived(
+    displayName.trim().toLocaleLowerCase() !== seatEyebrow.trim().toLocaleLowerCase(),
+  );
+  const patronConfig = $derived(resolvePatronTierConfig(player.subscriptionTier));
   const stateBadges = $derived.by(() => {
     const badges: string[] = [];
     if (player.isActive) {
@@ -277,6 +324,14 @@
     onReportPlayer?.();
   }
 
+  function handleCorrectionClick(): void {
+    if (!canRequestBoardStateCorrection && !isCorrectionActive) {
+      return;
+    }
+    detailsOpen = false;
+    onRequestBoardStateCorrection?.();
+  }
+
   async function handleConcedeClick(): Promise<void> {
     if (!canConcede) {
       return;
@@ -368,11 +423,12 @@
 {#if seat === "bottom"}
   <div class="mobile-menubar-frame mobile-menubar-frame--bottom">
     <div class="mobile-menubar-shell mobile-menubar-shell--bottom" data-testid="mobile-bottom-menubar">
+      {#if isPostGame}
       <div class="mobile-menubar-primary" data-testid="mobile-bottom-primary">
         <Button
           variant="outline"
           size="xs"
-          class="mobile-anchor-button mobile-bottom-primary-action quick-action quick-action--revealed mobile-bottom-control mobile-bottom-lore"
+          class="mobile-bottom-primary-action quick-action quick-action--revealed mobile-bottom-control mobile-bottom-lore"
           onclick={openDetails}
           aria-label={`Open ${seatLabel} details`}
           data-testid={`mobile-${seat}-lore-chip`}
@@ -383,8 +439,6 @@
           </span>
         </Button>
       </div>
-
-      {#if isPostGame}
         <div class="mobile-menubar-post-game-cta" data-testid="mobile-bottom-post-game-cta">
           {#if matchContext?.nextGameId && onNextGame}
             <Button
@@ -409,6 +463,22 @@
           {/if}
         </div>
       {:else}
+      <div class="mobile-menubar-cluster mobile-menubar-cluster--utility" data-testid="mobile-bottom-utility-cluster">
+        <div class="mobile-menubar-primary" data-testid="mobile-bottom-primary">
+          <Button
+            variant="outline"
+            size="xs"
+            class="mobile-bottom-primary-action quick-action quick-action--revealed mobile-bottom-control mobile-bottom-lore"
+            onclick={openDetails}
+            aria-label={`Open ${seatLabel} details`}
+            data-testid={`mobile-${seat}-lore-chip`}
+          >
+            <span class="lore-chip__content">
+              <span aria-hidden="true" class="lore-chip__icon" style={loreMaskStyle}></span>
+              <span class="lore-chip__value">{loreValue}</span>
+            </span>
+          </Button>
+        </div>
       <div
         data-slot="button-group"
         class="mobile-menubar-center"
@@ -470,12 +540,14 @@
           </div>
         </div>
       </div>
+      </div><!-- /.mobile-menubar-cluster--utility -->
 
+      <div class="mobile-menubar-cluster mobile-menubar-cluster--primary" data-testid="mobile-bottom-primary-cluster">
       <div class="mobile-menubar-pinned-actions" data-testid="mobile-bottom-secondary">
         <Button
           variant="outline"
           size="icon-sm"
-          class={`mobile-anchor-button mobile-bottom-primary-action quick-action quick-action--revealed quick-action--quest-all mobile-bottom-control${questAllArmed ? " quick-action--primary" : ""}${questAllAvailable ? "" : " mobile-bottom-primary-action--ghost"}`}
+          class={`mobile-bottom-primary-action quick-action quick-action--revealed quick-action--quest-all mobile-bottom-control${questAllArmed ? " quick-action--primary" : ""}${questAllAvailable ? "" : " mobile-bottom-primary-action--ghost"}`}
           onclick={handleQuestAllClick}
           disabled={!questAllAvailable}
           aria-label={questAllAvailable ? questAllAriaLabel : "Quest with all unavailable"}
@@ -512,7 +584,7 @@
         <Button
           variant="outline"
           size="icon-sm"
-          class={`mobile-anchor-button mobile-bottom-primary-action quick-action quick-action--revealed quick-action--pass-turn mobile-bottom-control${passTurnArmed ? " quick-action--primary" : ""}${passTurnAvailable ? "" : " mobile-bottom-primary-action--ghost"}`}
+          class={`mobile-bottom-primary-action quick-action quick-action--revealed quick-action--pass-turn mobile-bottom-control${passTurnArmed ? " quick-action--primary" : ""}${passTurnAvailable ? "" : " mobile-bottom-primary-action--ghost"}`}
           onclick={handlePassTurnClick}
           disabled={!passTurnAvailable}
           aria-label={passTurnAvailable ? passTurnButtonLabel : "Pass turn unavailable"}
@@ -524,6 +596,7 @@
           </span>
         </Button>
       </div>
+      </div><!-- /.mobile-menubar-cluster--primary -->
       {/if}
     </div>
   </div>
@@ -618,6 +691,23 @@
           </Button>
         {/if}
 
+        {#if chatController}
+          <Button
+            variant="outline"
+            size="icon-sm"
+            class="quick-action quick-action--icon-only"
+            onclick={handleOpenChat}
+            aria-label={chatUnreadCount > 0 ? `Open chat (${chatUnreadCount} new)` : "Open chat"}
+            title="Open chat"
+            data-testid="mobile-top-chat"
+          >
+            <MessageSquare class="size-4" />
+            {#if chatUnreadCount > 0}
+              <span class="quick-action__badge quick-action__badge--chat">{chatUnreadCount > 9 ? "9+" : chatUnreadCount}</span>
+            {/if}
+          </Button>
+        {/if}
+
         <Button
           variant="outline"
           size="icon-sm"
@@ -646,10 +736,15 @@
 {/if}
 
 <Drawer.Root bind:open={detailsOpen} direction={detailsSide} shouldScaleBackground={false}>
-  <Drawer.Content class="player-details-sheet border-sky-300/20 bg-slate-950/98 text-slate-100">
+  <Drawer.Content class={`player-details-sheet player-details-sheet--${detailsSide} border-sky-300/20 bg-slate-950/98 text-slate-100`}>
     <Drawer.Header class="player-details-sheet__header">
       <div class="flex items-center justify-between gap-3">
-        <Drawer.Title class="player-details-sheet__title">{player.label}</Drawer.Title>
+        <div class="min-w-0">
+          <span class="player-details-sheet__eyebrow">{seatEyebrow}</span>
+          <Drawer.Title class="player-details-sheet__title">
+            {hasDistinctDisplayName ? displayName : seatEyebrow}
+          </Drawer.Title>
+        </div>
         <Drawer.Close class="drawer-close-button" aria-label={`Close ${seatLabel} details`}>
           <X class="size-4" />
         </Drawer.Close>
@@ -660,13 +755,42 @@
       <div class="space-y-2.5 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <div class="rounded-[1rem] bg-slate-900/90 p-2.5 ring-1 ring-inset ring-sky-300/12">
           <div class="flex items-start justify-between gap-2">
-            <div class="min-w-0">
-              <span class="mt-0.5 truncate text-[1rem] font-bold leading-tight text-slate-50">
-                {player.label}
-              </span>
-              <span class="mt-0.5 text-[0.64rem] uppercase tracking-[0.16em] text-slate-400">
-                {player.side}
-              </span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                {#if patronConfig}
+                  <span
+                    class="player-patron-pill"
+                    style:--patron-color={patronConfig.color}
+                    style:--patron-glow={patronConfig.glow}
+                    style:--patron-border={patronConfig.borderColor}
+                    title={patronConfig.name()}
+                    aria-label={patronConfig.name()}
+                  >
+                    {#if patronConfig.id === "tier5"}
+                      <Crown size={10} />
+                    {:else if patronConfig.id === "tier4"}
+                      <Sparkles size={10} />
+                    {:else if patronConfig.id === "tier3"}
+                      <Gem size={10} />
+                    {:else}
+                      <Star size={10} />
+                    {/if}
+                  </span>
+                {/if}
+                {#if hasDistinctDisplayName}
+                  <span class="player-details-sheet__name">{displayName}</span>
+                {:else if patronConfig}
+                  <span class="player-details-sheet__name">{seatEyebrow}</span>
+                {/if}
+              </div>
+              {#if patronConfig}
+                <span
+                  class="player-details-sheet__tier-label"
+                  style:--patron-color={patronConfig.color}
+                >
+                  {patronConfig.name()}
+                </span>
+              {/if}
             </div>
 
             <div class="flex items-center gap-1.5 rounded-full bg-sky-950/70 px-2.5 py-1.25 ring-1 ring-inset ring-sky-300/18">
@@ -684,6 +808,26 @@
               </div>
               <Settings class="size-4 shrink-0" />
             </button>
+
+            {#if onRequestBoardStateCorrection && (canRequestBoardStateCorrection || isCorrectionActive) && !isPostGame}
+              <button
+                type="button"
+                class="sheet-action-button"
+                onclick={handleCorrectionClick}
+              >
+                <div class="sheet-action-button__copy">
+                  <span class="sheet-action-button__label">
+                    {isCorrectionActive ? "Exit Board State Correction" : "Request Board State Correction"}
+                  </span>
+                  <span class="sheet-action-button__meta">
+                    {isCorrectionActive
+                      ? "Return to normal play once both players have aligned the board."
+                      : "Ask the opponent to pause and manually adjust the board state together."}
+                  </span>
+                </div>
+                <ClipboardEdit class="size-4 shrink-0" />
+              </button>
+            {/if}
 
             <div class="sheet-support-actions">
               <p class="sheet-support-actions__title">{m["sim.support.title"]({})}</p>
@@ -715,17 +859,38 @@
             </button>
           </div>
         {:else}
-          <button
-            type="button"
-            class="sheet-action-button sheet-action-button--warning"
-            onclick={handleReportClick}
-          >
-            <div class="sheet-action-button__copy">
-              <span class="sheet-action-button__label">Report Player</span>
-              <span class="sheet-action-button__meta">Open the current placeholder reporting action.</span>
-            </div>
-            <Flag class="size-4 shrink-0" />
-          </button>
+          <div class="grid gap-1.5">
+            {#if onRequestBoardStateCorrection && (canRequestBoardStateCorrection || isCorrectionActive) && !isPostGame}
+              <button
+                type="button"
+                class="sheet-action-button"
+                onclick={handleCorrectionClick}
+              >
+                <div class="sheet-action-button__copy">
+                  <span class="sheet-action-button__label">
+                    {isCorrectionActive ? "Exit Board State Correction" : "Request Board State Correction"}
+                  </span>
+                  <span class="sheet-action-button__meta">
+                    {isCorrectionActive
+                      ? "Return to normal play once both players have aligned the board."
+                      : "Ask the opponent to pause and manually adjust the board state together."}
+                  </span>
+                </div>
+                <ClipboardEdit class="size-4 shrink-0" />
+              </button>
+            {/if}
+            <button
+              type="button"
+              class="sheet-action-button sheet-action-button--warning"
+              onclick={handleReportClick}
+            >
+              <div class="sheet-action-button__copy">
+                <span class="sheet-action-button__label">Report Player</span>
+                <span class="sheet-action-button__meta">Open the current placeholder reporting action.</span>
+              </div>
+              <Flag class="size-4 shrink-0" />
+            </button>
+          </div>
         {/if}
         <div class="grid grid-cols-2 gap-1.5 text-xs">
           <div class="stat-card">
@@ -761,6 +926,22 @@
       
       </div>
     </ScrollArea>
+  </Drawer.Content>
+</Drawer.Root>
+
+<Drawer.Root bind:open={chatDrawerOpen} direction="bottom" shouldScaleBackground={false}>
+  <Drawer.Content class="mobile-chat-sheet border-sky-300/20 bg-slate-950/98 text-slate-100">
+    <Drawer.Header class="mobile-chat-sheet__header">
+      <div class="flex items-center justify-between gap-3">
+        <Drawer.Title class="mobile-chat-sheet__title">Match chat</Drawer.Title>
+        <Drawer.Close class="drawer-close-button" aria-label="Close chat">
+          <X class="size-4" />
+        </Drawer.Close>
+      </div>
+    </Drawer.Header>
+    <div class="mobile-chat-sheet__body">
+      <MatchChatPanel viewerSide={ownerSide} />
+    </div>
   </Drawer.Content>
 </Drawer.Root>
 
@@ -825,7 +1006,7 @@
   }
 
   .mobile-menubar-shell--bottom {
-    gap: 0.14rem;
+    gap: 0.28rem;
     align-items: stretch;
   }
 
@@ -839,6 +1020,49 @@
     align-items: stretch;
     gap: 0.14rem;
     flex: 0 0 auto;
+  }
+
+  .mobile-menubar-cluster {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 0;
+    border-radius: 1rem;
+    border: 1px solid rgba(125, 211, 252, 0.18);
+    background: rgba(15, 23, 42, 0.78);
+    padding: 0.12rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 6px 16px rgba(2, 6, 23, 0.22);
+  }
+
+  .mobile-menubar-cluster--utility {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .mobile-menubar-cluster--utility > .mobile-menubar-primary {
+    border-right: 1px solid rgba(125, 211, 252, 0.1);
+    padding-right: 0.18rem;
+    margin-right: 0.18rem;
+  }
+
+  .mobile-menubar-cluster--utility > .mobile-menubar-center {
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .mobile-menubar-cluster--primary {
+    flex: 0 0 auto;
+    background: linear-gradient(180deg, rgba(8, 47, 73, 0.85), rgba(15, 23, 42, 0.92));
+    border-color: rgba(125, 211, 252, 0.34);
+  }
+
+  .mobile-menubar-cluster--primary > .mobile-menubar-pinned-actions {
+    gap: 0.14rem;
   }
 
   .mobile-menubar-post-game-cta {
@@ -1226,6 +1450,43 @@
     color: #bbf7d0;
   }
 
+  :global(.quick-action__badge--chat) {
+    background: linear-gradient(180deg, #38bdf8, #0ea5e9);
+    color: #0c1322;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.42);
+  }
+
+  :global(.mobile-chat-sheet) {
+    max-height: min(78dvh, 40rem);
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0;
+  }
+
+  :global(.mobile-chat-sheet__header) {
+    padding: 0.8rem 0.9rem 0.4rem;
+  }
+
+  :global(.mobile-chat-sheet__title) {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #f8fafc;
+  }
+
+  .mobile-chat-sheet__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0 0.65rem calc(0.65rem + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-chat-sheet__body :global(> *) {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
 
   :global(.quick-metric) {
     min-height: 1.85rem;
@@ -1252,9 +1513,16 @@
   }
 
   :global(.player-details-sheet) {
-    max-height: min(62dvh, 24rem);
+    max-height: min(78dvh, 34rem);
     box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.08), 0 24px 64px rgba(2, 6, 23, 0.72);
     padding-bottom: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.player-details-sheet--top) {
+    max-height: min(72dvh, 32rem);
+    padding-top: env(safe-area-inset-top);
   }
 
   :global(.player-details-sheet__header) {
@@ -1263,9 +1531,59 @@
   }
 
   :global(.player-details-sheet__title) {
-    font-size: 0.92rem;
+    font-size: 1rem;
     font-weight: 800;
     color: #f8fafc;
+    margin-top: 0.05rem;
+    line-height: 1.1;
+  }
+
+  :global(.player-details-sheet__eyebrow) {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.78);
+    line-height: 1;
+  }
+
+  :global(.player-details-sheet__name) {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #f8fafc;
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :global(.player-details-sheet__tier-label) {
+    display: inline-block;
+    margin-top: 0.18rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--patron-color, rgba(148, 163, 184, 0.85));
+  }
+
+  :global(.player-patron-pill) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--patron-border);
+    color: var(--patron-color);
+    flex-shrink: 0;
+    box-shadow:
+      0 0 4px var(--patron-glow),
+      0 0 8px var(--patron-glow),
+      inset 0 0 4px rgba(255, 255, 255, 0.06);
+    filter: drop-shadow(0 0 3px var(--patron-glow));
   }
 
 

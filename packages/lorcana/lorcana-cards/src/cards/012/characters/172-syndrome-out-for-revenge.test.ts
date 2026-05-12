@@ -378,6 +378,103 @@ describe("Syndrome - Out for Revenge", () => {
     });
   });
 
+  it("offers the optional play-for-free even when discard contains no Robot (CR 1.2.3 do as much as you can)", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: syndromeOutForRevenge }],
+      hand: [robotInHand],
+      // Discard has only a non-Robot — step 1 of the sequence has no legal target.
+      // Per CR 1.2.3 + 6.7.2.4 the resolving effect must still perform step 2
+      // (the optional "you may play or shift a Robot for free").
+      discard: [nonRobotInDiscard],
+      deck: 1,
+    });
+
+    expect(testEngine.asPlayerOne().quest(syndromeOutForRevenge)).toBeSuccessfulCommand();
+
+    const trigger = testEngine
+      .asPlayerOne()
+      .getBagEffects()
+      .find((bagEffect) => hasAbilityName(bagEffect, "GOT ME MONOLOGUING!"));
+    expect(trigger).toBeDefined();
+
+    expect(
+      testEngine.asPlayerOne().resolveBag(trigger!.id, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+
+    // Step 1 (return-from-discard) has no legal target and must be skipped per
+    // CR 1.2.3; step 2 (the optional play-for-free) must still resolve.
+    // Whether the engine suspends between steps or cascades the bag-level
+    // accept into the inner optional is an implementation detail. The
+    // observable invariant is: the Robot in hand ends up in play.
+    if (testEngine.asPlayerOne().getCardZone(robotInHand) === "hand") {
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          resolveOptional: true,
+          targets: [robotInHand],
+        }),
+      ).toBeSuccessfulCommand();
+    }
+    expect(testEngine.asPlayerOne().getCardZone(robotInHand)).toBe("play");
+    // And the non-Robot in discard was never touched.
+    expect(testEngine.asPlayerOne().getCardZone(nonRobotInDiscard)).toBe("discard");
+  });
+
+  it("resolves to no-op when neither discard nor hand contains a Robot (regression — P0 bugrepsp7SLarLzJ11649dELkLg / bugrepvQ6Tw1yhttbxqni_EXTx9)", () => {
+    // Replay evidence: gameId mgrqzPSrq6-8uFZk8Heeb9s turn 12 (and
+    // mgtdgmUeURIoE8WfLGH1x37 turn 21). Players questied Syndrome with zero
+    // Robots in either zone; the bag-item became unsatisfiable and they could
+    // not pass turn — only escape was concede.
+    //
+    // Engine fix shipped in fefdff51 ("preserve later sequence steps when
+    // return-from-discard has no candidates"); the reports landed during the
+    // deployment lag, so this guard locks in that fix. Per CR 1.2.3 the whole
+    // sequence resolves to no-op when neither step can be performed.
+    const nonRobotInHand = createMockCharacter({
+      id: "syndrome-non-robot-hand",
+      name: "Other Hero",
+      cost: 4,
+      classifications: ["Storyborn", "Hero"],
+    });
+
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      play: [{ card: syndromeOutForRevenge }],
+      hand: [nonRobotInHand],
+      discard: [nonRobotInDiscard],
+      deck: 1,
+    });
+
+    expect(testEngine.asPlayerOne().quest(syndromeOutForRevenge)).toBeSuccessfulCommand();
+
+    const trigger = testEngine
+      .asPlayerOne()
+      .getBagEffects()
+      .find((bagEffect) => hasAbilityName(bagEffect, "GOT ME MONOLOGUING!"));
+    expect(trigger).toBeDefined();
+
+    expect(
+      testEngine.asPlayerOne().resolveBag(trigger!.id, { resolveOptional: true }),
+    ).toBeSuccessfulCommand();
+
+    // Bag must drain even though both steps are unfillable.
+    expect(
+      testEngine
+        .asPlayerOne()
+        .getBagEffects()
+        .find((bagEffect) => hasAbilityName(bagEffect, "GOT ME MONOLOGUING!")),
+    ).toBeUndefined();
+
+    // No card moved between zones.
+    expect(testEngine.asPlayerOne().getCardZone(nonRobotInDiscard)).toBe("discard");
+    expect(testEngine.asPlayerOne().getCardZone(nonRobotInHand)).toBe("hand");
+
+    // No leftover pending-effect prompt — the wedge symptom in production was
+    // an unsatisfiable target-selection that survived past resolveBag.
+    expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
+
+    // Turn must be passable — the original P0 symptom was a wedged turn.
+    expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+  });
+
   it("has Shift 4 keyword", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
       hand: [syndromeOutForRevenge],

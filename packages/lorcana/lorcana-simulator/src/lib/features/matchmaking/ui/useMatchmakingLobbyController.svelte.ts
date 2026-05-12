@@ -59,6 +59,7 @@ import { DECK_FIXTURES } from "@/features/simulator-devtools/deck-fixtures/index
 import type { HumanVsAiMatchConfig } from "@/features/simulator-devtools/vs-ai/types.js";
 import type { MatchmakingStatus } from "../state/matchmaking-queue.svelte.js";
 import {
+  PLACEMENT_THRESHOLD,
   QUEUE_CARD_DEFINITIONS,
   createQueueJoinLabel,
   type QueueCardView,
@@ -216,6 +217,11 @@ export interface MatchmakingLobbyController {
       readonly inQueue: number;
       readonly liveMatches: number;
     }>;
+    readonly matchTypeStats: ReadonlyArray<{
+      readonly matchType: "ranked" | "casual";
+      readonly inQueue: number;
+      readonly liveMatches: number;
+    }>;
   };
   practice: {
     readonly loading: boolean;
@@ -310,7 +316,9 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
   practiceLoading = $state(false);
   practiceError = $state<string | null>(null);
   playerStats = $state<PlayerStats | null>(null);
-  selectedQueueFormat = $state<QueueStatsFormat>(loadMatchmakingPrefs().format ?? "infinity");
+  selectedQueueFormat = $state<QueueStatsFormat>(
+    restoreSupportedQueueFormat(loadMatchmakingPrefs().format),
+  );
   selectedQueueMode = $state<QueueStatsMode>(loadMatchmakingPrefs().mode ?? "1");
   selectedMatchType = $state<"ranked" | "casual" | "testing">("casual");
   selectedBotFixtureId = $state("");
@@ -342,6 +350,9 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
     const persistedMatchType = loadMatchmakingPrefs().matchType;
     if (persistedMatchType && (persistedMatchType !== "ranked" || this.rankedEnabled)) {
       this.selectedMatchType = persistedMatchType;
+    }
+    if (this.selectedMatchType === "ranked" && this.selectedQueueMode === "1") {
+      this.selectedQueueMode = "3";
     }
     this.#initialRoomCode = options.initialRoomCode ?? options.initialLobbyRoom?.roomCode ?? null;
     this.#initialLobbyRoom = options.initialLobbyRoom ?? null;
@@ -442,6 +453,10 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
       rankedEnabled: this.rankedEnabled,
       queueCards: QUEUE_CARD_DEFINITIONS.map((definition) => {
         const selectedDeck = this.playerContext.selectedDeck;
+        const isRanked = this.selectedMatchType === "ranked";
+        const formatStats = isRanked
+          ? this.playerStats?.byFormat?.find((f) => f.formatId === definition.format)
+          : undefined;
         return {
           definition,
           stats: this.queueStatsStore.statsByPartition(
@@ -455,8 +470,16 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
             !selectedDeck ||
             !selectedDeck.validFormats ||
             selectedDeck.validFormats.includes(definition.format),
-          winStreak: this.playerStats?.currentWinStreak ?? 0,
-          mmr: this.playerStats?.mmr ?? null,
+          winStreak: formatStats?.currentWinStreak ?? 0,
+          // MMR and placement are ranked-only concepts — suppress in casual/testing.
+          // Also suppress MMR until placement is complete — the API always
+          // returns a numeric mmr even during placement matches.
+          mmr:
+            formatStats && formatStats.gamesPlayed >= PLACEMENT_THRESHOLD ? formatStats.mmr : null,
+          // In ranked, surface placement progress for every format — fresh
+          // accounts with no byFormat entry yet should still see 0/N. In
+          // casual/testing the field stays null so the bar is hidden.
+          placementGamesPlayed: isRanked ? (formatStats?.gamesPlayed ?? 0) : null,
         };
       }),
       isDeckValidForSelectedFormat: this.isDeckValidForSelectedFormat,
@@ -481,6 +504,15 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
         mode,
         inQueue: this.queueStatsStore.totalInQueue(mode, this.selectedMatchType),
         liveMatches: this.queueStatsStore.totalLiveMatches(mode, this.selectedMatchType),
+      })),
+      matchTypeStats: (["ranked", "casual"] as const).map((matchType) => ({
+        matchType,
+        inQueue:
+          this.queueStatsStore.totalInQueue("1", matchType) +
+          this.queueStatsStore.totalInQueue("3", matchType),
+        liveMatches:
+          this.queueStatsStore.totalLiveMatches("1", matchType) +
+          this.queueStatsStore.totalLiveMatches("3", matchType),
       })),
     };
   }
@@ -848,6 +880,9 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
     if (this.selectionDisabled) {
       return;
     }
+    if (mode === "1" && this.selectedMatchType === "ranked") {
+      return;
+    }
 
     this.selectedQueueMode = mode;
     this.#deps.trackEvent("matchmaking_mode_select", { mode });
@@ -862,6 +897,9 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
     }
 
     this.selectedMatchType = matchType;
+    if (matchType === "ranked" && this.selectedQueueMode === "1") {
+      this.selectedQueueMode = "3";
+    }
     this.#deps.trackEvent("matchmaking_match_type_select", { matchType });
   }
 
@@ -1611,6 +1649,12 @@ type MatchmakingPrefs = {
   mode: QueueStatsMode;
   matchType: "ranked" | "casual" | "testing";
 };
+
+function restoreSupportedQueueFormat(persisted: QueueStatsFormat | undefined): QueueStatsFormat {
+  if (!persisted) return "infinity";
+  const supported = QUEUE_CARD_DEFINITIONS.some((def) => def.format === persisted);
+  return supported ? persisted : "infinity";
+}
 
 function loadMatchmakingPrefs(): Partial<MatchmakingPrefs> {
   try {

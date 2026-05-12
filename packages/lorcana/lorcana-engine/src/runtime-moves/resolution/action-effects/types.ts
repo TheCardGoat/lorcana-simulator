@@ -7,6 +7,7 @@ import type {
   ReplacementTriggerContext,
 } from "../../../types";
 import type { DynamicAmountEventSnapshot } from "../../../types/domain-events";
+import type { PlayerId } from "#core";
 import type { TargetSelectionInput } from "../../../targeting/runtime";
 import type { SlottedTargetInput } from "../../../targeting/slotted-targets";
 
@@ -37,6 +38,16 @@ type ActionResolutionInput = {
   destinations?: { zone: string; cards: CardInstanceId | CardInstanceId[] }[];
   eventSnapshot?: DynamicAmountEventSnapshot;
   triggerContext?: ReplacementTriggerContext;
+  /**
+   * The id of the player whose choice is currently being resolved when the
+   * effect was reached through an `optional` whose `chooser` was not the
+   * controller (e.g. OPPONENT chooser on Chernabog — Unnatural Force's
+   * nested "play from discard for free"). Inner resolvers that default a
+   * source/destination player to `cardPlayed.playerId` should prefer this
+   * id when set. Effects with an explicit `target: "OPPONENT" / "SELF"`
+   * etc. must continue to resolve relative to the original controller.
+   */
+  chooserPlayerId?: PlayerId;
 };
 
 export type { ActionResolutionInput, PlayCardExecutionContext };

@@ -24,16 +24,41 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(value, max));
 }
 
+/**
+ * Drill into wrapper effects to surface the inner effect that owns the
+ * `up-to` amount (if any). Handles:
+ *  - `optional` — unwraps to its inner effect.
+ *  - `sequence` — descends into each step until one yields an `up-to`-aware
+ *    effect; matches the engine's step-by-step bag resolution order. Without
+ *    this, payloads like Julieta's
+ *    `{type:"sequence", steps:[{type:"optional", effect:{type:"remove-damage", amount:{type:"up-to",value:2}}}, ...]}`
+ *    short-circuit at "sequence" and never expose the amount picker.
+ */
 function unwrapOptionalEffect(
   effectRecord: Record<string, unknown> | null,
 ): Record<string, unknown> | null {
   if (!effectRecord) {
     return null;
   }
-  // Unwrap optional wrappers so the inner effect type and amount are accessible
-  // (e.g. "move-damage" with an up-to amount inside an optional triggered ability).
-  if (getRecordString(effectRecord, "type") === "optional") {
-    return asRecord(effectRecord.effect) ?? effectRecord;
+  const type = getRecordString(effectRecord, "type");
+  if (type === "optional") {
+    const inner = asRecord(effectRecord.effect);
+    return inner ? (unwrapOptionalEffect(inner) ?? inner) : effectRecord;
+  }
+  if (type === "sequence") {
+    const steps = Array.isArray(effectRecord.steps) ? effectRecord.steps : [];
+    for (const step of steps) {
+      const stepRecord = asRecord(step);
+      if (!stepRecord) {
+        continue;
+      }
+      const unwrapped = unwrapOptionalEffect(stepRecord);
+      const unwrappedType = getRecordString(unwrapped, "type");
+      if (unwrappedType && getUpToRule(unwrappedType)) {
+        return unwrapped;
+      }
+    }
+    return effectRecord;
   }
   return effectRecord;
 }

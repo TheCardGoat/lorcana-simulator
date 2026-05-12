@@ -21,22 +21,15 @@
         "env": "CLOUDFLARE_API_TOKEN"
       }
     ],
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ]
+    "default": ["{projectRoot}/**/*", "sharedGlobals"]
   },
   "targetDefaults": {
     "topo": {
-      "dependsOn": [
-        "^topo"
-      ],
+      "dependsOn": ["^topo"],
       "cache": true
     },
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "inputs": [
         "{projectRoot}/src/**",
         "{projectRoot}/static/**",
@@ -91,47 +84,30 @@
       "cache": false
     },
     "build:node": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "{projectRoot}/build/**",
-        "{projectRoot}/.svelte-kit/output/**"
-      ],
+      "dependsOn": ["^build"],
+      "outputs": ["{projectRoot}/build/**", "{projectRoot}/.svelte-kit/output/**"],
       "cache": true
     },
     "build:cloudflare": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "{projectRoot}/.svelte-kit/output/**",
-        "{projectRoot}/.svelte-kit/cloudflare/**"
-      ],
+      "dependsOn": ["^build"],
+      "outputs": ["{projectRoot}/.svelte-kit/output/**", "{projectRoot}/.svelte-kit/cloudflare/**"],
       "cache": true
     },
     "cf-typegen": {
       "cache": false
     },
     "deploy": {
-      "dependsOn": [
-        "build:cloudflare"
-      ],
+      "dependsOn": ["build:cloudflare"],
       "cache": false
     },
     "deploy:staging": {
-      "dependsOn": [
-        "build:cloudflare"
-      ],
+      "dependsOn": ["build:cloudflare"],
       "cache": false
     },
     "preview": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "cache": false
     }
   },
-  "analytics": true,
-  "nxCloudId": "6a005a3ca1601b6e9a275120"
+  "analytics": false
 }

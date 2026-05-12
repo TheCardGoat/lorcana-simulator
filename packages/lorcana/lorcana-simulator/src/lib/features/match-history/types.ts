@@ -30,6 +30,18 @@ export type MatchListResponse = {
   nextCursor: string | null;
 };
 
+export type PlayerStatsByFormat = {
+  formatId: string;
+  mmr: number;
+  highestMmr: number | null;
+  bracket: string | null;
+  gamesPlayed: number;
+  gamesWon: number;
+  losses: number;
+  currentWinStreak: number;
+  currentLossStreak: number;
+};
+
 export type PlayerStats = {
   gamesPlayed: number;
   gamesWon: number;
@@ -48,6 +60,7 @@ export type PlayerStats = {
   takebacksGranted: number;
   takebacksReceived: number;
   sportsmanshipTier: string | null;
+  byFormat: PlayerStatsByFormat[];
 };
 
 export type MmrHistoryPoint = {
@@ -86,6 +99,25 @@ export type PlayerDeckEntry = {
   deckColorMask: number | null;
   deckName: string | null;
   matchCount: number;
+};
+
+export type Milestone = {
+  id: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+  /**
+   * Normalized progress toward the criterion, in the closed interval [0, 1].
+   * The server clamps server-side via `clamp01(value / target)`, so consumers
+   * can render `progress * 100` directly. `target` below is the raw threshold
+   * (e.g. `5` for "win 5 in a row") shown in copy, not used for normalization.
+   */
+  progress: number;
+  /** Raw threshold magnitude — informational, e.g. `5` for "win 5 in a row". */
+  target: number;
+};
+
+export type MilestonesResponse = {
+  milestones: Milestone[];
 };
 
 export type DeckRundownResponse = {

@@ -1,4 +1,6 @@
+import type { PlayCardDisabledReason } from "@tcg/lorcana-engine";
 import { m } from "$lib/i18n/messages.js";
+import { formatPlayCardDisabledReason } from "@/features/simulator/model/play-card-disabled-reason-i18n.js";
 import type {
   CardActionCategoryId,
   CardActionView,
@@ -6,6 +8,32 @@ import type {
   LorcanaCardSnapshot,
   LorcanaPlayerSide,
 } from "@/features/simulator/model/contracts.js";
+
+/**
+ * Per-category reason accessors the presenter calls when a play / shift / sing
+ * action is blocked (i.e. the engine produced no executable move for that
+ * category). Each returns `null` when the action is playable OR not applicable
+ * to the card (e.g. no Shift keyword for `getShiftDisabledReason`).
+ *
+ * Defined as a separate type so callers (game-context) can pass a single bag
+ * of callbacks instead of three loose props.
+ */
+export interface PlayCardDisabledReasonAccessors {
+  getStandardPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
+  getShiftPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
+  getSingPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
+}
+
+function resolveBlockedReason(
+  cardId: string,
+  accessor: ((cardId: string) => PlayCardDisabledReason | null) | undefined,
+  fallback: string,
+): string {
+  if (!accessor) return fallback;
+  const reason = accessor(cardId);
+  if (!reason) return fallback;
+  return formatPlayCardDisabledReason(reason);
+}
 
 const CARD_ACTION_ORDER: readonly CardActionCategoryId[] = [
   "play-card",
@@ -266,9 +294,21 @@ export function buildCardActionViews(options: {
   ownerSide: LorcanaPlayerSide | null;
   challengeReadyCardIds: string[];
   movableToLocationCardIds: string[];
+  /**
+   * Optional per-category disabled-reason accessors. When provided, the
+   * presenter pulls a localized tooltip from the engine for blocked
+   * play / shift actions instead of a generic "can't be played" string.
+   */
+  disabledReasonAccessors?: PlayCardDisabledReasonAccessors;
 }): CardActionView[] {
-  const { card, executableMoves, ownerSide, challengeReadyCardIds, movableToLocationCardIds } =
-    options;
+  const {
+    card,
+    executableMoves,
+    ownerSide,
+    challengeReadyCardIds,
+    movableToLocationCardIds,
+    disabledReasonAccessors,
+  } = options;
   if (!ownerSide || card.ownerSide !== ownerSide) {
     return [];
   }
@@ -331,7 +371,12 @@ export function buildCardActionViews(options: {
     }
 
     if (categoryId === "play-card" && (card.zoneId === "hand" || card.zoneId === "limbo")) {
-      actions.push(buildBlockedAction(card, categoryId, "This card cannot be played right now."));
+      const reasonText = resolveBlockedReason(
+        card.cardId,
+        disabledReasonAccessors?.getStandardPlayDisabledReason,
+        "This card cannot be played right now.",
+      );
+      actions.push(buildBlockedAction(card, categoryId, reasonText));
       continue;
     }
 
@@ -340,7 +385,26 @@ export function buildCardActionViews(options: {
       (card.zoneId === "hand" || card.zoneId === "limbo") &&
       hasKeyword(card, "Shift")
     ) {
-      actions.push(buildBlockedAction(card, categoryId, getShiftBlockedReason(card)));
+      const reasonText = resolveBlockedReason(
+        card.cardId,
+        disabledReasonAccessors?.getShiftPlayDisabledReason,
+        getShiftBlockedReason(card),
+      );
+      actions.push(buildBlockedAction(card, categoryId, reasonText));
+      continue;
+    }
+
+    if (
+      categoryId === "sing-card" &&
+      (card.zoneId === "hand" || card.zoneId === "limbo") &&
+      card.actionSubtype === "song"
+    ) {
+      const reasonText = resolveBlockedReason(
+        card.cardId,
+        disabledReasonAccessors?.getSingPlayDisabledReason,
+        "This song cannot be sung right now.",
+      );
+      actions.push(buildBlockedAction(card, categoryId, reasonText));
       continue;
     }
 

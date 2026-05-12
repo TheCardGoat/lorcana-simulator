@@ -1,9 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import {
   LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
   createMockCharacter,
   createMockLocation,
 } from "@tcg/lorcana-engine/testing";
+import { sugarRushSpeedwayFinishLine } from "../../006/locations/035-sugar-rush-speedway-finish-line";
 import { tukTukLivelyPartner } from "./127-tuk-tuk-lively-partner";
 
 const allyCharacter = createMockCharacter({
@@ -220,6 +222,46 @@ describe("Tuk Tuk - Lively Partner", () => {
       );
       // anotherAlly should NOT have a buff
       expect(testEngine.asPlayerOne().getCard(anotherAlly).strength).toBe(anotherAlly.strength);
+    });
+
+    it("does NOT trigger Sugar Rush Speedway's BRING IT HOME when Tuk Tuk moves to it from play (regression: bugrepIz1o2YYBcU4aBj_n2mOz6)", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        hand: [tukTukLivelyPartner],
+        inkwell: tukTukLivelyPartner.cost,
+        play: [allyCharacter, sugarRushSpeedwayFinishLine],
+        deck: 10,
+      });
+
+      const loreBefore = testEngine.asPlayerOne().getLore(PLAYER_ONE);
+
+      expect(testEngine.asPlayerOne().playCard(tukTukLivelyPartner)).toBeSuccessfulCommand();
+      expect(
+        testEngine
+          .asPlayerOne()
+          .resolvePendingByCard(tukTukLivelyPartner, { resolveOptional: true }),
+      ).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          targets: [allyCharacter, sugarRushSpeedwayFinishLine],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Both should be at the location.
+      expect(testEngine.asPlayerOne()).toBeAtLocation({
+        card: tukTukLivelyPartner,
+        location: sugarRushSpeedwayFinishLine,
+      });
+      expect(testEngine.asPlayerOne()).toBeAtLocation({
+        card: allyCharacter,
+        location: sugarRushSpeedwayFinishLine,
+      });
+
+      // BRING IT HOME, LITTLE ONE! requires a from-location move; neither
+      // character was at a location before, so the trigger must not enter
+      // the bag (no optional prompt) and lore must be unchanged.
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(loreBefore);
+      expect(testEngine.asPlayerOne().getCardZone(sugarRushSpeedwayFinishLine)).toBe("play");
     });
   });
 });

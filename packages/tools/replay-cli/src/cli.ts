@@ -76,6 +76,12 @@ Options:
 Output sections (in order):
   --- CARDS INVOLVED ---       instanceId → defId → on-disk file path
   --- INITIAL STATE ---        reconstructed MatchState before the turn
+  --- PENDING SELECTIONS ---   raw selectionContext objects for any pending
+                               player choice (targeting, scry, optional, etc.)
+                               at the pre-turn state, then again after each
+                               step in --- STEPS --- as a pendingSelections:
+                               line. Use this to compare what the engine
+                               offered against what the player actually picked.
   --- STEPS ---                per-step move, logs, JSON patches
 
 Exit codes:

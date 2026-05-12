@@ -32,6 +32,14 @@ export type MatchmakingQueueFormat = "infinity" | "core-constructed";
 export type MatchmakingQueueMode = "1" | "3";
 export type MatchmakingQueueMatchType = "ranked" | "casual" | "testing";
 
+const SUPPORTED_QUEUE_FORMATS: readonly MatchmakingQueueFormat[] = ["infinity", "core-constructed"];
+
+function coerceQueuedFormat(value: string | undefined | null): MatchmakingQueueFormat | null {
+  return SUPPORTED_QUEUE_FORMATS.includes(value as MatchmakingQueueFormat)
+    ? (value as MatchmakingQueueFormat)
+    : null;
+}
+
 export class MatchmakingQueueStore {
   status: MatchmakingStatus = $state("idle");
   queuedAt: number | null = $state(null);
@@ -100,7 +108,7 @@ export class MatchmakingQueueStore {
         this.position = result.position ?? null;
         this.queuedGameProfileId = result.entry.gameProfileId;
         this.queuedDeckListId = result.entry.deckListId;
-        this.queuedFormat = result.entry.format as MatchmakingQueueFormat;
+        this.queuedFormat = coerceQueuedFormat(result.entry.format);
         this.queuedMode = result.entry.mode as MatchmakingQueueMode;
         this.queuedMatchType = (result.entry.matchType as MatchmakingQueueMatchType) ?? "ranked";
         this.status = "queued";
@@ -132,7 +140,7 @@ export class MatchmakingQueueStore {
       this.position = result.position ?? null;
       this.queuedGameProfileId = result.entry.gameProfileId;
       this.queuedDeckListId = result.entry.deckListId;
-      this.queuedFormat = result.entry.format as MatchmakingQueueFormat;
+      this.queuedFormat = coerceQueuedFormat(result.entry.format);
       this.queuedMode = result.entry.mode as MatchmakingQueueMode;
       this.queuedMatchType = (result.entry.matchType as MatchmakingQueueMatchType) ?? "ranked";
       this.status = "queued";
@@ -166,7 +174,7 @@ export class MatchmakingQueueStore {
       this.queuedAt = entry.queuedAt;
       this.expiresAt = entry.expiresAt;
       this.queuedGameProfileId = params.gameProfileId;
-      this.queuedFormat = params.format as MatchmakingQueueFormat;
+      this.queuedFormat = coerceQueuedFormat(params.format);
       this.queuedMode = params.mode as MatchmakingQueueMode;
       this.queuedMatchType = (params.matchType as MatchmakingQueueMatchType) ?? "ranked";
       this.status = "queued";
@@ -234,7 +242,11 @@ export class MatchmakingQueueStore {
     this.matchFoundMatchId = msg.matchId;
     this.matchFoundGameId = msg.gameId;
     this.opponentDisplayName = msg.opponentDisplayName ?? null;
+    // Clear pending-accept state so any stale match_ready_expired WS message
+    // that arrives after match_found is ignored by handleMatchReadyExpired.
+    this.pendingMatchId = null;
     this.stopTimer();
+    this.stopAcceptTimer();
     const waitSeconds = this.queuedAt ? Math.round((Date.now() - this.queuedAt) / 1000) : 0;
     trackEvent("queue_match_found", {
       wait_seconds: waitSeconds,
@@ -295,7 +307,11 @@ export class MatchmakingQueueStore {
     }
 
     if (!msg.queued) {
-      if (this.status === "queued" || this.status === "match_ready") {
+      // Only reset when queued — match_ready exits exclusively via match_found /
+      // match_ready_expired WS events or the local deadline timer, never via a
+      // generic poll response (which can race against the server clearing the
+      // pending match right before it sends match_found).
+      if (this.status === "queued") {
         this.reset();
       }
       return;
@@ -316,6 +332,12 @@ export class MatchmakingQueueStore {
    */
   handleCancelled(reason: "timeout" | "manual" | "match_creation_error"): void {
     console.log("[matchmaking-queue] cancelled", { reason, previousStatus: this.status });
+    // Never cancel once a match is confirmed — match_found is the terminal success
+    // state and the player is about to navigate to the game.
+    if (this.status === "match_found") {
+      console.log("[matchmaking-queue] ignoring cancellation, match already found");
+      return;
+    }
     if (reason === "timeout") {
       const waitSeconds = this.queuedAt ? Math.round((Date.now() - this.queuedAt) / 1000) : 0;
       trackEvent("queue_timeout", {

@@ -21,7 +21,7 @@ export class QueueStatsStore {
   }
 
   setSnapshot(snapshot: QueueStatsResponse): void {
-    this.partitions = snapshot.partitions;
+    this.partitions = snapshot.partitions ?? [];
   }
 
   async refresh(): Promise<void> {

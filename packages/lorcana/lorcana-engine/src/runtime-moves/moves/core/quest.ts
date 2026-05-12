@@ -315,6 +315,15 @@ function executeQuestCard(ctx: PlayCardExecutionContext, cardId: CardInstanceId)
 }
 
 function getQuestableCharacterIds(ctx: QuestReadableContext): CardInstanceId[] {
+  return getEligibleQuestCharacters(ctx);
+}
+
+/**
+ * Returns the cardInstanceIds of the current player's characters that are
+ * legally able to quest this turn (ready, dry, no quest restrictions, etc.).
+ * Exported for cross-move enforcement — e.g. pass-turn must-quest validation.
+ */
+export function getEligibleQuestCharacters(ctx: QuestReadableContext): CardInstanceId[] {
   const currentPlayer = ctx.framework.state.currentPlayer!;
   const playCards = ctx.framework.zones.getCards({
     zone: "play",
