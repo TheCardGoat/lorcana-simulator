@@ -1200,15 +1200,24 @@ function confirmPendingAction(): void {
       .inkwell-container:not(.inkwell-container--drop-preview):not(.inkwell-container--drop-valid):not(
           .inkwell-container--drop-invalid
         )
-    ),
-  .bar-zone-shell :global(.item-zone) {
+    ) {
     width: 100%;
     height: 100%;
     --ink-card-width: var(--bar-row-card-width);
     --ink-card-height: var(--bar-row-card-height);
     --ink-card-gap: 0.25rem;
-    --item-zone-card-width: var(--bar-row-card-width);
-    --item-zone-card-height: var(--bar-row-card-height);
+    padding: 0;
+    border: none;
+    border-radius: calc(var(--bar-shell-radius) - 2px);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .bar-zone-shell :global(.item-zone) {
+    width: 100%;
+    height: 100%;
+    --item-zone-card-height: clamp(64px, calc(var(--bar-row-card-height) + 24px), 76px);
+    --item-zone-card-width: calc(var(--item-zone-card-height) * var(--bar-row-card-aspect));
     --item-grid-gap: 0.25rem;
     --item-container-padding: 0;
     padding: 0;

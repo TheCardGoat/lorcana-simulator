@@ -1,8 +1,6 @@
 ---
-name: nx-generate
-description: Generate code using nx generators. INVOKE IMMEDIATELY when user mentions scaffolding, setup, structure, creating apps/libs, or setting up project structure. Trigger words - scaffold, setup, create a ... app, create a ... lib, project structure, generate, add a new project. ALWAYS use this BEFORE calling nx_docs or exploring - this skill handles discovery internally.
-subagent: general-purpose
-context: fork
+name: "nx-generate"
+description: "Generate code using nx generators. INVOKE IMMEDIATELY when user mentions scaffolding, setup, structure, creating apps/libs, or setting up project structure. Trigger words - scaffold, setup, create a ... app, create a ... lib, project structure, generate, add a new project. ALWAYS use this BEFORE calling nx_docs or exploring - this skill handles discovery internally."
 ---
 
 # Run Nx Generator
@@ -166,3 +164,7 @@ nx run-many -t build,lint,test,typecheck
 These targets are common examples used across many workspaces. You should do research into other targets available for this workspace and its projects. CI configuration is usually a good guide for what the critical targets are that have to pass.
 
 If verification fails with manageable issues (a few lint errors, minor type issues), fix them. If issues are extensive, attempt obvious fixes first, then escalate to the user with details about what was generated, what's failing, and what you've attempted.
+
+## MANUAL MIGRATION REQUIRED
+
+Review unsupported Claude skill fields manually: `context`, `subagent`.

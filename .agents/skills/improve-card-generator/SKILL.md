@@ -1,6 +1,6 @@
 ---
-name: improve-card-generator
-description: Diagnose and fix Lorcana parser/generator gaps in `packages/lorcana/lorcana-cards` when card implementations are blocked by missing parsing coverage, manual-override mismatches, or generation stubs. Use for requests like "fix parser", "improve generator", "unblock missingImplementation cards", or "why is this card unparseable".
+name: "improve-card-generator"
+description: 'Diagnose and fix Lorcana parser/generator gaps in `packages/lorcana/lorcana-cards` when card implementations are blocked by missing parsing coverage, manual-override mismatches, or generation stubs. Use for requests like "fix parser", "improve generator", "unblock missingImplementation cards", or "why is this card unparseable".'
 ---
 
 # Improve Card Generator
