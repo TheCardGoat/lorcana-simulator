@@ -55,9 +55,7 @@
     "test:strategy:quick-replay": "RUN_STRATEGY_QUICK_REPLAY=1 AGENT=1 bun test --silent src/testing/ai-strategy/simulate-game.test.ts",
     "test:strategy:replay": "RUN_STRATEGY_REPLAY=1 AGENT=1 bun test --silent src/testing/ai-strategy/simulate-game.test.ts",
     "test:strategy:benchmark": "RUN_STRATEGY_BENCHMARK=1 STRATEGY_GAME_COUNT=100 AGENT=1 bun test --silent src/testing/ai-strategy/*.test.ts",
-    "test": "bun run test:rules && bun run test:unit",
-    "storybook": "HOT_UPDATE_DELAY_MS=1200 storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "test": "bun run test:rules && bun run test:unit"
   },
   "dependencies": {
     "@better-auth/infra": "catalog:",
@@ -100,16 +98,10 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "^5.0.1",
     "@inlang/paraglide-js": "^2.10.0",
     "@internationalized/date": "^3.12.0",
     "@lucide/svelte": "^1.7.0",
     "@playwright/test": "^1.58.1",
-    "@storybook/addon-a11y": "^10.2.17",
-    "@storybook/addon-docs": "^10.2.17",
-    "@storybook/addon-svelte-csf": "^5.0.11",
-    "@storybook/addon-vitest": "^10.2.17",
-    "@storybook/sveltekit": "^10.2.17",
     "@sveltejs/adapter-auto": "^7.0.0",
     "@sveltejs/adapter-node": "^5.5.4",
     "@sveltejs/kit": "^2.55.0",
@@ -127,7 +119,6 @@
     "playwright": "^1.58.2",
     "publint": "^0.3.17",
     "shadcn-svelte": "^1.2.7",
-    "storybook": "^10.2.17",
     "svelte": "^5.49.2",
     "svelte-check": "^4.3.6",
     "tailwind-merge": "^3.4.0",

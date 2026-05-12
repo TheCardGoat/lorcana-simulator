@@ -3,6 +3,7 @@ import { requestJson } from "$lib/data/transport/http-client.js";
 import type {
   DeckRundownResponse,
   MatchListResponse,
+  MilestonesResponse,
   MmrHistoryPoint,
   PlayingStreak,
   PlayerStats,
@@ -52,6 +53,14 @@ export async function fetchMmrHistory(): Promise<MmrHistoryPoint[]> {
   debug("[match-history] fetchMmrHistory →", url);
   const data = await requestJson<MmrHistoryPoint[]>(url, undefined, "Failed to load MMR history");
   debug("[match-history] fetchMmrHistory result: %d points", data.length);
+  return data;
+}
+
+export async function fetchMilestones(): Promise<MilestonesResponse> {
+  const url = `${getApiOrigin()}/v1/match-history/players/me/milestones`;
+  debug("[match-history] fetchMilestones →", url);
+  const data = await requestJson<MilestonesResponse>(url, undefined, "Failed to load milestones");
+  debug("[match-history] fetchMilestones result: %d milestones", data.milestones.length);
   return data;
 }
 

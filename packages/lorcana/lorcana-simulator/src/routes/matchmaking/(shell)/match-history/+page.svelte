@@ -40,6 +40,7 @@
       initialStats={data.stats}
       initialMmrHistory={data.mmrHistory}
       initialPlayingStreak={data.playingStreak}
+      initialMilestones={data.milestones}
       initialMatchList={data.matchList}
       initialDeckRundown={data.deckRundown}
     />

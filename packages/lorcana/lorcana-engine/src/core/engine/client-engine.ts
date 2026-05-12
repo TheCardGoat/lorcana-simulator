@@ -193,6 +193,16 @@ export class ClientEngine implements GameEngine {
         this.handleProtocolErrorMessage(typedMessage);
       }
     });
+
+    // Roll back any pending optimistic move when the transport drops. Without
+    // this, executeMove keeps short-circuiting with OPTIMISTIC_MOVE_PENDING
+    // until the next server frame — which may never arrive if the in-flight
+    // command never reached the server.
+    this.transport?.onDisconnect(() => {
+      if (this.optimisticState) {
+        this.rollbackOptimisticToConfirmed();
+      }
+    });
   }
 
   private applyFullState(message: UpdateFullMessage | SyncFullMessage): void {

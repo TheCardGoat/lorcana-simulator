@@ -136,11 +136,26 @@ export class GatewayTransport implements Transport {
       this.#handleGatewayMessage(msg);
     });
 
-    // Watch for gateway disconnects and forward to engine.
+    // Watch for gateway disconnects and forward to engine. On reconnect, ask the
+    // gateway to push the authoritative snapshot — otherwise the client engine
+    // stays stuck on a pending optimistic move and any queued #pendingRetryMove
+    // is never drained, because #checkAndRetryPendingMove only fires off
+    // game_joined / state_sync / state_update.
+    let wasDisconnected = false;
     this.#statusUnsubscribe = this.#gateway.addStatusChangeListener((status) => {
       if (status === "disconnected") {
+        wasDisconnected = true;
         this.#state = "DISCONNECTED";
         this.#disconnectHandler?.("gateway disconnected");
+      } else if (status === "connected" && wasDisconnected) {
+        wasDisconnected = false;
+        this.#state = "CONNECTED";
+        this.#gateway.send({
+          type: "reconnect",
+          ...this.#identityEcho(),
+          gameId: this.#gameId,
+          lastReceivedVersion: this.#serverStateVersion,
+        });
       }
     });
 
