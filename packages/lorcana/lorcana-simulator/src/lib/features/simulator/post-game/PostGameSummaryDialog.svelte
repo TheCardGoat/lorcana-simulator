@@ -44,6 +44,8 @@
   } from "@/features/replay/replay-store.js";
   import { fetchReplayBlob, decompressReplayBlob } from "@/features/replay/fetch-replay.js";
   import type { MatchNavigationContext, LorcanaPlayerSide } from "@/features/simulator/model/contracts.js";
+  import { useLorcanaGameContext } from "@/features/simulator/context/game-context.svelte.js";
+  import { resolvePatronTierConfig } from "@/features/simulator/model/player-tier.js";
 
   interface PostGameSummaryDialogProps {
     open?: boolean;
@@ -82,6 +84,48 @@
     onOpenFeedback,
     onOpenPlayerReport,
   }: PostGameSummaryDialogProps = $props();
+
+  const gameContext = (() => {
+    try {
+      return useLorcanaGameContext();
+    } catch {
+      return null;
+    }
+  })();
+
+  function resolvePlayerLabel(playerId: string | null | undefined): string | null {
+    if (!playerId) return null;
+    return gameContext?.resolvePlayerName(playerId) ?? null;
+  }
+
+  function resolvePlayerTier(playerId: string | null | undefined): string | undefined {
+    if (!playerId) return undefined;
+    return gameContext?.getPlayerSubscriptionTier(playerId) ?? undefined;
+  }
+
+  function sideToPlayerId(side: LorcanaPlayerSide | null | undefined): string | null {
+    if (!side) return null;
+    return gameContext?.getOwnerIdForSide(side) ?? null;
+  }
+
+  function sideToPlayerName(side: LorcanaPlayerSide | null | undefined): string | null {
+    return resolvePlayerLabel(sideToPlayerId(side));
+  }
+
+  function sideToTierConfig(side: LorcanaPlayerSide | null | undefined) {
+    return resolvePatronTierConfig(resolvePlayerTier(sideToPlayerId(side)));
+  }
+
+  // The server emits the raw playerId in conceded/timeout reasons (e.g.
+  // "gpsJEhXlom8biZ68_D5vAR conceded"). Replace any UUID-like token with the
+  // resolved display name so players don't see internal IDs.
+  function humanizeReason(reason: string | null | undefined): string | null {
+    if (!reason) return null;
+    return reason.replace(/[A-Za-z0-9_-]{16,}/g, (token) => {
+      const resolved = resolvePlayerLabel(token);
+      return resolved ?? token;
+    });
+  }
 
   let activeSection = $state<PostGameSectionId>("overview");
   let recordRequestState = $state(createInitialPostGameRecordRequestState());
@@ -508,7 +552,7 @@
           {/if}
         </p>
         <p class="post-game-header__reason">
-          {effectiveSummary.outcome.reason ?? outcomeHighlight?.detail ?? m["sim.postGame.reason.none"]({})}
+          {humanizeReason(effectiveSummary.outcome.reason) ?? outcomeHighlight?.detail ?? m["sim.postGame.reason.none"]({})}
         </p>
 
         <div class="post-game-facts">
@@ -547,10 +591,27 @@
           <section class="post-game-panel">
             <div class="post-game-scoreboard">
               {#each [effectiveSummary.players.playerOne, effectiveSummary.players.playerTwo] as player (player.side)}
+                {@const playerName = sideToPlayerName(player.side)}
+                {@const tierConfig = sideToTierConfig(player.side)}
                 <article class="post-game-scorecard">
                   <div class="post-game-scorecard__header">
-                    <div>
+                    <div class="min-w-0">
                       <p class="post-game-scorecard__label">{getSideLabel(player.side)}</p>
+                      {#if playerName}
+                        <p class="post-game-scorecard__name">
+                          {#if tierConfig}
+                            <span
+                              class="post-game-scorecard__tier-dot"
+                              style:--patron-color={tierConfig.color}
+                              style:--patron-glow={tierConfig.glow}
+                              style:--patron-border={tierConfig.borderColor}
+                              title={tierConfig.name()}
+                              aria-label={tierConfig.name()}
+                            ></span>
+                          {/if}
+                          <span style:color={tierConfig?.color ?? undefined}>{playerName}</span>
+                        </p>
+                      {/if}
                       <h3 class="post-game-scorecard__lore">
                         {player.lore}
                         <span>{m["sim.lore.label"]({})}</span>
@@ -785,64 +846,6 @@
       </div>
 
       <Dialog.Footer class="post-game-footer">
-        {#if onOpenBugReport || onOpenFeedback || onOpenPlayerReport}
-          <div class="post-game-feedback-prompt">
-            <span class="post-game-feedback-prompt__label">{m["sim.postGame.feedbackPrompt.label"]({})}</span>
-            <div class="post-game-feedback-prompt__actions">
-              {#if onOpenBugReport}
-                <button
-                  type="button"
-                  class="post-game-feedback-btn post-game-feedback-btn--bug"
-                  onclick={onOpenBugReport}
-                >
-                  <Bug class="size-3.5 shrink-0" />
-                  {m["sim.support.reportBugLabel"]({})}
-                </button>
-              {/if}
-              {#if onOpenFeedback}
-                <button
-                  type="button"
-                  class="post-game-feedback-btn post-game-feedback-btn--feedback"
-                  onclick={onOpenFeedback}
-                >
-                  <MessageSquarePlus class="size-3.5 shrink-0" />
-                  {m["sim.support.shareFeedbackLabel"]({})}
-                </button>
-              {/if}
-              {#if onOpenPlayerReport}
-                <button
-                  type="button"
-                  class="post-game-feedback-btn post-game-feedback-btn--report"
-                  onclick={onOpenPlayerReport}
-                >
-                  <Flag class="size-3.5 shrink-0" />
-                  {m["sim.player.report.openAria"]({})}
-                </button>
-              {/if}
-            </div>
-          </div>
-        {/if}
-        {#if matchContext && matchContext.format !== "best_of_1"}
-          <div class="post-game-series-info">
-            {#if matchContext.nextGameId}
-              <span>Game {matchContext.gameIndex} of 3</span>
-              <span class="post-game-series-info__sep">·</span>
-              {#if ownerSide === "playerTwo"}
-                <span>{matchContext.player2Score} – {matchContext.player1Score}</span>
-              {:else}
-                <span>{matchContext.player1Score} – {matchContext.player2Score}</span>
-              {/if}
-            {:else}
-              <span>Match complete</span>
-              <span class="post-game-series-info__sep">·</span>
-              {#if ownerSide === "playerTwo"}
-                <span>{matchContext.player2Score} – {matchContext.player1Score}</span>
-              {:else}
-                <span>{matchContext.player1Score} – {matchContext.player2Score}</span>
-              {/if}
-            {/if}
-          </div>
-        {/if}
         {#if pendingCloseAction}
           <div class="post-game-unsaved-confirm">
             <div class="post-game-unsaved-confirm__text">
@@ -862,53 +865,130 @@
             </div>
           </div>
         {:else}
-          <Button variant="outline" onclick={handleClose}>
-            {m["sim.postGame.close"]({})}
-          </Button>
-          <Button variant="outline" onclick={handleDownloadReplay} disabled={replayDownloading}>
-            <Download class="mr-1.5 size-3.5" />
-            {replayDownloading
-              ? m["sim.postGame.replay.downloading"]({})
-              : m["sim.postGame.replay.download"]({})}
-          </Button>
-          {#if canSaveReplay}
-            <Button variant="outline" onclick={handleSaveReplay} disabled={replaySaving || replaySaved}>
-              <Save class="mr-1.5 size-3.5" />
-              {#if replaySaved}
-                {m["sim.postGame.replay.saved"]({})}
-              {:else if replaySaving}
-                {m["sim.postGame.replay.saving"]({})}
-              {:else}
-                {m["sim.postGame.replay.save"]({})}
+          <div class="post-game-footer__secondary">
+            {#if onOpenBugReport || onOpenFeedback || onOpenPlayerReport}
+              <div class="post-game-feedback-prompt">
+                <span class="post-game-feedback-prompt__label">{m["sim.postGame.feedbackPrompt.label"]({})}</span>
+                <div class="post-game-feedback-prompt__actions">
+                  {#if onOpenBugReport}
+                    <button
+                      type="button"
+                      class="post-game-feedback-btn post-game-feedback-btn--bug"
+                      onclick={onOpenBugReport}
+                    >
+                      <Bug class="size-3.5 shrink-0" />
+                      {m["sim.support.reportBugLabel"]({})}
+                    </button>
+                  {/if}
+                  {#if onOpenFeedback}
+                    <button
+                      type="button"
+                      class="post-game-feedback-btn post-game-feedback-btn--feedback"
+                      onclick={onOpenFeedback}
+                    >
+                      <MessageSquarePlus class="size-3.5 shrink-0" />
+                      {m["sim.support.shareFeedbackLabel"]({})}
+                    </button>
+                  {/if}
+                  {#if onOpenPlayerReport}
+                    <button
+                      type="button"
+                      class="post-game-feedback-btn post-game-feedback-btn--report"
+                      onclick={onOpenPlayerReport}
+                    >
+                      <Flag class="size-3.5 shrink-0" />
+                      {m["sim.player.report.openAria"]({})}
+                    </button>
+                  {/if}
+                </div>
+              </div>
+            {/if}
+            {#if matchContext && matchContext.format !== "best_of_1"}
+              <div class="post-game-series-info">
+                {#if matchContext.nextGameId}
+                  <span>Game {matchContext.gameIndex} of 3</span>
+                  <span class="post-game-series-info__sep">·</span>
+                  {#if ownerSide === "playerTwo"}
+                    <span>{matchContext.player2Score} – {matchContext.player1Score}</span>
+                  {:else}
+                    <span>{matchContext.player1Score} – {matchContext.player2Score}</span>
+                  {/if}
+                {:else}
+                  <span>Match complete</span>
+                  <span class="post-game-series-info__sep">·</span>
+                  {#if ownerSide === "playerTwo"}
+                    <span>{matchContext.player2Score} – {matchContext.player1Score}</span>
+                  {:else}
+                    <span>{matchContext.player1Score} – {matchContext.player2Score}</span>
+                  {/if}
+                {/if}
+              </div>
+            {/if}
+            <div class="post-game-footer__replay-actions">
+              <Button variant="outline" size="sm" onclick={handleDownloadReplay} disabled={replayDownloading}>
+                <Download class="mr-1.5 size-3.5" />
+                {replayDownloading
+                  ? m["sim.postGame.replay.downloading"]({})
+                  : m["sim.postGame.replay.download"]({})}
+              </Button>
+              {#if canSaveReplay}
+                <Button variant="outline" size="sm" onclick={handleSaveReplay} disabled={replaySaving || replaySaved}>
+                  <Save class="mr-1.5 size-3.5" />
+                  {#if replaySaved}
+                    {m["sim.postGame.replay.saved"]({})}
+                  {:else if replaySaving}
+                    {m["sim.postGame.replay.saving"]({})}
+                  {:else}
+                    {m["sim.postGame.replay.save"]({})}
+                  {/if}
+                </Button>
               {/if}
+            </div>
+          </div>
+
+          <div class="post-game-footer__primary">
+            <Button
+              variant="outline"
+              class="post-game-footer__close"
+              onclick={handleClose}
+            >
+              {m["sim.postGame.close"]({})}
             </Button>
-          {/if}
-          {#if matchContext?.nextGameId && onNextGame}
-            <Button onclick={() => onNextGame!()} disabled={leavingMatch || matchContext.navigating}>
-              {#if matchContext.navigating}
+            {#if matchContext?.nextGameId && onNextGame}
+              <Button
+                class="post-game-footer__cta"
+                onclick={() => onNextGame!()}
+                disabled={leavingMatch || matchContext.navigating}
+              >
+                {#if matchContext.navigating}
+                  <LoaderCircle class="mr-1.5 size-3.5 animate-spin" />
+                  Loading…
+                {:else}
+                  Go to Next Game →
+                {/if}
+              </Button>
+            {:else if !matchContext || matchContext.matchCompleted || matchContext.format === "best_of_1"}
+              <Button
+                class="post-game-footer__cta"
+                onclick={handleReturn}
+                disabled={leavingMatch}
+              >
+                {m["sim.postGame.returnToMatchmaking"]({})}
+              </Button>
+            {:else}
+              <!--
+                Game finished locally (board flipped to "finished") but the server
+                has not yet confirmed match progression — neither nextGameId nor
+                matchCompleted is set. Show a disabled "Finalizing…" placeholder
+                so the user can't misclick "Back to matchmaking" during the
+                persistence window (~1–3s).
+              -->
+              <Button class="post-game-footer__cta" disabled>
                 <LoaderCircle class="mr-1.5 size-3.5 animate-spin" />
-                Loading…
-              {:else}
-                Go to Next Game →
-              {/if}
-            </Button>
-          {:else if !matchContext || matchContext.matchCompleted || matchContext.format === "best_of_1"}
-            <Button onclick={handleReturn} disabled={leavingMatch}>
-              {m["sim.postGame.returnToMatchmaking"]({})}
-            </Button>
-          {:else}
-            <!--
-              Game finished locally (board flipped to "finished") but the server
-              has not yet confirmed match progression — neither nextGameId nor
-              matchCompleted is set. Show a disabled "Finalizing…" placeholder
-              so the user can't misclick "Back to matchmaking" during the
-              persistence window (~1–3s).
-            -->
-            <Button disabled>
-              <LoaderCircle class="mr-1.5 size-3.5 animate-spin" />
-              Finalizing match…
-            </Button>
-          {/if}
+                Finalizing match…
+              </Button>
+            {/if}
+          </div>
         {/if}
       </Dialog.Footer>
     </Dialog.Content>
@@ -1118,6 +1198,31 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgba(125, 211, 252, 0.82);
+  }
+
+  .post-game-scorecard__name {
+    margin: 0.2rem 0 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #f8fafc;
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .post-game-scorecard__tier-dot {
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--patron-color);
+    border: 1px solid var(--patron-border);
+    box-shadow: 0 0 6px var(--patron-glow);
+    flex-shrink: 0;
   }
 
   .post-game-scorecard__lore {
@@ -1354,8 +1459,7 @@
     color: #fca5a5;
   }
 
-  .post-game-notes__actions,
-  :global(.post-game-footer) {
+  .post-game-notes__actions {
     display: flex;
     gap: 0.65rem;
     justify-content: flex-end;
@@ -1364,9 +1468,45 @@
   }
 
   :global(.post-game-footer) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
     padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom));
     border-top: 1px solid rgba(148, 163, 184, 0.12);
     background: rgba(2, 6, 23, 0.96);
+    flex-shrink: 0;
+  }
+
+  .post-game-footer__secondary {
+    display: flex;
+    gap: 0.65rem;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .post-game-footer__replay-actions {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-left: auto;
+  }
+
+  .post-game-footer__primary {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.55rem;
+    align-items: stretch;
+  }
+
+  :global(.post-game-footer__cta) {
+    min-height: 2.75rem;
+    font-weight: 800;
+    font-size: 0.95rem;
+  }
+
+  :global(.post-game-footer__close) {
+    min-height: 2.75rem;
   }
 
   .post-game-unsaved-confirm {
@@ -1616,19 +1756,89 @@
       padding-top: 0.75rem;
     }
 
-    .post-game-notes__actions,
-    :global(.post-game-footer) {
+    .post-game-notes__actions {
       justify-content: stretch;
     }
 
     :global(.post-game-footer) {
-      gap: 0.45rem;
-      padding-top: 0.65rem;
-      padding-bottom: calc(0.65rem + env(safe-area-inset-bottom));
+      gap: 0.4rem;
+      padding-top: 0.5rem;
+      padding-bottom: calc(0.55rem + env(safe-area-inset-bottom));
     }
 
-    .post-game-notes__actions :global([data-slot="button"]),
-    :global(.post-game-footer [data-slot="button"]) {
+    .post-game-footer__secondary {
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 0.4rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 0.1rem;
+      max-height: 2.4rem;
+    }
+
+    .post-game-footer__secondary::-webkit-scrollbar {
+      display: none;
+    }
+
+    .post-game-footer__replay-actions {
+      margin-left: 0;
+      gap: 0.35rem;
+      flex-shrink: 0;
+    }
+
+    .post-game-footer__replay-actions :global([data-slot="button"]) {
+      flex: 0 0 auto;
+      min-height: 2.1rem;
+      font-size: 0.72rem;
+      padding-inline: 0.55rem;
+    }
+
+    /* Drop the verbose "Help us improve" label on mobile; the icon buttons
+       speak for themselves and we need every pixel for the primary CTA. */
+    .post-game-feedback-prompt {
+      flex-direction: row;
+      align-items: center;
+      gap: 0.4rem;
+      margin-right: 0;
+      flex-shrink: 0;
+    }
+
+    .post-game-feedback-prompt__label {
+      display: none;
+    }
+
+    .post-game-feedback-prompt__actions {
+      gap: 0.35rem;
+      flex-wrap: nowrap;
+    }
+
+    .post-game-feedback-btn {
+      padding: 0.32rem 0.55rem;
+      font-size: 0.68rem;
+      gap: 0.3rem;
+    }
+
+    .post-game-series-info {
+      display: none;
+    }
+
+    .post-game-footer__primary {
+      grid-template-columns: auto 1fr;
+      gap: 0.4rem;
+    }
+
+    :global(.post-game-footer__cta) {
+      min-height: 2.85rem;
+      font-size: 0.92rem;
+    }
+
+    :global(.post-game-footer__close) {
+      min-height: 2.85rem;
+      padding-inline: 0.85rem;
+    }
+
+    .post-game-notes__actions :global([data-slot="button"]) {
       flex: 1 1 100%;
     }
   }

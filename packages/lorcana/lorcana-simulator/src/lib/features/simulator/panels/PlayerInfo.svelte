@@ -8,6 +8,7 @@ import { m } from "$lib/i18n/messages.js";
 import { useLorcanaBoardPresenter } from "@/features/simulator/context/game-context.svelte.js";
 import LoreBadge from "@/design-system/simulator/display/LoreBadge.svelte";
 import SimulatorSupportReminder from "@/features/simulator/support/SimulatorSupportReminder.svelte";
+import { resolvePatronTierConfig } from "@/features/simulator/model/player-tier.js";
 import {
 	Settings,
 	Bug,
@@ -165,14 +166,7 @@ const sideColors = {
 	playerTwo: "#ea0000",
 };
 
-type PatronTierConfig = { name: () => string; color: string; glow: string; borderColor: string };
-const patronTierConfigs: Record<string, PatronTierConfig> = {
-	tier2: { name: () => m["patron_tier_supporter"]({}), color: "#cd7f32", glow: "rgba(205,127,50,0.55)", borderColor: "rgba(205,127,50,0.5)" },
-	tier3: { name: () => m["patron_tier_champion"]({}),  color: "#d4d4d4", glow: "rgba(212,212,212,0.5)", borderColor: "rgba(212,212,212,0.45)" },
-	tier4: { name: () => m["patron_tier_legend"]({}),    color: "#ffd700", glow: "rgba(255,215,0,0.6)",   borderColor: "rgba(255,215,0,0.55)" },
-	tier5: { name: () => m["patron_tier_admin"]({}),     color: "#a855f7", glow: "rgba(168,85,247,0.55)", borderColor: "rgba(168,85,247,0.5)" },
-};
-const patronConfig = $derived(subscriptionTier ? (patronTierConfigs[subscriptionTier] ?? null) : null);
+const patronConfig = $derived(resolvePatronTierConfig(subscriptionTier));
 const mmrDisplay = $derived(Number.isFinite(mmr) ? `#${Math.round(mmr!)}` : null);
 
 function getSideLabel(side: LorcanaPlayerSide): string {
