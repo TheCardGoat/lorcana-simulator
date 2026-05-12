@@ -69,6 +69,7 @@ import {
 import { useSimulatorCardContext } from "@/features/simulator/context/simulator-card-context.svelte.js";
 import { useLorcanaSimulatorDndContext } from "@/features/simulator/context/simulator-dnd-context.svelte.js";
 import { bugReportContextFromBoard } from "@/features/simulator/support/feedback-api.js";
+import { getManualModeContext } from "@/features/manual-mode/manual-mode-context.svelte.js";
 import type { SimulatorLayoutMode } from "@/features/simulator/model/layout-mode.svelte.js";
 import type { MatchNavigationContext } from "@/features/simulator/model/contracts.js";
 import type {
@@ -319,6 +320,31 @@ const topPlayerLabel = $derived(
 );
 const bottomPlayerLabel = $derived(
 	hasOwnedView ? m["sim.player.you"]({}) : m["sim.player.side.playerOne"]({}),
+);
+const manualMode = getManualModeContext();
+const manualModeEnabled = $derived(manualMode?.enabled ?? false);
+const canRequestBoardStateCorrection = $derived(!!manualMode && hasOwnedView);
+function handleRequestBoardStateCorrection(): void {
+	if (!manualMode) return;
+	if (manualMode.enabled) {
+		manualMode.requestDisable();
+	} else {
+		manualMode.requestEnable();
+	}
+}
+const topPlayerId = $derived(board.getOwnerIdForSide(topSide));
+const bottomPlayerId = $derived(board.getOwnerIdForSide(bottomSide));
+const topPlayerDisplayName = $derived(
+	topPlayerId ? game.resolvePlayerName(topPlayerId) : null,
+);
+const bottomPlayerDisplayName = $derived(
+	bottomPlayerId ? game.resolvePlayerName(bottomPlayerId) : null,
+);
+const topPlayerSubscriptionTier = $derived(
+	topPlayerId ? game.getPlayerSubscriptionTier(topPlayerId) : undefined,
+);
+const bottomPlayerSubscriptionTier = $derived(
+	bottomPlayerId ? game.getPlayerSubscriptionTier(bottomPlayerId) : undefined,
 );
 const activeTurnTimer = $derived.by(() => {
 	// Prefer whichever clock is actually ticking (priority may shift mid-turn)
@@ -1170,6 +1196,8 @@ $effect(() => {
           seat="top"
           player={{
             label: topPlayerLabel,
+            displayName: topPlayerDisplayName,
+            subscriptionTier: topPlayerSubscriptionTier,
             side: topSide,
             summary: topSummary,
             isActive: activeSide === topSide,
@@ -1188,6 +1216,9 @@ $effect(() => {
           onOpenLog={() => onOpenCompactPanels?.("log")}
           onOpenCardPreview={openCompactPreview}
           onReportPlayer={handleMobileReportPlayer}
+          canRequestBoardStateCorrection={canRequestBoardStateCorrection}
+          isCorrectionActive={manualModeEnabled}
+          onRequestBoardStateCorrection={handleRequestBoardStateCorrection}
           bugReportContext={bugReportContext}
           {matchContext}
           ownerSide={board.ownerSide}
@@ -1402,6 +1433,8 @@ $effect(() => {
           seat="bottom"
           player={{
             label: bottomPlayerLabel,
+            displayName: bottomPlayerDisplayName,
+            subscriptionTier: bottomPlayerSubscriptionTier,
             side: bottomSide,
             summary: bottomSummary,
             isActive: activeSide === bottomSide,
@@ -1421,6 +1454,9 @@ $effect(() => {
           {pendingEffectsOpen}
           logCount={moveLogEntries.length}
           {canConcede}
+          canRequestBoardStateCorrection={canRequestBoardStateCorrection}
+          isCorrectionActive={manualModeEnabled}
+          onRequestBoardStateCorrection={handleRequestBoardStateCorrection}
           onOpenMoves={() => onOpenCompactPanels?.("moves")}
           onExecuteMoveCategory={handleMobileMoveCategory}
           onOpenLog={() => onOpenCompactPanels?.("log")}
