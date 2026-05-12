@@ -1816,7 +1816,18 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         resolutionInput.resolveOptional !== undefined
           ? { ...baseResolutionInput, resolveOptional: undefined }
           : baseResolutionInput;
-      return resolveActionEffect(ctx, cardPlayed, effect.effect, nestedResolutionInput, options);
+      // When the chooser differs from the controller (e.g. OPPONENT chooser on
+      // Chernabog — Unnatural Force's "that player may play a character from
+      // their discard for free"), thread the chooser id through resolutionInput
+      // so the inner play-card resolver can default `from: discard` to the
+      // chooser's discard when no explicit `target` is set. We do NOT swap
+      // cardPlayed.playerId — explicit relative targets like `target: "OPPONENT"`
+      // must continue to resolve relative to the original controller.
+      const inputWithChooser =
+        chooserId !== cardPlayed.playerId
+          ? { ...nestedResolutionInput, chooserPlayerId: chooserId }
+          : nestedResolutionInput;
+      return resolveActionEffect(ctx, cardPlayed, effect.effect, inputWithChooser, options);
     }
 
     return RESOLVED_ACTION_EFFECT;
