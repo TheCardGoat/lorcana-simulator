@@ -95,7 +95,7 @@
           <Trophy class="size-4 shrink-0 text-amber-300" />
         {:else}
           <span class="text-xs tabular-nums text-slate-600">
-            {milestone.progress >= 1 ? "" : `${Math.round(milestone.progress * 100)}%`}
+            {Math.round(Math.min(1, Math.max(0, milestone.progress)) * 100)}%
           </span>
         {/if}
       </div>

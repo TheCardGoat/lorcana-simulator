@@ -144,6 +144,7 @@
         { key: "stats", result: statsResult },
         { key: "mmr history", result: mmrResult },
         { key: "playing streak", result: streakResult },
+        { key: "milestones", result: milestonesResult },
         { key: "matches", result: matchesResult },
       ];
 
