@@ -22,7 +22,7 @@ import {
 } from "@/features/simulator-devtools/harness/browser-harness";
 import { assertLorcanaSimulatorMoveId } from "@/features/simulator/model/contracts";
 import { dispatchSimulatorMove } from "@/features/simulator/model/move-dispatch";
-import LorcanaDebugControls from "@/features/simulator-devtools/storybook/LorcanaDebugControls.svelte";
+import LorcanaDebugControls from "@/features/simulator-devtools/harness/LorcanaDebugControls.svelte";
 import { HarnessAiController } from "@/features/simulator-devtools/harness";
 import { DEFAULT_AUTOMATED_ACTION_STRATEGY_ID } from "@tcg/lorcana-engine";
 import { createHumanVsAiContext } from "@/features/simulator-devtools/vs-ai/context.js";

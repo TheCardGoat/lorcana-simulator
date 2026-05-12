@@ -12,7 +12,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Development
 bun run dev                    # Start Vite dev server
 bun run dev:calm               # Dev server with 1200ms HMR delay
-bun run storybook              # Component development (port 6006)
 
 # Testing
 bun run test                   # All tests (compiles i18n, runs rules + unit)
@@ -44,21 +43,23 @@ Run a specific test by name: `bun test "test name pattern"`
 ## Architecture
 
 ### Tech Stack
+
 - **UI Framework**: Svelte 5 (runes, `$state`, `$derived`, `$effect`)
 - **Build**: Vite + SvelteKit (adapter-node) + svelte-package for library output
 - **Styling**: TailwindCSS 4 + DaisyUI 5 + shadcn-svelte + tailwind-variants
 - **Drag & Drop**: @dnd-kit/svelte
 - **i18n**: Paraglide.js (compiled to `src/lib/paraglide/`)
-- **Testing**: Bun test (unit), Playwright (E2E), Vitest (Storybook)
-- **Components**: Storybook 10 for component development
+- **Testing**: Bun test (unit), Playwright (E2E)
 
 ### Key Directories
+
 - `src/lib/` — Library source (exported as `@tcg/lorcana-simulator`)
 - `src/routes/` — SvelteKit routes (dev harness, not shipped)
 - `src/testing/rules/` — Game rules spec tests using the multiplayer test engine
 - `src/testing/strategy/` — AI/strategy tests
 
 ### Dependency Chain
+
 ```
 @tcg/lorcana-types → @tcg/lorcana-engine → @tcg/lorcana-cards
                                           → @tcg/lorcana-simulator (this package)
@@ -78,11 +79,10 @@ import { someCard } from "@tcg/lorcana-cards/cards/001";
 describe("Card Name - Ability", () => {
   it("does the expected thing", () => {
     const engine = LorcanaMultiplayerTestEngine.createWithFixture(
-      { hand: [someCard], inkwell: someCard.cost },  // player one
-      { play: [otherCard], deck: 1 }                  // player two
+      { hand: [someCard], inkwell: someCard.cost }, // player one
+      { play: [otherCard], deck: 1 }, // player two
     );
-    expect(engine.asPlayerOne().playCard(someCard))
-      .toBeSuccessfulCommand();
+    expect(engine.asPlayerOne().playCard(someCard)).toBeSuccessfulCommand();
   });
 });
 ```
@@ -92,6 +92,7 @@ Custom matchers: `toBeSuccessfulCommand()` — available globally via bunfig.tom
 ### Workspace Context
 
 This is part of an Nx monorepo (`the-card-goat-online`). Root-level commands:
+
 - `bun run ci-check` — Types + tests across all packages (via `nx run-many`)
 - `bun run quality` — Lint + format check (oxlint + oxfmt)
 - `bun run quality:fix` — Auto-fix lint and format issues
