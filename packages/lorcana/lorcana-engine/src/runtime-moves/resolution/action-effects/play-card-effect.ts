@@ -976,8 +976,25 @@ export function resolvePlayCardEffect(
         emitTriggeredLorcanaEvent(
           ctx,
           "cardPlayed",
-          { playerId, cardId: chosenCardId, cardType, costType },
-          { event: "play", playerId, subjectCardId: chosenCardId },
+          {
+            playerId,
+            cardId: chosenCardId,
+            cardType,
+            costType,
+            // Mirror the playCard move's payload so play triggers gated on the
+            // `used-shift` condition (e.g. Omnidroid — V.9 ENEMY DETECTED) fire
+            // when the effect's shift route plays the card. Without this flag
+            // the condition evaluator falls back to `usedShift === undefined`
+            // and skips the trigger entirely (P1 — bugrepeGnIWtt1Ah-_BPuVw3SPk).
+            usedShift: true,
+            shiftTargetId: shiftTarget,
+          },
+          {
+            event: "play",
+            playerId,
+            subjectCardId: chosenCardId,
+            triggerSourceCardId: chosenCardId,
+          },
         );
       }
 
