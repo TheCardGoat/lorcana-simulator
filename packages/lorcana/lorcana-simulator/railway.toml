@@ -3,9 +3,14 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "packages/lorcana/lorcana-simulator/Dockerfile"
-
-[build.buildArgs]
-GHA_PAT_TOKEN = "{{ secrets.GHA_PAT_TOKEN }}"
+watchPatterns = [
+  "packages/lorcana/lorcana-simulator/**",
+  "package.json",
+  "bun.lock",
+  "turbo.json",
+  "tsconfig.json",
+  "packages/**",
+]
 
 [deploy]
 #healthcheckPath = "/health"
@@ -17,15 +22,6 @@ numReplicas = 1
 [deploy.teardown]
 overlapSeconds = 60
 drainingSeconds = 60
-
-watchPatterns = [
-  "packages/lorcana/lorcana-simulator/**",
-  "package.json",
-  "bun.lock",
-  "turbo.json",
-  "tsconfig.json",
-  "packages/**",
-]
 
 [environments.production.deploy]
 numReplicas = 2
