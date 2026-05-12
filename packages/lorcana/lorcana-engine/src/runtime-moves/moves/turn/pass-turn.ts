@@ -20,6 +20,7 @@ import {
   type PendingTurnTransitionState,
 } from "../../../types";
 import { getEligibleChallengeAttackers } from "../../rules/challenge-rules";
+import { getEligibleQuestCharacters } from "../core/quest";
 import {
   cleanupDanglingTargetEffects,
   cleanupExpiredEffects,
@@ -69,6 +70,7 @@ export const PASS_TURN_STACK_PENDING_ERROR_CODE = "PASS_TURN_STACK_PENDING";
 export const PASS_TURN_DECISION_PENDING_ERROR_CODE = "PASS_TURN_DECISION_PENDING";
 export const PASS_TURN_RECKLESS_CHALLENGE_REQUIRED_ERROR_CODE =
   "PASS_TURN_RECKLESS_CHALLENGE_REQUIRED";
+export const PASS_TURN_MUST_QUEST_REQUIRED_ERROR_CODE = "PASS_TURN_MUST_QUEST_REQUIRED";
 export const PASS_TURN_NOT_ACTIVE_PLAYER_ERROR_CODE = "PASS_TURN_NOT_ACTIVE_PLAYER";
 
 export type AdvanceTurnResult = {
@@ -614,6 +616,24 @@ function getPassTurnFailure(ctx: PassTurnIntentContext): PassTurnFailure | null 
       valid: false,
       error: "A Reckless character must challenge if able",
       errorCode: PASS_TURN_RECKLESS_CHALLENGE_REQUIRED_ERROR_CODE,
+    };
+  }
+
+  // "Must quest if able" enforcement (e.g. This Growing Pressure, Cobra Bubbles
+  // — Dedicated Official, Ariel — Curious Traveler). A character under the
+  // `must-quest` temporary restriction that is still a legal quester blocks
+  // their controller from passing turn.
+  const currentTurn = ctx.framework.state.status.turn ?? 1;
+  const eligibleQuesters = getEligibleQuestCharacters(ctx);
+  const mustQuestCharacterPending = eligibleQuesters.some((cardId) => {
+    const meta = ctx.cards.require(cardId).meta;
+    return hasTemporaryRestriction(meta, currentTurn, "must-quest");
+  });
+  if (mustQuestCharacterPending) {
+    return {
+      valid: false,
+      error: "A character under the must-quest restriction must quest if able",
+      errorCode: PASS_TURN_MUST_QUEST_REQUIRED_ERROR_CODE,
     };
   }
 
