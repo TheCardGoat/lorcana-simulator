@@ -7,6 +7,7 @@ import { resolveTargetPlayerIds } from "./player-target-resolver";
 import { resolveEffectTargets } from "../../../targeting/runtime";
 import { isDiscardZoneKey, recordDiscardExitThisTurn } from "../../state/turn-metrics";
 import { isCardInPlayZone } from "../../../operations/zones";
+import { markLastEffectPerformed } from "./event-snapshot-utils";
 
 export function isShuffleIntoDeckEffect(effect: unknown): effect is ShuffleIntoDeckEffect {
   return (
@@ -96,4 +97,11 @@ export function resolveShuffleIntoDeckEffect(
   ) {
     resolutionInput.eventSnapshot.chosenCardId = targets[0];
   }
+
+  // Mark whether this step actually performed so a downstream `if-you-do`
+  // conditional in the same sequence (e.g. Chernabog — Unnatural Force's
+  // "If you do, that player may play a character from their discard for free")
+  // sees the prior step's outcome. Without this the conditional reads
+  // `lastEffectPerformed: undefined` and silently skips its `then` branch.
+  markLastEffectPerformed(resolutionInput.eventSnapshot, targets.length > 0);
 }

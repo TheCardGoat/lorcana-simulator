@@ -673,7 +673,13 @@ export function resolvePlayCardEffect(
         effect.target,
         getEffectTargetSelectionInput(effect.target, resolutionInput),
       )
-    : [cardPlayed.playerId];
+    : // When no explicit player target is set, default to the chooser of the
+      // wrapping `optional` if one is in flight (e.g. Chernabog — Unnatural
+      // Force's nested "that player may play a character from their discard
+      // for free" runs with chooserPlayerId = opponent). Falling back to
+      // cardPlayed.playerId would source the opponent's "play from discard"
+      // from the original controller's discard.
+      [resolutionInput.chooserPlayerId ?? cardPlayed.playerId];
   const resolvedPlayerIds = targetPlayerIds.length > 0 ? targetPlayerIds : [cardPlayed.playerId];
 
   for (const playerId of resolvedPlayerIds) {
