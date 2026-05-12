@@ -217,6 +217,11 @@ export interface MatchmakingLobbyController {
       readonly inQueue: number;
       readonly liveMatches: number;
     }>;
+    readonly matchTypeStats: ReadonlyArray<{
+      readonly matchType: "ranked" | "casual";
+      readonly inQueue: number;
+      readonly liveMatches: number;
+    }>;
   };
   practice: {
     readonly loading: boolean;
@@ -499,6 +504,15 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
         mode,
         inQueue: this.queueStatsStore.totalInQueue(mode, this.selectedMatchType),
         liveMatches: this.queueStatsStore.totalLiveMatches(mode, this.selectedMatchType),
+      })),
+      matchTypeStats: (["ranked", "casual"] as const).map((matchType) => ({
+        matchType,
+        inQueue:
+          this.queueStatsStore.totalInQueue("1", matchType) +
+          this.queueStatsStore.totalInQueue("3", matchType),
+        liveMatches:
+          this.queueStatsStore.totalLiveMatches("1", matchType) +
+          this.queueStatsStore.totalLiveMatches("3", matchType),
       })),
     };
   }
