@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   LorcanaMultiplayerTestEngine,
+  PLAYER_ONE,
   createMockCharacter,
   createMockLocation,
 } from "@tcg/lorcana-engine/testing";
@@ -231,7 +232,7 @@ describe("Tuk Tuk - Lively Partner", () => {
         deck: 10,
       });
 
-      const loreBefore = testEngine.asPlayerOne().getLore();
+      const loreBefore = testEngine.asPlayerOne().getLore(PLAYER_ONE);
 
       expect(testEngine.asPlayerOne().playCard(tukTukLivelyPartner)).toBeSuccessfulCommand();
       expect(
@@ -259,7 +260,7 @@ describe("Tuk Tuk - Lively Partner", () => {
       // character was at a location before, so the trigger must not enter
       // the bag (no optional prompt) and lore must be unchanged.
       expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
-      expect(testEngine.asPlayerOne().getLore()).toBe(loreBefore);
+      expect(testEngine.asPlayerOne().getLore(PLAYER_ONE)).toBe(loreBefore);
       expect(testEngine.asPlayerOne().getCardZone(sugarRushSpeedwayFinishLine)).toBe("play");
     });
   });
