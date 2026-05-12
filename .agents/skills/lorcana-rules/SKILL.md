@@ -1,6 +1,6 @@
 ---
-name: lorcana-rules
-description: Explain and cite Disney Lorcana rules using indexed references, and produce implementation-ready behavior constraints for card development. Use when answering mechanic questions, resolving card interactions, or deriving test/implementation constraints from official rules.
+name: "lorcana-rules"
+description: "Explain and cite Disney Lorcana rules using indexed references, and produce implementation-ready behavior constraints for card development. Use when answering mechanic questions, resolving card interactions, or deriving test/implementation constraints from official rules."
 ---
 
 # Lorcana Rules

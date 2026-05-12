@@ -22,6 +22,7 @@ export interface PlayCardDisabledReasonAccessors {
   getStandardPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
   getShiftPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
   getSingPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
+  getInkActionDisabledReason?: (cardId: string) => string | null;
 }
 
 function resolveBlockedReason(
@@ -413,7 +414,14 @@ export function buildCardActionViews(options: {
       (card.zoneId === "hand" || card.zoneId === "discard") &&
       card.inkable !== false
     ) {
-      actions.push(buildBlockedAction(card, categoryId, "This card cannot be inked right now."));
+      actions.push(
+        buildBlockedAction(
+          card,
+          categoryId,
+          disabledReasonAccessors?.getInkActionDisabledReason?.(card.cardId) ??
+            "This card cannot be inked right now.",
+        ),
+      );
       continue;
     }
 

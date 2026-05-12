@@ -40,7 +40,7 @@ describe("CardHoverCardContent", () => {
     expect(body).toContain(">2</span>");
   });
 
-  it.skip("renders unavailable actions inside a collapsed section by default", () => {
+  it("renders unavailable actions as disabled chips with tooltip reasons", () => {
     const disabledAction: CardActionView = {
       id: "disabled:move-to-location:card-1",
       cardId: "card-1",
@@ -63,12 +63,12 @@ describe("CardHoverCardContent", () => {
       },
     });
 
-    expect(body).toContain("Unavailable Actions");
-    expect(body).toContain("1 unavailable action");
-    expect(body).not.toContain("No legal locations to move to right now.");
+    expect(body).toContain('data-testid="card-hover-action-chip-move-to-location-disabled"');
+    expect(body).toContain("disabled");
+    expect(body).toContain("No legal locations to move to right now.");
   });
 
-  it.skip("renders unavailable actions before enabled actions so active controls stay anchored at the bottom", () => {
+  it("renders unavailable actions alongside enabled actions in action order", () => {
     const enabledAction: CardActionView = {
       id: "enabled:ink:card-1",
       cardId: "card-1",
@@ -101,12 +101,14 @@ describe("CardHoverCardContent", () => {
       },
     });
 
-    const unavailableSectionIndex = body.indexOf("Unavailable Actions");
+    const unavailableActionChipIndex = body.indexOf(
+      'data-testid="card-hover-action-chip-move-to-location-disabled"',
+    );
     const enabledActionChipIndex = body.indexOf('data-testid="card-hover-action-chip-ink-card"');
 
-    expect(unavailableSectionIndex).toBeGreaterThanOrEqual(0);
+    expect(unavailableActionChipIndex).toBeGreaterThanOrEqual(0);
     expect(enabledActionChipIndex).toBeGreaterThanOrEqual(0);
-    expect(unavailableSectionIndex).toBeLessThan(enabledActionChipIndex);
+    expect(enabledActionChipIndex).toBeLessThan(unavailableActionChipIndex);
   });
 
   it("renders discard-cost Shift entries as keyword rows", () => {
