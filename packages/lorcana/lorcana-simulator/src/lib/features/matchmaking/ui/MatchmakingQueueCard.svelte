@@ -67,6 +67,11 @@
     acceptTimeRemainingMs: number;
     colorPreferenceCount: number;
     modeStats: ReadonlyArray<{ mode: QueueStatsMode; inQueue: number; liveMatches: number }>;
+    matchTypeStats: ReadonlyArray<{
+      matchType: 'ranked' | 'casual';
+      inQueue: number;
+      liveMatches: number;
+    }>;
     colorFilter?: Snippet;
     onSelectQueueMode: (mode: QueueStatsMode) => void;
     onSelectMatchType: (matchType: 'ranked' | 'casual' | 'testing') => void;
@@ -109,6 +114,7 @@
     opponentAccepted,
     colorPreferenceCount,
     modeStats,
+    matchTypeStats,
     colorFilter,
     acceptTimeRemainingMs,
     onSelectQueueMode,
@@ -122,6 +128,13 @@
   }: Props = $props();
 
   const RANKED_TOOLTIP_TEXT = m['sim.matchmaking.matchmaking.rankedComingSoon']({});
+
+  const rankedStats = $derived(
+    matchTypeStats.find((s) => s.matchType === 'ranked') ?? { inQueue: 0, liveMatches: 0 },
+  );
+  const casualStats = $derived(
+    matchTypeStats.find((s) => s.matchType === 'casual') ?? { inQueue: 0, liveMatches: 0 },
+  );
 
   function formatProfileName(displayName: string | null | undefined): string {
     return displayName?.trim().length ? displayName : 'Unnamed profile';
@@ -149,7 +162,18 @@
         disabled={selectionDisabled}
         onclick={() => onSelectMatchType('ranked')}
       >
-        Ranked
+        <span class="flex flex-col items-center gap-0.5">
+          <span>Ranked</span>
+          <span class={cn(
+            'inline-flex items-center gap-1 text-[0.65rem]',
+            selectedMatchType === 'ranked' ? 'text-slate-500' : 'text-slate-400',
+          )}>
+            <Swords class="size-3" aria-hidden="true" />
+            {rankedStats.liveMatches}
+            <Users class="size-3" aria-hidden="true" />
+            {rankedStats.inQueue}
+          </span>
+        </span>
       </button>
     {:else}
       <Tooltip.Root delayDuration={120}>
@@ -197,7 +221,18 @@
       disabled={selectionDisabled}
       onclick={() => onSelectMatchType('casual')}
     >
-      Casual
+      <span class="flex flex-col items-center gap-0.5">
+        <span>Casual</span>
+        <span class={cn(
+          'inline-flex items-center gap-1 text-[0.65rem]',
+          selectedMatchType === 'casual' ? 'text-slate-500' : 'text-slate-400',
+        )}>
+          <Swords class="size-3" aria-hidden="true" />
+          {casualStats.liveMatches}
+          <Users class="size-3" aria-hidden="true" />
+          {casualStats.inQueue}
+        </span>
+      </span>
     </button>
 
     {#if dev}

@@ -213,7 +213,7 @@ const damageIndicatorClass = $derived(
 		? "text-xs px-2 py-1"
 		: size === "small" || size === "small-plus"
 			? "text-base px-2.5 py-1"
-			: "text-2xl px-3.5 py-1.5",
+			: "px-[0.6em] py-[0.3em]",
 );
 </script>
 
@@ -397,6 +397,7 @@ const damageIndicatorClass = $derived(
     transform-style: preserve-3d;
     will-change: transform;
     transition: transform 0.1s ease-out;
+    container-type: size;
   }
 
   .card-face[data-card-size="tiny"],
@@ -589,6 +590,13 @@ const damageIndicatorClass = $derived(
     );
     pointer-events: none;
     z-index: 5;
+  }
+
+  /* Responsive damage indicator for medium and larger cards */
+  .card-face[data-card-size="medium"] .damage-indicator,
+  .card-face[data-card-size="large"] .damage-indicator,
+  .card-face[data-card-size="x-large"] .damage-indicator {
+    font-size: clamp(0.75rem, 6cqw, 1.5rem);
   }
 
   /* Reduced motion */

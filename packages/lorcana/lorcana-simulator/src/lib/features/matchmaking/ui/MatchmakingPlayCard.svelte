@@ -116,6 +116,7 @@
         opponentDisplayName={controller.queueStore.opponentDisplayName}
         colorPreferenceCount={countBits(controller.queueStore.preferredOpponentColors) + countBits(controller.queueStore.excludedOpponentColors)}
         modeStats={controller.queue.modeStats}
+        matchTypeStats={controller.queue.matchTypeStats}
         selfAccepted={controller.queueStore.selfAccepted}
         opponentAccepted={controller.queueStore.opponentAccepted}
         acceptTimeRemainingMs={controller.queueStore.acceptTimeRemainingMs}
