@@ -101,6 +101,18 @@ export type PlayerDeckEntry = {
   matchCount: number;
 };
 
+export type Milestone = {
+  id: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+  progress: number;
+  target: number;
+};
+
+export type MilestonesResponse = {
+  milestones: Milestone[];
+};
+
 export type DeckRundownResponse = {
   decks: PlayerDeckEntry[];
   matchups: DeckMatchupRow[];

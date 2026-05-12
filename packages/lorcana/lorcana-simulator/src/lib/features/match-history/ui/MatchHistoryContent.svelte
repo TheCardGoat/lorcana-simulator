@@ -14,12 +14,14 @@
     fetchPlayerStats,
     fetchMatches,
     fetchMmrHistory,
+    fetchMilestones,
     fetchPlayingStreak,
     fetchDeckRundown,
   } from "../api/player-stats-api";
   import type {
     PlayerStats,
     MatchListResponse,
+    MilestonesResponse,
     MmrHistoryPoint,
     PlayingStreak,
     DeckRundownResponse,
@@ -35,6 +37,7 @@
     initialStats?: PlayerStats | null;
     initialMmrHistory?: MmrHistoryPoint[];
     initialPlayingStreak?: PlayingStreak | null;
+    initialMilestones?: MilestonesResponse | null;
     initialMatchList?: { matches: MatchListResponse["matches"]; nextCursor: string | null };
     initialDeckRundown?: DeckRundownResponse | null;
   }
@@ -43,6 +46,7 @@
     initialStats,
     initialMmrHistory,
     initialPlayingStreak,
+    initialMilestones,
     initialMatchList,
     initialDeckRundown,
   }: Props = $props();
@@ -55,6 +59,7 @@
   let stats = $state<PlayerStats | null>(untrack(() => initialStats ?? null));
   let mmrHistory = $state<MmrHistoryPoint[]>(untrack(() => initialMmrHistory ?? []));
   let playingStreak = $state<PlayingStreak | null>(untrack(() => initialPlayingStreak ?? null));
+  let milestones = $state<MilestonesResponse | null>(untrack(() => initialMilestones ?? null));
   let matchList = $state<{ matches: MatchListResponse["matches"]; nextCursor: string | null }>(
     untrack(() => initialMatchList ?? { matches: [], nextCursor: null }),
   );
@@ -100,18 +105,21 @@
     loading = true;
     error = null;
     try {
-      const [statsResult, mmrResult, streakResult, matchesResult] = await Promise.allSettled([
-        fetchPlayerStats(),
-        fetchMmrHistory(),
-        fetchPlayingStreak(),
-        fetchMatches({ limit: 20 }),
-      ]);
+      const [statsResult, mmrResult, streakResult, milestonesResult, matchesResult] =
+        await Promise.allSettled([
+          fetchPlayerStats(),
+          fetchMmrHistory(),
+          fetchPlayingStreak(),
+          fetchMilestones(),
+          fetchMatches({ limit: 20 }),
+        ]);
 
       if (import.meta.env.DEV) {
         console.debug("[match-history] loadAll settled:", {
           stats: statsResult.status,
           mmr: mmrResult.status,
           streak: streakResult.status,
+          milestones: milestonesResult.status,
           matches: matchesResult.status,
         });
       }
@@ -119,6 +127,7 @@
       if (statsResult.status === "fulfilled") stats = statsResult.value;
       if (mmrResult.status === "fulfilled") mmrHistory = mmrResult.value;
       if (streakResult.status === "fulfilled") playingStreak = streakResult.value;
+      if (milestonesResult.status === "fulfilled") milestones = milestonesResult.value;
       if (matchesResult.status === "fulfilled") {
         matchList = { matches: matchesResult.value.matches, nextCursor: matchesResult.value.nextCursor };
         if (import.meta.env.DEV) {
@@ -249,7 +258,7 @@
           <PlayingStreakCard streak={playingStreak} />
         {/if}
 
-        <MilestonesCard {stats} />
+        <MilestonesCard {milestones} />
 
         <SportsmanshipCard {stats} />
       </aside>

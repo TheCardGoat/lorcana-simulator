@@ -5,6 +5,7 @@ import { serverJsonOrNull } from "$lib/data/server/server-json.js";
 import type {
   DeckRundownResponse,
   MatchListResponse,
+  MilestonesResponse,
   MmrHistoryPoint,
   PlayingStreak,
   PlayerStats,
@@ -20,10 +21,11 @@ export const load: PageServerLoad = async ({ request }) => {
   const apiOrigin = getServerApiOrigin(getApiOrigin());
   const base = `${apiOrigin}/v1/match-history/players/me`;
 
-  const [stats, mmrHistory, playingStreak, matchListResult] = await Promise.all([
+  const [stats, mmrHistory, playingStreak, milestones, matchListResult] = await Promise.all([
     serverJsonOrNull<PlayerStats>(`${base}/stats`, { headers: authHeaders }),
     serverJsonOrNull<MmrHistoryPoint[]>(`${base}/mmr-history`, { headers: authHeaders }),
     serverJsonOrNull<PlayingStreak>(`${base}/playing-streak`, { headers: authHeaders }),
+    serverJsonOrNull<MilestonesResponse>(`${base}/milestones`, { headers: authHeaders }),
     serverJsonOrNull<MatchListResponse>(`${base}/matches?limit=20`, { headers: authHeaders }),
   ]);
 
@@ -44,6 +46,7 @@ export const load: PageServerLoad = async ({ request }) => {
     stats,
     mmrHistory: mmrHistory ?? [],
     playingStreak,
+    milestones: milestones ?? { milestones: [] },
     matchList: matchListResult ?? { matches: [], nextCursor: null },
     deckRundown,
   };
