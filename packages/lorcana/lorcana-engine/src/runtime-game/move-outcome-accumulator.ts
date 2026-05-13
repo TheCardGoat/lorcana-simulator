@@ -351,6 +351,7 @@ export class MoveOutcomeAccumulator {
 
   private accumulateCardReadied(data: CardReadiedPayload, context: LogProjectionContext): void {
     if (data.isManual) return;
+    if (data.source === "start-of-turn" && data.zone === "inkwell") return;
 
     const cardId = data.cardId as CardInstanceId;
     this.cardsReadied.push(cardId);
