@@ -754,6 +754,47 @@ export function pruneExpiredTemporaryEffects(
   };
 }
 
+export function pruneTemporaryEffectsByDuration(
+  meta: LorcanaCardMeta | undefined,
+  duration: string,
+): LorcanaCardMeta | undefined {
+  if (!meta) {
+    return meta;
+  }
+
+  const temporaryKeywords = normalizeEffectMap(meta.temporaryKeywords);
+  const temporaryKeywordStarts = normalizeEffectMap(meta.temporaryKeywordStarts);
+  const temporaryKeywordPayloads = normalizeKeywordPayloadMap(meta.temporaryKeywordPayloads);
+  const temporaryKeywordValues = normalizeValueMap(meta.temporaryKeywordValues);
+  let changed = false;
+
+  for (const [keyword, payload] of Object.entries(temporaryKeywordPayloads)) {
+    if (payload.duration !== duration) {
+      continue;
+    }
+    delete temporaryKeywords[keyword];
+    delete temporaryKeywordStarts[keyword];
+    delete temporaryKeywordPayloads[keyword];
+    delete temporaryKeywordValues[keyword];
+    changed = true;
+  }
+
+  if (!changed) {
+    return meta;
+  }
+
+  return {
+    ...meta,
+    temporaryKeywords: Object.keys(temporaryKeywords).length > 0 ? temporaryKeywords : undefined,
+    temporaryKeywordStarts:
+      Object.keys(temporaryKeywordStarts).length > 0 ? temporaryKeywordStarts : undefined,
+    temporaryKeywordValues:
+      Object.keys(temporaryKeywordValues).length > 0 ? temporaryKeywordValues : undefined,
+    temporaryKeywordPayloads:
+      Object.keys(temporaryKeywordPayloads).length > 0 ? temporaryKeywordPayloads : undefined,
+  };
+}
+
 function getPlayerRestrictionMaps(
   state: TemporaryPlayerRestrictionsState,
   playerId: PlayerId,

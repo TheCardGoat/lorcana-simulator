@@ -86,6 +86,34 @@ describe("Mrs. Incredible - Determined Rescuer", () => {
       expect(testEngine.hasRestriction(superTeammate, "cant-quest")).toBe(true);
     });
 
+    it("triggers when Mrs. Incredible banishes an opposing character in her own challenge", () => {
+      const fragileOpponent = createMockCharacter({
+        id: "mrs-incredible-fragile-opponent",
+        name: "Fragile Opponent",
+        cost: 1,
+        strength: 0,
+        willpower: 1,
+      });
+
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [mrsIncredibleDeterminedRescuer],
+          deck: 3,
+        },
+        {
+          play: [{ card: fragileOpponent, exerted: true }],
+          deck: 3,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(mrsIncredibleDeterminedRescuer, fragileOpponent),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(fragileOpponent)).toBe("discard");
+      expect(testEngine.asPlayerOne().getBagCount()).toBeGreaterThanOrEqual(1);
+    });
+
     it("does not trigger when no challenge banish happens", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

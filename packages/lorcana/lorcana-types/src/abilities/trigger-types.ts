@@ -190,6 +190,9 @@ export interface TriggerSubjectQuery {
 
   /** Exclude songs (actions with actionSubtype "song") from matching */
   excludeSong?: boolean;
+
+  /** Require the played subject to have been shifted onto this trigger source. */
+  shiftedOntoSelf?: boolean;
 }
 
 /**

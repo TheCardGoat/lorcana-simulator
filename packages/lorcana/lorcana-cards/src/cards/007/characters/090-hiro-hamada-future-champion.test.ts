@@ -1,59 +1,67 @@
-// LEGACY IMPLEMENTATION: FOR REFERENCE ONLY. AFTER MIGRATION REMOVE THIS!
-// /**
-//  * @jest-environment node
-//  */
-//
-// Import { describe, expect, it } from "@jest/globals";
-// Import { hiroHamadaRoboticsProdigy } from "@lorcanito/lorcana-engine/cards/006";
-// Import {
-//   HiroHamadaArmorDesigner,
-//   HiroHamadaFutureChampion,
-// } from "@lorcanito/lorcana-engine/cards/007";
-// Import { TestEngine } from "@lorcanito/lorcana-engine/rules/testEngine";
-//
-// Describe("Hiro Hamada - Future Champion", () => {
-//   It("ORIGIN STORY When you play a Floodborn character on this card, draw a card.", async () => {
-//     Const testEngine = new TestEngine({
-//       Deck: 3,
-//       Inkwell: hiroHamadaArmorDesigner.cost,
-//       Play: [hiroHamadaFutureChampion],
-//       Hand: [hiroHamadaArmorDesigner],
-//     });
-//
-//     Await testEngine.shiftCard({
-//       Shifted: hiroHamadaFutureChampion,
-//       Shifter: hiroHamadaArmorDesigner,
-//     });
-//
-//     Expect(testEngine.getZonesCardCount()).toEqual(
-//       Expect.objectContaining({
-//         Hand: 1,
-//         Deck: 2,
-//       }),
-//     );
-//   });
-// });
-//
-// Describe("Regression", () => {
-//   It("should not trigger when Hiro is not the target", async () => {
-//     Const testEngine = new TestEngine({
-//       Deck: 3,
-//       Inkwell: hiroHamadaArmorDesigner.cost,
-//       Play: [hiroHamadaFutureChampion, hiroHamadaRoboticsProdigy],
-//       Hand: [hiroHamadaArmorDesigner],
-//     });
-//
-//     Await testEngine.shiftCard({
-//       Shifted: hiroHamadaRoboticsProdigy,
-//       Shifter: hiroHamadaArmorDesigner,
-//     });
-//
-//     Expect(testEngine.getZonesCardCount()).toEqual(
-//       Expect.objectContaining({
-//         Hand: 0,
-//         Deck: 3,
-//       }),
-//     );
-//   });
-// });
-//
+import { describe, expect, it } from "bun:test";
+import { LorcanaMultiplayerTestEngine, createMockCharacter } from "@tcg/lorcana-engine/testing";
+import { baymaxGiantRobot } from "./104-baymax-giant-robot";
+import { hiroHamadaFutureChampion } from "./090-hiro-hamada-future-champion";
+
+const otherShiftBase = createMockCharacter({
+  id: "hiro-other-shift-base",
+  name: "Other Shift Base",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+  lore: 1,
+});
+
+const deckCard = createMockCharacter({
+  id: "hiro-deck-card",
+  name: "Deck Card",
+  cost: 1,
+  strength: 1,
+  willpower: 1,
+  lore: 1,
+});
+
+describe("Hiro Hamada - Future Champion", () => {
+  describe("ORIGIN STORY - When you play a Floodborn character on this card, draw a card.", () => {
+    it("does not trigger when a Floodborn character is shifted onto another character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [hiroHamadaFutureChampion, otherShiftBase],
+        hand: [baymaxGiantRobot],
+        inkwell: 4,
+        deck: [deckCard],
+      });
+      const otherShiftBaseId = testEngine.findCardInstanceId(otherShiftBase, "play", "player_one");
+
+      expect(
+        testEngine.asPlayerOne().playCard(baymaxGiantRobot, {
+          cost: { cost: "shift", shiftTarget: otherShiftBaseId },
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerOne().getCardZone(deckCard)).toBe("deck");
+    });
+
+    it("triggers when a Floodborn character is shifted onto Hiro", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+        play: [hiroHamadaFutureChampion],
+        hand: [baymaxGiantRobot],
+        inkwell: 4,
+        deck: [deckCard],
+      });
+      const hiroId = testEngine.findCardInstanceId(hiroHamadaFutureChampion, "play", "player_one");
+
+      expect(
+        testEngine.asPlayerOne().playCard(baymaxGiantRobot, {
+          cost: { cost: "shift", shiftTarget: hiroId },
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(2);
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(hiroHamadaFutureChampion),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getCardZone(deckCard)).toBe("hand");
+    });
+  });
+});

@@ -2,12 +2,14 @@ import { describe, expect, it } from "bun:test";
 import type { CardInstanceId, PlayerId } from "#core";
 import type { PlayCardExecutionContext } from "../../runtime-moves/resolution/action-effects/types";
 import {
+  analyzeEffectTargets,
   analyzeTargetSelectionAvailability,
   analyzeTargetSelectionAvailabilityFromAnalysis,
 } from "./index";
 
 type TestCardDefinition = {
   id: string;
+  name?: string;
   cardType: "character" | "item" | "location" | "action";
   actionSubtype?: string;
   classifications?: string[];
@@ -101,6 +103,36 @@ function createTestContext(args?: {
 }
 
 describe("target-availability", () => {
+  it("excludes the return-from-discard source from source: other target candidates", () => {
+    const source = "alien-self" as CardInstanceId;
+    const other = "alien-other" as CardInstanceId;
+    const ctx = createTestContext({
+      definitions: {
+        [source]: { id: "alien-self", name: "Alien", cardType: "character" },
+        [other]: { id: "alien-other", name: "Alien", cardType: "character" },
+      },
+      zoneCards: {
+        [`discard:${PLAYER_ONE}`]: [source, other],
+      },
+    });
+
+    const analysis = analyzeEffectTargets(
+      {
+        type: "return-from-discard",
+        cardType: "character",
+        cardName: "Alien",
+        destination: "hand",
+        target: "CONTROLLER",
+        filter: { type: "source", ref: "other" },
+      },
+      PLAYER_ONE,
+      ctx,
+      source,
+    );
+
+    expect(analysis.cardCandidates).toEqual([other]);
+  });
+
   it("auto-rejects chosen-character effects with no legal candidates", () => {
     const source = "source" as CardInstanceId;
     const ctx = createTestContext({
