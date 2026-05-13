@@ -85,9 +85,99 @@ describe("Chernabog - Unnatural Force", () => {
       expect(testEngine.asPlayerTwo().getCardZone(opponentCharacter)).toBe("play");
     });
 
-    it.todo("should allow opponent to play a character from discard for free after shuffling - requires engine support for OPPONENT chooser in sequence + play-card from discard", () => {});
+    it("allows opponent to play a character from discard for free after shuffling (P1 — bugrep1OKSFvAtqfNuzlK2VZsbU / bugrepT9vmrCNgOi2UlSDJ3dcX_)", () => {
+      // Player reports (gameIds mgtj99NxMQ_4u_L5oOBezox t9 and
+      // mgjMTx9VGSgnCnPcedJZaAk t15): "Chernabog is not allowing my opponent
+      // to play a card from their discard for free."
+      //
+      // The DARK DANCE sequence is:
+      //   1. optional CONTROLLER: shuffle chosen opposing character into deck
+      //   2. conditional if-you-do:
+      //      then: optional OPPONENT: play character from discard for free
+      //
+      // Two engine gaps had to be closed:
+      //   - shuffle-into-deck resolver must mark `lastEffectPerformed` so
+      //     the `if-you-do` condition observes step 1's outcome.
+      //   - the optional handler must suspend for OPPONENT-chooser inside a
+      //     nested sequence and create a pending-effect targeted at the
+      //     opponent's discard.
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [chernabogUnnaturalForce],
+          inkwell: chernabogUnnaturalForce.cost,
+          deck: 5,
+        },
+        {
+          play: [opponentCharacter],
+          discard: [discardCharacter],
+          deck: 5,
+        },
+      );
 
-    it.todo("opponent can decline to play a character from discard - requires engine support for OPPONENT chooser in optional effects", () => {});
+      expect(testEngine.asPlayerOne().playCard(chernabogUnnaturalForce)).toBeSuccessfulCommand();
+
+      const bagEffects = testEngine.asPlayerOne().getBagEffects();
+      expect(bagEffects.length).toBeGreaterThan(0);
+
+      // Controller accepts step 1 and targets the opposing character.
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(chernabogUnnaturalForce, {
+          resolveOptional: true,
+          targets: [opponentCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Opposing character is shuffled into their deck.
+      expect(testEngine.asPlayerTwo().getCardZone(opponentCharacter)).not.toBe("play");
+
+      // Step 2 must now suspend for the opponent's choice — there should be a
+      // pending action effect for player two.
+      const pendingForOpponent = testEngine.asPlayerTwo().getPendingEffects();
+      expect(pendingForOpponent.length).toBeGreaterThan(0);
+
+      // Opponent accepts and plays the discard character for free.
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({
+          resolveOptional: true,
+          targets: [discardCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getCardZone(discardCharacter)).toBe("play");
+    });
+
+    it("allows opponent to decline the play-from-discard offer", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [chernabogUnnaturalForce],
+          inkwell: chernabogUnnaturalForce.cost,
+          deck: 5,
+        },
+        {
+          play: [opponentCharacter],
+          discard: [discardCharacter],
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(chernabogUnnaturalForce)).toBeSuccessfulCommand();
+
+      // Controller accepts step 1.
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(chernabogUnnaturalForce, {
+          resolveOptional: true,
+          targets: [opponentCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      // Opponent declines step 2.
+      expect(
+        testEngine.asPlayerTwo().resolveNextPending({ resolveOptional: false }),
+      ).toBeSuccessfulCommand();
+
+      // Discard character stays in discard.
+      expect(testEngine.asPlayerTwo().getCardZone(discardCharacter)).toBe("discard");
+      expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
+    });
 
     it("should not trigger 'If you do' effect when ability is declined", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(

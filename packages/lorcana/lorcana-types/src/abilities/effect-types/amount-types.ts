@@ -183,6 +183,7 @@ export type EffectDuration =
   | "this-turn"
   | "until-start-of-next-turn"
   | "until-end-of-turn"
+  | "during-challenge"
   | "permanent"
   | "while-condition"
   | "next-play-this-turn" // Used with static abilities

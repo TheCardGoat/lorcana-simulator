@@ -1,11 +1,6 @@
 ---
-name: extract
-description: Extract and consolidate reusable components, design tokens, and patterns into your design system. Identifies opportunities for systematic reuse and enriches your component library.
-user-invokable: true
-args:
-  - name: target
-    description: The feature, component, or area to extract from (optional)
-    required: false
+name: "extract"
+description: "The feature, component, or area to extract from (optional)"
 ---
 
 Identify reusable patterns, components, and design tokens, then extract and consolidate them into the design system for systematic reuse.
@@ -19,7 +14,7 @@ Analyze the target area to identify extraction opportunities:
    - Design token structure (if any)
    - Documentation patterns
    - Import/export conventions
-   
+
    **CRITICAL**: If no design system exists, ask before creating one. Understand the preferred location and structure first.
 
 2. **Identify patterns**: Look for:
@@ -55,18 +50,17 @@ Build improved, reusable versions:
   - Proper variants for different use cases
   - Accessibility built in (ARIA, keyboard navigation, focus management)
   - Documentation and usage examples
-  
 - **Design tokens**: Create tokens with:
   - Clear naming (primitive vs semantic)
   - Proper hierarchy and organization
   - Documentation of when to use each token
-  
 - **Patterns**: Document patterns with:
   - When to use this pattern
   - Code examples
   - Variations and combinations
 
 **NEVER**:
+
 - Extract one-off, context-specific implementations without generalization
 - Create components so generic they're useless
 - Extract without considering existing design system conventions
@@ -92,3 +86,7 @@ Update design system documentation:
 - Update any Storybook or component catalog
 
 Remember: A good design system is a living system. Extract patterns as they emerge, enrich them thoughtfully, and maintain them consistently.
+
+## MANUAL MIGRATION REQUIRED
+
+Review unsupported Claude skill fields manually: `args`, `required`, `user-invokable`.

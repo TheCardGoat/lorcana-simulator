@@ -44,6 +44,7 @@ export const hiroHamadaFutureChampion: CharacterCard = {
           cardType: "character",
           classification: "Floodborn",
           controller: "you",
+          shiftedOntoSelf: true,
         },
         timing: "when",
       },

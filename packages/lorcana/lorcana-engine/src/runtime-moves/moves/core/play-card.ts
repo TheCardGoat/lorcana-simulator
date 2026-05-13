@@ -1718,6 +1718,9 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
 
     let inkPaid = 0;
     let shiftTargetId: CardInstanceId | undefined;
+    let shiftTargetTriggerCandidates:
+      | ReturnType<typeof snapshotTriggeredCandidatesForCard>
+      | undefined;
     let singerIds: CardInstanceId[] | undefined;
 
     traceLorcanaRuntimeStep({
@@ -1802,6 +1805,9 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             throw new Error(`Failed to pay play cost: ${payResult.error} (${payResult.errorCode})`);
           }
           inkPaid = payResult.inkPaid;
+        }
+        if (shiftTargetId) {
+          shiftTargetTriggerCandidates = snapshotTriggeredCandidatesForCard(ctx, shiftTargetId);
         }
         break;
       }
@@ -2114,6 +2120,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         playerId: currentPlayer,
         subjectCardId: cardId,
         triggerSourceCardId: cardId,
+        triggerCandidates: shiftTargetTriggerCandidates,
       });
       if (singerIds) {
         singerIds.forEach((singerId) => {
@@ -2269,6 +2276,7 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         playerId: currentPlayer,
         subjectCardId: cardId,
         triggerSourceCardId: cardId,
+        triggerCandidates: shiftTargetTriggerCandidates,
       });
       if (singerIds) {
         singerIds.forEach((singerId) => {

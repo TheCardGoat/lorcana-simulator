@@ -1,6 +1,6 @@
 ---
-name: lorcana-test-generation
-description: Generate focused Lorcana card-behavior tests using the current multiplayer test engine and helper syntax, and write minimal engine repro tests when a card exposes a suspected runtime gap.
+name: "lorcana-test-generation"
+description: "Generate focused Lorcana card-behavior tests using the current multiplayer test engine and helper syntax, and write minimal engine repro tests when a card exposes a suspected runtime gap."
 ---
 
 # Lorcana Test Generation

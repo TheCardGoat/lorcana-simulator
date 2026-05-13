@@ -113,9 +113,8 @@ describe("Alien - True Believer", () => {
     //  action-effects/return-from-discard-effect.ts` and is unit-tested in
     // `__tests__/return-from-discard.test.ts` (source-filter cases).
     //
-    // An end-to-end card-level repro is blocked by a separate trigger-firing
-    // bug (HE HAS BEEN CHOSEN does not enter the bag in the current test
-    // harness). Tracked as a follow-up.
+    // The pending-selection candidate bug is covered in
+    // `packages/lorcana/lorcana-engine/src/targeting/runtime/target-availability.test.ts`.
     it.todo("card-level repro: returns another Alien (not the banished one) when banished — blocked on trigger-firing bug", () => {});
   });
 

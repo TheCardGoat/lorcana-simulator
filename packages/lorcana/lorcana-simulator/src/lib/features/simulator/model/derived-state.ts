@@ -262,13 +262,16 @@ function buildPlayerActiveEffects(
   return [...deduped.values()].sort((left, right) => left.label.localeCompare(right.label));
 }
 
-function supportsBodyguardPlayChoice(cardId: string, cards: CardSnapshotMap): boolean {
+function supportsEntryModePlayChoice(cardId: string, cards: CardSnapshotMap): boolean {
   const card = cards[cardId];
   if (!card || card.zoneId !== "hand" || card.cardType !== "character") {
     return false;
   }
 
-  return hasBodyguardKeyword(cardId, cards) && !hasSelfEnterExertedRestriction(cardId, cards);
+  return (
+    (hasBodyguardKeyword(cardId, cards) || card.mayEnterPlayExertedOption === true) &&
+    !hasSelfEnterExertedRestriction(cardId, cards)
+  );
 }
 
 function getPlayModeOptionLabel(
@@ -285,7 +288,7 @@ function getPlayModeOptionLabel(
   }
 
   if (
-    supportsBodyguardPlayChoice(cardId, cards) &&
+    supportsEntryModePlayChoice(cardId, cards) &&
     (!params.cost || params.cost === "standard") &&
     !params.targets
   ) {
@@ -293,7 +296,7 @@ function getPlayModeOptionLabel(
   }
 
   if (
-    supportsBodyguardPlayChoice(cardId, cards) &&
+    supportsEntryModePlayChoice(cardId, cards) &&
     (!params.cost || params.cost === "standard") &&
     Array.isArray(params.targets)
   ) {
@@ -470,7 +473,7 @@ function buildEntriesForAvailableMove(
       case "playCard": {
         const id = String(cardId);
         const targetOptions = engine.getMoveOptions("playCard", cardId);
-        const supportsBodyguardChoice = supportsBodyguardPlayChoice(id, cards);
+        const supportsEntryModeChoice = supportsEntryModePlayChoice(id, cards);
 
         if (targetOptions.length > 0) {
           for (const option of targetOptions) {
@@ -479,7 +482,7 @@ function buildEntriesForAvailableMove(
             }
 
             const targetId = String(option.cardId);
-            const playVariants = supportsBodyguardChoice
+            const playVariants = supportsEntryModeChoice
               ? [
                   {
                     idSuffix: "ready",
@@ -533,7 +536,7 @@ function buildEntriesForAvailableMove(
           continue;
         }
 
-        const playVariants = supportsBodyguardChoice
+        const playVariants = supportsEntryModeChoice
           ? [
               {
                 idSuffix: "ready",

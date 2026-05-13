@@ -1,6 +1,6 @@
 ---
-name: lorcana-cards
-description: Single owner for everything related to a specific Disney Lorcana card in `packages/lorcana/lorcana-cards` — authoring, debugging, triaging, generating, and any bounded engine or types extension required to make the printed text work. Use whenever the unit of work is "this card".
+name: "lorcana-cards"
+description: "Single owner for everything related to a specific Disney Lorcana card in `packages/lorcana/lorcana-cards` \u2014 authoring, debugging, triaging, generating, and any bounded engine or types extension required to make the printed text work. Use whenever the unit of work is \"this card\"."
 ---
 
 # Lorcana Cards

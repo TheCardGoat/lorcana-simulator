@@ -1,7 +1,5 @@
 <script lang="ts">
 import type { Snippet } from "svelte";
-import ChevronDownIcon from "@lucide/svelte/icons/chevron-down";
-import ChevronUpIcon from "@lucide/svelte/icons/chevron-up";
 import type {
 	CardActionView,
 	LorcanaCardSnapshot,
@@ -382,13 +380,7 @@ function handleManualMove(zone: string, position?: "top" | "bottom"): void {
 	if (!manualMode) return;
 	manualMode.moveCard(card.cardId, `${zone}:${card.ownerId}`, position);
 }
-const hasCollapsedActions = $derived(disabledNonAbilityActions.length > 0);
 const activeEffects = $derived(card.activeEffects ?? []);
-const collapsedActionLabel = $derived(
-	disabledNonAbilityActions.length === 1
-		? "1 unavailable action"
-		: `${disabledNonAbilityActions.length} unavailable actions`,
-);
 const resolvedLocationOccupants = $derived.by(() => {
 	if (card.cardType !== "location") {
 		return [];
@@ -422,8 +414,6 @@ const hasTextBoxContent = $derived(
 	hasStructuredText || Boolean(cardText),
 );
 const cardTags = $derived(getLorcanaCardTags(card));
-let inactiveActionsCollapsed = $state(true);
-
 function handleLocationOccupantEnter(occupant: LorcanaCardSnapshot): void {
 	simulatorCardContext?.setExternalPreviewCard(occupant);
 }
@@ -849,86 +839,43 @@ function handleFaceUpUnderCardLeave(card: LorcanaCardSnapshot): void {
 
   {#if hasActions}
     <div class="action-chip-section" data-testid="card-hover-action-chip-section">
-<!--   DISABLING FOR NOW, KEEP THE CODE COMMENTED OUT   -->
-      <!--{#if hasCollapsedActions}-->
-      <!--  <div class="action-collapse">-->
-      <!--    <button-->
-      <!--      type="button"-->
-      <!--      class="action-collapse__toggle"-->
-      <!--      aria-expanded={!inactiveActionsCollapsed}-->
-      <!--      aria-controls="card-hover-inactive-actions"-->
-      <!--      onclick={() => {-->
-      <!--        inactiveActionsCollapsed = !inactiveActionsCollapsed;-->
-      <!--      }}-->
-      <!--    >-->
-      <!--      <span class="action-collapse__copy">-->
-      <!--        <span class="action-collapse__label">Unavailable Actions</span>-->
-      <!--        <span class="action-collapse__count">{collapsedActionLabel}</span>-->
-      <!--      </span>-->
-      <!--      {#if inactiveActionsCollapsed}-->
-      <!--        <ChevronDownIcon class="action-collapse__chevron" aria-hidden="true" />-->
-      <!--      {:else}-->
-      <!--        <ChevronUpIcon class="action-collapse__chevron" aria-hidden="true" />-->
-      <!--      {/if}-->
-      <!--    </button>-->
-
-      <!--    {#if !inactiveActionsCollapsed}-->
-      <!--      <div-->
-      <!--        id="card-hover-inactive-actions"-->
-      <!--        class="action-chip-row action-chip-row&#45;&#45;collapsed action-chip-row&#45;&#45;disabled"-->
-      <!--        data-testid="card-hover-inactive-actions"-->
-      <!--      >-->
-      <!--        {#each disabledNonAbilityActions as action (action.id)}-->
-      <!--          {@const ActionIcon = getCardActionCategoryIcon(action.categoryId)}-->
-      <!--          <button-->
-      <!--            type="button"-->
-      <!--            class="action-chip action-chip&#45;&#45;disabled action-chip&#45;&#45;compact"-->
-      <!--            disabled-->
-      <!--            aria-label={action.reason ? `${action.label}: ${action.reason}` : action.label}-->
-      <!--            title={action.reason ?? action.label}-->
-      <!--            data-testid={`card-hover-action-chip-${action.categoryId}-disabled`}-->
-      <!--          >-->
-      <!--            <span class="action-chip__icon-shell" data-action-icon={action.categoryId} aria-hidden="true">-->
-      <!--              <ActionIcon class="action-chip__icon" />-->
-      <!--            </span>-->
-      <!--            <span class="action-chip__content">-->
-      <!--              <span class="action-chip__label">{action.label}</span>-->
-      <!--              {#if action.reason}-->
-      <!--                <span class="action-chip__detail">{action.reason}</span>-->
-      <!--              {/if}-->
-      <!--            </span>-->
-      <!--          </button>-->
-      <!--        {/each}-->
-      <!--      </div>-->
-      <!--    {/if}-->
-      <!--  </div>-->
-      <!--{/if}-->
-
-      {#if enabledNonAbilityActions.length > 0}
-        <div class="action-chip-row">
-          {#each enabledNonAbilityActions as action (action.id)}
-            {@const ActionIcon = getCardActionCategoryIcon(action.categoryId)}
+      <div class="action-chip-row">
+        {#each nonAbilityActions as action (action.id)}
+          {@const ActionIcon = getCardActionCategoryIcon(action.categoryId)}
+          {@const actionDescription = action.enabled ? action.detail : action.reason}
+          <span
+            class="action-chip-frame"
+            class:action-chip-frame--disabled={!action.enabled}
+            title={actionDescription ?? action.label}
+            aria-label={actionDescription ? `${action.label}: ${actionDescription}` : action.label}
+          >
             <button
               type="button"
               class="action-chip"
-              onclick={() => onAction?.(action)}
-              aria-label={action.detail ? `${action.label}: ${action.detail}` : action.label}
-              title={action.detail ?? action.label}
-              data-testid={`card-hover-action-chip-${action.categoryId}`}
+              class:action-chip--disabled={!action.enabled}
+              disabled={!action.enabled}
+              onclick={() => {
+                if (action.enabled) onAction?.(action);
+              }}
+              aria-label={actionDescription ? `${action.label}: ${actionDescription}` : action.label}
+              data-testid={action.enabled ? `card-hover-action-chip-${action.categoryId}` : `card-hover-action-chip-${action.categoryId}-disabled`}
             >
               <span class="action-chip__icon-shell" data-action-icon={action.categoryId} aria-hidden="true">
                 <ActionIcon class="action-chip__icon" />
               </span>
               <span class="action-chip__content">
                 <span class="action-chip__label">{action.label}</span>
-                {#if action.detail}
+                {#if action.enabled && action.detail}
                   <span class="action-chip__detail">{action.detail}</span>
                 {/if}
               </span>
             </button>
-          {/each}
-        </div>
-      {/if}
+            {#if !action.enabled && action.reason}
+              <span class="action-chip-tooltip" role="tooltip">{action.reason}</span>
+            {/if}
+          </span>
+        {/each}
+      </div>
     </div>
   {/if}
 
@@ -1122,6 +1069,58 @@ function handleFaceUpUnderCardLeave(card: LorcanaCardSnapshot): void {
 
   .action-chip-row--disabled {
     gap: 0.35rem;
+  }
+
+  .action-chip-frame {
+    position: relative;
+    display: inline-flex;
+    max-width: 100%;
+    border-radius: 999px;
+  }
+
+  .action-chip-tooltip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.45rem);
+    z-index: 8;
+    width: max-content;
+    max-width: min(16rem, 72vw);
+    transform: translate(-50%, 0.25rem);
+    border-radius: 0.6rem;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(8, 13, 24, 0.96);
+    box-shadow:
+      0 10px 28px rgba(2, 6, 23, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    padding: 0.45rem 0.6rem;
+    color: rgba(248, 250, 252, 0.96);
+    font-size: 0.68rem;
+    font-weight: 650;
+    line-height: 1.3;
+    opacity: 0;
+    pointer-events: none;
+    text-align: center;
+    transition:
+      opacity 120ms ease,
+      transform 120ms ease;
+  }
+
+  .action-chip-tooltip::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    width: 0.5rem;
+    height: 0.5rem;
+    transform: translate(-50%, -50%) rotate(45deg);
+    border-right: 1px solid rgba(148, 163, 184, 0.22);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(8, 13, 24, 0.96);
+  }
+
+  .action-chip-frame--disabled:hover .action-chip-tooltip {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
 
   .action-collapse {
@@ -2020,6 +2019,11 @@ function handleFaceUpUnderCardLeave(card: LorcanaCardSnapshot): void {
       linear-gradient(180deg, rgba(92, 100, 118, 0.12) 0%, rgba(62, 67, 83, 0.08) 100%),
       rgba(15, 22, 36, 0.58);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .action-chip--disabled .action-chip__label,
+  .action-chip--disabled .action-chip__icon-shell {
+    color: rgba(226, 232, 240, 0.68);
   }
 
   .action-chip__icon-shell {

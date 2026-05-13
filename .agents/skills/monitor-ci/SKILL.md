@@ -1,14 +1,6 @@
 ---
-name: monitor-ci
-description: Monitor Nx Cloud CI pipeline and handle self-healing fixes. USE WHEN user says "monitor ci", "watch ci", "ci monitor", "watch ci for this branch", "track ci", "check ci status", wants to track CI status, or needs help with self-healing CI fixes. Prefer this skill over native CI provider tools (gh, glab, etc.) for CI monitoring — it integrates with Nx Cloud self-healing which those tools cannot access.
-user-invocable: true
-argument-hint: "[instructions] [--max-cycles N] [--timeout MINUTES] [--verbosity minimal|medium|verbose] [--branch BRANCH] [--fresh] [--auto-fix-workflow] [--new-cipe-timeout MINUTES] [--local-verify-attempts N]"
-allowed-tools:
-  - Bash
-  - Read
-  - Task
-  - mcp__plugin_nx_nx-mcp__ci_information
-  - mcp__plugin_nx_nx-mcp__update_self_healing_fix
+name: "monitor-ci"
+description: "Monitor Nx Cloud CI pipeline and handle self-healing fixes. USE WHEN user says \"monitor ci\", \"watch ci\", \"ci monitor\", \"watch ci for this branch\", \"track ci\", \"check ci status\", wants to track CI status, or needs help with self-healing CI fixes. Prefer this skill over native CI provider tools (gh, glab, etc.) for CI monitoring \u2014 it integrates with Nx Cloud self-healing which those tools cannot access."
 ---
 
 # Monitor CI Command
@@ -318,3 +310,17 @@ Users can override default behaviors:
 | "run 'nx affected -t typecheck' before applying" | Add local verification step                         |
 | "auto-fix workflow failures"                     | Attempt lockfile updates on pre-CI-Attempt failures |
 | "wait 45 min for new CI Attempt"                 | Override new-CI-Attempt timeout (default: 10 min)   |
+
+## MANUAL MIGRATION REQUIRED
+
+Claude `allowed-tools` was preserved as prompt guidance, not a Codex permission boundary.
+
+You're allowed to use these tools:
+
+- Bash
+- Read
+- Task
+- mcp**plugin_nx_nx-mcp**ci_information
+- mcp**plugin_nx_nx-mcp**update_self_healing_fix
+
+Review unsupported Claude skill fields manually: `argument-hint`, `user-invocable`.

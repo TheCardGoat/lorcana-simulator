@@ -420,11 +420,13 @@ describe("buildCardActionViews", () => {
       standard?: PlayCardDisabledReason | null;
       shift?: PlayCardDisabledReason | null;
       sing?: PlayCardDisabledReason | null;
+      ink?: string | null;
     }) {
       return {
         getStandardPlayDisabledReason: () => opts.standard ?? null,
         getShiftPlayDisabledReason: () => opts.shift ?? null,
         getSingPlayDisabledReason: () => opts.sing ?? null,
+        getInkActionDisabledReason: () => opts.ink ?? null,
       };
     }
 
@@ -532,6 +534,24 @@ describe("buildCardActionViews", () => {
       const shift = actions.find((a) => a.categoryId === "shift-card");
       expect(play?.reason).toBe("This card cannot be played right now.");
       expect(shift?.reason).toBe("This card cannot be shifted right now.");
+    });
+
+    it("renders the ink action reason when the player already used their ink action", () => {
+      const card = createCard({ zoneId: "hand" });
+      const actions = buildCardActionViews({
+        card,
+        executableMoves: [],
+        ownerSide: "playerOne",
+        challengeReadyCardIds: [],
+        movableToLocationCardIds: [],
+        disabledReasonAccessors: makeAccessors({
+          ink: "You already inked a card this turn.",
+        }),
+      });
+
+      const ink = actions.find((a) => a.categoryId === "ink-card");
+      expect(ink?.enabled).toBe(false);
+      expect(ink?.reason).toBe("You already inked a card this turn.");
     });
   });
 

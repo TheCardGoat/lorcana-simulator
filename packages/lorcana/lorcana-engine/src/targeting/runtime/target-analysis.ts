@@ -39,6 +39,7 @@ type ReturnFromDiscardTargetDescriptor = {
     classification?: string;
     keyword?: string;
   };
+  excludeSelf?: boolean;
 };
 
 type DiscardTargetDescriptor = {
@@ -630,6 +631,7 @@ function normalizeReturnFromDiscardTargetDescriptor(
   const classification =
     typeof rawFilter?.classification === "string" ? rawFilter.classification : undefined;
   const keyword = typeof rawFilter?.keyword === "string" ? rawFilter.keyword : undefined;
+  const excludeSelf = rawFilter?.type === "source" && rawFilter.ref === "other";
 
   if (cardType === "song") {
     return {
@@ -642,6 +644,7 @@ function normalizeReturnFromDiscardTargetDescriptor(
         maxCost !== undefined || classification !== undefined || keyword !== undefined
           ? { maxCost, classification, keyword }
           : undefined,
+      excludeSelf,
     };
   }
 
@@ -654,6 +657,7 @@ function normalizeReturnFromDiscardTargetDescriptor(
       maxCost !== undefined || classification !== undefined || keyword !== undefined
         ? { maxCost, classification, keyword }
         : undefined,
+    excludeSelf,
   };
 }
 
@@ -1204,6 +1208,7 @@ function resolveActionDiscardTargetCandidates(
   targetDescriptors: ReturnFromDiscardTargetDescriptor[],
   playerId: PlayerId,
   ctx: ActionTargetRuntimeContext,
+  sourceCardId?: CardInstanceId,
 ): CardInstanceId[] {
   if (targetDescriptors.length === 0) {
     return [];
@@ -1221,6 +1226,9 @@ function resolveActionDiscardTargetCandidates(
     const resolved = resolveCandidateTargets(ctx, descriptor, {
       controllerId: playerId,
       extraPredicate: (cardId) => {
+        if (targetDescriptor.excludeSelf === true && cardId === sourceCardId) {
+          return false;
+        }
         const definition = getCardDefinition(ctx, cardId) as ActionTargetCardDefinition | undefined;
         if (
           targetDescriptor.actionSubtypes?.length &&
@@ -1627,6 +1635,7 @@ export function analyzeEffectTargets(
     returnFromDiscardTargetDescriptors,
     playerId,
     ctx,
+    sourceCardId,
   );
   const discardSelectionCandidates = resolveActionDiscardSelectionCandidates(
     discardTargetDescriptors,
@@ -1728,7 +1737,7 @@ export function analyzeEffectTargets(
         total +
         Math.min(
           descriptor.count,
-          resolveActionDiscardTargetCandidates([descriptor], playerId, ctx).length,
+          resolveActionDiscardTargetCandidates([descriptor], playerId, ctx, sourceCardId).length,
         ),
       0,
     ) +

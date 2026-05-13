@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PlayerStats } from "../types";
+  import type { MilestonesResponse } from "../types";
   import { cn } from "$lib/utils.js";
   import Trophy from "@lucide/svelte/icons/trophy";
   import Flame from "@lucide/svelte/icons/flame";
@@ -11,116 +11,43 @@
   import Clock from "@lucide/svelte/icons/clock";
 
   interface Props {
-    stats: PlayerStats;
+    milestones: MilestonesResponse | null;
   }
 
-  let { stats }: Props = $props();
+  let { milestones }: Props = $props();
 
-  type MilestoneDef = {
-    id: string;
+  // Presentation-only mapping. Server owns the criteria, ordering, and
+  // unlock state; client owns label/description/icon for each known id.
+  // Unknown ids (added server-side ahead of a client deploy) fall back to
+  // a generic trophy.
+  type Presentation = {
     label: string;
     description: string;
     icon: typeof Trophy;
-    unlocked: boolean;
-    progress: number;
-    target: number;
   };
 
-  const milestones = $derived<MilestoneDef[]>([
-    {
-      id: "first-blood",
-      label: "First Blood",
-      description: "Play your first game",
-      icon: Zap,
-      unlocked: stats.gamesPlayed >= 1,
-      progress: Math.min(1, stats.gamesPlayed),
-      target: 1,
-    },
-    {
-      id: "ten-games",
-      label: "Getting Started",
-      description: "Play 10 games",
-      icon: Target,
-      unlocked: stats.gamesPlayed >= 10,
-      progress: Math.min(1, stats.gamesPlayed / 10),
-      target: 10,
-    },
-    {
-      id: "century",
-      label: "Century",
-      description: "Play 100 games",
-      icon: Shield,
-      unlocked: stats.gamesPlayed >= 100,
-      progress: Math.min(1, stats.gamesPlayed / 100),
-      target: 100,
-    },
-    {
-      id: "on-fire",
-      label: "On Fire",
-      description: "Win 5 games in a row",
-      icon: Flame,
-      unlocked: stats.highestWinStreak >= 5,
-      progress: Math.min(1, stats.highestWinStreak / 5),
-      target: 5,
-    },
-    {
-      id: "inferno",
-      label: "Inferno",
-      description: "Win 10 games in a row",
-      icon: Flame,
-      unlocked: stats.highestWinStreak >= 10,
-      progress: Math.min(1, stats.highestWinStreak / 10),
-      target: 10,
-    },
-    {
-      id: "consistent",
-      label: "Consistent",
-      description: "55%+ win rate (50+ games)",
-      icon: Target,
-      unlocked: stats.gamesPlayed >= 50 && stats.winRate >= 55,
-      progress: stats.gamesPlayed >= 50 ? Math.min(1, stats.winRate / 55) : stats.gamesPlayed / 50,
-      target: 1,
-    },
-    {
-      id: "veteran",
-      label: "Veteran",
-      description: "Play 500 games",
-      icon: Crown,
-      unlocked: stats.gamesPlayed >= 500,
-      progress: Math.min(1, stats.gamesPlayed / 500),
-      target: 500,
-    },
-    {
-      id: "dedicated",
-      label: "Dedicated",
-      description: "Play a game today",
-      icon: Clock,
-      unlocked: stats.gamesToday >= 1,
-      progress: Math.min(1, stats.gamesToday / 1),
-      target: 1,
-    },
-    {
-      id: "gladiator",
-      label: "Gladiator",
-      description: "Win 100 games",
-      icon: Swords,
-      unlocked: stats.gamesWon >= 100,
-      progress: Math.min(1, stats.gamesWon / 100),
-      target: 100,
-    },
-    {
-      id: "active-week",
-      label: "Active Week",
-      description: "Play 10 games this week",
-      icon: Clock,
-      unlocked: stats.gamesThisWeek >= 10,
-      progress: Math.min(1, stats.gamesThisWeek / 10),
-      target: 10,
-    },
-  ]);
+  const PRESENTATION: Record<string, Presentation> = {
+    first_blood: { label: "First Blood", description: "Play your first game", icon: Zap },
+    ten_games: { label: "Getting Started", description: "Play 10 games", icon: Target },
+    century: { label: "Century", description: "Play 100 games", icon: Shield },
+    on_fire: { label: "On Fire", description: "Win 5 games in a row", icon: Flame },
+    inferno: { label: "Inferno", description: "Win 10 games in a row", icon: Flame },
+    consistent: { label: "Consistent", description: "55%+ win rate (50+ games)", icon: Target },
+    veteran: { label: "Veteran", description: "Play 500 games", icon: Crown },
+    dedicated: { label: "Dedicated", description: "Play a game today", icon: Clock },
+    gladiator: { label: "Gladiator", description: "Win 100 games", icon: Swords },
+    active_week: { label: "Active Week", description: "Play 10 games this week", icon: Clock },
+  };
 
-  const unlockedCount = $derived(milestones.filter((m) => m.unlocked).length);
-  const totalCount = $derived(milestones.length);
+  const FALLBACK: Presentation = {
+    label: "Achievement",
+    description: "",
+    icon: Trophy,
+  };
+
+  const list = $derived(milestones?.milestones ?? []);
+  const unlockedCount = $derived(list.filter((m) => m.unlocked).length);
+  const totalCount = $derived(list.length);
 </script>
 
 <div class="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
@@ -132,8 +59,9 @@
   </div>
 
   <div class="grid gap-2">
-    {#each milestones as milestone}
-      {@const Icon = milestone.icon}
+    {#each list as milestone (milestone.id)}
+      {@const presentation = PRESENTATION[milestone.id] ?? FALLBACK}
+      {@const Icon = presentation.icon}
       <div
         class={cn(
           "flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors",
@@ -149,10 +77,7 @@
           )}
         >
           <Icon
-            class={cn(
-              "size-4",
-              milestone.unlocked ? "text-amber-300" : "text-slate-600",
-            )}
+            class={cn("size-4", milestone.unlocked ? "text-amber-300" : "text-slate-600")}
           />
         </div>
         <div class="min-w-0 flex-1">
@@ -162,15 +87,15 @@
               milestone.unlocked ? "text-amber-100" : "text-slate-400",
             )}
           >
-            {milestone.label}
+            {presentation.label}
           </p>
-          <p class="text-xs text-slate-500">{milestone.description}</p>
+          <p class="text-xs text-slate-500">{presentation.description}</p>
         </div>
         {#if milestone.unlocked}
           <Trophy class="size-4 shrink-0 text-amber-300" />
         {:else}
           <span class="text-xs tabular-nums text-slate-600">
-            {milestone.progress >= 1 ? "" : `${Math.round(milestone.progress * 100)}%`}
+            {Math.round(Math.min(1, Math.max(0, milestone.progress)) * 100)}%
           </span>
         {/if}
       </div>

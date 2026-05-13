@@ -52,6 +52,7 @@ export const goGoTomagoMechanicalEngineer: CharacterCard = {
           cardType: "character",
           classification: "Floodborn",
           controller: "you",
+          shiftedOntoSelf: true,
         },
         timing: "when",
       },

@@ -66,6 +66,10 @@ const baseProps = {
     { mode: "1" as const, inQueue: 12, liveMatches: 4 },
     { mode: "3" as const, inQueue: 5, liveMatches: 2 },
   ],
+  matchTypeStats: [
+    { matchType: "ranked" as const, inQueue: 0, liveMatches: 0 },
+    { matchType: "casual" as const, inQueue: 17, liveMatches: 6 },
+  ],
   onAcceptMatch: () => {},
   onDeclineMatch: () => {},
 };

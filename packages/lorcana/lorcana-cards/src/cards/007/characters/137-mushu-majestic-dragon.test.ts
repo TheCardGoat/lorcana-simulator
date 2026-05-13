@@ -63,6 +63,7 @@ describe("Mushu - Majestic Dragon", () => {
       expect(testEngine.asPlayerOne().getCardZone(attacker)).toBe("play");
       expect(testEngine.asPlayerOne().getCardZone(defender)).toBe("discard");
       expect(testEngine.asPlayerOne().getDamage(attacker)).toBe(1);
+      expect(testEngine.asPlayerOne().getKeywordValue(attacker, "Resist") ?? 0).toBe(0);
     });
   });
 

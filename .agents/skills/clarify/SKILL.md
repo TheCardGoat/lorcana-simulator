@@ -1,11 +1,6 @@
 ---
-name: clarify
-description: Improve unclear UX copy, error messages, microcopy, labels, and instructions. Makes interfaces easier to understand and use.
-user-invokable: true
-args:
-  - name: target
-    description: The feature or component with unclear copy (optional)
-    required: false
+name: "clarify"
+description: "The feature or component with unclear copy (optional)"
 ---
 
 Identify and improve unclear, confusing, or poorly written interface text to make the product easier to understand and use.
@@ -47,6 +42,7 @@ Create a strategy for clearer communication:
 Refine text across these common areas:
 
 ### Error Messages
+
 **Bad**: "Error 403: Forbidden"
 **Good**: "You don't have permission to view this page. Contact your admin for access."
 
@@ -54,6 +50,7 @@ Refine text across these common areas:
 **Good**: "Email addresses need an @ symbol. Try: name@example.com"
 
 **Principles**:
+
 - Explain what went wrong in plain language
 - Suggest how to fix it
 - Don't blame the user
@@ -61,6 +58,7 @@ Refine text across these common areas:
 - Link to help/support if applicable
 
 ### Form Labels & Instructions
+
 **Bad**: "DOB (MM/DD/YYYY)"
 **Good**: "Date of birth" (with placeholder showing format)
 
@@ -68,6 +66,7 @@ Refine text across these common areas:
 **Good**: "Your email address" or "Company name"
 
 **Principles**:
+
 - Use clear, specific labels (not generic placeholders)
 - Show format expectations with examples
 - Explain why you're asking (when not obvious)
@@ -75,69 +74,83 @@ Refine text across these common areas:
 - Keep required field indicators clear
 
 ### Button & CTA Text
+
 **Bad**: "Click here" | "Submit" | "OK"
 **Good**: "Create account" | "Save changes" | "Got it, thanks"
 
 **Principles**:
+
 - Describe the action specifically
 - Use active voice (verb + noun)
 - Match user's mental model
 - Be specific ("Save" is better than "OK")
 
 ### Help Text & Tooltips
+
 **Bad**: "This is the username field"
 **Good**: "Choose a username. You can change this later in Settings."
 
 **Principles**:
+
 - Add value (don't just repeat the label)
 - Answer the implicit question ("What is this?" or "Why do you need this?")
 - Keep it brief but complete
 - Link to detailed docs if needed
 
 ### Empty States
+
 **Bad**: "No items"
 **Good**: "No projects yet. Create your first project to get started."
 
 **Principles**:
+
 - Explain why it's empty (if not obvious)
 - Show next action clearly
 - Make it welcoming, not dead-end
 
 ### Success Messages
+
 **Bad**: "Success"
 **Good**: "Settings saved! Your changes will take effect immediately."
 
 **Principles**:
+
 - Confirm what happened
 - Explain what happens next (if relevant)
 - Be brief but complete
 - Match the user's emotional moment (celebrate big wins)
 
 ### Loading States
+
 **Bad**: "Loading..." (for 30+ seconds)
 **Good**: "Analyzing your data... this usually takes 30-60 seconds"
 
 **Principles**:
+
 - Set expectations (how long?)
 - Explain what's happening (when it's not obvious)
 - Show progress when possible
 - Offer escape hatch if appropriate ("Cancel")
 
 ### Confirmation Dialogs
+
 **Bad**: "Are you sure?"
 **Good**: "Delete 'Project Alpha'? This can't be undone."
 
 **Principles**:
+
 - State the specific action
 - Explain consequences (especially for destructive actions)
 - Use clear button labels ("Delete project" not "Yes")
 - Don't overuse confirmations (only for risky actions)
 
 ### Navigation & Wayfinding
+
 **Bad**: Generic labels like "Items" | "Things" | "Stuff"
 **Good**: Specific labels like "Your projects" | "Team members" | "Settings"
 
 **Principles**:
+
 - Be specific and descriptive
 - Use language users understand (not internal jargon)
 - Make hierarchy clear
@@ -155,6 +168,7 @@ Every piece of copy should follow these rules:
 6. **Be consistent**: Use same terms throughout (don't vary for variety)
 
 **NEVER**:
+
 - Use jargon without explanation
 - Blame users ("You made an error" → "This field is required")
 - Be vague ("Something went wrong" without explanation)
@@ -177,3 +191,7 @@ Test that copy improvements work:
 - **Tone**: Is it appropriate for the situation?
 
 Remember: You're a clarity expert with excellent communication skills. Write like you're explaining to a smart friend who's unfamiliar with the product. Be clear, be helpful, be human.
+
+## MANUAL MIGRATION REQUIRED
+
+Review unsupported Claude skill fields manually: `args`, `required`, `user-invokable`.

@@ -340,6 +340,7 @@ export interface LorcanaGameContextValue {
   getStandardPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
   getShiftPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
   getSingPlayDisabledReason: (cardId: string) => PlayCardDisabledReason | null;
+  getInkActionDisabledReason: (cardId: string) => string | null;
   challengeReadyCardIds: () => string[];
   moveLogEntries: () => MoveLogEntrySnapshot[];
   pendingResolutionMoves: () => PendingResolutionMoveEntry[];
@@ -1036,6 +1037,26 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     this.#engine?.getShiftPlayDisabledReason(cardId) ?? null;
   readonly getSingPlayDisabledReason = (cardId: string): PlayCardDisabledReason | null =>
     this.#engine?.getSingPlayDisabledReason(cardId) ?? null;
+  readonly getInkActionDisabledReason = (cardId: string): string | null => {
+    const card = this.#cardSnapshotsById[cardId];
+    if (!card || (card.zoneId !== "hand" && card.zoneId !== "discard")) {
+      return null;
+    }
+
+    if (card.inkable === false) {
+      return "This card does not have the inkwell symbol.";
+    }
+
+    const owner = this.#boardSnapshot?.players[card.ownerId];
+    const inkedThisTurn = this.#engine?.getState().G.turnMetadata?.inkedThisTurn ?? [];
+    if (owner?.canAddCardToInkwell === false && inkedThisTurn.length > 0) {
+      return inkedThisTurn.length === 1
+        ? "You already inked a card this turn."
+        : "You already used all of your ink actions this turn.";
+    }
+
+    return null;
+  };
   readonly pendingResolutionMoves = (): PendingResolutionMoveEntry[] =>
     this.#pendingResolutionMoves;
   readonly playableHandCardIds = (): string[] => this.#playableHandCardIds;
@@ -6665,6 +6686,7 @@ export class LorcanaSidebarPresenter {
         getStandardPlayDisabledReason: this.#game.getStandardPlayDisabledReason,
         getShiftPlayDisabledReason: this.#game.getShiftPlayDisabledReason,
         getSingPlayDisabledReason: this.#game.getSingPlayDisabledReason,
+        getInkActionDisabledReason: this.#game.getInkActionDisabledReason,
       },
     });
 

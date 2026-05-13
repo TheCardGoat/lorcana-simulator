@@ -673,7 +673,13 @@ export function resolvePlayCardEffect(
         effect.target,
         getEffectTargetSelectionInput(effect.target, resolutionInput),
       )
-    : [cardPlayed.playerId];
+    : // When no explicit player target is set, default to the chooser of the
+      // wrapping `optional` if one is in flight (e.g. Chernabog — Unnatural
+      // Force's nested "that player may play a character from their discard
+      // for free" runs with chooserPlayerId = opponent). Falling back to
+      // cardPlayed.playerId would source the opponent's "play from discard"
+      // from the original controller's discard.
+      [resolutionInput.chooserPlayerId ?? cardPlayed.playerId];
   const resolvedPlayerIds = targetPlayerIds.length > 0 ? targetPlayerIds : [cardPlayed.playerId];
 
   for (const playerId of resolvedPlayerIds) {
@@ -976,8 +982,25 @@ export function resolvePlayCardEffect(
         emitTriggeredLorcanaEvent(
           ctx,
           "cardPlayed",
-          { playerId, cardId: chosenCardId, cardType, costType },
-          { event: "play", playerId, subjectCardId: chosenCardId },
+          {
+            playerId,
+            cardId: chosenCardId,
+            cardType,
+            costType,
+            // Mirror the playCard move's payload so play triggers gated on the
+            // `used-shift` condition (e.g. Omnidroid — V.9 ENEMY DETECTED) fire
+            // when the effect's shift route plays the card. Without this flag
+            // the condition evaluator falls back to `usedShift === undefined`
+            // and skips the trigger entirely (P1 — bugrepeGnIWtt1Ah-_BPuVw3SPk).
+            usedShift: true,
+            shiftTargetId: shiftTarget,
+          },
+          {
+            event: "play",
+            playerId,
+            subjectCardId: chosenCardId,
+            triggerSourceCardId: chosenCardId,
+          },
         );
       }
 

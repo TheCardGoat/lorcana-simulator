@@ -664,7 +664,7 @@ function confirmPendingAction(): void {
       background 160ms ease;
     overflow: visible;
     isolation: isolate;
-
+    container-type: size;
   }
 
   .seat-lane__content {
@@ -1080,7 +1080,10 @@ function confirmPendingAction(): void {
 
   .bar-zones {
     --bar-row-card-aspect: 1.21927;
-    --bar-row-card-height: 82px;
+    /* Tie ink card height to seat-lane height so ink stays ~half of play-card height.
+   Derivation: play_h ≈ 0.6667 × (lane_h - bar_h - bands); solving for ink_h ≈ 0.5 × play_h
+   gives ink_h ≈ 0.25 × lane_h - 15px. Clamped to keep readable at extremes. */
+    --bar-row-card-height: clamp(36px, calc(25cqh - 15px), 64px);
     --bar-row-card-width: calc(var(--bar-row-card-height) * var(--bar-row-card-aspect));
     --zone-card-height: var(--bar-row-card-height);
     --zone-card-width: var(--bar-row-card-width);
@@ -1197,15 +1200,24 @@ function confirmPendingAction(): void {
       .inkwell-container:not(.inkwell-container--drop-preview):not(.inkwell-container--drop-valid):not(
           .inkwell-container--drop-invalid
         )
-    ),
-  .bar-zone-shell :global(.item-zone) {
+    ) {
     width: 100%;
     height: 100%;
     --ink-card-width: var(--bar-row-card-width);
     --ink-card-height: var(--bar-row-card-height);
     --ink-card-gap: 0.25rem;
-    --item-zone-card-width: var(--bar-row-card-width);
-    --item-zone-card-height: var(--bar-row-card-height);
+    padding: 0;
+    border: none;
+    border-radius: calc(var(--bar-shell-radius) - 2px);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .bar-zone-shell :global(.item-zone) {
+    width: 100%;
+    height: 100%;
+    --item-zone-card-height: clamp(64px, calc(var(--bar-row-card-height) + 24px), 76px);
+    --item-zone-card-width: calc(var(--item-zone-card-height) * var(--bar-row-card-aspect));
     --item-grid-gap: 0.25rem;
     --item-container-padding: 0;
     padding: 0;
@@ -1275,7 +1287,7 @@ function confirmPendingAction(): void {
 
   @media (min-width: 1240px) {
     .bar-zones {
-      --bar-row-card-height: var(--sim-side-zone-card-height, 82px);
+      --bar-row-card-height: var(--sim-side-zone-card-height, clamp(36px, calc(25cqh - 15px), 64px));
       min-height: calc(var(--zone-card-height) + 1.25rem);
       max-height: calc(var(--zone-card-height) + 1.25rem);
       height: calc(var(--zone-card-height) + 1.25rem);

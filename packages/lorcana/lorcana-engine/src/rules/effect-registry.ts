@@ -4,6 +4,7 @@ export type EffectDuration =
   | "this-turn"
   | "next-turn"
   | "their-next-turn"
+  | "during-challenge"
   | "until-start-of-next-turn"
   | "until-end-of-turn"
   | "permanent";

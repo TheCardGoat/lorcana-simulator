@@ -101,6 +101,25 @@ export type PlayerDeckEntry = {
   matchCount: number;
 };
 
+export type Milestone = {
+  id: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+  /**
+   * Normalized progress toward the criterion, in the closed interval [0, 1].
+   * The server clamps server-side via `clamp01(value / target)`, so consumers
+   * can render `progress * 100` directly. `target` below is the raw threshold
+   * (e.g. `5` for "win 5 in a row") shown in copy, not used for normalization.
+   */
+  progress: number;
+  /** Raw threshold magnitude — informational, e.g. `5` for "win 5 in a row". */
+  target: number;
+};
+
+export type MilestonesResponse = {
+  milestones: Milestone[];
+};
+
 export type DeckRundownResponse = {
   decks: PlayerDeckEntry[];
   matchups: DeckMatchupRow[];
