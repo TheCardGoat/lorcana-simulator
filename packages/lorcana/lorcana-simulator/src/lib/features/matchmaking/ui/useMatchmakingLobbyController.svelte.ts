@@ -340,6 +340,7 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
   #initialGatewayTicket: string | null = null;
   #initialGatewayAuthToken: string | null = null;
   #initialMatchmakingStatus: MatchmakingStatusResponse | null = null;
+  #gatewayAuthRefreshPromise: Promise<boolean> | null = null;
 
   constructor(options: MatchmakingLobbyControllerOptions, deps: ControllerDeps) {
     this.initialLeaderboards = options.initialLeaderboards ?? null;
@@ -930,6 +931,8 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
       return;
     }
 
+    await this.#ensureAuthenticatedGatewayForQueue();
+
     await this.queueStore.join({
       gameProfileId: activeProfile.gameProfileId,
       format: this.selectedQueueFormat,
@@ -1356,6 +1359,37 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
     this.#gateway = this.#createGateway(ticket, token);
   }
 
+  async #ensureAuthenticatedGatewayForQueue(): Promise<boolean> {
+    if (!this.#deps.authSession.isAuthenticated) {
+      return false;
+    }
+
+    if (this.gateway.authenticated) {
+      return true;
+    }
+
+    if (this.gateway.authMethod !== "anonymous" && !this.gateway.authError) {
+      return true;
+    }
+
+    if (!this.#gatewayAuthRefreshPromise) {
+      this.#gatewayAuthRefreshPromise = (async () => {
+        const result = await this.#fetchGatewayTicket();
+        if (!result?.ticket) {
+          return false;
+        }
+
+        this.#replaceGateway(result.ticket, result.authToken);
+        this.gateway.connect();
+        return true;
+      })().finally(() => {
+        this.#gatewayAuthRefreshPromise = null;
+      });
+    }
+
+    return this.#gatewayAuthRefreshPromise;
+  }
+
   async #fetchGatewayTicket(): Promise<GatewayTicketResult | null> {
     try {
       return await this.#deps.fetchGatewayTicket();
@@ -1374,6 +1408,15 @@ class MatchmakingLobbyControllerImpl implements MatchmakingLobbyController {
 
   #requestMatchmakingPollIfQueued(): void {
     if (this.queueStore.status === "queued" || this.queueStore.status === "match_ready") {
+      if (
+        this.#deps.authSession.isAuthenticated &&
+        !this.gateway.authenticated &&
+        this.gateway.authMethod === "anonymous"
+      ) {
+        void this.#ensureAuthenticatedGatewayForQueue();
+        return;
+      }
+
       this.gateway.send({ type: "matchmaking_poll" });
     }
   }

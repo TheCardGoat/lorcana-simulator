@@ -152,8 +152,12 @@ class FakeGatewayClientStore {
 
   url: string;
   ticket?: string;
+  token?: string;
   onGameMessage?: (msg: { type: string; [key: string]: unknown }) => void;
   onOpen?: () => void;
+  authenticated = false;
+  authError = false;
+  authMethod: "ticket" | "token" | "anonymous";
 
   connect = mock(() => {});
   destroy = mock(() => {});
@@ -164,11 +168,14 @@ class FakeGatewayClientStore {
     ticket?: string,
     onGameMessage?: (msg: { type: string; [key: string]: unknown }) => void,
     onOpen?: () => void,
+    token?: string,
   ) {
     this.url = url;
     this.ticket = ticket;
+    this.token = token;
     this.onGameMessage = onGameMessage;
     this.onOpen = onOpen;
+    this.authMethod = ticket ? "ticket" : token ? "token" : "anonymous";
     FakeGatewayClientStore.instances.push(this);
   }
 }
@@ -439,6 +446,22 @@ describe("createMatchmakingLobbyController", () => {
     expect((controller.queueStore as unknown as FakeQueueStore).join).not.toHaveBeenCalled();
   });
 
+  it("upgrades an anonymous gateway before queue polling after join", async () => {
+    const controller = createController();
+    const anonymousGateway = controller.gateway as unknown as FakeGatewayClientStore;
+
+    await controller.handleJoinQueue();
+
+    expect(fetchGatewayTicket).toHaveBeenCalledTimes(1);
+    expect(anonymousGateway.destroy).toHaveBeenCalledTimes(1);
+    const upgradedGateway = FakeGatewayClientStore.instances.at(-1);
+    expect(upgradedGateway?.ticket).toBe("ticket-123");
+    expect(upgradedGateway?.token).toBe("auth-token-456");
+    expect(upgradedGateway?.connect).toHaveBeenCalledTimes(1);
+    expect(upgradedGateway?.send).toHaveBeenCalledWith({ type: "matchmaking_poll" });
+    expect(anonymousGateway.send).not.toHaveBeenCalled();
+  });
+
   it("captures the queued deck and polls the gateway after a successful join", async () => {
     const controller = createController();
 
@@ -447,7 +470,7 @@ describe("createMatchmakingLobbyController", () => {
     expect(
       (controller.queueStore as unknown as FakeQueueStore).captureQueuedDeck,
     ).toHaveBeenCalledWith("deck-list-1");
-    expect(FakeGatewayClientStore.instances[0]?.send).toHaveBeenCalledWith({
+    expect(FakeGatewayClientStore.instances.at(-1)?.send).toHaveBeenCalledWith({
       type: "matchmaking_poll",
     });
   });
