@@ -113,7 +113,7 @@
           card={location}
           onSelect={(selectedCard, event) => handleDirectCardSelection(selectedCard, event)}
           useContainerSize
-          imageFormat={ZONE_IMAGE_FORMATS.play}
+          imageFormat="full"
           hoverShowActions
           hideStatBadges
           hideSupplementalBadges
@@ -200,7 +200,8 @@
 
 <style>
   .location-cluster {
-    --location-card-height: calc(var(--zone-card-width) / var(--card-aspect));
+    --location-card-aspect: 0.7168;
+    --location-card-height: calc(var(--zone-card-width) / var(--location-card-aspect));
     --location-dock-border: rgba(178, 214, 139, 0.24);
     --location-dock-surface: rgba(29, 48, 31, 0.58);
     --location-dock-rail: rgba(15, 34, 50, 0.5);
