@@ -132,6 +132,18 @@ const cards = {
     keywords: ["Bodyguard"],
     facePresentation: "faceUp",
   },
+  mayEnterExerted: {
+    cardId: "mayEnterExerted",
+    definitionId: "def-may-enter-exerted",
+    isMasked: false,
+    label: "Mickey Mouse - Expedition Leader",
+    ownerId: "player_one",
+    ownerSide: "playerOne",
+    zoneId: "hand",
+    cardType: "character",
+    mayEnterPlayExertedOption: true,
+    facePresentation: "faceUp",
+  },
   forcedBodyguard: {
     cardId: "forcedBodyguard",
     definitionId: "def-forced-bodyguard",
@@ -254,6 +266,31 @@ describe("buildExecutableMoves", () => {
     expect(entries.map((entry) => entry.params)).toEqual([
       { cardId: "bodyguard", cost: "standard" },
       { cardId: "bodyguard", cost: "standard", resolveOptional: true },
+    ]);
+    expect(entries.map((entry) => entry.presentation)).toEqual([
+      expect.objectContaining({
+        optionLabel: "Play Ready",
+      }),
+      expect.objectContaining({
+        optionLabel: "Play Exerted",
+      }),
+    ]);
+  });
+
+  it("expands non-Bodyguard may-enter-play-exerted character play into ready and exerted variants", () => {
+    const engine = createStubEngine({ moveOptions: { mayEnterExerted: [] } });
+
+    const entries = buildExecutableMoves(
+      engine,
+      cards,
+      [createAvailableMove("playCard", ["mayEnterExerted"])],
+      [],
+    );
+
+    expect(entries).toHaveLength(2);
+    expect(entries.map((entry) => entry.params)).toEqual([
+      { cardId: "mayEnterExerted", cost: "standard" },
+      { cardId: "mayEnterExerted", cost: "standard", resolveOptional: true },
     ]);
     expect(entries.map((entry) => entry.presentation)).toEqual([
       expect.objectContaining({
