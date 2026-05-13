@@ -126,6 +126,11 @@ export interface WebVitalParams {
 }
 export interface WsLatencySampleParams {
   latency_ms: number;
+  namespace: string;
+  authenticated: boolean;
+  connection_auth_state: "authenticated" | "anonymous";
+  /** Disconnect transitions observed since the previous latency sample. */
+  disconnects_since_last_probe: number;
 }
 export interface TimeToFirstMoveParams {
   duration_ms: number;
