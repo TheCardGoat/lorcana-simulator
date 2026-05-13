@@ -42,7 +42,7 @@ export const mushuMajesticDragon: CharacterCard = {
         target: { ref: "trigger-subject" },
         type: "gain-keyword",
         value: 2,
-        duration: "this-turn",
+        duration: "during-challenge",
       },
       id: "bra-1",
       name: "INTIMIDATING AND AWE-INSPIRING",

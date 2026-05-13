@@ -17,6 +17,7 @@ import {
   recordChallengedCharacterThisTurn,
 } from "../../state/turn-metrics";
 import { hasTemporaryAbility as hasTempAbility } from "../../effects/temporary-effects";
+import { pruneTemporaryEffectsByDuration } from "../../effects/temporary-effects";
 import { applyReplacementEffects } from "../../effects/replacement-effects";
 import {
   emitTriggeredLorcanaEvent,
@@ -95,6 +96,20 @@ function consumeTemporaryAbility(
     temporaryAbilityPayloads:
       Object.keys(temporaryAbilityPayloads).length > 0 ? temporaryAbilityPayloads : undefined,
   });
+}
+
+function pruneChallengeDurationEffects(ctx: ChallengeContinuationContext): void {
+  const participantIds = [ctx.G.challengeState?.attacker, ctx.G.challengeState?.defender].filter(
+    (id): id is CardInstanceId => typeof id === "string",
+  );
+
+  for (const cardId of participantIds) {
+    const card = ctx.cards.require(cardId);
+    const prunedMeta = pruneTemporaryEffectsByDuration(card.meta, "during-challenge");
+    if (prunedMeta && prunedMeta !== card.meta) {
+      ctx.cards.patchMeta(cardId, prunedMeta);
+    }
+  }
 }
 
 function getClassificationsBeforeBanish(
@@ -487,6 +502,7 @@ export function continuePendingChallengeResolution(ctx: ChallengeContinuationCon
     !ctx.framework.state.priority.pendingChoice &&
     (ctx.G.pendingEffects?.length ?? 0) === 0
   ) {
+    pruneChallengeDurationEffects(ctx);
     setChallengeState(ctx, undefined);
   }
 }

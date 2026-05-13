@@ -378,6 +378,13 @@ function shouldAllowSnapshotCandidate(
   if (candidate.sourceId !== event.subjectCardId) {
     return true;
   }
+  if (
+    event.event === "banish-in-challenge" &&
+    candidate.ability.trigger?.on === "OTHER_CHARACTERS" &&
+    event.triggerSourceCardId !== candidate.sourceId
+  ) {
+    return true;
+  }
 
   // A card entering play cannot observe its own entry through a non-SELF trigger.
   // "Whenever you play a character" requires the observer to already be in play.
@@ -764,6 +771,16 @@ function queryMatchesSubject(
     return false;
   }
 
+  if (subject.shiftedOntoSelf === true) {
+    if (
+      event.event !== "play" ||
+      event.cardPlayed?.usedShift !== true ||
+      event.cardPlayed.shiftTargetId !== candidate.sourceId
+    ) {
+      return false;
+    }
+  }
+
   if (subject.controller === "you" && ownerId !== candidate.controllerId) {
     return false;
   }
@@ -984,7 +1001,10 @@ function subjectMatches(
   event: PendingTriggeredEvent,
   subject: TriggerSubject | undefined,
 ): boolean {
-  const subjectCardId = event.subjectCardId;
+  const subjectCardId =
+    event.event === "banish-in-challenge" && subject === "OTHER_CHARACTERS"
+      ? (event.triggerSourceCardId ?? event.subjectCardId)
+      : event.subjectCardId;
   const subjectOwnerId = getCardOwnerId(ctx, subjectCardId);
   const subjectCardType = getCardType(ctx, subjectCardId);
 
