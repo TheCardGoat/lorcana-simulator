@@ -25,6 +25,7 @@ import type {
 import type { BoardAnimationPlaceholder } from "@/features/simulator/animations/animation-orchestrator.svelte.js";
 import type { ResolvedQuestAnimation } from "@/features/simulator/animations/quest-animations.js";
 import type { ResolvedChallengeAnimation } from "@/features/simulator/animations/challenge-animations.js";
+import type { ResolvedActionAnimation } from "@/features/simulator/animations/action-animations.js";
 import type { ResolvedOverlayAnnouncement } from "@/features/simulator/animations/overlay-announcement-animations.js";
 import type { ResolvedCardEffectAnimation } from "@/features/simulator/animations/card-effect-animations.js";
 import type {
@@ -75,6 +76,10 @@ export class LorcanaBoardPresenter {
     this.#game.onChallengeAnimationFinished(animationId);
   }
 
+  onActionAnimationFinished(animationId: string): void {
+    this.#game.onActionAnimationFinished(animationId);
+  }
+
   onCardEffectAnimationFinished(animationId: string): void {
     this.#game.onCardEffectAnimationFinished(animationId);
   }
@@ -105,6 +110,10 @@ export class LorcanaBoardPresenter {
 
   get challengeAnimations(): ResolvedChallengeAnimation[] {
     return this.#game.challengeAnimations();
+  }
+
+  get actionAnimations(): ResolvedActionAnimation[] {
+    return this.#game.actionAnimations();
   }
 
   get overlayAnnouncements(): ResolvedOverlayAnnouncement[] {

@@ -168,6 +168,10 @@ import {
   type ResolvedChallengeAnimation,
 } from "@/features/simulator/animations/challenge-animations.js";
 import {
+  deriveResolvedActionAnimationsFromPacket,
+  type ResolvedActionAnimation,
+} from "@/features/simulator/animations/action-animations.js";
+import {
   deriveQueuedOverlayAnnouncementsFromPacket,
   type ResolvedOverlayAnnouncement,
 } from "@/features/simulator/animations/overlay-announcement-animations.js";
@@ -363,6 +367,7 @@ export interface LorcanaGameContextValue {
   animations: () => ResolvedBoardMoveAnimation[];
   questAnimations: () => ResolvedQuestAnimation[];
   challengeAnimations: () => ResolvedChallengeAnimation[];
+  actionAnimations: () => ResolvedActionAnimation[];
   overlayAnnouncements: () => ResolvedOverlayAnnouncement[];
   cardEffectAnimations: () => ResolvedCardEffectAnimation[];
   activePlayerEffectTargets: () => ReadonlySet<LorcanaPlayerSide>;
@@ -392,6 +397,7 @@ export interface LorcanaGameContextValue {
   onBoardAnimationFinished: (animationId: string) => void;
   onQuestAnimationFinished: (animationId: string) => void;
   onChallengeAnimationFinished: (animationId: string) => void;
+  onActionAnimationFinished: (animationId: string) => void;
   onCardEffectAnimationFinished: (animationId: string) => void;
   onOverlayAnnouncementFinished: (animationId: string) => void;
   getOwnerIdForSide: (side: LorcanaPlayerSide) => string | null;
@@ -739,6 +745,8 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
   #questAnimationTimeouts: ReturnType<typeof setTimeout>[] = [];
   #activeChallengeAnimations = $state<ResolvedChallengeAnimation[]>([]);
   #challengeAnimationTimeouts: ReturnType<typeof setTimeout>[] = [];
+  #activeActionAnimations = $state<ResolvedActionAnimation[]>([]);
+  #actionAnimationTimeouts: ReturnType<typeof setTimeout>[] = [];
   #activeOverlayAnnouncements = $state<ResolvedOverlayAnnouncement[]>([]);
   #overlayAnnouncementTimeouts: ReturnType<typeof setTimeout>[] = [];
   #activeCardEffectAnimations = $state<ResolvedCardEffectAnimation[]>([]);
@@ -1082,6 +1090,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
   readonly questAnimations = (): ResolvedQuestAnimation[] => this.#activeQuestAnimations;
   readonly challengeAnimations = (): ResolvedChallengeAnimation[] =>
     this.#activeChallengeAnimations;
+  readonly actionAnimations = (): ResolvedActionAnimation[] => this.#activeActionAnimations;
   readonly overlayAnnouncements = (): ResolvedOverlayAnnouncement[] =>
     this.#activeOverlayAnnouncements;
   readonly cardEffectAnimations = (): ResolvedCardEffectAnimation[] =>
@@ -1505,6 +1514,10 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     );
   };
 
+  readonly onActionAnimationFinished = (animationId: string): void => {
+    this.#activeActionAnimations = this.#activeActionAnimations.filter((a) => a.id !== animationId);
+  };
+
   readonly onCardEffectAnimationFinished = (animationId: string): void => {
     this.#activeCardEffectAnimations = this.#activeCardEffectAnimations.filter(
       (a) => a.id !== animationId,
@@ -1883,6 +1896,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     this.#clearBoardAnimationTimer();
     this.#clearQuestAnimationTimers();
     this.#clearChallengeAnimationTimers();
+    this.#clearActionAnimationTimers();
     this.#clearOverlayAnnouncementTimers();
     this.#clearCardEffectAnimationTimers();
     this.#clearPlayerEffectAnimationTimers();
@@ -1892,6 +1906,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
     this.#playedPacketAnimationIds = [];
     this.#activeQuestAnimations = [];
     this.#activeChallengeAnimations = [];
+    this.#activeActionAnimations = [];
     this.#activeOverlayAnnouncements = [];
     this.#activeCardEffectAnimations = [];
     this.#activePlayerEffectTargets = new Set();
@@ -1916,6 +1931,13 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       clearTimeout(timeout);
     }
     this.#challengeAnimationTimeouts = [];
+  }
+
+  #clearActionAnimationTimers(): void {
+    for (const timeout of this.#actionAnimationTimeouts) {
+      clearTimeout(timeout);
+    }
+    this.#actionAnimationTimeouts = [];
   }
 
   #clearOverlayAnnouncementTimers(): void {
@@ -1964,6 +1986,35 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
           this.#challengeAnimationTimeouts.push(clearId);
         }, delay);
         this.#challengeAnimationTimeouts.push(staggerId);
+      }
+    }
+  }
+
+  #fireActionAnimations(animations: ResolvedActionAnimation[]): void {
+    if (animations.length === 0) {
+      return;
+    }
+
+    const STAGGER_MS = 50;
+
+    for (let i = 0; i < animations.length; i++) {
+      const animation = animations[i];
+      const delay = i * STAGGER_MS;
+      const showAnimation = (): void => {
+        this.#activeActionAnimations = [...this.#activeActionAnimations, animation];
+        const clearId = setTimeout(() => {
+          this.#activeActionAnimations = this.#activeActionAnimations.filter(
+            (a) => a.id !== animation.id,
+          );
+        }, animation.durationMs);
+        this.#actionAnimationTimeouts.push(clearId);
+      };
+
+      if (delay === 0) {
+        showAnimation();
+      } else {
+        const staggerId = setTimeout(showAnimation, delay);
+        this.#actionAnimationTimeouts.push(staggerId);
       }
     }
   }
@@ -2572,6 +2623,12 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
           packetUpdate,
           CHALLENGE_ANIMATION_DURATION_MS[this.#animationSpeed],
         );
+    const nextResolvedActionAnimations = animationsOff
+      ? []
+      : deriveResolvedActionAnimationsFromPacket(
+          packetUpdate,
+          CHALLENGE_ANIMATION_DURATION_MS[this.#animationSpeed],
+        );
     const nextQueuedOverlayAnnouncements = animationsOff
       ? []
       : deriveQueuedOverlayAnnouncementsFromPacket(
@@ -2652,9 +2709,14 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       nextQueuedAnimations.length > 0 ||
       nextQueuedQuestAnimations.length > 0 ||
       nextQueuedChallengeAnimations.length > 0 ||
+      nextResolvedActionAnimations.length > 0 ||
       nextQueuedCardEffectAnimations.length > 0 ||
       nextQueuedOverlayAnnouncements.length > 0 ||
       nextQueuedPlayerEffectAnimations.length > 0;
+
+    if (nextResolvedActionAnimations.length > 0) {
+      this.#fireActionAnimations(nextResolvedActionAnimations);
+    }
 
     // Prefer ingesting based on unseen packet animations rather than only on local
     // engine state bumps. In browser-harness / async transport flows the read-model
@@ -2676,6 +2738,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       ...nextQueuedAnimations.map((a) => a.id),
       ...nextQueuedQuestAnimations.map((a) => a.id),
       ...nextQueuedChallengeAnimations.map((a) => a.id),
+      ...nextResolvedActionAnimations.map((a) => a.id),
       ...nextQueuedOverlayAnnouncements.map((a) => a.id),
       ...nextQueuedCardEffectAnimations.map((a) => a.id),
       ...nextQueuedPlayerEffectAnimations.map((a) => a.id),
