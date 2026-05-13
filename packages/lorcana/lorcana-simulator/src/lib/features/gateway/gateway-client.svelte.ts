@@ -28,6 +28,7 @@ export class GatewayClientStore {
   statusChangedAt: number = $state(Date.now());
   /** Auth method being attempted: ticket, token, or anonymous. */
   readonly authMethod: "ticket" | "token" | "anonymous";
+  readonly namespace = "/lorcana";
 
   private client: GatewayClient;
   #previousStatus: ConnectionStatus = "idle";
@@ -37,6 +38,8 @@ export class GatewayClientStore {
   #lastLatencySampleAt = 0;
   /** Disconnect transitions observed since the last sample emit. */
   #disconnectCount = 0;
+  /** Disconnect transitions observed since the last latency sample. */
+  #disconnectsSinceLastLatencySample = 0;
   #disconnectSampleTimer: ReturnType<typeof setInterval> | null = null;
   static readonly DISCONNECT_SAMPLE_WINDOW_MS = 60_000;
 
@@ -140,6 +143,7 @@ export class GatewayClientStore {
       }
     } else if (state.status === "disconnected" && prevStatus === "connected") {
       this.#disconnectCount += 1;
+      this.#disconnectsSinceLastLatencySample += 1;
       trackEvent("ws_disconnect", { reason: state.error ? "connection_error" : "closed" });
     } else if (
       state.status === "disconnected" &&
@@ -158,8 +162,16 @@ export class GatewayClientStore {
     if (state.status === "connected" && state.latencyMs != null) {
       const now = Date.now();
       if (now - this.#lastLatencySampleAt >= 30_000) {
+        const disconnectsSinceLastProbe = this.#disconnectsSinceLastLatencySample;
         this.#lastLatencySampleAt = now;
-        trackEvent("ws_latency_sample", { latency_ms: state.latencyMs });
+        this.#disconnectsSinceLastLatencySample = 0;
+        trackEvent("ws_latency_sample", {
+          latency_ms: state.latencyMs,
+          namespace: this.namespace,
+          authenticated: state.authenticated,
+          connection_auth_state: state.authenticated ? "authenticated" : "anonymous",
+          disconnects_since_last_probe: disconnectsSinceLastProbe,
+        });
       }
     }
 
