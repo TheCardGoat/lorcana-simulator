@@ -138,7 +138,11 @@ export type StrategyDecisionLogEntry = AutomatedActionDecisionTrace & {
 };
 
 export type QuestionableDecision = {
-  category: "challenge-over-quest" | "traded-last-quester" | "inked-key-card";
+  category:
+    | "suicide-challenge"
+    | "low-value-challenge"
+    | "traded-last-quester"
+    | "inked-key-card";
   matchId: string;
   moveNumber: number;
   turnNumber: number;
@@ -946,8 +950,9 @@ function countChallengeOverQuest(entries: readonly StrategyDecisionLogEntry[]): 
 }
 
 const QUESTIONABLE_CATEGORY_SEVERITY: Record<QuestionableDecision["category"], number> = {
-  "challenge-over-quest": 3,
-  "traded-last-quester": 2,
+  "suicide-challenge": 4,
+  "traded-last-quester": 3,
+  "low-value-challenge": 2,
   "inked-key-card": 1,
 };
 
@@ -966,24 +971,83 @@ function buildMatchDecisionAnalysis(
   for (const entry of entries) {
     const selectedFamily = entry.selectedCandidate?.family;
 
-    // challenge-over-quest
+    // challenge-vs-quest analysis: split into suicide-challenge (clear
+    // mistake) and low-value-challenge (debatable trade), so the digest can
+    // distinguish bugs from judgment calls.
     if (
       selectedFamily === "challenge" &&
-      entry.orderedCandidates.some((candidate) => candidate.family === "quest")
+      entry.orderedCandidates.some((candidate) => candidate.family === "quest") &&
+      entry.selectedCandidate
     ) {
-      const loreTotals = entry.boardSnapshot.loreTotals;
-      const loreValues = Object.values(loreTotals) as number[];
-      const maxLore = Math.max(...loreValues);
-      const minLore = Math.min(...loreValues);
-      const loreDeficit = maxLore - minLore;
+      const heuristics = entry.selectedCandidate.heuristics;
+      const findNumber = (key: string): number | undefined => {
+        const found = heuristics.find((heuristic) => heuristic.key === key);
+        return typeof found?.value === "number" ? found.value : undefined;
+      };
+      const findBoolean = (key: string): boolean | undefined => {
+        const found = heuristics.find((heuristic) => heuristic.key === key);
+        return typeof found?.value === "boolean" ? found.value : undefined;
+      };
+      const attackerSurvives = findBoolean("challengeAttackerSurvives");
+      const loreSwing = findNumber("challengeLoreSwing");
+      const attackerLore = findNumber("challengeAttackerLore");
+      const defenderLore = findNumber("challengeDefenderLore");
+      const loreTotals = entry.boardSnapshot.loreTotals as Record<string, number>;
+      const opponentLore = Object.entries(loreTotals).reduce(
+        (max, [playerId, score]) =>
+          playerId !== entry.actorId && (score ?? 0) > max ? (score ?? 0) : max,
+        0,
+      );
+      // Suppress suicide-challenge flags when the opponent is at true
+      // end-game (≥15 lore): the strategy deliberately permits defensive
+      // banish-trades there to buy a critical turn. Also suppress the
+      // matchup-aware `attackerLore≥2 && opp≥10` window — the anti-suicide
+      // guard in challenge.ts leaves those to card-rule and mode logic.
+      const isIntentionalEndGameTrade =
+        opponentLore >= 15 ||
+        ((attackerLore ?? 0) >= 2 && opponentLore >= 10);
 
-      decisions.push({
-        category: "challenge-over-quest",
-        matchId,
-        moveNumber: entry.moveNumber,
-        turnNumber: entry.turnNumber,
-        reason: `Challenged instead of questing (lore: ${loreValues.join(" vs ")}, deficit: ${loreDeficit})`,
-      });
+      if (
+        attackerSurvives === false &&
+        loreSwing !== undefined &&
+        loreSwing <= 0 &&
+        attackerLore !== undefined &&
+        attackerLore > 0 &&
+        !isIntentionalEndGameTrade
+      ) {
+        decisions.push({
+          category: "suicide-challenge",
+          matchId,
+          moveNumber: entry.moveNumber,
+          turnNumber: entry.turnNumber,
+          reason: `Self-banished a ${attackerLore}-lore quester for non-positive swing (swing: ${loreSwing}, defender lore: ${defenderLore ?? "?"}, opp lore: ${opponentLore})`,
+        });
+      } else if (
+        attackerSurvives === true &&
+        loreSwing !== undefined &&
+        attackerLore !== undefined &&
+        defenderLore !== undefined &&
+        attackerLore > 0 &&
+        loreSwing < attackerLore &&
+        // Only flag when the defender's lore is strictly smaller than the
+        // attacker's: equal-lore trades that banish the defender are
+        // net-positive long-term (challenge gains `attackerLore` next turn
+        // while opp can't quest with the banished defender), so the bot's
+        // call is defensible even though `swing < attackerLore` for one turn.
+        defenderLore < attackerLore &&
+        // Skip end-game defensive trades — when opp is one turn from
+        // winning, any banish-trade buys time and the strategy intentionally
+        // permits the lore-suboptimal play.
+        opponentLore < 15
+      ) {
+        decisions.push({
+          category: "low-value-challenge",
+          matchId,
+          moveNumber: entry.moveNumber,
+          turnNumber: entry.turnNumber,
+          reason: `Challenged for swing ${loreSwing} instead of questing for ${attackerLore} (defender lore: ${defenderLore}, opp lore: ${opponentLore})`,
+        });
+      }
     }
 
     // traded-last-quester
@@ -1013,27 +1077,67 @@ function buildMatchDecisionAnalysis(
       }
     }
 
-    // inked-key-card
+    // inked-key-card: suppress when (a) the matchup explicitly favours
+    // inking this card (positive `matchupInk:<definitionId>` contributor —
+    // the deck-profile encodes intentional matchup overrides, e.g. Pete in
+    // sapphire-steel vs amber-steel ramps), or (b) every ink candidate is a
+    // key card, meaning the bot had no non-key alternative and was forced
+    // to ink the least-bad option.
     if (
       selectedFamily === "putCardIntoInkwell" &&
       entry.selectedCandidate?.sourceDefinitionId &&
       KEY_CARD_DEFINITION_IDS.has(entry.selectedCandidate.sourceDefinitionId)
     ) {
-      const profile = BEST_AI_CARD_PROFILES.find(
-        (p) => p.definitionId === entry.selectedCandidate?.sourceDefinitionId,
+      const definitionId = entry.selectedCandidate.sourceDefinitionId;
+      const matchupInkKey = `matchupInk:${definitionId}`;
+      const matchupOverrideValue = entry.selectedCandidate.contributors.find(
+        (contributor) => contributor.key === matchupInkKey,
+      )?.value;
+      const isMatchupDrivenInk =
+        typeof matchupOverrideValue === "number" && matchupOverrideValue > 0;
+      const inkCandidates = entry.orderedCandidates.filter(
+        (candidate) => candidate.family === "putCardIntoInkwell",
       );
+      // A candidate is "ink-averse" if it's in the curated key-card profile
+      // registry OR carries an `inkAvoid` role contributor. The deck-profile
+      // tags many engine cards with `inkAvoid` even when they don't have a
+      // standalone profile entry — flagging on those is just as much a
+      // forced-ink situation.
+      const isInkAverseCandidate = (candidate: {
+        sourceDefinitionId?: string;
+        contributors: ReadonlyArray<{ key: string; value: number | boolean | string }>;
+      }): boolean => {
+        if (
+          candidate.sourceDefinitionId !== undefined &&
+          KEY_CARD_DEFINITION_IDS.has(candidate.sourceDefinitionId)
+        ) {
+          return true;
+        }
+        return candidate.contributors.some(
+          (contributor) =>
+            contributor.key === "inkAvoid" &&
+            typeof contributor.value === "number" &&
+            contributor.value < 0,
+        );
+      };
+      const everyInkCandidateIsKey =
+        inkCandidates.length > 0 && inkCandidates.every(isInkAverseCandidate);
 
-      decisions.push({
-        category: "inked-key-card",
-        matchId,
-        moveNumber: entry.moveNumber,
-        turnNumber: entry.turnNumber,
-        reason: `Inked key card ${profile?.label ?? entry.selectedCandidate.sourceDefinitionId} (ink adjust: ${profile?.baseAdjust?.ink ?? "n/a"})`,
-      });
+      if (!isMatchupDrivenInk && !everyInkCandidateIsKey) {
+        const profile = BEST_AI_CARD_PROFILES.find((p) => p.definitionId === definitionId);
+
+        decisions.push({
+          category: "inked-key-card",
+          matchId,
+          moveNumber: entry.moveNumber,
+          turnNumber: entry.turnNumber,
+          reason: `Inked key card ${profile?.label ?? definitionId} (ink adjust: ${profile?.baseAdjust?.ink ?? "n/a"})`,
+        });
+      }
     }
   }
 
-  // Sort by severity (highest first), then by lore deficit for challenge-over-quest
+  // Sort by severity (highest first), then by move number
   decisions.sort((a, b) => {
     const severityDiff =
       QUESTIONABLE_CATEGORY_SEVERITY[b.category] - QUESTIONABLE_CATEGORY_SEVERITY[a.category];
