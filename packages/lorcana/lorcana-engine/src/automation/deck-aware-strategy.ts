@@ -347,7 +347,7 @@ function resolveBestAiAxisAdjustment(args: {
   context: AutomatedActionPlanningContext;
   definitionId?: string;
 }): BestAiAxisAdjustment {
-  if (!args.config.useBestAiRules || !args.definitionId) {
+  if (!args.definitionId) {
     return {
       contributors: [],
       matchedRuleIds: [],
@@ -370,6 +370,11 @@ function resolveBestAiAxisAdjustment(args: {
 
   const contributors: Contribution[] = [];
   let score = 0;
+  // `baseAdjust` is always-true per-card policy (e.g. Pete's `ink: -1`
+  // says "this card is too valuable to ink in any matchup"). Apply it
+  // unconditionally — the per-card profile is the right layer for these
+  // matchup-agnostic biases, and gating it behind `useBestAiRules`
+  // silently stripped them from the promoted default strategy.
   const baseValue = evaluation.baseAdjust[args.axis] ?? 0;
   if (baseValue !== 0) {
     contributors.push({
@@ -383,29 +388,35 @@ function resolveBestAiAxisAdjustment(args: {
     score += baseValue;
   }
 
-  for (const rule of evaluation.matchedRules) {
-    const value = rule.adjust[args.axis] ?? 0;
-    if (value === 0) {
-      continue;
-    }
+  // Matchup-specific `matchedRules` remain candidate-tier (gated by
+  // `useBestAiRules`) — those encode opinionated matchup adjustments that
+  // are still being tuned against the default baseline.
+  const includeMatchedRules = args.config.useBestAiRules === true;
+  if (includeMatchedRules) {
+    for (const rule of evaluation.matchedRules) {
+      const value = rule.adjust[args.axis] ?? 0;
+      if (value === 0) {
+        continue;
+      }
 
-    contributors.push({
-      axis: args.axis,
-      key: `${args.axis}Rule:${rule.id}`,
-      reason: rule.reason,
-      ruleId: rule.id,
-      source: "card-rule",
-      strategyTags: rule.strategyTags,
-      value,
-    });
-    score += value;
+      contributors.push({
+        axis: args.axis,
+        key: `${args.axis}Rule:${rule.id}`,
+        reason: rule.reason,
+        ruleId: rule.id,
+        source: "card-rule",
+        strategyTags: rule.strategyTags,
+        value,
+      });
+      score += value;
+    }
   }
 
   return {
     contributors,
-    matchedRuleIds: evaluation.matchedRuleIds,
+    matchedRuleIds: includeMatchedRules ? evaluation.matchedRuleIds : [],
     score,
-    targetPreference: evaluation.targetPreference,
+    targetPreference: includeMatchedRules ? evaluation.targetPreference : undefined,
   };
 }
 
