@@ -8,11 +8,19 @@
 	let joinDiscordServer = $state(true);
 	let discordError = $state<string | null>(null);
 	let metafyError = $state<string | null>(null);
+	let emailAuthError = $state<string | null>(null);
+	let emailAuthMode = $state<"sign-in" | "sign-up">("sign-in");
+	let email = $state("");
+	let password = $state("");
+	let displayName = $state("");
+	let emailAuthLoading = $state(false);
 	const showMetafySignIn = import.meta.env.DEV;
+	const showDevEmailPasswordSignIn = import.meta.env.DEV;
 
 	async function handleDiscordSignIn() {
 		discordError = null;
 		metafyError = null;
+		emailAuthError = null;
 		try {
 			await authSession.signInWithDiscord({ joinGuild: joinDiscordServer });
 		} catch (error) {
@@ -24,12 +32,34 @@
 	async function handleMetafySignIn() {
 		discordError = null;
 		metafyError = null;
+		emailAuthError = null;
 		try {
 			await authSession.signInWithMetafy();
 		} catch (error) {
 			console.error("Metafy sign-in failed:", error);
 			metafyError =
 				error instanceof Error ? error.message : "Metafy sign-in failed.";
+		}
+	}
+
+	async function handleEmailAuth() {
+		discordError = null;
+		metafyError = null;
+		emailAuthError = null;
+		emailAuthLoading = true;
+		try {
+			const input = { email, password, name: displayName };
+			if (emailAuthMode === "sign-up") {
+				await authSession.signUpWithEmail(input);
+			} else {
+				await authSession.signInWithEmail(input);
+			}
+			open = false;
+		} catch (error) {
+			console.error("Email auth failed:", error);
+			emailAuthError = error instanceof Error ? error.message : "Email auth failed.";
+		} finally {
+			emailAuthLoading = false;
 		}
 	}
 </script>
@@ -120,6 +150,79 @@
 						{metafyError}
 					</p>
 				{/if}
+				{/if}
+
+				{#if showDevEmailPasswordSignIn}
+					<form
+						class="space-y-3 rounded-lg border border-dashed border-border p-3"
+						onsubmit={(event) => {
+							event.preventDefault();
+							void handleEmailAuth();
+						}}
+					>
+						<div class="flex rounded-md bg-muted p-1 text-sm">
+							<button
+								type="button"
+								class={`flex-1 rounded px-3 py-1.5 ${emailAuthMode === "sign-in" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+								onclick={() => (emailAuthMode = "sign-in")}
+							>
+								Sign in
+							</button>
+							<button
+								type="button"
+								class={`flex-1 rounded px-3 py-1.5 ${emailAuthMode === "sign-up" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+								onclick={() => (emailAuthMode = "sign-up")}
+							>
+								Create
+							</button>
+						</div>
+						{#if emailAuthMode === "sign-up"}
+							<label class="block space-y-1 text-sm">
+								<span class="font-medium">Display name</span>
+								<input
+									bind:value={displayName}
+									class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+									autocomplete="name"
+									placeholder="Agent Tester"
+									type="text"
+								/>
+							</label>
+						{/if}
+						<label class="block space-y-1 text-sm">
+							<span class="font-medium">Email</span>
+							<input
+								bind:value={email}
+								class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+								autocomplete="email"
+								placeholder="agent@example.test"
+								required
+								type="email"
+							/>
+						</label>
+						<label class="block space-y-1 text-sm">
+							<span class="font-medium">Password</span>
+							<input
+								bind:value={password}
+								class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+								autocomplete={emailAuthMode === "sign-up" ? "new-password" : "current-password"}
+								minlength="8"
+								required
+								type="password"
+							/>
+						</label>
+						<Button class="h-10 w-full" disabled={emailAuthLoading} type="submit" variant="secondary">
+							{emailAuthLoading ? "Working..." : emailAuthMode === "sign-up" ? "Create dev account" : "Sign in with email"}
+						</Button>
+						{#if emailAuthError}
+							<p
+								class="rounded-md bg-destructive/10 px-3 py-2 text-center text-xs text-destructive"
+								role="alert"
+								aria-live="assertive"
+							>
+								{emailAuthError}
+							</p>
+						{/if}
+					</form>
 				{/if}
 
 				<p class="text-muted-foreground text-center text-xs leading-5">
