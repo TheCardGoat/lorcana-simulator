@@ -99,4 +99,27 @@ describe("Bibbidi Bobbidi Boo", () => {
     expect(testEngine.asPlayerOne().getCardZone(returnId)).toBe("hand");
     expect(testEngine.asPlayerOne().getCardZone(playId)).toBe("hand");
   });
+
+  it("does not offer the returned character as the follow-up character to play", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      hand: [bibbidiBobbidiBoo, cheshireCatAlwaysGrinning],
+      inkwell: bibbidiBobbidiBoo.cost,
+      play: [tamatoaDrabLittleCrab],
+    });
+    const returnId = testEngine.findCardInstanceId(tamatoaDrabLittleCrab, "play", "p1");
+    const playId = testEngine.findCardInstanceId(cheshireCatAlwaysGrinning, "hand", "p1");
+
+    expect(
+      testEngine.asPlayerOne().playCard(bibbidiBobbidiBoo, {
+        targets: [returnId],
+      }),
+    ).toBeSuccessfulCommand();
+
+    const [pendingEffect] = testEngine.asPlayerOne().getPendingEffects();
+    expect(pendingEffect?.selectionContext?.kind).toBe("target-selection");
+    if (pendingEffect?.selectionContext?.kind === "target-selection") {
+      expect(pendingEffect.selectionContext.cardCandidateIds).toContain(playId);
+      expect(pendingEffect.selectionContext.cardCandidateIds).not.toContain(returnId);
+    }
+  });
 });

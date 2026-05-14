@@ -270,12 +270,18 @@ function applyMoveDamage(
     const newDamage = destinationDamage + applied;
     setCardDamage(ctx, destinationId, newDamage);
 
-    // Check for lethal damage on the destination and banish if needed
+    // Check for lethal damage on the destination and banish if needed.
+    // Some printed effects immediately move that damage away in the same
+    // instruction sequence, so they opt out and let the full effect finish.
     const destDefinition = ctx.cards.getDefinition(destinationId) as
       | ({ willpower?: number; cardType?: string } & Record<string, unknown>)
       | undefined;
     const willpower = destDefinition?.willpower;
-    if (typeof willpower === "number" && newDamage >= willpower) {
+    if (
+      effect.deferLethalBanish !== true &&
+      typeof willpower === "number" &&
+      newDamage >= willpower
+    ) {
       const ownerId = ctx.framework.zones.getCardOwner(destinationId) as PlayerId | undefined;
       if (ownerId) {
         const keywordsBeforeBanish = getKeywordsBeforeBanish(

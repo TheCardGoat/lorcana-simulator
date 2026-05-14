@@ -42,6 +42,20 @@ describe("test-routes", () => {
     expect(fixture?.name).toBe("Player Selection");
   });
 
+  it("resolves the 2026-05-14 daily triage visual fixtures", () => {
+    const fixtureIds = [
+      "triage-2026-05-14-luisa-confident-climber",
+      "triage-2026-05-14-bibbidi-bobbidi-boo",
+      "triage-2026-05-14-captain-hook-underhanded",
+      "triage-2026-05-14-the-family-scattered",
+    ];
+
+    for (const fixtureId of fixtureIds) {
+      expect(resolveFixtureForTestRoute(fixtureId)?.id).toBe(fixtureId);
+      expect(buildFixtureTestRouteHref(fixtureId)).toBe(`/tests/${fixtureId}`);
+    }
+  });
+
   it("returns undefined for unknown fixture routes", () => {
     expect(resolveFixtureForTestRoute("does-not-exist")).toBeUndefined();
   });

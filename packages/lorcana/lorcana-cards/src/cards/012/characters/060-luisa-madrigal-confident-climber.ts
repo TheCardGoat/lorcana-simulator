@@ -54,6 +54,7 @@ export const luisaMadrigalConfidentClimber: CharacterCard = {
             },
             from: "CHOSEN_CHARACTER_OF_YOURS",
             to: "SELF",
+            deferLethalBanish: true,
           },
           {
             type: "conditional",
