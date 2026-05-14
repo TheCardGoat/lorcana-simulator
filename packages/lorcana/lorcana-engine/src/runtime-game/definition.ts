@@ -100,9 +100,12 @@ export const lorcanaRuntimeConfig: MatchRuntimeConfig = {
 
   derivePacketAnimations: (context: PacketAnimationContext) => {
     const animations = deriveLorcanaPacketAnimations(context);
-    // Temporarily disable all animations except pass-turn and challenge.
+    // Temporarily disable all animations except pass-turn, challenge, and targeted actions.
     return animations.filter(
-      (anim) => anim.kind === "lorcana.turnChange" || anim.kind === "lorcana.challenge",
+      (anim) =>
+        anim.kind === "lorcana.turnChange" ||
+        anim.kind === "lorcana.challenge" ||
+        anim.kind === "lorcana.action",
     );
   },
 
