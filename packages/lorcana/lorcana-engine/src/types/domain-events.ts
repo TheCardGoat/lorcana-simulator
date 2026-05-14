@@ -80,6 +80,8 @@ export interface CardExertedPayload {
 
 export interface CardReadiedPayload {
   cardId: CardInstanceId;
+  source?: string;
+  zone?: string;
   isManual?: boolean;
 }
 

@@ -226,7 +226,7 @@ function readyCardsForPlayer(
         emitTriggeredLorcanaEvent(
           ctx,
           "cardReadied",
-          { cardId },
+          { cardId, source: "start-of-turn", zone: zone.zone },
           { event: "ready", playerId, subjectCardId: cardId },
         );
       }
