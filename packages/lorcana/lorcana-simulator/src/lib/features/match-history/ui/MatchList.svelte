@@ -122,6 +122,10 @@
   export async function reset(): Promise<void> {
     void refresh();
   }
+
+  function matchRowKey(match: MatchSummary, index: number): string {
+    return `${match.matchId}:${visibleStart + index}`;
+  }
 </script>
 
 <div class="space-y-2">
@@ -206,7 +210,7 @@
         bind:this={listViewport}
         class="max-h-[34rem] space-y-1.5 overflow-y-auto overscroll-contain p-2 [scrollbar-color:rgba(148,163,184,0.45)_transparent] [scrollbar-width:thin]"
       >
-        {#each visibleMatches as match (match.matchId)}
+        {#each visibleMatches as match, i (matchRowKey(match, i))}
           <MatchRow {match} />
         {/each}
         {#if loadingMore}
