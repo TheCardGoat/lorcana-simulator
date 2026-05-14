@@ -129,6 +129,17 @@ export type LorcanaChallengeAnimationPayload = {
   defenderWouldBeBanished: boolean;
 };
 
+export type LorcanaActionAnimationTargetPayload = {
+  cardId: string;
+  wasBanished: boolean;
+};
+
+export type LorcanaActionAnimationPayload = {
+  actorSide: "playerOne" | "playerTwo";
+  actionCardId: string;
+  targets: readonly LorcanaActionAnimationTargetPayload[];
+};
+
 export type LorcanaTurnChangeAnimationPayload = {
   previousPlayerId: string;
   nextPlayerId: string;
@@ -159,6 +170,7 @@ export type LorcanaPlayerEffectAnimationPayload = {
 };
 
 type LorcanaPacketAnimationPayloads = {
+  "lorcana.action": LorcanaActionAnimationPayload;
   "lorcana.boardMove": LorcanaBoardMoveAnimationPayload;
   "lorcana.cardEffect": LorcanaCardEffectAnimationPayload;
   "lorcana.challenge": LorcanaChallengeAnimationPayload;
@@ -346,6 +358,36 @@ function detectDrawAnimations(
   }
 
   return animations;
+}
+
+function getTargetIdsFromArgs(args: object): string[] {
+  if (!("targets" in args) || !Array.isArray(args.targets)) {
+    return [];
+  }
+
+  return args.targets.filter((target): target is string => typeof target === "string");
+}
+
+function wasCardBanishedByCommand(context: PacketAnimationContext, cardId: string): boolean {
+  const instance = context.staticResources.instances.get(cardId);
+  const ownerId = instance?.ownerID;
+  if (!ownerId) {
+    return false;
+  }
+
+  const previousZoneCards = context.previousState.ctx.zones.private.zoneCards;
+  const nextZoneCards = context.nextState.ctx.zones.private.zoneCards;
+  const previousPlay = previousZoneCards[`play:${ownerId}`];
+  const previousDiscard = previousZoneCards[`discard:${ownerId}`];
+  const nextDiscard = nextZoneCards[`discard:${ownerId}`];
+
+  return (
+    Array.isArray(previousPlay) &&
+    Array.isArray(nextDiscard) &&
+    previousPlay.includes(cardId) &&
+    nextDiscard.includes(cardId) &&
+    (!Array.isArray(previousDiscard) || !previousDiscard.includes(cardId))
+  );
 }
 
 export function deriveLorcanaPacketAnimations(
@@ -625,6 +667,22 @@ export function deriveLorcanaPacketAnimations(
 
     // Keep play.action packet for action card spell effect overlay
     if (isActionPlay) {
+      const targetIds = getTargetIdsFromArgs(command.input.args);
+      if (targetIds.length > 0) {
+        animations.push({
+          id: `${command.commandID}:action:${cardPlayedId}`,
+          kind: "lorcana.action",
+          payload: {
+            actorSide,
+            actionCardId: cardPlayedId,
+            targets: targetIds.map((targetId) => ({
+              cardId: targetId,
+              wasBanished: wasCardBanishedByCommand(context, targetId),
+            })),
+          },
+        });
+      }
+
       animations.push({
         id: `${command.commandID}:play-action-effect:${cardPlayedId}`,
         kind: "play.action",

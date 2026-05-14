@@ -49,6 +49,7 @@ import PendingEffectsPopover from "@/features/simulator/panels/PendingEffectsPop
 import BoardAnimationLayer from "./BoardAnimationLayer.svelte";
 import QuestAnimationLayer from "./QuestAnimationLayer.svelte";
 import ChallengeAnimationLayer from "./ChallengeAnimationLayer.svelte";
+import ActionAnimationLayer from "./ActionAnimationLayer.svelte";
 import OverlayAnnouncementLayer from "./OverlayAnnouncementLayer.svelte";
 import CardEffectAnimationLayer from "./CardEffectAnimationLayer.svelte";
 import ChallengeAimOverlay from "@/features/simulator/board/ChallengeAimOverlay.svelte";
@@ -1378,6 +1379,7 @@ $effect(() => {
         <QuestAnimationLayer />
         <CardEffectAnimationLayer />
         <ChallengeAnimationLayer />
+        <ActionAnimationLayer />
         <OverlayAnnouncementLayer />
       </div>
     </div>

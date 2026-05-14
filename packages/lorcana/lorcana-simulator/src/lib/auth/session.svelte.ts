@@ -72,6 +72,12 @@ interface DiscordSignInOptions {
   joinGuild?: boolean;
 }
 
+interface DevEmailPasswordAuthInput {
+  email: string;
+  password: string;
+  name?: string;
+}
+
 async function signInWithDiscord(options: DiscordSignInOptions = {}): Promise<void> {
   trackEvent("auth_sign_in_start", { method: "discord" });
   const { callbackPath = "/matchmaking", joinGuild = false } = options;
@@ -133,6 +139,33 @@ async function signInWithMetafy(callbackPath = "/matchmaking"): Promise<void> {
   }
 }
 
+async function signInWithEmail(input: DevEmailPasswordAuthInput): Promise<void> {
+  const result = await authClient.signIn.email({
+    email: input.email,
+    password: input.password,
+  });
+
+  if (result.error) {
+    throw new Error(result.error.message || "Email sign-in failed.");
+  }
+
+  await fetchSession();
+}
+
+async function signUpWithEmail(input: DevEmailPasswordAuthInput): Promise<void> {
+  const result = await authClient.signUp.email({
+    email: input.email,
+    password: input.password,
+    name: input.name?.trim() || input.email,
+  });
+
+  if (result.error) {
+    throw new Error(result.error.message || "Email sign-up failed.");
+  }
+
+  await fetchSession();
+}
+
 /**
  * Sign out and clear session state.
  */
@@ -180,5 +213,7 @@ export const authSession = {
   hydrateFromServer,
   signInWithDiscord,
   signInWithMetafy,
+  signInWithEmail,
+  signUpWithEmail,
   signOut,
 };

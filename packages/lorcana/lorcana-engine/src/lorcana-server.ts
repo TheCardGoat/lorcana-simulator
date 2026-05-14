@@ -355,11 +355,19 @@ export class LorcanaServer extends LorcanaEngineBase {
         createErrorResult: (error, errorCode) => this.createErrorResult(error, errorCode),
         createNoopResult: () => this.createNoopResult(),
         executeCandidate: (resolvedActorId, candidate) =>
-          this.executeAutomatedActionCandidate(resolvedActorId, candidate),
+          this.executeAutomatedActionCandidate(resolvedActorId, candidate, {
+            autoBagDrainResolverScope: "acting-player",
+          }),
         getDefinitionByInstanceId: (cardId) =>
           this.getCardDefinitionByInstanceId(cardId) as LorcanaCard,
         passTurn: (resolvedActorId) =>
-          this.executeMoveInputForPlayer("passTurn", resolvedActorId, { args: {} }),
+          this.executeMoveInputForPlayer(
+            "passTurn",
+            resolvedActorId,
+            { args: {} },
+            undefined,
+            { autoBagDrainResolverScope: "acting-player" },
+          ),
         previewChallenge: (attackerId, defenderId) =>
           actorId ? this.previewChallengeForActor(actorId, attackerId, defenderId) : null,
         state,
@@ -412,11 +420,19 @@ export class LorcanaServer extends LorcanaEngineBase {
         createErrorResult: (error, errorCode) => this.createErrorResult(error, errorCode),
         createNoopResult: () => this.createNoopResult(),
         executeCandidate: (resolvedActorId, candidate) =>
-          this.executeAutomatedActionCandidate(resolvedActorId, candidate),
+          this.executeAutomatedActionCandidate(resolvedActorId, candidate, {
+            autoBagDrainResolverScope: "acting-player",
+          }),
         getDefinitionByInstanceId: (cardId) =>
           this.getCardDefinitionByInstanceId(cardId) as LorcanaCard,
         passTurn: (resolvedActorId) =>
-          this.executeMoveInputForPlayer("passTurn", resolvedActorId, { args: {} }),
+          this.executeMoveInputForPlayer(
+            "passTurn",
+            resolvedActorId,
+            { args: {} },
+            undefined,
+            { autoBagDrainResolverScope: "acting-player" },
+          ),
         previewChallenge: (attackerId, defenderId) =>
           actorId ? this.previewChallengeForActor(actorId, attackerId, defenderId) : null,
         state,

@@ -1,9 +1,11 @@
 import { describe, it, expect } from "bun:test";
 import { LorcanaMultiplayerTestEngine } from "@tcg/lorcana-engine/testing";
 import { dragonFire, mickeyMouseTrueFriend } from "@tcg/lorcana-cards/cards/001";
+import { simbaProtectiveCub } from "@tcg/lorcana-cards/cards/001";
+import { onlySoMuchRoom } from "@tcg/lorcana-cards/cards/008";
 
 describe("Play Targeting Action Card Animation", () => {
-  it("emits boardMove packet for action card requiring target selection", () => {
+  it("emits action packet for action card requiring target selection", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [dragonFire],
@@ -23,13 +25,50 @@ describe("Play Targeting Action Card Animation", () => {
     const packet = testEngine.asLorcanaPlayerOne().getLastPacketUpdate();
     const animations = packet?.animations ?? [];
 
-    const boardMoveAnimation = animations.find((a) => a.kind === "lorcana.boardMove");
-    expect(boardMoveAnimation).toBeDefined();
-    expect(boardMoveAnimation?.payload).toEqual(
+    const actionAnimation = animations.find((a) => a.kind === "lorcana.action");
+    const targetId = testEngine.findCardInstanceId(mickeyMouseTrueFriend, "discard", "p2");
+
+    expect(actionAnimation).toBeDefined();
+    expect(actionAnimation?.payload).toEqual(
       expect.objectContaining({
-        variant: "play-action",
-        sourceZoneId: "hand",
-        destinationZoneId: "discard",
+        actorSide: "playerOne",
+        actionCardId: testEngine.findCardInstanceId(dragonFire, "discard", "p1"),
+        targets: [{ cardId: targetId, wasBanished: true }],
+      }),
+    );
+  });
+
+  it("emits all chosen targets for multi-target action cards", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [onlySoMuchRoom],
+        inkwell: onlySoMuchRoom.cost,
+        discard: [mickeyMouseTrueFriend],
+      },
+      {
+        play: [simbaProtectiveCub],
+      },
+    );
+
+    expect(
+      testEngine.asPlayerOne().playCard(onlySoMuchRoom, {
+        targets: [simbaProtectiveCub, mickeyMouseTrueFriend],
+      }),
+    ).toBeSuccessfulCommand();
+
+    const packet = testEngine.asLorcanaPlayerOne().getLastPacketUpdate();
+    const actionAnimation = packet?.animations.find((a) => a.kind === "lorcana.action");
+    const simbaId = testEngine.findCardInstanceId(simbaProtectiveCub, "hand", "p2");
+    const mickeyId = testEngine.findCardInstanceId(mickeyMouseTrueFriend, "hand", "p1");
+
+    expect(actionAnimation?.payload).toEqual(
+      expect.objectContaining({
+        actorSide: "playerOne",
+        actionCardId: testEngine.findCardInstanceId(onlySoMuchRoom, "discard", "p1"),
+        targets: [
+          { cardId: simbaId, wasBanished: false },
+          { cardId: mickeyId, wasBanished: false },
+        ],
       }),
     );
   });
@@ -54,15 +93,9 @@ describe("Play Targeting Action Card Animation", () => {
     const packet = testEngine.asLorcanaPlayerOne().getLastPacketUpdate();
     const animations = packet?.animations ?? [];
 
-    const boardMoveAnimation = animations.find((a) => a.kind === "lorcana.boardMove");
+    const actionAnimation = animations.find((a) => a.kind === "lorcana.action");
 
-    if (result.success) {
-      // If the engine auto-resolved the target, the card should be in discard
-      // and the animation should be present
-      expect(boardMoveAnimation).toBeDefined();
-    } else {
-      // If the engine rejected the move (no target specified), no animation is expected
-      expect(boardMoveAnimation).toBeUndefined();
-    }
+    expect(result.success).toBe(true);
+    expect(actionAnimation).toBeUndefined();
   });
 });

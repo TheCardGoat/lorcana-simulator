@@ -729,6 +729,54 @@ describe("resolveActionEffect", () => {
     ]);
   });
 
+  it("does not let the controller preselect a target for an opponent-chosen effect", () => {
+    const source = "source" as CardInstanceId;
+    const opposingTarget = "opposing-target" as CardInstanceId;
+    const { ctx, state } = createResolverTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "action" },
+        [opposingTarget]: {
+          id: "opposing-target",
+          cardType: "character",
+          strength: 2,
+          willpower: 3,
+        },
+      },
+      zoneCards: {
+        [`play:${PLAYER_TWO}`]: [opposingTarget],
+      },
+    });
+
+    const suspended = resolveActionEffect(
+      ctx,
+      createCardPlayedPayload(source, PLAYER_ONE),
+      {
+        type: "exert",
+        chosenBy: "opponent",
+        target: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+      { targets: [opposingTarget] },
+    );
+
+    expect(suspended.status).toBe("suspended");
+    expect(state.cardMeta[opposingTarget]?.state).toBeUndefined();
+    expect(ctx.G.pendingEffects?.[0]).toMatchObject({
+      chooserId: PLAYER_TWO,
+      kind: "target-selection",
+    });
+    const selectionContext = ctx.G.pendingEffects?.[0]?.selectionContext;
+    expect(selectionContext).toMatchObject({
+      currentSelection: {},
+      cardCandidateIds: [opposingTarget],
+    });
+  });
+
   it("does not suspend when repeated chosen descriptors reuse the same selected target", () => {
     const source = "source" as CardInstanceId;
     const target = "target" as CardInstanceId;

@@ -38,6 +38,23 @@ import { triage20260505TouchTheSkyFixture } from "./triage-2026-05-05-touch-the-
 import { triage20260506BrawlCastMauiRushChallengeFixture } from "./triage-2026-05-06-brawl-cast-maui-rush-challenge.js";
 import { triage20260508ShereKhanSkipOptionalFixture } from "./triage-2026-05-08-shere-khan-skip-optional.js";
 import { triage20260511DinBodyguardEnterExertedFixture } from "./triage-2026-05-11-din-bodyguard-enter-exerted.js";
+import { triage20260514BibbidiBobbidiBooFixture } from "./triage-2026-05-14-bibbidi-bobbidi-boo.js";
+import { triage20260514CaptainHookUnderhandedFixture } from "./triage-2026-05-14-captain-hook-underhanded.js";
+import { triage20260514LuisaConfidentClimberFixture } from "./triage-2026-05-14-luisa-confident-climber.js";
+import { triage20260514TheFamilyScatteredFixture } from "./triage-2026-05-14-the-family-scattered.js";
+import { triage20260514MushuMajesticDragonFixture } from "./triage-2026-05-14-mushu-majestic-dragon.js";
+import { triage20260514BeastSnowfieldTroublemakerFixture } from "./triage-2026-05-14-beast-snowfield-troublemaker.js";
+import { triage20260514SwordOfShanyuFixture } from "./triage-2026-05-14-sword-of-shan-yu.js";
+import { triage20260514ChernabogUnnaturalForceFixture } from "./triage-2026-05-14-chernabog-unnatural-force.js";
+import { triage20260514AnnaTrustingSisterFixture } from "./triage-2026-05-14-anna-trusting-sister.js";
+import { triage20260514MrsIncredibleRegroupFixture } from "./triage-2026-05-14-mrs-incredible-regroup.js";
+import { triage20260514AlmaMadrigalLeadingTheWayFixture } from "./triage-2026-05-14-alma-madrigal-leading-the-way.js";
+import { triage20260514MrIncredibleSuperStrongFixture } from "./triage-2026-05-14-mr-incredible-super-strong.js";
+import { triage20260514TamatoaHappyAsAClamFixture } from "./triage-2026-05-14-tamatoa-happy-as-a-clam.js";
+import { triage20260514FergusOutpostBuilderFixture } from "./triage-2026-05-14-fergus-outpost-builder.js";
+import { triage20260514ThisGrowingPressureFixture } from "./triage-2026-05-14-this-growing-pressure.js";
+import { triage20260514CantHoldItBackAnymoreFixture } from "./triage-2026-05-14-cant-hold-it-back-anymore.js";
+import { triage20260514OmnidroidV9ShiftFixture } from "./triage-2026-05-14-omnidroid-v9-shift.js";
 import { createFixtureRegistry } from "./registry.js";
 
 export const DEFAULT_LORCANA_FIXTURE_ID = "empty-board";
@@ -88,6 +105,23 @@ const fixtureRegistry = createFixtureRegistry(
     triage20260506BrawlCastMauiRushChallengeFixture,
     triage20260508ShereKhanSkipOptionalFixture,
     triage20260511DinBodyguardEnterExertedFixture,
+    triage20260514LuisaConfidentClimberFixture,
+    triage20260514BibbidiBobbidiBooFixture,
+    triage20260514CaptainHookUnderhandedFixture,
+    triage20260514TheFamilyScatteredFixture,
+    triage20260514MushuMajesticDragonFixture,
+    triage20260514BeastSnowfieldTroublemakerFixture,
+    triage20260514SwordOfShanyuFixture,
+    triage20260514ChernabogUnnaturalForceFixture,
+    triage20260514AnnaTrustingSisterFixture,
+    triage20260514MrsIncredibleRegroupFixture,
+    triage20260514AlmaMadrigalLeadingTheWayFixture,
+    triage20260514MrIncredibleSuperStrongFixture,
+    triage20260514TamatoaHappyAsAClamFixture,
+    triage20260514FergusOutpostBuilderFixture,
+    triage20260514ThisGrowingPressureFixture,
+    triage20260514CantHoldItBackAnymoreFixture,
+    triage20260514OmnidroidV9ShiftFixture,
   ] satisfies LorcanaSimulatorFixture[],
   "general simulator fixtures",
 );

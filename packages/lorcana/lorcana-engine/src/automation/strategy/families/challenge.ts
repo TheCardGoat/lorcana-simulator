@@ -53,7 +53,12 @@ function getAggressiveTradeSignals(
     (attackerCard?.strength ?? 0) + (attackerCard?.willpower ?? 0);
   const attackerSurvives = candidate.preview?.attackerWouldBeBanished !== true;
   const tradeValueDelta = defenderValue - (attackerSurvives ? 0 : attackerValue);
-  const meaningfulThreat = defenderLore > 0 || defenderCost >= 4 || removesBlocker;
+  // Tightened from `defenderLore > 0` to `defenderLore >= 2`: a single-lore
+  // defender by itself isn't enough to justify giving up the attacker's
+  // quest turn — removing it denies only ~1 future opp lore, which is
+  // dominated by questing now for `attackerLore` lore. Higher-lore
+  // defenders, expensive bodies, and blockers still register.
+  const meaningfulThreat = defenderLore >= 2 || defenderCost >= 4 || removesBlocker;
 
   return {
     challengeAttackerValue: attackerValue,
@@ -88,9 +93,47 @@ function shouldPrioritizeChallenge(
     return false;
   }
 
+  // Anti-suicide guard: when the attacker would die and the printed-lore
+  // swing is non-positive, quest with the same attacker normally dominates
+  // — quest closes (or grows) the lore gap by `attackerLore` while the
+  // trade leaves the gap untouched and also costs the card. Reject the
+  // boost in this shape unless ALL of the following hold, signalling a
+  // matchup-aware aggressive trade is legitimately on the table:
+  //   - opponent is at meaningful pressure (≥10 lore), AND
+  //   - the attacker is a multi-lore quester (≥2): single-lore questers
+  //     suiciding for swing≤0 is always a net loss; only ≥2-lore questers
+  //     get the "matchup-aware trade" benefit-of-the-doubt (matches the
+  //     Daisy-into-control card rule shape).
+  // True end-game (≥15) is allowed for all attacker-lore values because a
+  // banish-trade then buys a critical turn — that path is left to the
+  // mode-specific checks and the "last quester" guard below.
+  if (
+    !attackerSurvives &&
+    loreSwing <= 0 &&
+    attackerLore > 0 &&
+    opponentLore < 15 &&
+    !(attackerLore >= 2 && opponentLore >= 10)
+  ) {
+    return false;
+  }
+
   if (mode === "board-control") {
     const actorQuestPotential = getQuestPotentialForPlayer(context, context.actorId);
     const opponentQuestPotential = getQuestPotentialForPlayer(context, opponentId);
+
+    // Lore-now precedence: when the attacker would survive and would gain
+    // more lore by questing than the trade yields in swing, prefer questing
+    // unless the defender itself outweighs the attacker in lore (denying a
+    // bigger future gain) or the opponent is at end-game pressure.
+    if (
+      attackerSurvives &&
+      attackerLore > 0 &&
+      loreSwing < attackerLore &&
+      defenderLore < attackerLore &&
+      opponentLore < 15
+    ) {
+      return false;
+    }
 
     return (
       opponentLore >= actorLore &&

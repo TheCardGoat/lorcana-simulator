@@ -86,7 +86,10 @@ export {
   QUEST_ONLY_TEST_STRATEGY_ID,
   questOnlyTestAutomatedActionStrategy,
 } from "./automation";
-export type { AutomatedActionStrategyOption } from "./automation";
+export type {
+  AutomatedActionCandidateSummary,
+  AutomatedActionStrategyOption,
+} from "./automation";
 export type {
   AcceptedMoveRecord,
   EngineLogRecord,

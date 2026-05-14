@@ -133,6 +133,8 @@ import { getLogger } from "@logtape/logtape";
 
 export const logger = getLogger(["lorcana-engine", "lorcana-engine-base"]);
 
+type AutoBagDrainResolverScope = "any" | "acting-player";
+
 type SongPlayOptions = {
   singleSingerIds: CardInstanceId[];
   singTogetherOption: MoveOptionSingTogether | null;
@@ -904,6 +906,7 @@ export abstract class LorcanaEngineBase {
   private autoResolveDeterministicBagEffects(
     playerId: string,
     initialResult: CommandResult,
+    options: { autoBagDrainResolverScope?: AutoBagDrainResolverScope } = {},
   ): CommandResult {
     let currentResult = initialResult;
     const maxAutoResolveAttempts = 25;
@@ -924,7 +927,12 @@ export abstract class LorcanaEngineBase {
       );
       const bagId = nextResolver ? this.getAutoResolvableBagId(nextResolver) : undefined;
       const scopedPlayerId = this.getScopedPlayerId();
-      if (!nextResolver || !bagId || (scopedPlayerId && nextResolver !== scopedPlayerId)) {
+      if (
+        !nextResolver ||
+        !bagId ||
+        (scopedPlayerId && nextResolver !== scopedPlayerId) ||
+        (options.autoBagDrainResolverScope === "acting-player" && nextResolver !== playerId)
+      ) {
         return currentResult;
       }
 
@@ -1028,7 +1036,10 @@ export abstract class LorcanaEngineBase {
     playerId: string,
     input: LorcanaRuntimeMoveInputs[K],
     prevStateID?: number,
-    options: { skipAutoBagDrain?: boolean } = {},
+    options: {
+      autoBagDrainResolverScope?: AutoBagDrainResolverScope;
+      skipAutoBagDrain?: boolean;
+    } = {},
   ): CommandResult {
     logger.debug(
       "Executing move {moveId} player={playerId} prevStateID={prevStateID} input={input.args}",
@@ -1044,7 +1055,9 @@ export abstract class LorcanaEngineBase {
     const maybeAutoDrain = (result: CommandResult): CommandResult =>
       !result.success || skipAutoBagDrain
         ? result
-        : this.autoResolveDeterministicBagEffects(playerId, result);
+        : this.autoResolveDeterministicBagEffects(playerId, result, {
+            autoBagDrainResolverScope: options.autoBagDrainResolverScope,
+          });
 
     const summarizePostMoveState = (): {
       bag: Array<{ id: string; type: string; chooserId: string; sourceId?: string }>;
@@ -1183,6 +1196,7 @@ export abstract class LorcanaEngineBase {
   protected executeAutomatedActionCandidate(
     actorId: PlayerId,
     candidate: AutomatedActionCandidate,
+    options: { autoBagDrainResolverScope?: AutoBagDrainResolverScope } = {},
   ): CommandResult {
     const request = buildAutomatedActionMoveRequest(
       actorId,
@@ -1193,6 +1207,8 @@ export abstract class LorcanaEngineBase {
       request.moveId,
       actorId,
       request.input as LorcanaRuntimeMoveInputs[typeof request.moveId],
+      undefined,
+      options,
     );
   }
 

@@ -253,6 +253,27 @@ function getAvailableInkForPlayer(board: LorcanaProjectedBoardView, playerId: Pl
   }, 0);
 }
 
+function actorHasPendingStandardOnlyCostReduction(
+  adapter: AutomatedActionPlannerAdapter,
+  actorId: PlayerId,
+): boolean {
+  const registry = buildRegistryFromMatchState(
+    adapter.state as LorcanaMatchState,
+    (id) => adapter.getDefinitionByInstanceId(id),
+  );
+  const effects = registry.byPlayer.get(actorId) ?? [];
+  for (const effect of effects) {
+    if (effect.kind !== "cost-reduction") {
+      continue;
+    }
+    const payload = effect.payload as { playMethod?: unknown };
+    if (payload.playMethod === "standard") {
+      return true;
+    }
+  }
+  return false;
+}
+
 function isPermanentCard(card: LorcanaProjectedCard | undefined): boolean {
   return (
     card?.cardType === "character" || card?.cardType === "item" || card?.cardType === "location"
@@ -2138,15 +2159,33 @@ function enumeratePlayCostModes(args: {
   cardId: CardInstanceId;
   searchCaps: AutomatedActionSearchCaps;
   diagnostics: AutomatedActionDiagnostic[];
+  hasPendingStandardOnlyCostReduction: boolean;
 }): PlayCardCostInput[] {
-  const { actorId, adapter, cardDef, cardId, searchCaps, diagnostics } = args;
+  const {
+    actorId,
+    adapter,
+    cardDef,
+    cardId,
+    searchCaps,
+    diagnostics,
+    hasPendingStandardOnlyCostReduction,
+  } = args;
   // The projection computes playCost without `playMethod`, so it will not
-  // reflect standard-only cost reducers. Always emit `standard` and let the
-  // engine validate it. The `free` validation path also uses `playMethod:
-  // undefined`, so the projected playCost is exact for that check — emit
-  // `free` only when the projection says the cost is already zero.
-  const costModes: PlayCardCostInput[] = ["standard"];
+  // reflect standard-only cost reducers. Emit `standard` unless the projected
+  // cost is above available ink. When no standard-only cost-reduction effect
+  // is pending for the actor in the registry, the projection's playCost is
+  // exact and we can use a 0-ink tolerance. Otherwise allow a small tolerance
+  // to keep cards within reach of a typical (≤2) standard-only reducer
+  // enumerable. The `free` validation path uses `playMethod: undefined`, so
+  // the projected playCost is exact for that check — emit `free` only when
+  // the projection says the cost is already zero.
   const projectedPlayCost = getProjectedCard(adapter.board, cardId)?.playCost ?? cardDef.cost;
+  const availableInk = getAvailableInkForPlayer(adapter.board, actorId);
+  const standardCostReducerTolerance = hasPendingStandardOnlyCostReduction ? 2 : 0;
+  const costModes: PlayCardCostInput[] = [];
+  if (projectedPlayCost <= availableInk + standardCostReducerTolerance) {
+    costModes.push("standard");
+  }
   if (projectedPlayCost === 0) {
     costModes.push("free");
   }
@@ -2250,6 +2289,17 @@ function enumeratePlayCardCandidates(args: {
     return;
   }
 
+  // Detect whether the actor has any pending standard-only cost-reduction
+  // effect registered (e.g., a one-shot "your next character costs N less to
+  // play" from a resolved action). The projection's playCost ignores
+  // standard-only reductions (it has no playMethod), so we apply a small
+  // tolerance below in that case; otherwise the projection is exact and we
+  // can enforce strict affordability.
+  const hasPendingStandardOnlyCostReduction = actorHasPendingStandardOnlyCostReduction(
+    adapter,
+    actorId,
+  );
+
   for (const cardId of stableSortIds(
     adapter.board,
     getPlayerZoneCardIds(adapter.board, actorId, "hand"),
@@ -2298,6 +2348,7 @@ function enumeratePlayCardCandidates(args: {
       cardId,
       searchCaps,
       diagnostics,
+      hasPendingStandardOnlyCostReduction,
     });
     for (const cost of costModes) {
       for (const variant of resolutionVariants) {
@@ -2609,19 +2660,106 @@ function enumerateQuestCandidates(args: {
   }
 
   for (const cardId of getActorCharactersInPlay(adapter, actorId)) {
-    // Skip exerted characters — they cannot quest in any scenario. We do
-    // NOT pre-filter `drying`, because keywords like QuestWhileDrying /
-    // can-quest-turn-played make some drying characters legal questers;
-    // validation handles that exception correctly.
+    // Skip exerted characters — they cannot quest in any scenario. Skip
+    // drying characters unless they have a legal exception: the
+    // `QuestWhileDrying` keyword (projected `keywords` aggregates base +
+    // static keyword grants from other cards) or a self-static
+    // `can-quest-turn-played` restriction on the card definition. Any other
+    // drying-quester exception would still be caught by engine validation.
     const projected = getProjectedCard(adapter.board, cardId);
     if (projected?.exerted === true) {
       continue;
+    }
+    if (projected?.drying === true) {
+      const keywords = projected.keywords ?? [];
+      const allowed =
+        keywords.includes("QuestWhileDrying") ||
+        definitionHasSelfStaticCanQuestTurnPlayed(adapter.getDefinitionByInstanceId(cardId));
+      if (!allowed) {
+        continue;
+      }
     }
     addValidatedCandidate(adapter, diagnostics, actorId, candidates, {
       family: "quest",
       cardId,
     });
   }
+}
+
+function definitionHasSelfStaticCanQuestTurnPlayed(
+  definition: LorcanaCardDefinition | undefined,
+): boolean {
+  if (!definition) {
+    return false;
+  }
+  for (const ability of definition.abilities ?? []) {
+    if (ability.type !== "static") {
+      continue;
+    }
+    const effect = ability.effect as {
+      type?: string;
+      restriction?: string;
+      target?: string;
+    };
+    if (
+      effect?.type === "restriction" &&
+      effect.restriction === "can-quest-turn-played" &&
+      (effect.target === undefined || effect.target === "SELF")
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function definitionHasSelfStaticChallengeReadyGrant(
+  definition: LorcanaCardDefinition | undefined,
+): boolean {
+  if (!definition) {
+    return false;
+  }
+  for (const ability of definition.abilities ?? []) {
+    if (ability.type !== "static") {
+      continue;
+    }
+    const effect = ability.effect as { type?: string; target?: string; ability?: unknown };
+    if (effect?.type !== "grant-ability") {
+      continue;
+    }
+    if (effect.target !== undefined && effect.target !== "SELF") {
+      continue;
+    }
+    const granted = effect.ability;
+    const grantedType =
+      typeof granted === "string"
+        ? granted
+        : granted && typeof granted === "object" && !Array.isArray(granted)
+          ? (granted as { type?: string }).type
+          : undefined;
+    if (grantedType === "can-challenge-ready") {
+      return true;
+    }
+  }
+  return false;
+}
+
+function actorHasAnyChallengeReadyGrant(
+  adapter: AutomatedActionPlannerAdapter,
+  actorId: PlayerId,
+): boolean {
+  for (const cardId of getActorCharactersInPlay(adapter, actorId)) {
+    const projected = getProjectedCard(adapter.board, cardId);
+    if (
+      projected?.temporaryAbilities &&
+      Object.prototype.hasOwnProperty.call(projected.temporaryAbilities, "can-challenge-ready")
+    ) {
+      return true;
+    }
+    if (definitionHasSelfStaticChallengeReadyGrant(adapter.getDefinitionByInstanceId(cardId))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function enumerateChallengeCandidates(args: {
@@ -2635,17 +2773,27 @@ function enumerateChallengeCandidates(args: {
     return;
   }
 
-  // Skip exerted attackers — they cannot challenge. We do NOT pre-filter
-  // `drying` attackers, because Rush (and similar grants) lets drying
-  // characters challenge legally; validation handles that exception.
+  // Skip exerted attackers — they cannot challenge. Skip drying attackers
+  // that don't have Rush. The projected `hasRush` already aggregates base
+  // keyword, temporary grants, and static grants from other cards, so this
+  // is exact for the Rush exception that `hasRushForChallenge` enforces in
+  // challenge-rules.ts. Any other drying-attacker exception would still be
+  // caught by the engine validator and produce a diagnostic.
   const attackers = getActorCharactersInPlay(adapter, actorId).filter((cardId) => {
     const projected = getProjectedCard(adapter.board, cardId);
-    return projected?.exerted !== true;
+    if (projected?.exerted === true) {
+      return false;
+    }
+    if (projected?.drying === true && projected?.hasRush !== true) {
+      return false;
+    }
+    return true;
   });
-  // Defenders include any character or location. We do NOT filter ready
-  // character defenders here, because some attackers can grant
-  // can-challenge-ready (challenge ready characters), and that decision is
-  // attacker-specific — validation handles it per pairing.
+  // Defenders include exerted characters and any location. Ready character
+  // defenders are normally illegal; only attackers with a `can-challenge-ready`
+  // grant (temporary or self-static) may challenge them. If no actor character
+  // carries such a grant, ready character defenders can be safely filtered.
+  const actorCanChallengeReady = actorHasAnyChallengeReadyGrant(adapter, actorId);
   const defenders = stableSortIds(
     adapter.board,
     adapter.board.playerOrder
@@ -2653,12 +2801,108 @@ function enumerateChallengeCandidates(args: {
       .flatMap((playerId) => getPlayerZoneCardIds(adapter.board, playerId, "play"))
       .filter((cardId) => {
         const definition = adapter.getDefinitionByInstanceId(cardId);
-        return definition?.cardType === "character" || definition?.cardType === "location";
+        if (definition?.cardType === "location") {
+          return true;
+        }
+        if (definition?.cardType !== "character") {
+          return false;
+        }
+        if (actorCanChallengeReady) {
+          return true;
+        }
+        const projected = getProjectedCard(adapter.board, cardId);
+        return projected?.exerted === true;
       }),
   );
 
+  // Evasive defenders can only be challenged by attackers that have Evasive
+  // or Alert (engine rule: `canChallengeEvasive` in challenge-rules.ts).
+  // The projection's `keywords` already aggregates base + temporary +
+  // static keyword grants, so this filter is exact.
+  const attackerCanChallengeEvasive = new Map<CardInstanceId, boolean>();
   for (const attackerId of attackers) {
+    const projected = getProjectedCard(adapter.board, attackerId);
+    const keywords = projected?.keywords ?? [];
+    attackerCanChallengeEvasive.set(
+      attackerId,
+      keywords.includes("Evasive") || keywords.includes("Alert"),
+    );
+  }
+
+  // Bodyguard "must be challenged if able": when an opposing player has an
+  // exerted Bodyguard character that this attacker could legally challenge,
+  // every non-Bodyguard character belonging to that owner becomes an illegal
+  // target. Locations are not gated by Bodyguard. The check is per-attacker
+  // because Evasive filters which Bodyguards count for that attacker (engine:
+  // `getBodyguardCandidatesForOwner` in challenge-rules.ts).
+  const defenderInfo = new Map<
+    CardInstanceId,
+    {
+      ownerId: PlayerId;
+      cardType: "character" | "location";
+      hasEvasive: boolean;
+      hasBodyguard: boolean;
+      exerted: boolean;
+    }
+  >();
+  const bodyguardsByOwner = new Map<
+    PlayerId,
+    Array<{ cardId: CardInstanceId; hasEvasive: boolean }>
+  >();
+  for (const playerId of adapter.board.playerOrder) {
+    if (playerId === actorId) {
+      continue;
+    }
+    for (const cardId of getPlayerZoneCardIds(adapter.board, playerId, "play")) {
+      const definition = adapter.getDefinitionByInstanceId(cardId);
+      if (definition?.cardType !== "character" && definition?.cardType !== "location") {
+        continue;
+      }
+      const projected = getProjectedCard(adapter.board, cardId);
+      const keywords = projected?.keywords ?? [];
+      const info = {
+        ownerId: playerId,
+        cardType: definition.cardType,
+        hasEvasive: projected?.hasEvasive === true,
+        hasBodyguard: keywords.includes("Bodyguard"),
+        exerted: projected?.exerted === true,
+      };
+      defenderInfo.set(cardId, info);
+      if (info.cardType === "character" && info.hasBodyguard && info.exerted) {
+        let list = bodyguardsByOwner.get(playerId);
+        if (!list) {
+          list = [];
+          bodyguardsByOwner.set(playerId, list);
+        }
+        list.push({ cardId, hasEvasive: info.hasEvasive });
+      }
+    }
+  }
+
+  for (const attackerId of attackers) {
+    const canChallengeEvasive = attackerCanChallengeEvasive.get(attackerId) === true;
+    const ownersWithMandatoryBodyguard = new Set<PlayerId>();
+    for (const [ownerId, list] of bodyguardsByOwner) {
+      if (list.some((bg) => canChallengeEvasive || !bg.hasEvasive)) {
+        ownersWithMandatoryBodyguard.add(ownerId);
+      }
+    }
+
     for (const defenderId of defenders) {
+      const info = defenderInfo.get(defenderId);
+      if (!info) {
+        continue;
+      }
+      if (!canChallengeEvasive && info.hasEvasive) {
+        continue;
+      }
+      if (
+        info.cardType === "character" &&
+        !info.hasBodyguard &&
+        ownersWithMandatoryBodyguard.has(info.ownerId)
+      ) {
+        continue;
+      }
       addValidatedCandidate(adapter, diagnostics, actorId, candidates, {
         family: "challenge",
         attackerId,
