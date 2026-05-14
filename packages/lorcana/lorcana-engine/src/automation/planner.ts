@@ -2141,12 +2141,22 @@ function enumeratePlayCostModes(args: {
 }): PlayCardCostInput[] {
   const { actorId, adapter, cardDef, cardId, searchCaps, diagnostics } = args;
   // The projection computes playCost without `playMethod`, so it will not
-  // reflect standard-only cost reducers. Always emit `standard` and let the
-  // engine validate it. The `free` validation path also uses `playMethod:
-  // undefined`, so the projected playCost is exact for that check — emit
-  // `free` only when the projection says the cost is already zero.
-  const costModes: PlayCardCostInput[] = ["standard"];
+  // reflect standard-only cost reducers. Emit `standard` unless the projected
+  // cost is so far above available ink that no realistic cost reducer could
+  // bridge the gap — this filters obvious INSUFFICIENT_INK candidates before
+  // they reach engine validation. The `free` validation path uses
+  // `playMethod: undefined`, so the projected playCost is exact for that
+  // check — emit `free` only when the projection says the cost is already zero.
   const projectedPlayCost = getProjectedCard(adapter.board, cardId)?.playCost ?? cardDef.cost;
+  const availableInk = getAvailableInkForPlayer(adapter.board, actorId);
+  // Tolerance accounts for standard-only cost reducers not reflected in the
+  // projection. Lorcana cost reducers are typically -1 or -2; 2 is a safe
+  // upper bound that keeps legitimate reducer cases enumerable.
+  const STANDARD_COST_REDUCER_TOLERANCE = 2;
+  const costModes: PlayCardCostInput[] = [];
+  if (projectedPlayCost <= availableInk + STANDARD_COST_REDUCER_TOLERANCE) {
+    costModes.push("standard");
+  }
   if (projectedPlayCost === 0) {
     costModes.push("free");
   }

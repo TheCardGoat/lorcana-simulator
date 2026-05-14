@@ -234,6 +234,41 @@ describe("Sid Phillips - Toy Surgeon", () => {
       expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
       expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
     });
+
+    it("server-side opponent automation does not auto-resolve the Sid controller's follow-up bag", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          hand: [sidPhillipsToySurgeon],
+          play: [toyCharacter],
+          inkwell: sidPhillipsToySurgeon.cost,
+        },
+        {
+          play: [opponentCharacter],
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().playCard(sidPhillipsToySurgeon)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(sidPhillipsToySurgeon, {
+          resolveOptional: true,
+          targets: [toyCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(1);
+
+      const automatedOpponentAction = testEngine.asServer().takeAutomatedActionForCurrentActor();
+
+      expect(automatedOpponentAction.finalResult).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
+      expect(testEngine.asPlayerTwo().getCardZone(opponentCharacter)).toBe("discard");
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(0);
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(testEngine.asPlayerOne().resolveNextBag()).toBeSuccessfulCommand();
+      expect(testEngine.getLore(PLAYER_ONE)).toBe(2);
+    });
   });
 
   describe("DOUBLE PRIZES!", () => {
