@@ -36,7 +36,10 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
             id: "chooseFirstPlayer",
             name: "Choose First Player",
             order: 1,
-            validMoves: ["chooseWhoGoesFirst"],
+            // forfeitGame is a server-only move used by timeout/drop handlers;
+            // it must remain legal in every phase, including pre-game setup,
+            // so a disconnect during mulligan still cleanly ends the game.
+            validMoves: ["chooseWhoGoesFirst", "forfeitGame"],
             nextPhase: "mulligan",
             endIf: (state) => state.ctx.status.otp != null,
           },
@@ -55,7 +58,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
                 });
               }
             },
-            validMoves: ["alterHand"],
+            validMoves: ["alterHand", "forfeitGame"],
             endIf: (state) => (state.ctx.status.pendingMulligan?.length ?? 0) === 0,
             // No nextPhase: segment transition to mainGame
           },
@@ -75,6 +78,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
       },
       validMoves: [
         "concede",
+        "forfeitGame",
         "passTurn",
         "moveCharacterToLocation",
         "resolveBag",
@@ -175,6 +179,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
             },
             validMoves: [
               "concede",
+              "forfeitGame",
               "resolveBag",
               "resolveEffect",
               "manualMoveCard",
@@ -205,6 +210,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
               "resolveBag",
               "resolveEffect",
               "concede",
+              "forfeitGame",
               "manualMoveCard",
               "manualExertCard",
               "manualReadyCard",
@@ -223,6 +229,7 @@ export const lorcanaRuntimeFlow: RuntimeFlowDefinition = {
             onEnter: (_ctx: RuntimeLifecycleContext) => {},
             validMoves: [
               "concede",
+              "forfeitGame",
               "resolveBag",
               "resolveEffect",
               "manualMoveCard",
