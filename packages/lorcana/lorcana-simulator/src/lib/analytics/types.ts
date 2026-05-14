@@ -10,7 +10,7 @@
  */
 
 // ── Auth Events ──────────────────────────────────────────────
-export type AuthSignInMethod = "discord" | "metafy";
+export type AuthSignInMethod = "discord" | "email" | "metafy";
 export interface AuthSignInStartParams {
   method: AuthSignInMethod;
 }

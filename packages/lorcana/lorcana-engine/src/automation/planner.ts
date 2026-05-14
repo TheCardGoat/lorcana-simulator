@@ -22,9 +22,11 @@ import {
 } from "../runtime-moves/rules/play-card-rules";
 import {
   getGrantedActivatedAbilities,
+  hasStaticChallengerFilteredRestriction,
   toStaticAbilityState,
 } from "../runtime-moves/rules/static-ability-utils";
 import { buildRegistryFromMatchState } from "../runtime-moves/rules/move-registry-cache";
+import { getAppliedCostReductions } from "../rules/derived-state";
 import { cardHasName } from "../card-utils";
 import { analyzeEffectTargets } from "../targeting";
 import { classifyEffectPolarity, classifyTargetedStepPolarity } from "./effect-polarity";
@@ -253,25 +255,30 @@ function getAvailableInkForPlayer(board: LorcanaProjectedBoardView, playerId: Pl
   }, 0);
 }
 
-function actorHasPendingStandardOnlyCostReduction(
+function getStandardCostReductionTolerance(
   adapter: AutomatedActionPlannerAdapter,
   actorId: PlayerId,
-): boolean {
+  cardDef: LorcanaCardDefinition,
+  cardId: CardInstanceId,
+): number {
+  const projected = getProjectedCard(adapter.board, cardId);
   const registry = buildRegistryFromMatchState(
     adapter.state as LorcanaMatchState,
     (id) => adapter.getDefinitionByInstanceId(id),
   );
-  const effects = registry.byPlayer.get(actorId) ?? [];
-  for (const effect of effects) {
-    if (effect.kind !== "cost-reduction") {
-      continue;
-    }
-    const payload = effect.payload as { playMethod?: unknown };
-    if (payload.playMethod === "standard") {
-      return true;
-    }
-  }
-  return false;
+  const application = getAppliedCostReductions({
+    definition: cardDef,
+    state: adapter.state as LorcanaMatchState,
+    cardInstanceId: cardId,
+    ownerID: projected?.ownerId ?? actorId,
+    zoneID: projected?.zone ?? "hand",
+    actorPlayerId: actorId,
+    getDefinitionByInstanceId: (id) => adapter.getDefinitionByInstanceId(id),
+    playMethod: "standard",
+    registry,
+  });
+
+  return Math.max(0, application.reductionAmount);
 }
 
 function isPermanentCard(card: LorcanaProjectedCard | undefined): boolean {
@@ -2159,7 +2166,7 @@ function enumeratePlayCostModes(args: {
   cardId: CardInstanceId;
   searchCaps: AutomatedActionSearchCaps;
   diagnostics: AutomatedActionDiagnostic[];
-  hasPendingStandardOnlyCostReduction: boolean;
+  standardCostReductionTolerance: number;
 }): PlayCardCostInput[] {
   const {
     actorId,
@@ -2168,22 +2175,18 @@ function enumeratePlayCostModes(args: {
     cardId,
     searchCaps,
     diagnostics,
-    hasPendingStandardOnlyCostReduction,
+    standardCostReductionTolerance,
   } = args;
   // The projection computes playCost without `playMethod`, so it will not
-  // reflect standard-only cost reducers. Emit `standard` unless the projected
-  // cost is above available ink. When no standard-only cost-reduction effect
-  // is pending for the actor in the registry, the projection's playCost is
-  // exact and we can use a 0-ink tolerance. Otherwise allow a small tolerance
-  // to keep cards within reach of a typical (≤2) standard-only reducer
-  // enumerable. The `free` validation path uses `playMethod: undefined`, so
-  // the projected playCost is exact for that check — emit `free` only when
-  // the projection says the cost is already zero.
+  // reflect standard-only cost reducers. Use the actual applicable reduction
+  // amount as tolerance so large reducers are still sent to engine validation.
+  // The `free` validation path uses `playMethod: undefined`, so the projected
+  // playCost is exact for that check; emit `free` only when the projection says
+  // the cost is already zero.
   const projectedPlayCost = getProjectedCard(adapter.board, cardId)?.playCost ?? cardDef.cost;
   const availableInk = getAvailableInkForPlayer(adapter.board, actorId);
-  const standardCostReducerTolerance = hasPendingStandardOnlyCostReduction ? 2 : 0;
   const costModes: PlayCardCostInput[] = [];
-  if (projectedPlayCost <= availableInk + standardCostReducerTolerance) {
+  if (projectedPlayCost <= availableInk + standardCostReductionTolerance) {
     costModes.push("standard");
   }
   if (projectedPlayCost === 0) {
@@ -2289,17 +2292,6 @@ function enumeratePlayCardCandidates(args: {
     return;
   }
 
-  // Detect whether the actor has any pending standard-only cost-reduction
-  // effect registered (e.g., a one-shot "your next character costs N less to
-  // play" from a resolved action). The projection's playCost ignores
-  // standard-only reductions (it has no playMethod), so we apply a small
-  // tolerance below in that case; otherwise the projection is exact and we
-  // can enforce strict affordability.
-  const hasPendingStandardOnlyCostReduction = actorHasPendingStandardOnlyCostReduction(
-    adapter,
-    actorId,
-  );
-
   for (const cardId of stableSortIds(
     adapter.board,
     getPlayerZoneCardIds(adapter.board, actorId, "hand"),
@@ -2348,7 +2340,12 @@ function enumeratePlayCardCandidates(args: {
       cardId,
       searchCaps,
       diagnostics,
-      hasPendingStandardOnlyCostReduction,
+      standardCostReductionTolerance: getStandardCostReductionTolerance(
+        adapter,
+        actorId,
+        cardDef,
+        cardId,
+      ),
     });
     for (const cost of costModes) {
       for (const variant of resolutionVariants) {
@@ -2762,6 +2759,27 @@ function actorHasAnyChallengeReadyGrant(
   return false;
 }
 
+function isDefenderUnchallengeableForAttacker(
+  adapter: AutomatedActionPlannerAdapter,
+  defenderId: CardInstanceId,
+  attackerId: CardInstanceId,
+): boolean {
+  const projected = getProjectedCard(adapter.board, defenderId);
+  if (
+    projected?.temporaryRestrictions &&
+    Object.prototype.hasOwnProperty.call(projected.temporaryRestrictions, "cant-be-challenged")
+  ) {
+    return true;
+  }
+
+  return hasStaticChallengerFilteredRestriction({
+    state: toStaticAbilityState(adapter.state as LorcanaMatchState),
+    cardId: defenderId,
+    attackerId,
+    getDefinitionByInstanceId: (candidateId) => adapter.getDefinitionByInstanceId(candidateId),
+  });
+}
+
 function enumerateChallengeCandidates(args: {
   actorId: PlayerId;
   adapter: AutomatedActionPlannerAdapter;
@@ -2883,7 +2901,13 @@ function enumerateChallengeCandidates(args: {
     const canChallengeEvasive = attackerCanChallengeEvasive.get(attackerId) === true;
     const ownersWithMandatoryBodyguard = new Set<PlayerId>();
     for (const [ownerId, list] of bodyguardsByOwner) {
-      if (list.some((bg) => canChallengeEvasive || !bg.hasEvasive)) {
+      if (
+        list.some(
+          (bg) =>
+            (canChallengeEvasive || !bg.hasEvasive) &&
+            !isDefenderUnchallengeableForAttacker(adapter, bg.cardId, attackerId),
+        )
+      ) {
         ownersWithMandatoryBodyguard.add(ownerId);
       }
     }
@@ -2891,6 +2915,9 @@ function enumerateChallengeCandidates(args: {
     for (const defenderId of defenders) {
       const info = defenderInfo.get(defenderId);
       if (!info) {
+        continue;
+      }
+      if (isDefenderUnchallengeableForAttacker(adapter, defenderId, attackerId)) {
         continue;
       }
       if (!canChallengeEvasive && info.hasEvasive) {

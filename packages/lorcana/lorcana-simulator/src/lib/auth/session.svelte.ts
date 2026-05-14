@@ -19,7 +19,7 @@ let user = $state<AuthUser | null>(null);
 let session = $state<AuthSession | null>(null);
 let isLoading = $state(true);
 
-async function fetchSession(): Promise<void> {
+async function fetchSession(options: { signInMethod?: "discord" | "email" | "metafy" } = {}): Promise<void> {
   const wasAuthenticated = user !== null;
   isLoading = true;
   try {
@@ -31,7 +31,7 @@ async function fetchSession(): Promise<void> {
       session = result.data.session as unknown as AuthSession;
 
       if (!wasAuthenticated) {
-        trackEvent("auth_sign_in_complete", { method: "discord" });
+        trackEvent("auth_sign_in_complete", { method: options.signInMethod ?? "discord" });
       }
       setUserProperties({ auth_state: "authenticated" });
     } else {
@@ -149,7 +149,7 @@ async function signInWithEmail(input: DevEmailPasswordAuthInput): Promise<void> 
     throw new Error(result.error.message || "Email sign-in failed.");
   }
 
-  await fetchSession();
+  await fetchSession({ signInMethod: "email" });
 }
 
 async function signUpWithEmail(input: DevEmailPasswordAuthInput): Promise<void> {
@@ -163,7 +163,7 @@ async function signUpWithEmail(input: DevEmailPasswordAuthInput): Promise<void> 
     throw new Error(result.error.message || "Email sign-up failed.");
   }
 
-  await fetchSession();
+  await fetchSession({ signInMethod: "email" });
 }
 
 /**

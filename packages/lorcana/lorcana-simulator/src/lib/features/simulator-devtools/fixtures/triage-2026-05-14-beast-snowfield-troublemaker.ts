@@ -9,7 +9,7 @@ export const triage20260514BeastSnowfieldTroublemakerFixture = createFixture({
     "Visual repro for Beast - Snowfield Troublemaker Rush bug. Play Beast from P1's hand — it has Rush and should be able to challenge P2's character immediately.",
   skipPreGame: true,
   playerOne: {
-    inkwell: 1,
+    inkwell: 2,
     hand: [beastSnowfieldTroublemaker],
     play: [],
     deck: 10,
@@ -17,7 +17,7 @@ export const triage20260514BeastSnowfieldTroublemakerFixture = createFixture({
   },
   playerTwo: {
     hand: [],
-    play: [{ card: mickeyMouseTrueFriend, isDrying: false }],
+    play: [{ card: mickeyMouseTrueFriend, isDrying: false, exerted: true }],
     deck: 10,
     lore: 0,
   },

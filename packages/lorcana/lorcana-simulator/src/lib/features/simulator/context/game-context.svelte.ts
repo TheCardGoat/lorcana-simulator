@@ -248,6 +248,13 @@ export const CHALLENGE_ANIMATION_DURATION_MS: Record<AnimationSpeed, number> = {
   slow: 1600,
 };
 
+export const ACTION_ANIMATION_DURATION_MS: Record<AnimationSpeed, number> = {
+  off: 0,
+  fast: 900,
+  normal: 1250,
+  slow: 1600,
+};
+
 export const QUEST_ROTATION_DURATION_MS: Record<AnimationSpeed, number> = {
   off: 0,
   fast: 125,
@@ -2627,7 +2634,7 @@ export class LorcanaGameContext implements LorcanaGameContextValue {
       ? []
       : deriveResolvedActionAnimationsFromPacket(
           packetUpdate,
-          CHALLENGE_ANIMATION_DURATION_MS[this.#animationSpeed],
+          ACTION_ANIMATION_DURATION_MS[this.#animationSpeed],
         );
     const nextQueuedOverlayAnnouncements = animationsOff
       ? []

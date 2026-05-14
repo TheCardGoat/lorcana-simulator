@@ -19,6 +19,8 @@ import {
 } from "../../state/turn-metrics";
 import { queueTriggeredEvent } from "../../../triggered-abilities";
 
+export const DEFERRED_LETHAL_DAMAGE_SWEEP_FLAG = "__deferredLethalDamageSweep";
+
 export function isMoveDamageEffect(effect: unknown): effect is MoveDamageEffect {
   return (
     typeof effect === "object" &&
@@ -317,6 +319,12 @@ function applyMoveDamage(
         );
         recordBanishedCharacterThisTurn(ctx, destinationId);
       }
+    }
+
+    if (effect.deferLethalBanish === true && resolutionInput.eventSnapshot) {
+      (resolutionInput.eventSnapshot as Record<string, unknown>)[
+        DEFERRED_LETHAL_DAMAGE_SWEEP_FLAG
+      ] = true;
     }
   }
 
