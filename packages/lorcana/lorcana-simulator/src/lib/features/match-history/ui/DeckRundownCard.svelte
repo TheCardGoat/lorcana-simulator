@@ -29,25 +29,30 @@
   const TREND_WINDOW = 20;
 
   let sortMode = $state<SortMode>("contribution");
-  let userDeckMask = $state<number | null>(null);
+  let userDeckKey = $state<string | null>(null);
 
   const deckOptions = $derived(getDeckOptions(matches));
+
+  function deckOptionKey(opt: DeckOption): string {
+    return `${opt.deckListId ?? "mask-only"}:${opt.mask}`;
+  }
 
   function deckLabel(opt: DeckOption): string {
     if (opt.label) return opt.label;
     return getColorMaskLabel(opt.mask);
   }
 
-  const selectedDeckMask = $derived.by(() => {
+  const selectedOption = $derived.by(() => {
     const opts = deckOptions;
     if (opts.length === 0) return null;
-    if (userDeckMask !== null && opts.some((o) => o.mask === userDeckMask)) {
-      return userDeckMask;
+    if (userDeckKey !== null) {
+      const selected = opts.find((o) => deckOptionKey(o) === userDeckKey);
+      if (selected) return selected;
     }
-    return opts[0].mask;
+    return opts[0];
   });
 
-  const selectedOption = $derived(deckOptions.find((o) => o.mask === selectedDeckMask) ?? null);
+  const selectedDeckMask = $derived(selectedOption?.mask ?? null);
 
   const worstMatchup = $derived.by((): DeckMatchupRow | null => {
     const sorted = [...rows].filter((r) => r.matchCount >= 3 && r.matchWinRate !== null);
@@ -58,8 +63,8 @@
 
   function handleDeckChange(e: Event): void {
     const v = (e.currentTarget as HTMLSelectElement).value;
-    userDeckMask = v === "" ? null : Number(v);
-    const opt = deckOptions.find((o) => String(o.mask) === v);
+    userDeckKey = v === "" ? null : v;
+    const opt = deckOptions.find((o) => deckOptionKey(o) === v);
     if (opt) {
       trackEvent("deck_rundown_deck_selected", { deck_name: opt.label || getColorMaskLabel(opt.mask) });
       onDeckChange?.(opt);
@@ -151,6 +156,18 @@
     });
   }
 
+  function matchupRowKey(row: DeckMatchupRow, index: number): string {
+    return [
+      row.opponentDeckColorMask ?? "unknown",
+      row.matchCount,
+      row.matchWins,
+      row.gamesTotal,
+      row.otpPlayed,
+      row.otdPlayed,
+      index,
+    ].join(":");
+  }
+
   function rowLabel(row: DeckMatchupRow): string {
     if (row.opponentDeckColorMask === null) return "Unknown";
     return getColorMaskLabel(row.opponentDeckColorMask);
@@ -188,11 +205,11 @@
         <span class="shrink-0">Your deck</span>
         <select
           class="max-w-[260px] rounded-md border border-white/10 bg-white/[0.04] px-2 py-1.5 text-xs text-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
-          value={String(selectedDeckMask ?? deckOptions[0]?.mask ?? "")}
+          value={selectedOption ? deckOptionKey(selectedOption) : ""}
           onchange={handleDeckChange}
         >
-          {#each deckOptions as opt (opt.mask)}
-            <option value={String(opt.mask)}>
+          {#each deckOptions as opt (deckOptionKey(opt))}
+            <option value={deckOptionKey(opt)}>
               {deckLabel(opt)} ({opt.matchCount} matches)
             </option>
           {/each}
@@ -312,7 +329,7 @@
           </tr>
         </thead>
         <tbody>
-          {#each rows as row (row.opponentDeckColorMask ?? "unknown")}
+          {#each rows as row, i (matchupRowKey(row, i))}
             {@const rowOpacity = row.matchCount < 3 ? "opacity-50" : ""}
             <tr class="border-b border-white/[0.04] last:border-b-0 {rowOpacity}">
               <td class="max-w-[200px] py-2 pr-3 align-middle">
