@@ -886,6 +886,13 @@ function maybeSuspendForChosenTargets(
   }
 
   const effectRecord = effect as Record<string, unknown>;
+  const currentActorId = getCurrentActionActorId(ctx, cardPlayed);
+  const chooserId = resolveDefaultTargetChooserId(ctx, cardPlayed, effectRecord, resolutionInput);
+  const isResolvingPendingSelection = options?.allowPromptForExistingChosenTargets === true;
+  const selectionResolutionInput =
+    "chosenBy" in effectRecord && chooserId !== currentActorId && !isResolvingPendingSelection
+      ? clearCurrentSelectionTargets(resolutionInput)
+      : resolutionInput;
   if (
     effectRecord.type === "choice" ||
     effectRecord.type === "conditional" ||
@@ -911,10 +918,10 @@ function maybeSuspendForChosenTargets(
     origin: "pending-effect",
     requestId: "pending-effect:preview",
     sourceCardId: cardPlayed.cardId,
-    chooserId: resolveDefaultTargetChooserId(ctx, cardPlayed, effectRecord, resolutionInput),
+    chooserId,
     cardPlayed,
     effect,
-    resolutionInput,
+    resolutionInput: selectionResolutionInput,
     ctx,
   });
   if (
@@ -946,8 +953,9 @@ function maybeSuspendForChosenTargets(
   // their target, we must NOT re-suspend here — otherwise the pay-cost
   // resolver never runs, the cost is never paid, and the discard never fires.
   if (selectionContext.kind === "target-selection" || selectionContext.kind === "discard-choice") {
-    const currentTargetCount = getCurrentSelectionTargets(resolutionInput).length;
+    const currentTargetCount = getCurrentSelectionTargets(selectionResolutionInput).length;
     if (
+      (selectionContext.chooserId === currentActorId || isResolvingPendingSelection) &&
       currentTargetCount > 0 &&
       currentTargetCount >= Math.max(selectionContext.minSelections, 1)
     ) {
@@ -971,7 +979,7 @@ function maybeSuspendForChosenTargets(
     cardPlayed,
     effect,
     continuation: options?.continuation,
-    resolutionInput,
+    resolutionInput: selectionResolutionInput,
     selectionContext,
     ...(options?.allowSuspendWithZeroTargetCandidates === true
       ? { allowSuspendWithZeroTargetCandidates: true as const }
@@ -1509,7 +1517,7 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         stepTargets.length > 0 || fallbackStepTargets.length === 0
           ? stepTargets
           : fallbackStepTargets;
-      const nestedResolutionInput = (() => {
+      let nestedResolutionInput = (() => {
         if (stagedSequence && stagedTargetCount > 0) {
           return withCurrentSelectionTargets(
             withContextSelectionTargets(
@@ -1557,6 +1565,25 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
 
         return resolutionInput;
       })();
+      if (
+        !stagedSequence &&
+        currentTargets.length > consumedTargets &&
+        nestedEffect &&
+        typeof nestedEffect === "object" &&
+        !Array.isArray(nestedEffect) &&
+        "chosenBy" in nestedEffect
+      ) {
+        const nestedChooserId = resolveDefaultTargetChooserId(
+          ctx,
+          cardPlayed,
+          nestedEffect as unknown as Record<string, unknown>,
+          nestedResolutionInput,
+        );
+        const currentActorId = getCurrentActionActorId(ctx, cardPlayed);
+        if (nestedChooserId !== currentActorId) {
+          nestedResolutionInput = clearCurrentSelectionTargets(nestedResolutionInput);
+        }
+      }
       const implicitlyConsumesCurrentSelection =
         hasSatisfiedChosenTargetContext(
           ctx,

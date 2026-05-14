@@ -1164,6 +1164,12 @@ function getEligibleZoneCardsForPlayCardEffect(
         }
       }
       if (
+        filterRecord.excludeChosenCard === true &&
+        args.resolutionInput.eventSnapshot?.chosenCardId === cardId
+      ) {
+        return false;
+      }
+      if (
         typeof filterRecord.classification === "string" &&
         !(definition.classifications ?? []).includes(filterRecord.classification)
       ) {

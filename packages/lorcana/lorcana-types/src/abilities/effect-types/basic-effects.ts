@@ -164,6 +164,12 @@ export interface MoveDamageEffect {
   distribution?: "aggregate" | "from-each-source";
   from?: CharacterTarget;
   to?: CharacterTarget;
+  /**
+   * Skip the resolver's immediate lethal-damage banish for the destination.
+   * Use only when a printed effect must finish a follow-up instruction before
+   * state-based lethal damage is checked.
+   */
+  deferLethalBanish?: boolean;
 }
 
 // ============================================================================

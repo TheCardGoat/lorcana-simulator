@@ -30,6 +30,31 @@ const opponentCharacterC = createMockCharacter({
 });
 
 describe("The Family Scattered", () => {
+  it("asks the opponent to choose before moving the first character", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+      {
+        hand: [theFamilyScattered],
+        inkwell: theFamilyScattered.cost,
+        deck: [],
+      },
+      {
+        play: [opponentCharacterA, opponentCharacterB, opponentCharacterC],
+        deck: [],
+      },
+    );
+
+    expect(testEngine.asPlayerOne().playCard(theFamilyScattered)).toBeSuccessfulCommand();
+
+    expect(testEngine.asPlayerTwo().getCardZone(opponentCharacterA)).toBe("play");
+    expect(testEngine.asPlayerTwo().getCardZone(opponentCharacterB)).toBe("play");
+    expect(testEngine.asPlayerTwo().getCardZone(opponentCharacterC)).toBe("play");
+    const [firstPending] = testEngine.asPlayerTwo().getPendingEffects();
+    expect(firstPending?.payload).toMatchObject({
+      chooserId: "player_two",
+      kind: "target-selection",
+    });
+  });
+
   it("opponent returns one character to hand, puts one on bottom of deck, and puts one on top of deck", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {

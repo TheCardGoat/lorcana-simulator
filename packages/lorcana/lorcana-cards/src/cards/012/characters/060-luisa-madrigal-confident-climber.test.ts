@@ -61,6 +61,45 @@ describe("Luisa Madrigal - Confident Climber", () => {
       expect(testEngine.asPlayerTwo().getDamage(opposingCharacter)).toBe(3);
     });
 
+    it("moves lethal fourth damage away before Luisa is banished", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: luisaMadrigalConfidentClimber, damage: 3 },
+            { card: friendlyCharacter, damage: 1 },
+          ],
+          inkwell: 1,
+          deck: [],
+        },
+        {
+          play: [opposingCharacter],
+          deck: [],
+        },
+      );
+
+      const friendlyId = testEngine.findCardInstanceId(friendlyCharacter, "play");
+      const opposingId = testEngine.findCardInstanceId(opposingCharacter, "play", "player_two");
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(luisaMadrigalConfidentClimber),
+      ).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [friendlyId] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(luisaMadrigalConfidentClimber)).toBe("play");
+      expect(testEngine.asPlayerOne().getDamage(luisaMadrigalConfidentClimber)).toBe(4);
+
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [opposingId] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(luisaMadrigalConfidentClimber)).toBe("play");
+      expect(testEngine.asPlayerOne().getDamage(luisaMadrigalConfidentClimber)).toBe(0);
+      expect(testEngine.asPlayerOne().getDamage(friendlyCharacter)).toBe(0);
+      expect(testEngine.asPlayerTwo().getDamage(opposingCharacter)).toBe(4);
+    });
+
     it("does not move all damage to opposing if self has less than 3 damage", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
         {

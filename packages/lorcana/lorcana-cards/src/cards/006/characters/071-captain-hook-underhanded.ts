@@ -35,9 +35,19 @@ export const captainHookUnderhanded: CharacterCard = {
   classifications: ["Storyborn", "Villain", "Pirate", "Captain"],
   abilities: [
     {
+      condition: {
+        type: "exerted",
+      },
       effect: {
         restriction: "cant-quest",
-        target: "SELF",
+        target: {
+          selector: "all",
+          zones: ["play"],
+          owner: "opponent",
+          count: "all",
+          cardTypes: ["character"],
+          filters: [{ type: "has-classification", classification: "Pirate" }],
+        },
         type: "restriction",
       },
       id: "i7x-1",

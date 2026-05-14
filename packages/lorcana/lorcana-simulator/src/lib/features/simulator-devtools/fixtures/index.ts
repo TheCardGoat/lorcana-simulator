@@ -38,6 +38,10 @@ import { triage20260505TouchTheSkyFixture } from "./triage-2026-05-05-touch-the-
 import { triage20260506BrawlCastMauiRushChallengeFixture } from "./triage-2026-05-06-brawl-cast-maui-rush-challenge.js";
 import { triage20260508ShereKhanSkipOptionalFixture } from "./triage-2026-05-08-shere-khan-skip-optional.js";
 import { triage20260511DinBodyguardEnterExertedFixture } from "./triage-2026-05-11-din-bodyguard-enter-exerted.js";
+import { triage20260514BibbidiBobbidiBooFixture } from "./triage-2026-05-14-bibbidi-bobbidi-boo.js";
+import { triage20260514CaptainHookUnderhandedFixture } from "./triage-2026-05-14-captain-hook-underhanded.js";
+import { triage20260514LuisaConfidentClimberFixture } from "./triage-2026-05-14-luisa-confident-climber.js";
+import { triage20260514TheFamilyScatteredFixture } from "./triage-2026-05-14-the-family-scattered.js";
 import { createFixtureRegistry } from "./registry.js";
 
 export const DEFAULT_LORCANA_FIXTURE_ID = "empty-board";
@@ -88,6 +92,10 @@ const fixtureRegistry = createFixtureRegistry(
     triage20260506BrawlCastMauiRushChallengeFixture,
     triage20260508ShereKhanSkipOptionalFixture,
     triage20260511DinBodyguardEnterExertedFixture,
+    triage20260514LuisaConfidentClimberFixture,
+    triage20260514BibbidiBobbidiBooFixture,
+    triage20260514CaptainHookUnderhandedFixture,
+    triage20260514TheFamilyScatteredFixture,
   ] satisfies LorcanaSimulatorFixture[],
   "general simulator fixtures",
 );
