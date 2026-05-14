@@ -9,6 +9,16 @@
   const actionAnimations = $derived(board.actionAnimations);
   const cardSnapshotsById = $derived(board.cardSnapshotsById);
 
+  // Keep fixed panels anchored to the viewport even when board ancestors use transforms.
+  function teleport(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        node.remove();
+      },
+    };
+  }
+
   function onActionAnimationFinished(id: string): void {
     board.onActionAnimationFinished(id);
   }
@@ -36,17 +46,20 @@
 
 {#each actionAnimations as animation (animation.id)}
   <div
+    use:teleport
     class="action-result-panel"
     style="--duration:{animation.durationMs}ms"
     aria-hidden="true"
     onanimationend={(event) => handleAnimationEnd(animation, event)}
   >
     <div class="card-slot card-slot--source">
-      {#if getActionCard(animation)}
-        <LorcanaCard card={getActionCard(animation)!} size="small" isExerted={false} />
-      {:else}
-        <div class="card-placeholder"></div>
-      {/if}
+      {#each [getActionCard(animation)] as actionCard}
+        {#if actionCard}
+          <LorcanaCard card={actionCard} size="small" isExerted={false} />
+        {:else}
+          <div class="card-placeholder"></div>
+        {/if}
+      {/each}
     </div>
 
     <div class="targets" style="--target-count:{animation.targets.length}">
@@ -87,16 +100,18 @@
           </svg>
 
           <div class="card-slot">
-            {#if getTargetCard(target.cardId)}
-              <LorcanaCard
-                card={getTargetCard(target.cardId)!}
-                size="small"
-                isExerted={false}
-                isBanishedPreview={target.wasBanished}
-              />
-            {:else}
-              <div class="card-placeholder"></div>
-            {/if}
+            {#each [getTargetCard(target.cardId)] as targetCard}
+              {#if targetCard}
+                <LorcanaCard
+                  card={targetCard}
+                  size="small"
+                  isExerted={false}
+                  isBanishedPreview={target.wasBanished}
+                />
+              {:else}
+                <div class="card-placeholder"></div>
+              {/if}
+            {/each}
             {#if target.wasBanished}
               <span class="banish-badge">{m["sim.challengePreview.banished"]({})}</span>
             {/if}

@@ -1,6 +1,7 @@
 import type { PacketAnimation, PacketAnimationContext } from "#core";
 import type { LorcanaBoardZoneId, LorcanaCardMeta, LorcanaG } from "../types";
 import type { LorcanaCardDefinition } from "@tcg/lorcana-types";
+import { flattenSlottedTargets, isSlottedTargetInput } from "../targeting/slotted-targets";
 
 const BOARD_CENTER_ANCHOR_ID = "board:center";
 
@@ -360,12 +361,28 @@ function detectDrawAnimations(
   return animations;
 }
 
-function getTargetIdsFromArgs(args: object): string[] {
-  if (!("targets" in args) || !Array.isArray(args.targets)) {
+function getTargetIdsFromArgs(context: PacketAnimationContext, args: object): string[] {
+  if (!("targets" in args)) {
     return [];
   }
 
-  return args.targets.filter((target): target is string => typeof target === "string");
+  if (typeof args.targets === "string") {
+    return context.staticResources.instances.has(args.targets) ? [args.targets] : [];
+  }
+
+  if (!Array.isArray(args.targets)) {
+    if ("targets" in args && isSlottedTargetInput(args.targets)) {
+      return flattenSlottedTargets(args.targets)
+        .map((target) => String(target))
+        .filter((target) => context.staticResources.instances.has(target));
+    }
+    return [];
+  }
+
+  return args.targets.filter(
+    (target): target is string =>
+      typeof target === "string" && context.staticResources.instances.has(target),
+  );
 }
 
 function wasCardBanishedByCommand(context: PacketAnimationContext, cardId: string): boolean {
@@ -667,7 +684,7 @@ export function deriveLorcanaPacketAnimations(
 
     // Keep play.action packet for action card spell effect overlay
     if (isActionPlay) {
-      const targetIds = getTargetIdsFromArgs(command.input.args);
+      const targetIds = getTargetIdsFromArgs(context, command.input.args);
       if (targetIds.length > 0) {
         animations.push({
           id: `${command.commandID}:action:${cardPlayedId}`,

@@ -1,4 +1,4 @@
-import { chiefTuiRespectedLeader, mickeyMouseTrueFriend } from "@tcg/lorcana-cards/cards/001";
+import { mauiHeroToAll, mickeyMouseTrueFriend } from "@tcg/lorcana-cards/cards/001";
 import { fergusOutpostBuilder, theIslandOfNomanisanSyndromesHeadquarters } from "@tcg/lorcana-cards/cards/012";
 import { createFixture } from "./fixture-factory";
 
@@ -25,7 +25,7 @@ export const triage20260514FergusOutpostBuilderFixture = createFixture({
   playerTwo: {
     hand: [],
     play: [
-      { card: chiefTuiRespectedLeader, isDrying: false },
+      { card: mauiHeroToAll, isDrying: false },
       { card: mickeyMouseTrueFriend, isDrying: false },
     ],
     deck: 10,
