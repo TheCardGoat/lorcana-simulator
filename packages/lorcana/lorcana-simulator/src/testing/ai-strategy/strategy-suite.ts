@@ -9,6 +9,7 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type {
+  AutomatedActionCandidateSummary,
   AutomatedActionStrategyOption,
   AutomatedActionDecisionTrace,
   AutomatedActionFallback,
@@ -1077,23 +1078,60 @@ function buildMatchDecisionAnalysis(
       }
     }
 
-    // inked-key-card
+    // inked-key-card: suppress when (a) the matchup explicitly favours
+    // inking this card (positive `matchupInk:<definitionId>` contributor —
+    // the deck-profile encodes intentional matchup overrides, e.g. Pete in
+    // sapphire-steel vs amber-steel ramps), or (b) every ink candidate is a
+    // key card, meaning the bot had no non-key alternative and was forced
+    // to ink the least-bad option.
     if (
       selectedFamily === "putCardIntoInkwell" &&
       entry.selectedCandidate?.sourceDefinitionId &&
       KEY_CARD_DEFINITION_IDS.has(entry.selectedCandidate.sourceDefinitionId)
     ) {
-      const profile = BEST_AI_CARD_PROFILES.find(
-        (p) => p.definitionId === entry.selectedCandidate?.sourceDefinitionId,
+      const definitionId = entry.selectedCandidate.sourceDefinitionId;
+      const matchupInkKey = `matchupInk:${definitionId}`;
+      const matchupOverrideValue = (entry.selectedCandidate.contributors ?? []).find(
+        (contributor) => contributor.key === matchupInkKey,
+      )?.value;
+      const isMatchupDrivenInk =
+        typeof matchupOverrideValue === "number" && matchupOverrideValue > 0;
+      const inkCandidates = entry.orderedCandidates.filter(
+        (candidate) => candidate.family === "putCardIntoInkwell",
       );
+      // A candidate is "ink-averse" if it's in the curated key-card profile
+      // registry OR carries an `inkAvoid` role contributor. The deck-profile
+      // tags many engine cards with `inkAvoid` even when they don't have a
+      // standalone profile entry — flagging on those is just as much a
+      // forced-ink situation.
+      const isInkAverseCandidate = (candidate: AutomatedActionCandidateSummary): boolean => {
+        if (
+          candidate.sourceDefinitionId !== undefined &&
+          KEY_CARD_DEFINITION_IDS.has(candidate.sourceDefinitionId)
+        ) {
+          return true;
+        }
+        return (candidate.contributors ?? []).some(
+          (contributor) =>
+            contributor.key === "inkAvoid" &&
+            typeof contributor.value === "number" &&
+            contributor.value < 0,
+        );
+      };
+      const everyInkCandidateIsKey =
+        inkCandidates.length > 0 && inkCandidates.every(isInkAverseCandidate);
 
-      decisions.push({
-        category: "inked-key-card",
-        matchId,
-        moveNumber: entry.moveNumber,
-        turnNumber: entry.turnNumber,
-        reason: `Inked key card ${profile?.label ?? entry.selectedCandidate.sourceDefinitionId} (ink adjust: ${profile?.baseAdjust?.ink ?? "n/a"})`,
-      });
+      if (!isMatchupDrivenInk && !everyInkCandidateIsKey) {
+        const profile = BEST_AI_CARD_PROFILES.find((p) => p.definitionId === definitionId);
+
+        decisions.push({
+          category: "inked-key-card",
+          matchId,
+          moveNumber: entry.moveNumber,
+          turnNumber: entry.turnNumber,
+          reason: `Inked key card ${profile?.label ?? definitionId} (ink adjust: ${profile?.baseAdjust?.ink ?? "n/a"})`,
+        });
+      }
     }
   }
 
