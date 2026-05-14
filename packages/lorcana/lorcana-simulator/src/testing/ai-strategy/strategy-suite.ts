@@ -9,6 +9,7 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type {
+  AutomatedActionCandidateSummary,
   AutomatedActionStrategyOption,
   AutomatedActionDecisionTrace,
   AutomatedActionFallback,
@@ -1090,7 +1091,7 @@ function buildMatchDecisionAnalysis(
     ) {
       const definitionId = entry.selectedCandidate.sourceDefinitionId;
       const matchupInkKey = `matchupInk:${definitionId}`;
-      const matchupOverrideValue = entry.selectedCandidate.contributors.find(
+      const matchupOverrideValue = (entry.selectedCandidate.contributors ?? []).find(
         (contributor) => contributor.key === matchupInkKey,
       )?.value;
       const isMatchupDrivenInk =
@@ -1103,17 +1104,14 @@ function buildMatchDecisionAnalysis(
       // tags many engine cards with `inkAvoid` even when they don't have a
       // standalone profile entry — flagging on those is just as much a
       // forced-ink situation.
-      const isInkAverseCandidate = (candidate: {
-        sourceDefinitionId?: string;
-        contributors: ReadonlyArray<{ key: string; value: number | boolean | string }>;
-      }): boolean => {
+      const isInkAverseCandidate = (candidate: AutomatedActionCandidateSummary): boolean => {
         if (
           candidate.sourceDefinitionId !== undefined &&
           KEY_CARD_DEFINITION_IDS.has(candidate.sourceDefinitionId)
         ) {
           return true;
         }
-        return candidate.contributors.some(
+        return (candidate.contributors ?? []).some(
           (contributor) =>
             contributor.key === "inkAvoid" &&
             typeof contributor.value === "number" &&
