@@ -21,8 +21,8 @@ export const triage20260514MrsIncredibleRegroupFixture = createFixture({
   playerTwo: {
     hand: [],
     play: [
-      { card: chiefTuiRespectedLeader, isDrying: false },
-      { card: mickeyMouseTrueFriend, isDrying: false },
+      { card: chiefTuiRespectedLeader, isDrying: false, exerted: true },
+      { card: mickeyMouseTrueFriend, isDrying: false, exerted: true },
     ],
     deck: 10,
     lore: 0,

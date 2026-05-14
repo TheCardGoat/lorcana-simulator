@@ -22,7 +22,7 @@ export const triage20260514MushuMajesticDragonFixture = createFixture({
   playerTwo: {
     hand: [],
     play: [
-      { card: mickeyMouseTrueFriend, isDrying: false },
+      { card: mickeyMouseTrueFriend, isDrying: false, exerted: true },
       { card: mickeyMouseTrueFriend, isDrying: false },
     ],
     deck: 10,

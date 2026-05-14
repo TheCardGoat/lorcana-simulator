@@ -20,7 +20,7 @@ export const triage20260514MrIncredibleSuperStrongFixture = createFixture({
   },
   playerTwo: {
     hand: [],
-    play: [{ card: chiefTuiRespectedLeader, isDrying: false }],
+    play: [{ card: chiefTuiRespectedLeader, isDrying: false, exerted: true }],
     deck: 10,
     lore: 0,
   },

@@ -14,6 +14,7 @@ export const triage20260514SwordOfShanyuFixture = createFixture({
     play: [
       { card: theSwordOfShanyu, isDrying: false },
       { card: chiefTuiRespectedLeader, isDrying: false, exerted: true },
+      { card: mickeyMouseTrueFriend, isDrying: false },
     ],
     deck: 10,
     lore: 0,

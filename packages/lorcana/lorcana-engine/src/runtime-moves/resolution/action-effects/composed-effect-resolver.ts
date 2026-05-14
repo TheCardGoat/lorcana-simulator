@@ -118,7 +118,11 @@ import {
   isMoveCardsFromUnderEffect,
   resolveMoveCardsFromUnderEffect,
 } from "./move-cards-from-under-effect";
-import { isMoveDamageEffect, resolveMoveDamageEffect } from "./move-damage-effect";
+import {
+  DEFERRED_LETHAL_DAMAGE_SWEEP_FLAG,
+  isMoveDamageEffect,
+  resolveMoveDamageEffect,
+} from "./move-damage-effect";
 import { isMoveToLocationEffect, resolveMoveToLocationEffect } from "./move-to-location-effect";
 import {
   executeScryActionCardPlay,
@@ -177,6 +181,7 @@ import { isShuffleIntoDeckEffect, resolveShuffleIntoDeckEffect } from "./shuffle
 import { isSupportEffect, resolveSupportEffect } from "./support-effect";
 import { isForEachOpponentEffect, resolveForEachOpponentEffect } from "./for-each-opponent-effect";
 import { markLastEffectPerformed, resetLastEffectPerformed } from "./event-snapshot-utils";
+import { sweepLethalDamageInPlay } from "../../state/lethal-damage-sweep";
 import { handleUnsupportedActionEffect } from "./unsupported-action-effect";
 import {
   clearPendingActionChoice,
@@ -889,6 +894,8 @@ function maybeSuspendForChosenTargets(
   const currentActorId = getCurrentActionActorId(ctx, cardPlayed);
   const chooserId = resolveDefaultTargetChooserId(ctx, cardPlayed, effectRecord, resolutionInput);
   const isResolvingPendingSelection = options?.allowPromptForExistingChosenTargets === true;
+  // Opponent-chosen effects must not inherit the active player's preselected
+  // targets; clear them before prompting so only the chooser supplies targets.
   const selectionResolutionInput =
     "chosenBy" in effectRecord && chooserId !== currentActorId && !isResolvingPendingSelection
       ? clearCurrentSelectionTargets(resolutionInput)
@@ -1680,6 +1687,17 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
         }
         return result;
       }
+    }
+
+    if (
+      (resolutionInput.eventSnapshot as Record<string, unknown>)[
+        DEFERRED_LETHAL_DAMAGE_SWEEP_FLAG
+      ] === true
+    ) {
+      delete (resolutionInput.eventSnapshot as Record<string, unknown>)[
+        DEFERRED_LETHAL_DAMAGE_SWEEP_FLAG
+      ];
+      sweepLethalDamageInPlay(ctx, { reasonCardId: cardPlayed.cardId });
     }
 
     return RESOLVED_ACTION_EFFECT;
