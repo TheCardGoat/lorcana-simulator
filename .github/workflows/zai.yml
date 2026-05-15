@@ -59,6 +59,24 @@ jobs:
           }
           EOF
 
+      - name: Remove broken Claude skill links
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! -d ".claude/skills" ]]; then
+            exit 0
+          fi
+
+          # claude-code-action snapshots .claude with symlink dereferencing before
+          # restoring trusted config from the base branch. Broken skill links make
+          # that snapshot fail before the action can start.
+          while IFS= read -r -d '' skill_link; do
+            if [[ ! -e "${skill_link}" ]]; then
+              rm "${skill_link}"
+            fi
+          done < <(find .claude/skills -type l -print0)
+
       - name: "Get PR details (pull_request & workflow_dispatch)"
         id: "get_pr"
         if: |-

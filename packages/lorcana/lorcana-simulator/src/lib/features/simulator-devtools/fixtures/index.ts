@@ -55,6 +55,7 @@ import { triage20260514FergusOutpostBuilderFixture } from "./triage-2026-05-14-f
 import { triage20260514ThisGrowingPressureFixture } from "./triage-2026-05-14-this-growing-pressure.js";
 import { triage20260514CantHoldItBackAnymoreFixture } from "./triage-2026-05-14-cant-hold-it-back-anymore.js";
 import { triage20260514OmnidroidV9ShiftFixture } from "./triage-2026-05-14-omnidroid-v9-shift.js";
+import { triage20260515HandInTheBoxSpringLoadedFixture } from "./triage-2026-05-15-hand-in-the-box-spring-loaded.js";
 import { createFixtureRegistry } from "./registry.js";
 
 export const DEFAULT_LORCANA_FIXTURE_ID = "empty-board";
@@ -122,6 +123,7 @@ const fixtureRegistry = createFixtureRegistry(
     triage20260514ThisGrowingPressureFixture,
     triage20260514CantHoldItBackAnymoreFixture,
     triage20260514OmnidroidV9ShiftFixture,
+    triage20260515HandInTheBoxSpringLoadedFixture,
   ] satisfies LorcanaSimulatorFixture[],
   "general simulator fixtures",
 );
