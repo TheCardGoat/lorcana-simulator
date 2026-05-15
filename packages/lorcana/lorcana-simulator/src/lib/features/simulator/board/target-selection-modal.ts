@@ -1,4 +1,14 @@
-import type { ResolutionTargetAvailableMovesSelectionState } from "@/features/simulator/model/contracts.js";
+import type {
+  ActionAvailableMovesSelectionState,
+  LorcanaCardSnapshot,
+  LorcanaZoneId,
+  ResolutionTargetAvailableMovesSelectionState,
+} from "@/features/simulator/model/contracts.js";
+
+export type TargetSelectionModalPolicyState = Pick<
+  ResolutionTargetAvailableMovesSelectionState,
+  "allowedZones" | "candidatePlayerIds" | "categoryId" | "playCardEntryModeChoice"
+>;
 
 const TARGET_ZONE_LABELS = {
   deck: "Deck",
@@ -23,9 +33,7 @@ const TARGET_ZONE_LABELS = {
  */
 const ZONES_USING_CARD_TARGET_MODAL = ["discard", "deck", "inkwell", "limbo"] as const;
 
-function selectionUsesCardTargetModal(
-  selectionState: ResolutionTargetAvailableMovesSelectionState,
-): boolean {
+function selectionUsesCardTargetModal(selectionState: TargetSelectionModalPolicyState): boolean {
   if (selectionState.candidatePlayerIds.length > 0) {
     return true;
   }
@@ -40,13 +48,40 @@ function selectionUsesCardTargetModal(
 }
 
 export function shouldUseTargetSelectionModal(
-  selectionState: ResolutionTargetAvailableMovesSelectionState | null | undefined,
+  selectionState: TargetSelectionModalPolicyState | null | undefined,
 ): boolean {
   return Boolean(
     selectionState &&
     selectionState.categoryId !== "alter-hand" &&
     selectionUsesCardTargetModal(selectionState),
   );
+}
+
+export function getActionTargetSelectionModalZones(
+  selectionState: ActionAvailableMovesSelectionState | null | undefined,
+  cardSnapshotsById: Record<string, LorcanaCardSnapshot>,
+): LorcanaZoneId[] {
+  if (
+    selectionState?.mode !== "action" ||
+    (selectionState.phase !== "choose-target" && selectionState.phase !== "choose-cost")
+  ) {
+    return [];
+  }
+
+  const zones = new Set<LorcanaZoneId>();
+
+  for (const entry of selectionState.entries) {
+    if (entry.kind !== "card" || entry.disabled || !entry.cardId) {
+      continue;
+    }
+
+    const zoneId = cardSnapshotsById[entry.cardId]?.zoneId;
+    if (zoneId) {
+      zones.add(zoneId);
+    }
+  }
+
+  return [...zones];
 }
 
 export function shouldAutoOpenTargetSelectionModal(
@@ -57,7 +92,7 @@ export function shouldAutoOpenTargetSelectionModal(
 }
 
 export function getTargetSelectionModalTitle(
-  selectionState: ResolutionTargetAvailableMovesSelectionState,
+  selectionState: Pick<TargetSelectionModalPolicyState, "allowedZones"> & { title: string },
 ): string {
   if (selectionState.allowedZones.length === 1 && selectionState.allowedZones[0] !== "play") {
     return `${TARGET_ZONE_LABELS[selectionState.allowedZones[0]]} targets`;

@@ -11,9 +11,11 @@ import { m } from "$lib/i18n/messages.js";
 import type {
 	ExecutableMoveEntry,
 	ExecutableMovePresentationCategoryId,
+	ActionAvailableMovesSelectionState,
 	AvailableMovesSelectionEntry,
 	LorcanaCardSnapshot,
 	LorcanaPlayerSide,
+	LorcanaZoneId,
 	ResolutionChoiceAvailableMovesSelectionState,
 	ResolutionTargetAvailableMovesSelectionState,
 } from "@/features/simulator/model/contracts.js";
@@ -40,6 +42,7 @@ import type { InteractionSelectChoice } from "@tcg/lorcana-interaction";
 import ResolutionTargetOverlay from "@/features/simulator/board/ResolutionTargetOverlay.svelte";
 import { shouldUseResolutionTargetOverlay } from "@/features/simulator/board/resolution-target-overlay.js";
 import {
+	getActionTargetSelectionModalZones,
 	getTargetSelectionModalTitle,
 	shouldAutoOpenTargetSelectionModal,
 	shouldUseTargetSelectionModal,
@@ -78,6 +81,21 @@ import type {
 	DirectMoveTriggerSource,
 } from "@/features/simulator/model/direct-action-state.js";
 import { getQuestAllSummary } from "@/features/simulator/model/turn-action-rail.js";
+
+type CardTargetDialogState = Pick<
+	ResolutionTargetAvailableMovesSelectionState,
+	| "sessionKey"
+	| "title"
+	| "message"
+	| "entries"
+	| "allowedZones"
+	| "candidateCardIds"
+	| "candidatePlayerIds"
+	| "canConfirm"
+	| "canDecline"
+	| "declineLabel"
+	| "playCardEntryModeChoice"
+> & { mode: "resolution-target" | "action" };
 
 interface PendingEffectsPopoverItem {
 	id: string;
@@ -398,13 +416,73 @@ const targetSelectionState = $derived.by(() => {
 	if (
 		availableMovesSelectionState?.mode === "resolution-target" ||
 		(availableMovesSelectionState?.mode === "action" &&
-			availableMovesSelectionState.phase === "choose-target")
+			(availableMovesSelectionState.phase === "choose-target" ||
+				availableMovesSelectionState.phase === "choose-cost"))
 	) {
 		return availableMovesSelectionState;
 	}
 
 	return null;
 });
+function createActionTargetDialogSessionKey(
+	state: ActionAvailableMovesSelectionState,
+	allowedZones: readonly LorcanaZoneId[],
+): string {
+	return [
+		"action-target",
+		state.categoryId,
+		state.sourceCardId ?? "none",
+		state.selectedMoveId ?? "none",
+		allowedZones.join(","),
+		state.entries.map((entry) => entry.id).join("|"),
+	].join(":");
+}
+
+function createActionTargetDialogState(
+	state: ActionAvailableMovesSelectionState,
+): CardTargetDialogState | null {
+	const entryCandidateCardIds = state.entries.flatMap((entry) =>
+		entry.kind === "card" && typeof entry.cardId === "string" ? [entry.cardId] : [],
+	);
+	const candidateCardIds =
+		entryCandidateCardIds.length > 0
+			? entryCandidateCardIds
+			: sidebar.selectableActionSessionCardIds;
+	const allowedZones =
+		candidateCardIds.length > 0
+			? [
+					...new Set(
+						candidateCardIds.flatMap((cardId) => {
+							const zoneId = board.cardSnapshotsById[cardId]?.zoneId;
+							return zoneId ? [zoneId] : [];
+						}),
+					),
+				]
+			: getActionTargetSelectionModalZones(state, board.cardSnapshotsById);
+
+	if (
+		!shouldUseTargetSelectionModal({
+			allowedZones,
+			candidatePlayerIds: [],
+			categoryId: state.categoryId,
+		})
+	) {
+		return null;
+	}
+
+	return {
+		mode: "action",
+		sessionKey: createActionTargetDialogSessionKey(state, allowedZones),
+		title: state.title,
+		message: state.message,
+		entries: state.entries,
+		allowedZones,
+		candidateCardIds,
+		candidatePlayerIds: [],
+		canConfirm: state.canConfirm,
+	};
+}
+
 const resolutionTargetOverlayState = $derived.by(
 	(): ResolutionTargetAvailableMovesSelectionState | null => {
   if (shouldUseResolutionTargetOverlay(targetSelectionState)) {
@@ -415,15 +493,27 @@ const resolutionTargetOverlayState = $derived.by(
 },
 );
 const genericTargetModalState = $derived.by(
-	(): ResolutionTargetAvailableMovesSelectionState | null =>
-		targetSelectionState?.mode === "resolution-target" &&
-		shouldUseTargetSelectionModal(targetSelectionState) &&
-		!resolutionTargetOverlayState
-			? targetSelectionState
-			: null,
+	(): CardTargetDialogState | null => {
+		if (!targetSelectionState || resolutionTargetOverlayState) {
+			return null;
+		}
+
+		if (
+			targetSelectionState.mode === "resolution-target" &&
+			shouldUseTargetSelectionModal(targetSelectionState)
+		) {
+			return targetSelectionState;
+		}
+
+		if (targetSelectionState.mode === "action") {
+			return createActionTargetDialogState(targetSelectionState);
+		}
+
+		return null;
+	},
 );
 const dialogTargetState = $derived.by(
-	(): ResolutionTargetAvailableMovesSelectionState | null =>
+	(): CardTargetDialogState | null =>
 		genericTargetModalState ??
 		(userForcedTargetDialogOpen && targetSelectionState?.mode === "resolution-target"
 			? targetSelectionState
@@ -474,7 +564,7 @@ const hasActiveOverlay = $derived(
 );
 
 function getDialogCardIds(
-	state: ResolutionTargetAvailableMovesSelectionState | null,
+	state: CardTargetDialogState | null,
 ): string[] {
 	if (!state) {
 		return [];

@@ -56,6 +56,13 @@ describe("test-routes", () => {
     }
   });
 
+  it("resolves the Hand-in-the-Box Spring-Loaded visual fixture", () => {
+    const fixtureId = "triage-2026-05-15-hand-in-the-box-spring-loaded";
+
+    expect(resolveFixtureForTestRoute(fixtureId)?.id).toBe(fixtureId);
+    expect(buildFixtureTestRouteHref(fixtureId)).toBe(`/tests/${fixtureId}`);
+  });
+
   it("returns undefined for unknown fixture routes", () => {
     expect(resolveFixtureForTestRoute("does-not-exist")).toBeUndefined();
   });
