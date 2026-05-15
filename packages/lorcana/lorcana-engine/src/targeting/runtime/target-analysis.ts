@@ -78,6 +78,10 @@ type ActionTargetCardDefinition = {
   cost?: number;
 };
 
+function isTargetOwner(value: unknown): value is "you" | "opponent" | "any" {
+  return value === "you" || value === "opponent" || value === "any";
+}
+
 type ActionTargetRuntimeContext = Pick<
   MoveValidationContext<MoveInput> | MoveEnumerationContext,
   "framework" | "cards"
@@ -269,6 +273,13 @@ function validateForcedEffectTargetSelection(args: {
 }
 
 function normalizeTargetOwner(target: unknown): "you" | "opponent" | "any" {
+  if (target && typeof target === "object" && !Array.isArray(target)) {
+    const owner = (target as Record<string, unknown>).owner;
+    if (isTargetOwner(owner)) {
+      return owner;
+    }
+  }
+
   switch (target) {
     case "OPPONENT":
     case "OPPONENTS":
@@ -538,7 +549,7 @@ function collectRemoveDamageTargetDescriptors(effect: unknown): RemoveDamageTarg
         cardTypes: ["character"],
         filter: fromRecord?.filter,
         filters: fromRecord?.filters,
-        ...(toIsSelf ? { excludeSelf: true } : {}),
+        ...(fromRecord?.excludeSelf === true || toIsSelf ? { excludeSelf: true } : {}),
       });
     }
     if (effectRecord.to !== undefined && !toIsSelf) {
@@ -547,7 +558,7 @@ function collectRemoveDamageTargetDescriptors(effect: unknown): RemoveDamageTarg
         cardTypes: ["character"],
         filter: toRecord?.filter,
         filters: toRecord?.filters,
-        ...(fromIsSelf ? { excludeSelf: true } : {}),
+        ...(toRecord?.excludeSelf === true || fromIsSelf ? { excludeSelf: true } : {}),
       });
     }
     return descriptors;
