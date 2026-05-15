@@ -77,9 +77,12 @@ export function resolveMoveDamageEffect(
       return;
     }
     const toTarget = effect.to ?? "chosen-for-effect";
-    const destinationSelectionInput = effectTargetUsesSelectionContext(effect.to)
-      ? getEffectTargetSelectionInput(toTarget, resolutionInput)
-      : slottedToInput;
+    const destinationSelectionInput =
+      slottedToInput.length > 0
+        ? slottedToInput
+        : effectTargetUsesSelectionContext(effect.to)
+          ? getEffectTargetSelectionInput(toTarget, resolutionInput)
+          : slottedToInput;
     const destinationTargets =
       resolveEffectTargets(ctx, cardPlayed, toTarget, destinationSelectionInput) ?? [];
     const destinationId = destinationTargets[0];

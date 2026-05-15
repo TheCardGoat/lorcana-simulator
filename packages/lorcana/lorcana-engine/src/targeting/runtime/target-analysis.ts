@@ -78,6 +78,10 @@ type ActionTargetCardDefinition = {
   cost?: number;
 };
 
+function isTargetOwner(value: unknown): value is "you" | "opponent" | "any" {
+  return value === "you" || value === "opponent" || value === "any";
+}
+
 type ActionTargetRuntimeContext = Pick<
   MoveValidationContext<MoveInput> | MoveEnumerationContext,
   "framework" | "cards"
@@ -269,6 +273,13 @@ function validateForcedEffectTargetSelection(args: {
 }
 
 function normalizeTargetOwner(target: unknown): "you" | "opponent" | "any" {
+  if (target && typeof target === "object" && !Array.isArray(target)) {
+    const owner = (target as Record<string, unknown>).owner;
+    if (isTargetOwner(owner)) {
+      return owner;
+    }
+  }
+
   switch (target) {
     case "OPPONENT":
     case "OPPONENTS":
@@ -523,19 +534,31 @@ function collectRemoveDamageTargetDescriptors(effect: unknown): RemoveDamageTarg
     // here is safe: the bag/pending-effect drains without prompting.
     const fromIsSelf = effectRecord.from === "SELF";
     const toIsSelf = effectRecord.to === "SELF";
+    const fromRecord =
+      effectRecord.from && typeof effectRecord.from === "object"
+        ? (effectRecord.from as Record<string, unknown>)
+        : undefined;
+    const toRecord =
+      effectRecord.to && typeof effectRecord.to === "object"
+        ? (effectRecord.to as Record<string, unknown>)
+        : undefined;
     const descriptors: RemoveDamageTargetDescriptor[] = [];
     if (effectRecord.from !== undefined && !fromIsSelf) {
       descriptors.push({
         owner: normalizeMoveDamageParticipantOwner(effectRecord.from),
         cardTypes: ["character"],
-        ...(toIsSelf ? { excludeSelf: true } : {}),
+        filter: fromRecord?.filter,
+        filters: fromRecord?.filters,
+        ...(fromRecord?.excludeSelf === true || toIsSelf ? { excludeSelf: true } : {}),
       });
     }
     if (effectRecord.to !== undefined && !toIsSelf) {
       descriptors.push({
         owner: normalizeMoveDamageParticipantOwner(effectRecord.to),
         cardTypes: ["character"],
-        ...(fromIsSelf ? { excludeSelf: true } : {}),
+        filter: toRecord?.filter,
+        filters: toRecord?.filters,
+        ...(toRecord?.excludeSelf === true || fromIsSelf ? { excludeSelf: true } : {}),
       });
     }
     return descriptors;

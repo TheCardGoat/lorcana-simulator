@@ -26,6 +26,14 @@ const weakAttacker = createMockCharacter({
   willpower: 1,
 });
 
+const damagedOpposingSource = createMockCharacter({
+  id: "gothel-test-damaged-opposing-source",
+  name: "Damaged Opposing Source",
+  cost: 2,
+  strength: 1,
+  willpower: 5,
+});
+
 describe("Mother Gothel - Vain Sorceress", () => {
   describe("NOW YOU'VE UPSET ME - Whenever one of your characters challenges, you may move 1 damage counter from chosen character to chosen opposing character.", () => {
     it("moves 1 damage from chosen character to chosen opposing character when accepted", () => {
@@ -121,6 +129,36 @@ describe("Mother Gothel - Vain Sorceress", () => {
       // Gothel had 2 damage, now has 1
       expect(testEngine.asPlayerOne().getDamage(motherGothelVainSorceress)).toBe(1);
       // Defender took combat damage + 1 moved
+      expect(testEngine.asPlayerTwo().getDamage(defender)).toBe(attacker.strength + 1);
+    });
+
+    it("can move damage from one opposing character to another opposing character", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [motherGothelVainSorceress, { card: attacker, isDrying: false }],
+          deck: 3,
+        },
+        {
+          play: [{ card: damagedOpposingSource, damage: 2 }, { card: defender, exerted: true }],
+          deck: 3,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().challenge(attacker, defender)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(1);
+
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(motherGothelVainSorceress, {
+          resolveOptional: true,
+          targets: {
+            kind: "move-damage",
+            from: [damagedOpposingSource],
+            to: [defender],
+          },
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getDamage(damagedOpposingSource)).toBe(1);
       expect(testEngine.asPlayerTwo().getDamage(defender)).toBe(attacker.strength + 1);
     });
 
