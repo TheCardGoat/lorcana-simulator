@@ -1,11 +1,16 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  getActionTargetSelectionModalZones,
   getTargetSelectionModalTitle,
   shouldAutoOpenTargetSelectionModal,
   shouldUseTargetSelectionModal,
 } from "./target-selection-modal.js";
-import type { ResolutionTargetAvailableMovesSelectionState } from "@/features/simulator/model/contracts.js";
+import type {
+  ActionAvailableMovesSelectionState,
+  LorcanaCardSnapshot,
+  ResolutionTargetAvailableMovesSelectionState,
+} from "@/features/simulator/model/contracts.js";
 
 function createSelectionState(
   overrides: Partial<ResolutionTargetAvailableMovesSelectionState> = {},
@@ -39,9 +44,99 @@ function createSelectionState(
   };
 }
 
+function createActionSelectionState(
+  overrides: Partial<ActionAvailableMovesSelectionState> = {},
+): ActionAvailableMovesSelectionState {
+  return {
+    mode: "action",
+    categoryId: "play-card",
+    categoryLabel: "Play card",
+    phase: "choose-target",
+    title: "Hand-in-the-Box - Sid's Toy",
+    message:
+      "Choose a Toy character from your discard to put on bottom of your deck to play Hand-in-the-Box - Sid's Toy for free.",
+    canBack: true,
+    canCancel: true,
+    canConfirm: false,
+    entries: [
+      {
+        id: "available-moves:card:toy-1",
+        kind: "card",
+        cardId: "toy-1",
+        label: "Wind-Up Frog - Sid's Toy",
+        selected: false,
+      },
+    ],
+    sourceCardId: "hand-in-the-box",
+    sourceLabel: "Hand-in-the-Box - Sid's Toy",
+    targetCardId: null,
+    targetLabel: null,
+    selectedMoveId: "play-card:hand-in-the-box:spring-loaded",
+    selectedMoveLabel: "Play: Put Toy on Deck Bottom",
+    ...overrides,
+  };
+}
+
+function createCardSnapshot(overrides: Partial<LorcanaCardSnapshot> = {}): LorcanaCardSnapshot {
+  return {
+    cardId: "toy-1",
+    definitionId: "wind-up-frog",
+    isMasked: false,
+    label: "Wind-Up Frog - Sid's Toy",
+    ownerId: "player_one",
+    ownerSide: "playerOne",
+    zoneId: "discard",
+    facePresentation: "faceUp",
+    ...overrides,
+  };
+}
+
 describe("target selection modal helpers", () => {
   it("uses the modal for discard-target sessions", () => {
     expect(shouldUseTargetSelectionModal(createSelectionState())).toBe(true);
+  });
+
+  it("derives discard zones for action target-selection sessions", () => {
+    expect(
+      getActionTargetSelectionModalZones(createActionSelectionState(), {
+        "toy-1": createCardSnapshot(),
+      }),
+    ).toEqual(["discard"]);
+  });
+
+  it("derives discard zones for action cost-selection sessions", () => {
+    expect(
+      getActionTargetSelectionModalZones(
+        createActionSelectionState({
+          phase: "choose-cost",
+        }),
+        {
+          "toy-1": createCardSnapshot(),
+        },
+      ),
+    ).toEqual(["discard"]);
+  });
+
+  it("ignores disabled action target entries when deriving modal zones", () => {
+    expect(
+      getActionTargetSelectionModalZones(
+        createActionSelectionState({
+          entries: [
+            {
+              id: "available-moves:card:toy-1",
+              kind: "card",
+              cardId: "toy-1",
+              label: "Wind-Up Frog - Sid's Toy",
+              selected: false,
+              disabled: true,
+            },
+          ],
+        }),
+        {
+          "toy-1": createCardSnapshot(),
+        },
+      ),
+    ).toEqual([]);
   });
 
   it("uses the modal for player-target sessions", () => {
