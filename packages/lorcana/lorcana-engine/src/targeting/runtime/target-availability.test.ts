@@ -414,4 +414,83 @@ describe("target-availability", () => {
       shouldAutoRejectForNoValidTargets: false,
     });
   });
+
+  it("honors object move-damage endpoint owner during candidate analysis", () => {
+    const source = "source" as CardInstanceId;
+    const friendly = "friendly" as CardInstanceId;
+    const opposing = "opposing" as CardInstanceId;
+    const ctx = createTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "character" },
+        [friendly]: { id: "friendly", cardType: "character" },
+        [opposing]: { id: "opposing", cardType: "character" },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [source, friendly],
+        [`play:${PLAYER_TWO}`]: [opposing],
+      },
+    });
+
+    const analysis = analyzeEffectTargets(
+      {
+        type: "move-damage",
+        amount: 1,
+        from: {
+          selector: "chosen",
+          count: 1,
+          owner: "any",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+        to: "SELF",
+      },
+      PLAYER_ONE,
+      ctx,
+      source,
+    );
+
+    expect(analysis.cardCandidates).toContain(friendly);
+    expect(analysis.cardCandidates).toContain(opposing);
+    expect(analysis.cardCandidates).not.toContain(source);
+  });
+
+  it("honors explicit excludeSelf on object move-damage endpoints during candidate analysis", () => {
+    const source = "source" as CardInstanceId;
+    const friendly = "friendly" as CardInstanceId;
+    const opposing = "opposing" as CardInstanceId;
+    const ctx = createTestContext({
+      definitions: {
+        [source]: { id: "source", cardType: "character" },
+        [friendly]: { id: "friendly", cardType: "character" },
+        [opposing]: { id: "opposing", cardType: "character" },
+      },
+      zoneCards: {
+        [`play:${PLAYER_ONE}`]: [source, friendly],
+        [`play:${PLAYER_TWO}`]: [opposing],
+      },
+    });
+
+    const analysis = analyzeEffectTargets(
+      {
+        type: "move-damage",
+        amount: 1,
+        from: {
+          selector: "chosen",
+          count: 1,
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+        },
+        to: "CHOSEN_OPPOSING_CHARACTER",
+      },
+      PLAYER_ONE,
+      ctx,
+      source,
+    );
+
+    expect(analysis.cardCandidates).toContain(friendly);
+    expect(analysis.cardCandidates).toContain(opposing);
+    expect(analysis.cardCandidates).not.toContain(source);
+  });
 });
