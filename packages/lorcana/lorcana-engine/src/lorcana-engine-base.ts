@@ -4470,9 +4470,17 @@ export abstract class LorcanaEngineBase {
       return [];
     }
 
+    const shouldAnalyzePlayCards =
+      legalMoveIds.includes("playCard") ||
+      playerBoard.hand.some((cardId) => this.canPlayCard(cardId as CardInstanceId));
+    const moveIdsToAnalyze =
+      shouldAnalyzePlayCards && !legalMoveIds.includes("playCard")
+        ? [...legalMoveIds, "playCard"]
+        : legalMoveIds;
+
     const moves: AvailableMove[] = [];
 
-    for (const moveId of legalMoveIds) {
+    for (const moveId of moveIdsToAnalyze) {
       if (moveId === "alterHand") {
         continue;
       }
@@ -4490,22 +4498,15 @@ export abstract class LorcanaEngineBase {
           const definition = this.getCardDefinitionByInstanceId(id);
           const card = definition as LorcanaCard;
 
-          // Check standard/free play (ink-based cost only).
-          // canPlayCard includes a song-singing fallback that returns true when a
-          // singer is available even if ink is insufficient. For the playCard move
-          // list we only want cards that can be played by paying ink, so songs must
-          // pass standard-cost validation directly.
-          if (this.canPlayCard(id)) {
-            if (
-              isSongCard(card) &&
-              !this.validateMove("playCard", {
-                args: { cardId: id, cost: "standard" },
-              }).valid
-            ) {
-              // Song can be sung but not played with ink — exclude from playCard
-            } else {
-              playCardIds.push(id);
-            }
+          // Check standard/free play only. canPlayCard also includes sing/shift
+          // fallbacks, but those belong in the dedicated singCard/shiftCard
+          // move buckets below.
+          if (
+            this.validateMove("playCard", {
+              args: { cardId: id, cost: "standard" },
+            }).valid
+          ) {
+            playCardIds.push(id);
           }
 
           // Check shift — need at least one valid shift target on board

@@ -10,6 +10,14 @@ const friendlyCharacter = createMockCharacter({
   willpower: 5,
 });
 
+const undamagedFriendlyCharacter = createMockCharacter({
+  id: "luisa-test-undamaged-friendly",
+  name: "Undamaged Friendly Character",
+  cost: 2,
+  strength: 2,
+  willpower: 5,
+});
+
 const opposingCharacter = createMockCharacter({
   id: "luisa-test-opposing",
   name: "Opposing Character",
@@ -134,6 +142,50 @@ describe("Luisa Madrigal - Confident Climber", () => {
       expect(testEngine.asPlayerTwo().getDamage(opposingCharacter)).toBe(0);
     });
 
+    it("does not offer Luisa or undamaged characters as source targets", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: luisaMadrigalConfidentClimber, damage: 2 },
+            { card: friendlyCharacter, damage: 1 },
+            undamagedFriendlyCharacter,
+          ],
+          inkwell: 1,
+          deck: [],
+        },
+        { deck: [] },
+      );
+
+      const friendlyId = testEngine.findCardInstanceId(friendlyCharacter, "play");
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(luisaMadrigalConfidentClimber),
+      ).toBeSuccessfulCommand();
+
+      const [pending] = testEngine.asPlayerOne().getPendingEffects();
+      expect(pending?.selectionContext).toMatchObject({
+        targetDsl: [
+          {
+            excludeSelf: true,
+            filters: [{ type: "status", status: "damaged" }],
+          },
+        ],
+        expectedSlottedKind: "move-damage",
+      });
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({
+          targets: {
+            kind: "move-damage",
+            from: [friendlyId],
+            to: [],
+          },
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getDamage(luisaMadrigalConfidentClimber)).toBe(3);
+      expect(testEngine.asPlayerOne().getDamage(friendlyCharacter)).toBe(0);
+    });
+
     it("can be activated multiple times per turn (no exert required — cost is 1 ink only)", () => {
       // The card text across all non-English localizations shows "1 {I}" with no {E}.
       // The English description includes "{E}" but this is a text-display artefact —
@@ -168,6 +220,19 @@ describe("Luisa Madrigal - Confident Climber", () => {
       expect(
         testEngine.asPlayerOne().activateAbility(luisaMadrigalConfidentClimber),
       ).toBeSuccessfulCommand();
+      const [secondPending] = testEngine.asPlayerOne().getPendingEffects();
+      const secondCandidateIds =
+        secondPending?.selectionContext && "cardCandidateIds" in secondPending.selectionContext
+          ? secondPending.selectionContext.cardCandidateIds
+          : [];
+      expect(secondCandidateIds).toEqual([friendlyId]);
+      expect(
+        testEngine.asPlayerOne().resolveNextPending({ targets: [friendlyId] }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getDamage(luisaMadrigalConfidentClimber)).toBe(2);
+      expect(testEngine.asPlayerOne().getDamage(friendlyCharacter)).toBe(0);
+      expect(testEngine.asPlayerOne().getPendingEffects()).toHaveLength(0);
     });
 
     it("cannot activate without enough ink", () => {

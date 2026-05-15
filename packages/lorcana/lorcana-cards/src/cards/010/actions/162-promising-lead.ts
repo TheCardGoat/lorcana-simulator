@@ -26,7 +26,7 @@ export const promisingLead: ActionCard = {
         steps: [
           {
             duration: "this-turn",
-            modifier: 2,
+            modifier: 1,
             stat: "lore",
             target: {
               selector: "chosen",
@@ -38,32 +38,12 @@ export const promisingLead: ActionCard = {
             type: "modify-stat",
           },
           {
-            type: "conditional",
-            condition: {
-              type: "target-query",
-              query: {
-                selector: "all",
-                reference: "selected-first",
-                filters: [
-                  {
-                    type: "has-classification",
-                    classification: "Detective",
-                  },
-                ],
-              },
-              comparison: {
-                operator: "gte",
-                value: 1,
-              },
+            duration: "this-turn",
+            keyword: "Support",
+            target: {
+              ref: "previous-target",
             },
-            then: {
-              duration: "this-turn",
-              keyword: "Support",
-              target: {
-                ref: "previous-target",
-              },
-              type: "gain-keyword",
-            },
+            type: "gain-keyword",
           },
         ],
       },

@@ -523,11 +523,21 @@ function collectRemoveDamageTargetDescriptors(effect: unknown): RemoveDamageTarg
     // here is safe: the bag/pending-effect drains without prompting.
     const fromIsSelf = effectRecord.from === "SELF";
     const toIsSelf = effectRecord.to === "SELF";
+    const fromRecord =
+      effectRecord.from && typeof effectRecord.from === "object"
+        ? (effectRecord.from as Record<string, unknown>)
+        : undefined;
+    const toRecord =
+      effectRecord.to && typeof effectRecord.to === "object"
+        ? (effectRecord.to as Record<string, unknown>)
+        : undefined;
     const descriptors: RemoveDamageTargetDescriptor[] = [];
     if (effectRecord.from !== undefined && !fromIsSelf) {
       descriptors.push({
         owner: normalizeMoveDamageParticipantOwner(effectRecord.from),
         cardTypes: ["character"],
+        filter: fromRecord?.filter,
+        filters: fromRecord?.filters,
         ...(toIsSelf ? { excludeSelf: true } : {}),
       });
     }
@@ -535,6 +545,8 @@ function collectRemoveDamageTargetDescriptors(effect: unknown): RemoveDamageTarg
       descriptors.push({
         owner: normalizeMoveDamageParticipantOwner(effectRecord.to),
         cardTypes: ["character"],
+        filter: toRecord?.filter,
+        filters: toRecord?.filters,
         ...(fromIsSelf ? { excludeSelf: true } : {}),
       });
     }

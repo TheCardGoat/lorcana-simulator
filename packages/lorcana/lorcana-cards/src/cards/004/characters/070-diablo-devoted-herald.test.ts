@@ -86,6 +86,37 @@ describe("Diablo - Devoted Herald", () => {
     expect(testEngine.asPlayerOne().canPlayCard(diabloDevotedHerald)).toBe(true);
   });
 
+  it("lists action cards in hand as selectable discard costs for Shift", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: 0,
+      play: [diabloMaleficentsSpy],
+      hand: [brawl, friendsOnTheOtherSide, diabloDevotedHerald],
+    });
+
+    const player = testEngine.asPlayerOne();
+    const shiftCardId = testEngine.findCardInstanceId(diabloDevotedHerald, "hand", PLAYER_ONE);
+    const shiftTargetId = testEngine.findCardInstanceId(diabloMaleficentsSpy, "play", PLAYER_ONE);
+    const brawlId = testEngine.findCardInstanceId(brawl, "hand", PLAYER_ONE);
+    const friendsId = testEngine.findCardInstanceId(friendsOnTheOtherSide, "hand", PLAYER_ONE);
+
+    expect(
+      player.getAvailableMoves().find((move) => move.moveId === "shiftCard")?.selectableCardIds,
+    ).toContain(shiftCardId);
+    expect(player.getMoveOptions("shiftCard", shiftCardId)).toContainEqual({
+      kind: "card",
+      cardId: shiftTargetId,
+      selectableCosts: [
+        {
+          kind: "discardCards",
+          count: 1,
+          candidateCardIds: [brawlId, friendsId],
+          zone: "hand",
+          cardType: "action",
+        },
+      ],
+    });
+  });
+
   describe("CIRCLE FAR AND WIDE - whenever the opponent draws a card while this character is exerted, you may draw a card.", () => {
     it("triggers when opponent draws cards while Diablo is exerted", () => {
       const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
