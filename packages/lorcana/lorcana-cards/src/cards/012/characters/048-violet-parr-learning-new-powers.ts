@@ -51,7 +51,14 @@ export const violetParrLearningNewPowers: CharacterCard = {
         effect: {
           type: "move-damage",
           amount: 1,
-          from: "CHOSEN_CHARACTER",
+          from: {
+            selector: "chosen",
+            count: 1,
+            owner: "any",
+            zones: ["play"],
+            cardTypes: ["character"],
+            filters: [{ type: "status", status: "damaged" }],
+          },
           to: "CHOSEN_OPPOSING_CHARACTER",
         },
       },

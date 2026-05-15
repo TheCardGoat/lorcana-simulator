@@ -104,6 +104,7 @@ import {
 import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import type { StaticEffectRegistry } from "../../../rules/static-effect-registry";
 import { getActivePlayFromUnderPermissions } from "../../effects/play-from-under-permissions";
+import { banishAsAbilityCost } from "../../../operations";
 
 function validateInitialActionTargetSelection(
   effectOrAbility: unknown,
@@ -1860,11 +1861,11 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
         const sacrificeTargetId = (
           "sacrificeTarget" in params ? params.sacrificeTarget : undefined
         )!;
-        ctx.framework.zones.moveCard(sacrificeTargetId, {
-          zone: "discard",
+        banishAsAbilityCost(ctx, {
+          cardId: sacrificeTargetId,
+          sourceId: cardId,
           playerId: currentPlayer,
         });
-        ctx.cards.clearMeta(sacrificeTargetId);
         traceLorcanaRuntimeStep({
           kind: "card.moved",
           moveId: "playCard",
