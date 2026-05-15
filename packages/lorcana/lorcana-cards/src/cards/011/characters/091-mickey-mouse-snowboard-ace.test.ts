@@ -5,6 +5,7 @@ import {
   createMockCharacter,
 } from "@tcg/lorcana-engine/testing";
 import { letItGo } from "../actions/163-let-it-go";
+import { snowFort } from "../items/098-snow-fort";
 import { mickeyMouseSnowboardAce } from "./091-mickey-mouse-snowboard-ace";
 
 const opponentHandCard1 = createMockCharacter({
@@ -23,6 +24,24 @@ const playerHandCard = createMockCharacter({
   id: "mickey-snowboard-player-hand",
   name: "Player Hand Card",
   cost: 1,
+});
+
+const survivingDefender = createMockCharacter({
+  id: "mickey-snowboard-surviving-defender",
+  name: "Surviving Defender",
+  cost: 2,
+  strength: 1,
+  willpower: 7,
+  lore: 1,
+});
+
+const wouldBeLethalAttacker = createMockCharacter({
+  id: "mickey-snowboard-would-be-lethal-attacker",
+  name: "Would-Be Lethal Attacker",
+  cost: 4,
+  strength: 6,
+  willpower: 7,
+  lore: 1,
 });
 
 describe("Mickey Mouse - Snowboard Ace", () => {
@@ -101,6 +120,61 @@ describe("Mickey Mouse - Snowboard Ace", () => {
       expect(testEngine.asPlayerTwo().getCardZone(opponentHandCard1)).toBe("discard");
       const opponentHandAfter = testEngine.asPlayerTwo().getCardsInZone("hand", PLAYER_TWO).count;
       expect(opponentHandAfter).toBe(opponentHandBeforeDiscard - 1);
+    });
+
+    it("does not trigger when Mickey challenges with Snow Fort and remains in play", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [snowFort, { card: mickeyMouseSnowboardAce, isDrying: false }],
+          deck: 5,
+        },
+        {
+          play: [{ card: survivingDefender, exerted: true }],
+          hand: [opponentHandCard1, opponentHandCard2],
+          deck: 5,
+        },
+      );
+
+      expect(
+        testEngine.asPlayerOne().challenge(mickeyMouseSnowboardAce, survivingDefender),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(mickeyMouseSnowboardAce)).toBe("play");
+      expect(testEngine.asPlayerTwo().getCardZone(survivingDefender)).toBe("play");
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
+      expect(testEngine.asPlayerTwo().getCardsInZone("hand", PLAYER_TWO).count).toBe(2);
+    });
+
+    it("does not trigger when Snow Fort prevents Mickey from leaving during an opponent challenge", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [snowFort, { card: mickeyMouseSnowboardAce, exerted: true }],
+          deck: 5,
+        },
+        {
+          play: [{ card: wouldBeLethalAttacker, isDrying: false }],
+          hand: [opponentHandCard1, opponentHandCard2],
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+      const opponentHandBeforeChallenge = testEngine
+        .asPlayerTwo()
+        .getCardsInZone("hand", PLAYER_TWO).count;
+
+      expect(
+        testEngine.asPlayerTwo().challenge(wouldBeLethalAttacker, mickeyMouseSnowboardAce),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCardZone(mickeyMouseSnowboardAce)).toBe("play");
+      expect(testEngine.asPlayerTwo().getCardZone(wouldBeLethalAttacker)).toBe("play");
+      expect(testEngine.asPlayerOne().getBagCount()).toBe(0);
+      expect(testEngine.asPlayerTwo().getPendingEffects()).toHaveLength(0);
+      expect(testEngine.asPlayerTwo().getCardsInZone("hand", PLAYER_TWO).count).toBe(
+        opponentHandBeforeChallenge,
+      );
     });
   });
 });
