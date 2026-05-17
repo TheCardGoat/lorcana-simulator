@@ -16,9 +16,7 @@ import type {
   MoveLogEntrySnapshot,
   SimulatorSerializedObject,
 } from "../simulator/model/contracts.js";
-import {
-  isLorcanaSimulatorMoveId,
-} from "../simulator/model/contracts.js";
+import { isLorcanaSimulatorMoveId } from "../simulator/model/contracts.js";
 import { formatEventLogBody } from "../simulator/model/event-log-formatting.js";
 
 export interface SpectatorRecentHistory {
@@ -130,6 +128,7 @@ export function createSpectatorHistoryEntries(args: {
       return [];
     }
 
+    const primaryMoveId = move.moveId;
     const params = normalizePersistedMoveParams(move.input);
     // Collect ALL logs for this dispatch (same stateVersion), not just the first.
     // A single dispatch may produce multiple logs: one for the primary action and
@@ -151,7 +150,9 @@ export function createSpectatorHistoryEntries(args: {
         params,
         typedLogEntry: undefined,
       };
-      return [{ ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text }];
+      return [
+        { ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text },
+      ];
     }
 
     return matchingLogs.flatMap((matchingLog, logIndex) => {
@@ -162,7 +163,7 @@ export function createSpectatorHistoryEntries(args: {
       // logs are sub-effects (triggered abilities, etc.).
       const isPrimary = logIndex === 0;
       const logMoveId: LorcanaSimulatorMoveId | null = isPrimary
-        ? move.moveId
+        ? primaryMoveId
         : isLorcanaSimulatorMoveId(logType)
           ? logType
           : null;
@@ -172,9 +173,7 @@ export function createSpectatorHistoryEntries(args: {
       if (!logMoveId) return [];
 
       // Sub-effects carry their own playerId (the controller of the triggered ability).
-      const logPlayerId = isPrimary
-        ? move.actorId
-        : ((log?.playerId ?? move.actorId) as string);
+      const logPlayerId = isPrimary ? move.actorId : ((log?.playerId ?? move.actorId) as string);
 
       const strippedLog = stripPrivateFields(matchingLog.log, viewerId);
 
@@ -190,7 +189,9 @@ export function createSpectatorHistoryEntries(args: {
         typedLogEntry: strippedLog as MoveLogEntrySnapshot["typedLogEntry"],
       };
 
-      return [{ ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text }];
+      return [
+        { ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text },
+      ];
     });
   });
 }
