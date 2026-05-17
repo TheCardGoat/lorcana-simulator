@@ -4,9 +4,9 @@ packages:
   - "packages/tools/*"
 
 catalog:
-  vite: "npm:@voidzero-dev/vite-plus-core@latest"
-  vite-plus: latest
-  vitest: "npm:@voidzero-dev/vite-plus-test@latest"
+  vite: "npm:@voidzero-dev/vite-plus-core@0.1.21"
+  vite-plus: 0.1.21
+  vitest: "npm:@voidzero-dev/vite-plus-test@0.1.21"
   "@types/node": ^24.12.0
   typescript: ^5
   "@better-auth/infra": ^0.2.5
