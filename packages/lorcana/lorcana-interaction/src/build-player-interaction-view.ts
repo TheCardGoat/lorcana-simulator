@@ -290,24 +290,52 @@ function buildActivePrompt(
 }
 
 /**
- * How many leading slots the engine auto-resolved for the given context.
+ * Slot keys the engine auto-resolved to the source card. Reads
+ * `context.autoResolvedSlots` (engine-surfaced as of gap #15 fix) and
+ * intersects with the canonical slot ordering so the UI can ask which
+ * positions are locked-to-source.
  *
- * The engine omits auto-resolved slots from `currentSelection.targets`,
- * so when `maxSelections` is fewer than the slotted kind's total slot
- * count, the leading slots are auto-bound (typically to the source
- * card via `from: { ref: "self" }`).
- *
- * Heuristic until the engine surfaces auto-resolve directly (work-log
- * gap #15). Mirrors the existing simulator presenter
- * (`resolution-target-prompt.ts` autoResolvedFromSlots logic) so the
- * view model agrees with what the dispatcher already does.
+ * Fallback: when the engine has not surfaced `autoResolvedSlots` (older
+ * snapshots, or kinds not yet annotated) we infer the **trailing** slots
+ * from `maxSelections < totalSlots` for `move-damage`. Trailing rather
+ * than leading because every Lorcana descriptor that compresses a slot
+ * to the source uses `to: SELF` (Luisa, Isabela, Madam Mim). The previous
+ * "leading slots" fallback flipped FROM and TO for those cards and
+ * produced submissions the engine silently rejected.
  */
+function getAutoResolvedSlotIndices(context: TargetResolutionSelectionContext): readonly number[] {
+  if (!context.expectedSlottedKind) return [];
+  const slotKeys = SLOTTED_TARGET_SLOT_KEYS[context.expectedSlottedKind];
+  const declared = context.autoResolvedSlots;
+  if (declared && declared.length > 0) {
+    const declaredSet = new Set<string>(declared);
+    const indices: number[] = [];
+    slotKeys.forEach((key, index) => {
+      if (declaredSet.has(key)) {
+        indices.push(index);
+      }
+    });
+    return indices;
+  }
+  if (context.expectedSlottedKind !== "move-damage") return [];
+  if (context.maxSelections <= 0 || context.maxSelections >= slotKeys.length) return [];
+  const trailingCount = slotKeys.length - context.maxSelections;
+  const indices: number[] = [];
+  for (let i = slotKeys.length - trailingCount; i < slotKeys.length; i += 1) {
+    indices.push(i);
+  }
+  return indices;
+}
+
 function countAutoResolvedSlots(context: TargetResolutionSelectionContext): number {
-  if (!context.expectedSlottedKind) return 0;
-  const totalSlots = SLOTTED_TARGET_SLOT_KEYS[context.expectedSlottedKind].length;
-  if (context.expectedSlottedKind !== "move-damage") return 0;
-  if (context.maxSelections <= 0 || context.maxSelections >= totalSlots) return 0;
-  return totalSlots - context.maxSelections;
+  return getAutoResolvedSlotIndices(context).length;
+}
+
+function isAutoResolvedSlotIndex(
+  context: TargetResolutionSelectionContext,
+  index: number,
+): boolean {
+  return getAutoResolvedSlotIndices(context).includes(index);
 }
 
 function resolveSelectedCardIds(
@@ -327,7 +355,6 @@ function buildSlots(
   }
   const slottedKind = context.expectedSlottedKind;
   const keys = SLOTTED_TARGET_SLOT_KEYS[slottedKind];
-  const autoResolvedCount = countAutoResolvedSlots(context);
   const moveToLocationSelection =
     slottedKind === "move-to-location" && board
       ? splitMoveToLocationSelection(
@@ -337,14 +364,17 @@ function buildSlots(
         )
       : null;
 
+  const autoResolvedIndices = getAutoResolvedSlotIndices(context);
+  const autoResolvedSet = new Set<number>(autoResolvedIndices);
+
   return keys.map((key, index) => {
     let targetCardId: CardInstanceId | null;
     let autoResolved: boolean;
-    if (index < autoResolvedCount) {
+    if (autoResolvedSet.has(index)) {
       targetCardId = context.sourceCardId;
       autoResolved = true;
     } else {
-      const filledIndex = index - autoResolvedCount;
+      const filledIndex = countChooserSlotsBefore(autoResolvedIndices, index);
       const fixedMoveLocation =
         slottedKind === "move-to-location" && key === "location"
           ? getFixedMoveToLocationId(board, context)
@@ -368,6 +398,24 @@ function buildSlots(
       targetCardId,
     };
   });
+}
+
+/**
+ * Number of chooser-filled (non-auto-resolved) slots that appear *before*
+ * the given visible slot index. Lets us index into the flat
+ * `selectedCardIds` array correctly when auto-resolved slots are
+ * interleaved with chooser slots — e.g. `move-damage` with `to: SELF`
+ * has chooser=from at index 0 and auto=to at index 1, while `from: SELF`
+ * has auto=from at index 0 and chooser=to at index 1.
+ */
+function countChooserSlotsBefore(autoResolvedIndices: readonly number[], slotIndex: number): number {
+  let count = 0;
+  for (let i = 0; i < slotIndex; i += 1) {
+    if (!autoResolvedIndices.includes(i)) {
+      count += 1;
+    }
+  }
+  return count;
 }
 
 function getProjectedCardType(
@@ -442,14 +490,24 @@ function computeActiveSlotIndex(
   ) {
     return pendingActiveSlotIndex;
   }
-  const autoResolvedCount = countAutoResolvedSlots(context);
   if (getFixedMoveToLocationId(board, context)) {
     return 0;
   }
-  // Visible slots are those after the auto-resolved ones; the active slot
-  // is the first unfilled visible slot (or the last visible slot if all
-  // are filled).
-  return Math.min(autoResolvedCount + selectedCardIds.length, keys.length - 1);
+  // The active slot is the first chooser-fillable (non-auto-resolved) slot
+  // that has not yet received a selection. Auto-resolved slots are skipped
+  // regardless of their position so `to: SELF` cards (Luisa) advance
+  // through `from` (index 0) before the auto-locked `to` (index 1), while
+  // `from: SELF` cards (Nero) leave `from` auto-locked and advance through
+  // `to` (index 1).
+  const autoResolvedIndices = getAutoResolvedSlotIndices(context);
+  const chooserIndices = keys
+    .map((_, index) => index)
+    .filter((index) => !autoResolvedIndices.includes(index));
+  if (chooserIndices.length === 0) {
+    return keys.length - 1;
+  }
+  const nextChooserPosition = Math.min(selectedCardIds.length, chooserIndices.length - 1);
+  return chooserIndices[nextChooserPosition];
 }
 
 /**
@@ -652,21 +710,37 @@ function buildTargetPayload(
     }
 
     const slotKeys = SLOTTED_TARGET_SLOT_KEYS[context.expectedSlottedKind];
-    const autoResolvedCount = countAutoResolvedSlots(context);
+    const autoResolvedIndices = getAutoResolvedSlotIndices(context);
+    const autoResolvedSet = new Set<number>(autoResolvedIndices);
+    const chooserIndices = slotKeys
+      .map((_, index) => index)
+      .filter((index) => !autoResolvedSet.has(index));
     const slotted: Record<string, CardInstanceId[]> = {};
     for (let i = 0; i < slotKeys.length; i += 1) {
-      if (i < autoResolvedCount) {
+      if (autoResolvedSet.has(i)) {
         slotted[slotKeys[i]] = [context.sourceCardId];
       } else {
-        const filledIndex = i - autoResolvedCount;
+        const chooserPosition = chooserIndices.indexOf(i);
         slotted[slotKeys[i]] =
-          filledIndex < baseSelectedCards.length ? [baseSelectedCards[filledIndex]] : [];
+          chooserPosition < baseSelectedCards.length
+            ? [baseSelectedCards[chooserPosition]]
+            : [];
       }
     }
-    // Active slot = first visible slot still empty (or the last one).
-    const activeSlotIndex =
-      explicitActiveSlotIndex ??
-      Math.min(autoResolvedCount + baseSelectedCards.length, slotKeys.length - 1);
+    // Active slot: prefer the caller's explicit override; otherwise the
+    // next unfilled chooser slot (clamped to the last chooser slot).
+    let activeSlotIndex: number;
+    if (typeof explicitActiveSlotIndex === "number") {
+      activeSlotIndex = explicitActiveSlotIndex;
+    } else if (chooserIndices.length === 0) {
+      activeSlotIndex = slotKeys.length - 1;
+    } else {
+      const nextChooserPosition = Math.min(
+        baseSelectedCards.length,
+        chooserIndices.length - 1,
+      );
+      activeSlotIndex = chooserIndices[nextChooserPosition];
+    }
     const activeSlotKey = slotKeys[activeSlotIndex];
     slotted[activeSlotKey] = [...slotted[activeSlotKey], ...selectedCards];
     return {
@@ -708,16 +782,20 @@ function buildTargetSubmissionPayload(
     }
 
     const slotKeys = SLOTTED_TARGET_SLOT_KEYS[context.expectedSlottedKind];
-    const autoResolvedCount = countAutoResolvedSlots(context);
+    const autoResolvedIndices = getAutoResolvedSlotIndices(context);
+    const autoResolvedSet = new Set<number>(autoResolvedIndices);
+    const chooserIndices = slotKeys
+      .map((_, index) => index)
+      .filter((index) => !autoResolvedSet.has(index));
     const slotted: Record<string, CardInstanceId[]> = {};
 
     for (let i = 0; i < slotKeys.length; i += 1) {
-      if (i < autoResolvedCount) {
+      if (autoResolvedSet.has(i)) {
         slotted[slotKeys[i]] = [context.sourceCardId];
       } else {
-        const selectedIndex = i - autoResolvedCount;
+        const chooserPosition = chooserIndices.indexOf(i);
         slotted[slotKeys[i]] =
-          selectedIndex < selectedCards.length ? [selectedCards[selectedIndex]] : [];
+          chooserPosition < selectedCards.length ? [selectedCards[chooserPosition]] : [];
       }
     }
 
@@ -768,8 +846,13 @@ function filterCardCandidatesForActiveSlot(params: {
     return [...context.cardCandidateIds];
   }
 
+  // Map the slot index to a target-DSL index by counting only chooser slots.
+  // For `move-damage` with `to: SELF` (Luisa) the chooser slot is 0, so the
+  // DSL index is 0 even though slotIndex is 0 and no slot is auto-leading.
+  // For `from: SELF` (Nero) the chooser slot is 1, mapping to DSL index 0
+  // (the engine only ships one DSL entry for the user-chosen slot).
   const targetDslIndex = context.expectedSlottedKind
-    ? Math.max(0, slotIndex - countAutoResolvedSlots(context))
+    ? countChooserSlotsBefore(getAutoResolvedSlotIndices(context), slotIndex)
     : slotIndex;
   const target = context.targetDsl[targetDslIndex] ?? null;
   if (!target) {
