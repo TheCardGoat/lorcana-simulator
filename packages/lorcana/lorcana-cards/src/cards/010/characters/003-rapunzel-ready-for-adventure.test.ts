@@ -43,6 +43,15 @@ const pegasus = createMockCharacter({
   lore: 1,
 });
 
+const pascal = createMockCharacter({
+  id: "rapunzel-test-pascal",
+  name: "Pascal",
+  cost: 1,
+  strength: 1,
+  willpower: 3,
+  lore: 1,
+});
+
 describe("Rapunzel - Ready for Adventure", () => {
   it("should have Support ability", () => {
     const testEngine = new LorcanaTestEngine({
@@ -132,6 +141,49 @@ describe("Rapunzel - Ready for Adventure", () => {
 
       // Protection was consumed after first hit, so Moana takes full damage from Pegasus
       expect(testEngine.asPlayerOne().getDamage(moana)).toBe(pegasus.strength);
+    });
+
+    it("regression: later attackers in the same turn deal damage after the shield is consumed", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [rapunzelReadyForAdventure, moana],
+          deck: 5,
+        },
+        {
+          play: [heihei, pegasus, pascal],
+          deck: 5,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().quest(rapunzelReadyForAdventure)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(rapunzelReadyForAdventure, {
+          resolveOptional: true,
+          targets: [moana],
+        }),
+      ).toBeSuccessfulCommand();
+      expect(testEngine.asServer().manualExertCard(moana)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().passTurn()).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().challenge(heihei, moana)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getDamage(moana)).toBe(0);
+
+      const secondChallengePreview = testEngine.asPlayerTwo().previewChallenge(pegasus, moana);
+      expect(secondChallengePreview).toMatchObject({
+        attackerDamageDealt: pegasus.strength,
+        defenderDamageIsReduced: false,
+      });
+      expect(testEngine.asPlayerTwo().challenge(pegasus, moana)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getDamage(moana)).toBe(pegasus.strength);
+
+      const thirdChallengePreview = testEngine.asPlayerTwo().previewChallenge(pascal, moana);
+      expect(thirdChallengePreview).toMatchObject({
+        attackerDamageDealt: pascal.strength,
+        defenderCurrentDamage: pegasus.strength,
+        defenderDamageIsReduced: false,
+      });
+      expect(testEngine.asPlayerTwo().challenge(pascal, moana)).toBeSuccessfulCommand();
+      expect(testEngine.asPlayerOne().getDamage(moana)).toBe(pegasus.strength + pascal.strength);
     });
 
     it("protection does NOT apply on player one's next turn (expires)", () => {

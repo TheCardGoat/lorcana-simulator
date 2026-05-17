@@ -12,6 +12,8 @@ type TestCardDefinition = {
   cardType: "character" | "item" | "location" | "action";
   name?: string;
   version?: string;
+  controllerId?: PlayerId;
+  damage?: number;
 };
 
 /**
@@ -299,6 +301,82 @@ describe("buildResolutionSelectionContext", () => {
       throw new Error("Expected target-selection");
     }
     expect(selection.expectedSlottedKind).toBe("move-damage");
+    expect(selection.autoResolvedSlots).toBeUndefined();
+  });
+
+  it("emits autoResolvedSlots: ['to'] for move-damage with to: SELF (Luisa-style)", () => {
+    const source = "source" as CardInstanceId;
+    const donor = "donor" as CardInstanceId;
+    const { ctx } = createMinimalSelectionTestContext({
+      [source]: { id: "source", cardType: "character", controllerId: PLAYER_ONE },
+      [donor]: { id: "donor", cardType: "character", controllerId: PLAYER_ONE, damage: 1 },
+    });
+
+    const selection = buildResolutionSelectionContext({
+      origin: "pending-effect",
+      requestId: "req-luisa",
+      sourceCardId: source,
+      chooserId: PLAYER_ONE,
+      cardPlayed: createCardPlayedPayload(source, PLAYER_ONE),
+      effect: {
+        type: "move-damage",
+        amount: { type: "up-to", value: 1 },
+        from: {
+          selector: "chosen",
+          count: 1,
+          owner: "you",
+          zones: ["play"],
+          cardTypes: ["character"],
+          excludeSelf: true,
+        },
+        to: "SELF",
+      },
+      resolutionInput: {},
+      ctx,
+    });
+
+    if (selection?.kind !== "target-selection") {
+      throw new Error("Expected target-selection");
+    }
+    expect(selection.expectedSlottedKind).toBe("move-damage");
+    expect(selection.autoResolvedSlots).toEqual(["to"]);
+  });
+
+  it("emits autoResolvedSlots: ['from'] for move-damage with from: SELF (Nero-style)", () => {
+    const source = "source" as CardInstanceId;
+    const enemy = "enemy" as CardInstanceId;
+    const { ctx } = createMinimalSelectionTestContext({
+      [source]: { id: "source", cardType: "character", controllerId: PLAYER_ONE, damage: 2 },
+      [enemy]: { id: "enemy", cardType: "character", controllerId: PLAYER_TWO },
+    });
+
+    const selection = buildResolutionSelectionContext({
+      origin: "pending-effect",
+      requestId: "req-from-self",
+      sourceCardId: source,
+      chooserId: PLAYER_ONE,
+      cardPlayed: createCardPlayedPayload(source, PLAYER_ONE),
+      effect: {
+        type: "move-damage",
+        amount: { type: "up-to", value: 1 },
+        from: "SELF",
+        to: {
+          selector: "chosen",
+          count: 1,
+          owner: "opponent",
+          zones: ["play"],
+          cardTypes: ["character"],
+        },
+      },
+      resolutionInput: {},
+      ctx,
+    });
+
+    if (selection?.kind !== "target-selection") {
+      throw new Error("Expected target-selection");
+    }
+    expect(selection.expectedSlottedKind).toBe("move-damage");
+    expect(selection.autoResolvedSlots).toEqual(["from"]);
   });
 
   it("sets expectedSlottedKind for move-to-location effect descriptors", () => {

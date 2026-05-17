@@ -123,6 +123,42 @@ When a Linear issue is being tracked (Step 1), include a one-line replay summary
 
 Do not edit any files in this step. The output of this step is purely informational for the rest of triage.
 
+### Step 3.5 - When the CLI Trace Is Not Enough, Move to the Browser
+
+The CLI trace is great for "what state changed", but it cannot answer everything. **Whenever the printed trace is not sufficient to validate the bug, open the replay in the simulator and verify the behavior from both sides of the table.** Reasons the trace is insufficient include:
+
+- The bug is positional, UI-layer, or animation-timing related (drag target, hover state, tooltip, target highlight).
+- The reported behavior depends on **what the opponent saw** — their hand, their visible zones, their available targets — which trace mode does not surface.
+- You need to step through subsequent moves interactively to confirm the bug reproduces deterministically and to see _which_ side's view actually diverges from expectation.
+- Hidden information (decks, deck order, scry buffers, hand contents) matters and the JSON dump alone is hard to read.
+
+Use the CLI's browser mode to skip the manual URL construction. From the repo root:
+
+```bash
+# Watcher at the first step of the suspect turn (local dev by default)
+bun packages/tools/replay-cli/src/cli.ts \
+  --replay-id <gameId> --turn <turn> --open
+
+# Same against production
+bun packages/tools/replay-cli/src/cli.ts \
+  --replay-id <gameId> --turn <turn> --open \
+  --base-url https://tcg.online
+
+# Forked, playable session as one specific side
+bun packages/tools/replay-cli/src/cli.ts \
+  --replay-id <gameId> --turn <turn> --fork --side <playerOne|playerTwo>
+```
+
+When using browser mode you **must** validate the moment from **both** player perspectives:
+
+1. Open the watcher and step to the suspect move. Note what the **acting player's** view shows (cards in hand, available targets, modal copy if any).
+2. Use the watcher's `Play from Here` button (or re-run the CLI with `--fork --side <other-player>`) to take the **opponent's** seat at the same step. Verify their view of the same state — what they could see, what they could legally do — matches what the report and the trace imply.
+3. Capture concrete observations from both seats (e.g., "P1 sees challenge target highlighted as legal; P2 view also lists the same character — confirms targeting bug is symmetric, not a view-leak"). Cite these in the failing test rationale (Step 6) and in the Linear progress comment.
+
+Browser mode prints the URL it opened; quote that URL in the Linear progress comment so reviewers can click straight to the disputed step.
+
+If browser mode is not feasible (no display, no auth into prod, no local dev server running), say so explicitly in the Linear update and continue with trace-only evidence — but flag the gap, because some bug classes cannot be reliably confirmed without the UI check.
+
 ---
 
 ## Step 4 - Validate Card References

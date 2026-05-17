@@ -554,6 +554,21 @@ function deriveLegalChoiceIndices(
 ): number[] {
   return options.flatMap((option, index) => {
     const optionRecord = asRecord(option);
+    let effectiveOption = option;
+    if (optionRecord?.type === "conditional") {
+      const conditionMet = evaluateActionCondition(
+        optionRecord.condition as never,
+        args.ctx as never,
+        args.cardPlayed,
+        args.resolutionInput,
+      );
+      effectiveOption = conditionMet
+        ? (optionRecord.then ?? optionRecord.effect ?? optionRecord.ifTrue)
+        : (optionRecord.else ?? optionRecord.ifFalse);
+      if (!effectiveOption) {
+        return [];
+      }
+    }
     if (
       optionRecord?.type === "discard" &&
       optionRecord.chosen === true &&
@@ -584,7 +599,7 @@ function deriveLegalChoiceIndices(
 
     const optionContext = buildImmediateSelectionContext({
       ...args,
-      effect: option,
+      effect: effectiveOption,
     });
     if (optionContext?.kind === "target-selection" || optionContext?.kind === "discard-choice") {
       const candidateCount =
@@ -870,6 +885,9 @@ function buildGenericTargetSelectionContext(
   }
 
   const expectedSlottedKind = deriveSlottedKind(effectRecord);
+  const autoResolvedSlots = expectedSlottedKind
+    ? deriveAutoResolvedSlots(expectedSlottedKind, effectRecord)
+    : undefined;
   const projectedCurrentSelection: ResolutionSelectionCurrentSelection = { ...currentSelection };
   const [onlyTargetDsl] = analysis.targetDsl;
   const onlyTargetCardTypes =
@@ -911,6 +929,7 @@ function buildGenericTargetSelectionContext(
     ordered: args.ordered === true,
     autoRejected: allowEmptyResolution,
     ...(expectedSlottedKind ? { expectedSlottedKind } : {}),
+    ...(autoResolvedSlots && autoResolvedSlots.length > 0 ? { autoResolvedSlots } : {}),
   };
 }
 
@@ -932,6 +951,43 @@ function deriveSlottedKind(
     default:
       return undefined;
   }
+}
+
+/**
+ * Identify the slot keys the engine already bound to the source card. The
+ * canonical signal is a slot whose printed descriptor names `SELF` — that
+ * slot is auto-bound to the activating card; only the remaining slots are
+ * chooser-filled. Returning the actual keys (instead of a count) lets the
+ * UI render the correct direction even when the SELF slot is trailing —
+ * e.g. Luisa "I Can Take It" (`from: CHOSEN, to: SELF`), where the previous
+ * "leading slots auto-resolved" heuristic flipped FROM and TO and built a
+ * submission the engine silently rejected.
+ */
+function deriveAutoResolvedSlots(
+  kind: SlottedTargetKind,
+  effectRecord: ReturnType<typeof asRecord>,
+): readonly string[] | undefined {
+  if (!effectRecord) {
+    return undefined;
+  }
+  if (kind === "move-damage") {
+    const auto: string[] = [];
+    if (isSelfTargetDescriptor(effectRecord.from)) {
+      auto.push("from");
+    }
+    if (isSelfTargetDescriptor(effectRecord.to)) {
+      auto.push("to");
+    }
+    return auto.length > 0 ? auto : undefined;
+  }
+  // Other slotted kinds (move-to-location, shift-and-choose, banish-and-play)
+  // currently don't expose `SELF`-bound slots in printed effects; leave
+  // unset until a card actually needs it.
+  return undefined;
+}
+
+function isSelfTargetDescriptor(value: unknown): boolean {
+  return value === "SELF";
 }
 
 type PlayCardEffectRecord = {

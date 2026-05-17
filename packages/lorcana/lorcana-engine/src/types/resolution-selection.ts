@@ -113,6 +113,19 @@ export type TargetResolutionSelectionContext = ResolutionSelectionContextBase & 
    * single-slot / non-slotted effects — flat-array path preserved.
    */
   expectedSlottedKind?: SlottedTargetKind;
+  /**
+   * Slot keys the engine already bound to the source card (typically because
+   * the printed effect names `SELF` for that slot). The UI MUST treat these
+   * slots as locked-to-source and ask the chooser to fill only the slots
+   * NOT named here. Order is informational — `expectedSlottedKind`'s slot
+   * keys define the canonical positions.
+   *
+   * Absent when no slot is auto-resolved (all slots are chooser-filled) or
+   * when the prompt is non-slotted. Replaces the previous "leading slots
+   * are auto-resolved" heuristic that mis-routed `from: CHOSEN, to: SELF`
+   * effects (e.g. Luisa "I Can Take It").
+   */
+  autoResolvedSlots?: readonly string[];
   playCardEntryModeCandidateIds?: CardInstanceId[];
 };
 

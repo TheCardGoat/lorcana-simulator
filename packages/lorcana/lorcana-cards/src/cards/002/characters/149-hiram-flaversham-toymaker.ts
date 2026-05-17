@@ -48,9 +48,13 @@ export const hiramFlavershamToymaker: CharacterCard = {
               type: "banish",
             },
             {
-              amount: 2,
-              target: "CONTROLLER",
-              type: "draw",
+              type: "conditional",
+              condition: { type: "if-you-do" },
+              then: {
+                amount: 2,
+                target: "CONTROLLER",
+                type: "draw",
+              },
             },
           ],
         },
@@ -83,9 +87,13 @@ export const hiramFlavershamToymaker: CharacterCard = {
               type: "banish",
             },
             {
-              amount: 2,
-              target: "CONTROLLER",
-              type: "draw",
+              type: "conditional",
+              condition: { type: "if-you-do" },
+              then: {
+                amount: 2,
+                target: "CONTROLLER",
+                type: "draw",
+              },
             },
           ],
         },

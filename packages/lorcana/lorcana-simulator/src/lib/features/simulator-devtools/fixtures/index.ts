@@ -56,6 +56,21 @@ import { triage20260514ThisGrowingPressureFixture } from "./triage-2026-05-14-th
 import { triage20260514CantHoldItBackAnymoreFixture } from "./triage-2026-05-14-cant-hold-it-back-anymore.js";
 import { triage20260514OmnidroidV9ShiftFixture } from "./triage-2026-05-14-omnidroid-v9-shift.js";
 import { triage20260515HandInTheBoxSpringLoadedFixture } from "./triage-2026-05-15-hand-in-the-box-spring-loaded.js";
+import { triage20260516LuisaAndIsabelaFeelBetterFixture } from "./triage-2026-05-16-luisa-and-isabela-feel-better.js";
+import {
+  triage20260517BibbidiAnotherCharacterFixture,
+  triage20260517CheshireCatBoostMoveOneFixture,
+  triage20260517HadesTargetClarityFixture,
+  triage20260517HammPiggyBankExertFixture,
+  triage20260517KristoffsLutePlayTopFixture,
+  triage20260517LeviathanReturnOfHerculesFixture,
+  triage20260517LyleDirtyTricksFixture,
+  triage20260517MirabelCuriousChildRevealFixture,
+  triage20260517SidDoublePrizesFixture,
+  triage20260517TianaDaleBotChallengeFixture,
+  triage20260517UnderTheSeaSingTogetherFixture,
+  triage20260517WindUpFrogToyBanishFixture,
+} from "./triage-2026-05-17-remaining.js";
 import { createFixtureRegistry } from "./registry.js";
 
 export const DEFAULT_LORCANA_FIXTURE_ID = "empty-board";
@@ -124,6 +139,19 @@ const fixtureRegistry = createFixtureRegistry(
     triage20260514CantHoldItBackAnymoreFixture,
     triage20260514OmnidroidV9ShiftFixture,
     triage20260515HandInTheBoxSpringLoadedFixture,
+    triage20260516LuisaAndIsabelaFeelBetterFixture,
+    triage20260517TianaDaleBotChallengeFixture,
+    triage20260517KristoffsLutePlayTopFixture,
+    triage20260517LeviathanReturnOfHerculesFixture,
+    triage20260517HammPiggyBankExertFixture,
+    triage20260517MirabelCuriousChildRevealFixture,
+    triage20260517BibbidiAnotherCharacterFixture,
+    triage20260517HadesTargetClarityFixture,
+    triage20260517CheshireCatBoostMoveOneFixture,
+    triage20260517WindUpFrogToyBanishFixture,
+    triage20260517LyleDirtyTricksFixture,
+    triage20260517SidDoublePrizesFixture,
+    triage20260517UnderTheSeaSingTogetherFixture,
   ] satisfies LorcanaSimulatorFixture[],
   "general simulator fixtures",
 );

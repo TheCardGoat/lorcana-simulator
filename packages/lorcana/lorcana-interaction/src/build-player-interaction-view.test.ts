@@ -466,10 +466,12 @@ describe("buildPlayerInteractionView", () => {
       });
     });
 
-    it("marks slot 0 as auto-resolved (from-self) when maxSelections < totalSlots", () => {
-      // Engine signals "from is auto-resolved to the source card" by asking
-      // for fewer targets (1) than the slotted kind has slots (2).
-      const ctx = moveDamageContext({ minSelections: 1, maxSelections: 1 });
+    it("marks slot 0 as auto-resolved when the engine declares `autoResolvedSlots: ['from']` (from: SELF, to: CHOSEN)", () => {
+      const ctx = moveDamageContext({
+        minSelections: 1,
+        maxSelections: 1,
+        autoResolvedSlots: ["from"],
+      });
       const view = buildPlayerInteractionView(withPendingPrompt(ctx), PLAYER_ONE);
       const fromSlot = view.activePrompt?.slots?.[0];
       expect(fromSlot?.autoResolved).toBe(true);
@@ -480,10 +482,63 @@ describe("buildPlayerInteractionView", () => {
       expect(toSlot?.targetCardId).toBeNull();
     });
 
+    it("marks slot 1 as auto-resolved when the engine declares `autoResolvedSlots: ['to']` (from: CHOSEN, to: SELF)", () => {
+      // Regression: Luisa "I Can Take It" — `from: CHOSEN_CHARACTER_OF_YOURS,
+      // to: SELF`. Previously the heuristic bound source to slot 0 and asked
+      // the player to fill slot 1, producing a payload the engine silently
+      // rejected because the FROM-DSL excluded the source card.
+      const ctx = moveDamageContext({
+        minSelections: 1,
+        maxSelections: 1,
+        autoResolvedSlots: ["to"],
+      });
+      const view = buildPlayerInteractionView(withPendingPrompt(ctx), PLAYER_ONE);
+      const fromSlot = view.activePrompt?.slots?.[0];
+      expect(fromSlot?.autoResolved).toBe(false);
+      expect(fromSlot?.locked).toBe(false);
+      expect(fromSlot?.targetCardId).toBeNull();
+      const toSlot = view.activePrompt?.slots?.[1];
+      expect(toSlot?.autoResolved).toBe(true);
+      expect(toSlot?.locked).toBe(true);
+      expect(toSlot?.targetCardId).toBe(SOURCE_CARD);
+      expect(view.activePrompt?.activeSlotIndex).toBe(0);
+    });
+
+    it("builds a submission with FROM=chosen and TO=source for `to: SELF` prompts (Luisa regression)", () => {
+      const ctx = moveDamageContext({
+        cardCandidateIds: [TARGET_A, TARGET_B],
+        minSelections: 1,
+        maxSelections: 1,
+        autoResolvedSlots: ["to"],
+        targetDsl: [
+          {
+            selector: "chosen",
+            count: 1,
+            owner: "you",
+            zones: ["play"],
+            cardTypes: ["character"],
+            excludeSelf: true,
+          },
+        ],
+      });
+      const view = buildPlayerInteractionView(withPendingPrompt(ctx), PLAYER_ONE, {
+        pendingSelectedCardIds: [TARGET_A],
+      });
+      expect(view.submission.canSubmit).toBe(true);
+      expect(view.submission.submitPayload).toEqual({
+        targets: {
+          kind: "move-damage",
+          from: [TARGET_A],
+          to: [SOURCE_CARD],
+        },
+      });
+    });
+
     it("aligns the destination slot with the engine's currentSelection.targets[0] for from-self prompts", () => {
       const ctx = moveDamageContext({
         minSelections: 1,
         maxSelections: 1,
+        autoResolvedSlots: ["from"],
         currentSelection: { targets: [TARGET_A] },
       });
       const view = buildPlayerInteractionView(withPendingPrompt(ctx), PLAYER_ONE);
@@ -496,6 +551,7 @@ describe("buildPlayerInteractionView", () => {
         cardCandidateIds: [SOURCE_CARD, TARGET_B],
         minSelections: 1,
         maxSelections: 1,
+        autoResolvedSlots: ["from"],
         targetDsl: [
           {
             selector: "chosen",
