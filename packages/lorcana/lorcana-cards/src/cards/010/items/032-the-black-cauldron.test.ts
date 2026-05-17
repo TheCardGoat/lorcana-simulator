@@ -53,6 +53,30 @@ describe("The Black Cauldron", () => {
     expect(testEngine.getCardsUnder(theBlackCauldron)).toHaveLength(0);
   });
 
+  it("RISE AND JOIN ME! - surfaces characters under the cauldron in available moves", () => {
+    const testEngine = LorcanaMultiplayerTestEngine.createWithFixture({
+      inkwell: raisedSoldier.cost + 1,
+      play: [theBlackCauldron, raisedSoldier],
+      deck: 1,
+    });
+
+    testEngine.putCardUnder(theBlackCauldron, raisedSoldier);
+
+    expect(
+      testEngine.asPlayerOne().activateAbility(theBlackCauldron, {
+        ability: "RISE AND JOIN ME!",
+      }),
+    ).toBeSuccessfulCommand();
+
+    const raisedSoldierId = testEngine.findCardInstanceId(raisedSoldier, "limbo");
+    const playMove = testEngine
+      .asPlayerOne()
+      .getAvailableMoves()
+      .find((move) => move.moveId === "playCard");
+
+    expect(playMove?.selectableCardIds).toContain(raisedSoldierId);
+  });
+
   it("regression: Lantern cost reduction is applied only once when playing from Black Cauldron", () => {
     const expensiveCharacter = createMockCharacter({
       id: "black-cauldron-expensive-char",

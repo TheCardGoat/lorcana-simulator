@@ -27,6 +27,14 @@ const nonMickeyCharacter = createMockCharacter({
   willpower: 3,
 });
 
+const smallMickeyMouse = createMockCharacter({
+  id: "minnie-sp-small-mickey",
+  name: "Mickey Mouse",
+  cost: 2,
+  strength: 2,
+  willpower: 3,
+});
+
 describe("Minnie Mouse - Sweetheart Princess", () => {
   describe("ROYAL FAVOR - Your characters named Mickey Mouse gain Support.", () => {
     it("gives Support to Mickey Mouse characters you control", () => {
@@ -98,6 +106,44 @@ describe("Minnie Mouse - Sweetheart Princess", () => {
       ).toBeSuccessfulCommand();
 
       expect(testEngine.asPlayerTwo().getCardZone(strongExertedCharacter)).toBe("discard");
+    });
+
+    it("can banish a character whose current strength reached 5 through Support", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [
+            { card: minnieMouseSweetheartPrincess, isDrying: false },
+            { card: smallMickeyMouse, isDrying: false },
+          ],
+          deck: 1,
+        },
+        {
+          play: [{ card: weakExertedCharacter, exerted: true }],
+          deck: 1,
+        },
+      );
+
+      expect(testEngine.asPlayerOne().quest(smallMickeyMouse)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(smallMickeyMouse, {
+          resolveOptional: true,
+          targets: [weakExertedCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardStrength(weakExertedCharacter)).toBeGreaterThanOrEqual(
+        5,
+      );
+
+      expect(testEngine.asPlayerOne().quest(minnieMouseSweetheartPrincess)).toBeSuccessfulCommand();
+      expect(
+        testEngine.asPlayerOne().resolvePendingByCard(minnieMouseSweetheartPrincess, {
+          resolveOptional: true,
+          targets: [weakExertedCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerTwo().getCardZone(weakExertedCharacter)).toBe("discard");
     });
 
     it("does not banish when the optional trigger is declined", () => {
