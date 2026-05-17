@@ -6,6 +6,7 @@ import {
   createMockCharacter,
 } from "@tcg/lorcana-engine/testing";
 import type { ZoneId } from "@tcg/lorcana-types";
+import { theBlackCauldron } from "../items/032-the-black-cauldron";
 import { theHornedKingTriumphantGhoul } from "./049-the-horned-king-triumphant-ghoul";
 
 const plainCharacter = createMockCharacter({
@@ -55,6 +56,33 @@ describe("The Horned King - Triumphant Ghoul", () => {
       // Horned King should now have +2 lore
       const hornedKingAfter = testEngine.asPlayerOne().getCard(theHornedKingTriumphantGhoul);
       expect(hornedKingAfter.lore).toBe(theHornedKingTriumphantGhoul.lore + 2);
+    });
+
+    it("gets +2 lore when The Black Cauldron puts a character from discard under itself", () => {
+      const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
+        {
+          play: [theHornedKingTriumphantGhoul, theBlackCauldron],
+          discard: [plainCharacter],
+          inkwell: 1,
+          deck: 5,
+        },
+        { deck: 5 },
+      );
+
+      expect(testEngine.asPlayerOne().getCard(theHornedKingTriumphantGhoul).lore).toBe(
+        theHornedKingTriumphantGhoul.lore,
+      );
+
+      expect(
+        testEngine.asPlayerOne().activateAbility(theBlackCauldron, {
+          ability: "THE CAULDRON CALLS",
+          targets: [plainCharacter],
+        }),
+      ).toBeSuccessfulCommand();
+
+      expect(testEngine.asPlayerOne().getCard(theHornedKingTriumphantGhoul).lore).toBe(
+        theHornedKingTriumphantGhoul.lore + 2,
+      );
     });
 
     it("should get +2 lore when a card leaves opponent's discard pile this turn", () => {

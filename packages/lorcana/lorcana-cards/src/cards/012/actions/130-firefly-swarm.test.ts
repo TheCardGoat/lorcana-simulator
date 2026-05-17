@@ -96,7 +96,7 @@ describe("Firefly Swarm", () => {
     expect(testEngine.asPlayerTwo().getCardZone(strongTarget)).toBe("discard");
   });
 
-  it("option 2: does nothing when fewer than 2 cards were put into your discard this turn", () => {
+  it("option 2: is rejected when fewer than 2 cards were put into your discard this turn", () => {
     const testEngine = LorcanaMultiplayerTestEngine.createWithFixture(
       {
         hand: [fireflySwarm, filler1],
@@ -112,10 +112,13 @@ describe("Firefly Swarm", () => {
       testEngine.asServer().manualMoveCard(filler1Id, `discard:${PLAYER_ONE}` as ZoneId),
     ).toBeSuccessfulCommand();
 
-    testEngine.asPlayerOne().playCardWithChoice(fireflySwarm, 1, {
-      targets: [strongTarget],
-    });
+    expect(
+      testEngine.asPlayerOne().playCardWithChoice(fireflySwarm, 1, {
+        targets: [strongTarget],
+      }),
+    ).not.toBeSuccessfulCommand();
 
     expect(testEngine.asPlayerTwo().getCardZone(strongTarget)).toBe("play");
+    expect(testEngine.asPlayerOne().getCardZone(fireflySwarm)).toBe("hand");
   });
 });

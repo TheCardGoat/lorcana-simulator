@@ -1930,6 +1930,17 @@ const actionEffectResolvers: Record<SupportedActionEffectType, ActionEffectResol
       return suspendActionEffect(ctx, pendingEffect);
     }
 
+    const legalOptionIndices = getLegalChoiceOptionIndices(
+      ctx,
+      cardPlayed,
+      effect,
+      resolutionInput,
+    );
+    if (!legalOptionIndices.includes(Math.min(rawChoiceIndex, choiceOptions.length - 1))) {
+      markLastEffectPerformed(resolutionInput.eventSnapshot, false);
+      return RESOLVED_ACTION_EFFECT;
+    }
+
     const choiceIndex = Math.min(rawChoiceIndex, choiceOptions.length - 1);
     const nestedResolutionInput =
       effect.chooser === "CHOSEN_PLAYER"
@@ -3474,6 +3485,18 @@ export function getLegalOrOptionIndices(
   ctx: EffectLegalityContext,
   cardPlayed: CardPlayedPayload,
   effect: OrLikeEffect,
+  resolutionInput: ActionResolutionInput,
+): number[] {
+  const options = effect.options ?? effect.choices ?? [];
+  return options.flatMap((option, index) =>
+    isEffectCurrentlyLegal(ctx, cardPlayed, option, resolutionInput) ? [index] : [],
+  );
+}
+
+export function getLegalChoiceOptionIndices(
+  ctx: EffectLegalityContext,
+  cardPlayed: CardPlayedPayload,
+  effect: ChoiceLikeEffect,
   resolutionInput: ActionResolutionInput,
 ): number[] {
   const options = effect.options ?? effect.choices ?? [];

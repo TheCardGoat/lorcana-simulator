@@ -105,6 +105,7 @@ import { getOrBuildMoveRegistry } from "../../rules/move-registry-cache";
 import type { StaticEffectRegistry } from "../../../rules/static-effect-registry";
 import { getActivePlayFromUnderPermissions } from "../../effects/play-from-under-permissions";
 import { banishAsAbilityCost } from "../../../operations";
+import { getLegalChoiceOptionIndices } from "../../resolution/action-effects/composed-effect-resolver";
 
 function validateInitialActionTargetSelection(
   effectOrAbility: unknown,
@@ -1566,6 +1567,55 @@ export const playCard: LorcanaMoveDefinition<"playCard"> = {
             "INVALID_CHOICE_INDEX",
             cardDef,
           );
+        }
+
+        if (cardDef.cardType === "action") {
+          const actionEffects = (cardDef.abilities ?? []).filter(
+            (ability) => ability.type === "action",
+          );
+          const { flatTargets: flatTargetsForChoiceValidation } = splitActionTargetInput(
+            params.targets,
+          );
+          const actionResolutionInput = {
+            targets: flatTargetsForChoiceValidation as ActionResolutionInput["targets"],
+            choiceIndex: params.choiceIndex,
+            eventSnapshot: params.eventSnapshot,
+            resolveOptional: params.resolveOptional,
+          } satisfies ActionResolutionInput;
+          const cardPlayedPayload: CardPlayedPayload = {
+            playerId: currentPlayer as PlayerId,
+            cardId: cardId as CardInstanceId,
+            cardType: cardDef.cardType,
+            costType: cost,
+          };
+
+          for (const ability of actionEffects) {
+            const effectRecord = ability.effect as unknown as Record<string, unknown> | undefined;
+            if (!effectRecord || effectRecord.type !== "choice") {
+              continue;
+            }
+            const options = Array.isArray(effectRecord.options)
+              ? effectRecord.options
+              : Array.isArray(effectRecord.choices)
+                ? effectRecord.choices
+                : [];
+            if (params.choiceIndex >= options.length) {
+              return fail("choiceIndex is out of range", "INVALID_CHOICE_INDEX", cardDef);
+            }
+            const legalChoiceIndices = getLegalChoiceOptionIndices(
+              ctx,
+              cardPlayedPayload,
+              effectRecord as never,
+              actionResolutionInput,
+            );
+            if (!legalChoiceIndices.includes(params.choiceIndex)) {
+              return fail(
+                "Selected choice option is not currently legal",
+                "ILLEGAL_CHOICE_OPTION",
+                cardDef,
+              );
+            }
+          }
         }
       }
 
