@@ -25,9 +25,9 @@ This skill is typically the first step of [`triage-player-report`](../../command
 
 ## The CLI
 
-Source: [`packages/tools/replay-cli`](../../../packages/tools/replay-cli) (package `@tcg/replay-cli`, bin `tcg-replay`).
+Source: [`packages/tools/replay-cli`](../../../packages/tools/replay-cli) (package `@tcg/replay-cli`, bin `tcg-replay`). The CLI has two modes — **trace mode** (default; this skill's primary workflow) and **browser mode** (`--open` / `--fork`, see below) for moving the rest of triage into the UI.
 
-Invocation:
+Trace-mode invocation:
 
 ```bash
 bun packages/tools/replay-cli/src/cli.ts --replay-id <gameId> --turn <n>
@@ -35,14 +35,46 @@ bun packages/tools/replay-cli/src/cli.ts --replay-id <gameId> --turn <n>
 
 Flags:
 
-| Flag                 | Required | Notes                                                                                                   |
-| -------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
-| `--replay-id <id>`   | yes      | The production game id (the same `gameId` referenced in support tickets / Linear)                       |
-| `--turn <n>`         | yes      | 1-based turn number. `acceptedMove.turnNumber` semantics — turn 1 is the very first player's first move |
-| `--api-origin <url>` | no       | Override the API origin. Default: `$TCG_API_ORIGIN` env var, then `https://api.tcg.online`              |
-| `-h, --help`         | no       | Print usage                                                                                             |
+| Flag                 | Required          | Notes                                                                                                                                                                |
+| -------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--replay-id <id>`   | yes               | The production game id (the same `gameId` referenced in support tickets / Linear)                                                                                    |
+| `--turn <n>`         | yes               | 1-based turn number. `acceptedMove.turnNumber` semantics — turn 1 is the very first player's first move                                                              |
+| `--api-origin <url>` | no                | Override the replay download origin. Default: `$TCG_API_ORIGIN` env var, then `https://api.tcg.online`                                                               |
+| `--open`             | no (browser mode) | Open the replay watcher in the default browser at the first step of `--turn`, **instead of** printing the trace. See "Browser mode" below.                           |
+| `--fork`             | no (browser mode) | Open the "Play from Here" fork view at the first step of `--turn`. Requires `--side`. Implies `--open`. See "Browser mode".                                          |
+| `--side <p1\|p2>`    | with `--fork`     | `playerOne` or `playerTwo`. Which player you fork as.                                                                                                                |
+| `--base-url <url>`   | no                | Simulator origin for `--open`/`--fork`. Default: `$TCG_REPLAY_BASE_URL` env var, then `http://localhost:5173`. Set to `https://tcg.online` for production replays.   |
+| `-h, --help`         | no                | Print usage                                                                                                                                                          |
 
 Exit codes: `0` success · `1` runtime error (replay not found, turn out of range, network) · `2` bad input (missing/invalid flags).
+
+## Browser mode (Play from Here)
+
+`--open` and `--fork` are the bridge from CLI-based triage to in-browser triage. They are **optional** — trace mode remains the default and the right starting point for evidence gathering. Reach for browser mode when the printed trace alone cannot answer the question (see "When the CLI is not enough" in [`triage-player-report`](../../commands/triage-player-report.md), Step 3.5).
+
+Examples:
+
+```bash
+# Open the watcher locally at the first step of turn 7
+bun packages/tools/replay-cli/src/cli.ts \
+  --replay-id <gameId> --turn 7 --open
+
+# Same against production
+bun packages/tools/replay-cli/src/cli.ts \
+  --replay-id <gameId> --turn 7 --open --base-url https://tcg.online
+
+# Jump straight into a forked, playable session as player 2
+bun packages/tools/replay-cli/src/cli.ts \
+  --replay-id <gameId> --turn 7 --fork --side playerTwo
+```
+
+Behavior in browser mode:
+
+- The CLI converts `--turn N` into the **global step index of the first step of turn N** (the same number trace mode reports as `step <globalIndex>` for that step), then constructs the URL the simulator's replay route already understands:
+  - Watcher: `<base-url>/replay/<replayId>?step=<step>`
+  - Fork: `<base-url>/replay/<replayId>/fork?step=<step>&side=<side>`
+- It prints the URL to stdout (so you can capture it for a Linear comment) and launches the default browser via the OS open command. The trace report is **not** printed in this mode — run a second invocation without `--open` if you need both.
+- `--base-url` defaults to local dev (`http://localhost:5173`) so the common case ("triage against my running dev server") is one flag fewer. Switch to production with `--base-url https://tcg.online` or by exporting `TCG_REPLAY_BASE_URL`.
 
 ## What you get back
 
