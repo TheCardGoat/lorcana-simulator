@@ -17,7 +17,6 @@ import type {
   SimulatorSerializedObject,
 } from "../simulator/model/contracts.js";
 import {
-  assertLorcanaSimulatorMoveId,
   isLorcanaSimulatorMoveId,
 } from "../simulator/model/contracts.js";
 import { formatEventLogBody } from "../simulator/model/event-log-formatting.js";
@@ -124,36 +123,90 @@ export function createSpectatorHistoryEntries(args: {
   viewerId?: string | null;
 }): MoveLogEntrySnapshot[] {
   const viewerId = args.viewerId ?? null;
+  const resolveCard = buildCardReferenceResolver(args.engine, args.cardsMaps);
 
-  return args.acceptedMoves.flatMap((move, index) => {
+  return args.acceptedMoves.flatMap((move, moveIndex) => {
     if (!isLorcanaSimulatorMoveId(move.moveId)) {
       return [];
     }
 
     const params = normalizePersistedMoveParams(move.input);
-    const matchingLog = args.engineLogs.find((entry) => entry.stateVersion === move.stateVersion);
-    const strippedLog = matchingLog?.log
-      ? stripPrivateFields(matchingLog.log, viewerId)
-      : undefined;
+    // Collect ALL logs for this dispatch (same stateVersion), not just the first.
+    // A single dispatch may produce multiple logs: one for the primary action and
+    // additional ones for auto-resolved triggered abilities (resolveBag entries).
+    const matchingLogs = args.engineLogs.filter(
+      (entry) => entry.stateVersion === move.stateVersion,
+    );
 
-    const entry: MoveLogEntrySnapshot = {
-      id: `spectator-history-${move.stateVersion}-${index}-${move.moveId}`,
-      timestamp: move.timestamp,
-      turnNumber: move.turnNumber,
-      moveId: move.moveId,
-      actorSide: args.resolveActorSide(move.actorId),
-      title: "",
-      playerId: move.actorId,
-      params,
-      typedLogEntry: strippedLog as MoveLogEntrySnapshot["typedLogEntry"],
-    };
+    if (matchingLogs.length === 0) {
+      // No matching log — show the move with fallback display text.
+      const entry: MoveLogEntrySnapshot = {
+        id: `spectator-history-${move.stateVersion}-${moveIndex}-${move.moveId}`,
+        timestamp: move.timestamp,
+        turnNumber: move.turnNumber,
+        moveId: move.moveId,
+        actorSide: args.resolveActorSide(move.actorId),
+        title: "",
+        playerId: move.actorId,
+        params,
+        typedLogEntry: undefined,
+      };
+      return [{ ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text }];
+    }
 
-    const resolveCard = buildCardReferenceResolver(args.engine, args.cardsMaps);
-    return [{ ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text }];
+    return matchingLogs.flatMap((matchingLog, logIndex) => {
+      const log = matchingLog.log as { type?: string; playerId?: string } | null;
+      const logType = log?.type ?? "";
+
+      // The first log corresponds to the primary dispatched action; subsequent
+      // logs are sub-effects (triggered abilities, etc.).
+      const isPrimary = logIndex === 0;
+      const logMoveId: LorcanaSimulatorMoveId | null = isPrimary
+        ? move.moveId
+        : isLorcanaSimulatorMoveId(logType)
+          ? logType
+          : null;
+
+      // Skip sub-logs whose type doesn't map to a known simulator move ID
+      // (e.g. "turnStart", "gameEnd" are surfaced via other mechanisms).
+      if (!logMoveId) return [];
+
+      // Sub-effects carry their own playerId (the controller of the triggered ability).
+      const logPlayerId = isPrimary
+        ? move.actorId
+        : ((log?.playerId ?? move.actorId) as string);
+
+      const strippedLog = stripPrivateFields(matchingLog.log, viewerId);
+
+      const entry: MoveLogEntrySnapshot = {
+        id: `spectator-history-${move.stateVersion}-${moveIndex}-${logMoveId}-${logIndex}`,
+        timestamp: move.timestamp,
+        turnNumber: move.turnNumber,
+        moveId: logMoveId,
+        actorSide: args.resolveActorSide(logPlayerId),
+        title: "",
+        playerId: logPlayerId,
+        params: isPrimary ? params : undefined,
+        typedLogEntry: strippedLog as MoveLogEntrySnapshot["typedLogEntry"],
+      };
+
+      return [{ ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text }];
+    });
   });
 }
 
-export function createLiveEntry(args: {
+/**
+ * Build one or more MoveLogEntrySnapshot entries from a live state_update packet.
+ *
+ * A single dispatch on the server can auto-resolve several moves (e.g. playCard
+ * followed by one or more triggered-ability resolveBag moves). All of those
+ * share the same stateVersion but produce distinct engineLog entries. This
+ * function creates one snapshot per engineLog so that:
+ *   - Every sub-effect (triggered ability, auto-resolved bag) is visible in the log.
+ *   - Each sub-effect is attributed to the correct player (the ability's controller),
+ *     not always to the original move dispatcher.
+ */
+export function createLiveEntries(args: {
   acceptedMove: SpectatorAcceptedMove;
   engineLogs: SpectatorEngineLog[];
   engine: LorcanaClient;
@@ -161,22 +214,91 @@ export function createLiveEntry(args: {
   resolveActorSide: (actorId: string) => LorcanaPlayerSide | undefined;
   /** Viewer identity for defense-in-depth privacy stripping. Defaults to null (spectator). */
   viewerId?: string | null;
-}): MoveLogEntrySnapshot {
+}): MoveLogEntrySnapshot[] {
   const viewerId = args.viewerId ?? null;
-  const moveId = assertLorcanaSimulatorMoveId(args.acceptedMove.moveId);
+  // If the dispatched move ID isn't a known simulator move (e.g. a future engine-internal
+  // type), fall through to the sub-effect scan so triggered abilities still surface.
+  const primaryMoveId = isLorcanaSimulatorMoveId(args.acceptedMove.moveId)
+    ? args.acceptedMove.moveId
+    : null;
   const params = normalizePersistedMoveParams(args.acceptedMove.input);
-  const matchingLog = args.engineLogs.find(
-    (entry) => entry.stateVersion === args.acceptedMove.stateVersion,
-  );
-  const strippedLog = matchingLog?.log ? stripPrivateFields(matchingLog.log, viewerId) : undefined;
+  const resolveCard = buildCardReferenceResolver(args.engine, args.cardsMaps);
 
+  if (args.engineLogs.length === 0) {
+    // No engine logs (e.g. manual moves) — single fallback entry.
+    if (!primaryMoveId) return [];
+    const entry: MoveLogEntrySnapshot = {
+      // stateVersion is stable across move_accepted (unicast to issuer) and
+      // state_update (broadcast to everyone) for the same move; using it for
+      // the dedup id prevents duplicate entries on the dispatcher's screen.
+      // Manual moves emit no engine logs, so buildAcceptedMove falls back to
+      // Date.now() per packet — that wall-clock differs between the two
+      // arrivals and would otherwise sneak past pushEntries' Set-based dedup.
+      id: `spectator-live-${args.acceptedMove.stateVersion}-${primaryMoveId}`,
+      timestamp: args.acceptedMove.timestamp,
+      turnNumber: args.acceptedMove.turnNumber,
+      moveId: primaryMoveId,
+      actorSide: args.resolveActorSide(args.acceptedMove.actorId),
+      title: "",
+      playerId: args.acceptedMove.actorId,
+      params,
+      typedLogEntry: undefined,
+    };
+    return [{ ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text }];
+  }
+
+  return args.engineLogs.flatMap((engineLog, logIndex) => {
+    const log = engineLog.log as { type?: string; playerId?: string } | null;
+    const logType = log?.type ?? "";
+
+    // First log = primary dispatched action; subsequent = auto-resolved sub-effects.
+    // If primaryMoveId is null (unknown dispatched type), treat log[0] as a sub-effect too.
+    const isPrimary = logIndex === 0 && primaryMoveId !== null;
+    const logMoveId: LorcanaSimulatorMoveId | null = isPrimary
+      ? primaryMoveId
+      : isLorcanaSimulatorMoveId(logType)
+        ? logType
+        : null;
+
+    // Skip sub-logs whose type doesn't map to a known simulator move ID
+    // (e.g. "turnStart" / "gameEnd" are surfaced via other mechanisms).
+    if (!logMoveId) return [];
+
+    // Sub-effects carry their own playerId (the controller of the triggered ability).
+    const logPlayerId = isPrimary
+      ? args.acceptedMove.actorId
+      : (log?.playerId ?? args.acceptedMove.actorId);
+
+    const strippedLog = stripPrivateFields(engineLog.log, viewerId);
+
+    const entry: MoveLogEntrySnapshot = {
+      id: `spectator-live-${args.acceptedMove.stateVersion}-${logMoveId}-${logIndex}`,
+      timestamp: args.acceptedMove.timestamp,
+      turnNumber: args.acceptedMove.turnNumber,
+      moveId: logMoveId,
+      actorSide: args.resolveActorSide(logPlayerId),
+      title: "",
+      playerId: logPlayerId,
+      params: isPrimary ? params : undefined,
+      typedLogEntry: strippedLog as MoveLogEntrySnapshot["typedLogEntry"],
+    };
+
+    return [{ ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text }];
+  });
+}
+
+/** @deprecated Use {@link createLiveEntries} instead. Returns the first entry or a blank placeholder. */
+export function createLiveEntry(
+  args: Parameters<typeof createLiveEntries>[0],
+): MoveLogEntrySnapshot {
+  const entries = createLiveEntries(args);
+  if (entries[0]) return entries[0];
+  // Absolute fallback: blank entry so callers expecting a non-null value don't crash.
+  const resolveCard = buildCardReferenceResolver(args.engine, args.cardsMaps);
+  const moveId = isLorcanaSimulatorMoveId(args.acceptedMove.moveId)
+    ? args.acceptedMove.moveId
+    : "passTurn"; // safe default — will render as an empty/unknown row
   const entry: MoveLogEntrySnapshot = {
-    // stateVersion is stable across move_accepted (unicast to issuer) and
-    // state_update (broadcast to everyone) for the same move; using it for
-    // the dedup id prevents duplicate entries on the dispatcher's screen.
-    // Manual moves emit no engine logs, so buildAcceptedMove falls back to
-    // Date.now() per packet — that wall-clock differs between the two
-    // arrivals and would otherwise sneak past pushEntries' Set-based dedup.
     id: `spectator-live-${args.acceptedMove.stateVersion}-${moveId}`,
     timestamp: args.acceptedMove.timestamp,
     turnNumber: args.acceptedMove.turnNumber,
@@ -184,11 +306,9 @@ export function createLiveEntry(args: {
     actorSide: args.resolveActorSide(args.acceptedMove.actorId),
     title: "",
     playerId: args.acceptedMove.actorId,
-    params,
-    typedLogEntry: strippedLog as MoveLogEntrySnapshot["typedLogEntry"],
+    params: undefined,
+    typedLogEntry: undefined,
   };
-
-  const resolveCard = buildCardReferenceResolver(args.engine, args.cardsMaps);
   return { ...entry, title: formatEventLogBody(entry, undefined, undefined, resolveCard).text };
 }
 
@@ -385,16 +505,16 @@ export class SpectatorMatchOrchestrator {
       );
     }
 
-    if (msg.acceptedMove && isLorcanaSimulatorMoveId(msg.acceptedMove.moveId)) {
-      this.readModel.pushEntries([
-        createLiveEntry({
+    if (msg.acceptedMove) {
+      this.readModel.pushEntries(
+        createLiveEntries({
           acceptedMove: msg.acceptedMove,
           engineLogs: msg.engineLogs ?? [],
           engine: this.#engine,
           cardsMaps: this.#cardsMaps,
           resolveActorSide: (actorId) => this.resolveActorSide(actorId),
         }),
-      ]);
+      );
       return;
     }
 

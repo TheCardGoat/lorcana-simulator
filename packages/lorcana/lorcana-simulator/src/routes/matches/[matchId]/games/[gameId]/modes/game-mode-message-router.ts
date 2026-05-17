@@ -196,20 +196,11 @@ export function createMessageRouter(
         ? (msg.engineLogs as RecentHistory["engineLogs"])
         : undefined;
       const moveType = typeof msg.moveType === "string" ? msg.moveType : undefined;
-      // state_update has no top-level actorId — extract from the matching engineLog.
-      // Engine log types don't always match the WS moveType (e.g. "inkCard" vs
-      // "putCardIntoInkwell"), so fall back to the first log that carries a playerId.
-      const moveLog = engineLogs?.find(
-        (e) => (e.log as { type?: string } | null)?.type === moveType,
-      );
+      // state_update may or may not carry a top-level actorId. When present, use it
+      // (the dispatcher is authoritative). Otherwise fall back to the first engineLog
+      // that carries a playerId — the first log belongs to the initiating player.
       const actorId = (() => {
-        // Prefer the explicit actorId from the broadcast (the dispatcher).
-        // Manual moves bypass the engine log pipeline, so engineLog.playerId
-        // is unreliable for attribution — and even when a log exists, it
-        // tracks the affected player, not the issuer of the correction.
         if (typeof msg.actorId === "string") return msg.actorId;
-        const fromMatch = (moveLog?.log as { playerId?: string } | null)?.playerId;
-        if (typeof fromMatch === "string") return fromMatch;
         for (const entry of engineLogs ?? []) {
           const pid = (entry.log as { playerId?: string } | null)?.playerId;
           if (typeof pid === "string") return pid;

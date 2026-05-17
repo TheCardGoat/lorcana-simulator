@@ -14,7 +14,7 @@ import { isLorcanaSimulatorMoveId } from "../simulator/model/contracts.js";
 import {
   SpectatorReadModel,
   createSpectatorHistoryEntries,
-  createLiveEntry,
+  createLiveEntries,
   type SpectatorRecentHistory,
 } from "../spectator/spectator-match-orchestrator.svelte.js";
 
@@ -127,9 +127,9 @@ export class HvHPlayerOrchestrator {
     acceptedMove?: SpectatorRecentHistory["acceptedMoves"][number];
     engineLogs?: SpectatorRecentHistory["engineLogs"];
   }): void {
-    if (msg.acceptedMove && isLorcanaSimulatorMoveId(msg.acceptedMove.moveId)) {
-      this.readModel.pushEntries([
-        createLiveEntry({
+    if (msg.acceptedMove) {
+      this.readModel.pushEntries(
+        createLiveEntries({
           acceptedMove: msg.acceptedMove,
           engineLogs: msg.engineLogs ?? [],
           engine: this.#client,
@@ -137,7 +137,7 @@ export class HvHPlayerOrchestrator {
           resolveActorSide: (actorId) => this.#resolveActorSide(actorId),
           viewerId: this.#gameProfileId,
         }),
-      ]);
+      );
     }
   }
 
