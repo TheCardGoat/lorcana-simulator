@@ -63,6 +63,28 @@ describe("test-routes", () => {
     expect(buildFixtureTestRouteHref(fixtureId)).toBe(`/tests/${fixtureId}`);
   });
 
+  it("resolves the 2026-05-17 daily feedback remaining-item visual fixtures", () => {
+    const fixtureIds = [
+      "triage-2026-05-17-tiana-dale-bot-challenge",
+      "triage-2026-05-17-kristoffs-lute-play-top",
+      "triage-2026-05-17-leviathan-return-of-hercules",
+      "triage-2026-05-17-hamm-piggy-bank-exert",
+      "triage-2026-05-17-mirabel-curious-child-reveal",
+      "triage-2026-05-17-bibbidi-another-character",
+      "triage-2026-05-17-hades-target-clarity",
+      "triage-2026-05-17-cheshire-cat-boost-move-one",
+      "triage-2026-05-17-wind-up-frog-toy-banish",
+      "triage-2026-05-17-lyle-dirty-tricks",
+      "triage-2026-05-17-sid-double-prizes",
+      "triage-2026-05-17-under-the-sea-sing-together",
+    ];
+
+    for (const fixtureId of fixtureIds) {
+      expect(resolveFixtureForTestRoute(fixtureId)?.id).toBe(fixtureId);
+      expect(buildFixtureTestRouteHref(fixtureId)).toBe(`/tests/${fixtureId}`);
+    }
+  });
+
   it("returns undefined for unknown fixture routes", () => {
     expect(resolveFixtureForTestRoute("does-not-exist")).toBeUndefined();
   });

@@ -6,7 +6,7 @@ import type { ActionResolutionInput, PlayCardExecutionContext } from "./types";
 import { resolveEffectTargets } from "../../../targeting/runtime";
 import { markLastEffectPerformed } from "./event-snapshot-utils";
 import { emitTriggeredLorcanaEvent } from "../../effects/triggered-abilities";
-import { recordCardPutUnderThisTurn } from "../../state/turn-metrics";
+import { recordCardPutUnderThisTurn, recordDiscardExitThisTurn } from "../../state/turn-metrics";
 import { getEffectTargetSelectionInput } from "./selection-state";
 
 export function isPutUnderEffect(effect: unknown): effect is PutUnderEffect {
@@ -252,6 +252,7 @@ export function resolvePutUnderEffect(
       );
       if (moved) {
         movedCardId = selectedCardId;
+        recordDiscardExitThisTurn(ctx);
       }
     }
   }
