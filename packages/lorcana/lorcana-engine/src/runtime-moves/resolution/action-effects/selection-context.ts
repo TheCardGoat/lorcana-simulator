@@ -554,6 +554,21 @@ function deriveLegalChoiceIndices(
 ): number[] {
   return options.flatMap((option, index) => {
     const optionRecord = asRecord(option);
+    let effectiveOption = option;
+    if (optionRecord?.type === "conditional") {
+      const conditionMet = evaluateActionCondition(
+        optionRecord.condition as never,
+        args.ctx as never,
+        args.cardPlayed,
+        args.resolutionInput,
+      );
+      effectiveOption = conditionMet
+        ? (optionRecord.then ?? optionRecord.effect ?? optionRecord.ifTrue)
+        : (optionRecord.else ?? optionRecord.ifFalse);
+      if (!effectiveOption) {
+        return [];
+      }
+    }
     if (
       optionRecord?.type === "discard" &&
       optionRecord.chosen === true &&
@@ -584,7 +599,7 @@ function deriveLegalChoiceIndices(
 
     const optionContext = buildImmediateSelectionContext({
       ...args,
-      effect: option,
+      effect: effectiveOption,
     });
     if (optionContext?.kind === "target-selection" || optionContext?.kind === "discard-choice") {
       const candidateCount =

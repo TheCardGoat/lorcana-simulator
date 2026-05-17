@@ -4470,9 +4470,29 @@ export abstract class LorcanaEngineBase {
       return [];
     }
 
+    const hasPlayablePlayFromUnderCard = (() => {
+      const currentTurn = this.getState().ctx.status.turn ?? 1;
+      const permissions = getActivePlayFromUnderPermissions(
+        this.getState().G.playFromUnderPermissions,
+        clientPlayerId as PlayerId,
+        currentTurn,
+      );
+      for (const permission of permissions) {
+        const sourceItemMeta = this.getState().ctx.zones.private.cardMeta[permission.sourceItemId];
+        const underCardIds = Array.isArray(sourceItemMeta?.cardsUnder)
+          ? (sourceItemMeta.cardsUnder as CardInstanceId[])
+          : [];
+        if (underCardIds.some((cardId) => this.canPlayCard(cardId))) {
+          return true;
+        }
+      }
+      return false;
+    })();
+
     const shouldAnalyzePlayCards =
       legalMoveIds.includes("playCard") ||
-      playerBoard.hand.some((cardId) => this.canPlayCard(cardId as CardInstanceId));
+      playerBoard.hand.some((cardId) => this.canPlayCard(cardId as CardInstanceId)) ||
+      hasPlayablePlayFromUnderCard;
     const moveIdsToAnalyze =
       shouldAnalyzePlayCards && !legalMoveIds.includes("playCard")
         ? [...legalMoveIds, "playCard"]
@@ -4613,9 +4633,10 @@ export abstract class LorcanaEngineBase {
           currentTurnForLimbo,
         );
         for (const permission of validPermissions) {
-          const sourceItemCard = this.getBoard().cards[String(permission.sourceItemId)];
-          const underCardIds = Array.isArray(sourceItemCard?.cardsUnder)
-            ? (sourceItemCard.cardsUnder as CardInstanceId[])
+          const sourceItemMeta =
+            this.getState().ctx.zones.private.cardMeta[permission.sourceItemId];
+          const underCardIds = Array.isArray(sourceItemMeta?.cardsUnder)
+            ? (sourceItemMeta.cardsUnder as CardInstanceId[])
             : [];
           for (const underCardId of underCardIds) {
             if (!playCardIds.includes(underCardId) && this.canPlayCard(underCardId)) {
