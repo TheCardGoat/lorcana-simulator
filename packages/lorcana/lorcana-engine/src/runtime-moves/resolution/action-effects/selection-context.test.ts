@@ -12,6 +12,8 @@ type TestCardDefinition = {
   cardType: "character" | "item" | "location" | "action";
   name?: string;
   version?: string;
+  controllerId?: PlayerId;
+  damage?: number;
 };
 
 /**
@@ -345,7 +347,7 @@ describe("buildResolutionSelectionContext", () => {
     const enemy = "enemy" as CardInstanceId;
     const { ctx } = createMinimalSelectionTestContext({
       [source]: { id: "source", cardType: "character", controllerId: PLAYER_ONE, damage: 2 },
-      [enemy]: { id: "enemy", cardType: "character", controllerId: "p2" },
+      [enemy]: { id: "enemy", cardType: "character", controllerId: PLAYER_TWO },
     });
 
     const selection = buildResolutionSelectionContext({
